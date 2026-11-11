@@ -47,11 +47,11 @@ const canvasMeasurer = (() => {
 const ITALIC_TAN = Math.tan((12 * Math.PI) / 180);
 
 /** scale：畫布短邊 / 1080（uiScale）。字級以 1080 為基準，所以預覽（較小）與輸出（1080）看起來一樣。 */
-export function renderText(card: TextCard, scale: number): TextRender {
+export function renderText(card: TextCard, scale: number, quality = 2): TextRender {
   // 字體還沒載入完成時畫的是備用字體，所以「各字體載入了沒」也要算進快取鍵，載入後才會重畫
   for (const run of card.runs) requestFont(run.fontId);
   const loaded = card.runs.map((r) => (cssFamily(r.fontId) ? 1 : 0)).join('');
-  const key = `${scale.toFixed(4)}|${loaded}|${JSON.stringify(card)}`;
+  const key = `${scale.toFixed(4)}|${quality}|${loaded}|${JSON.stringify(card)}`;
   const hit = cache.get(key);
   if (hit) {
     cache.delete(key);
@@ -76,6 +76,8 @@ export function renderText(card: TextCard, scale: number): TextRender {
           cmds: shapePath(card.box.shape, lay.w, lay.h, {
             radius: (card.box.radius ?? 28) * scale,
             tail: card.box.tailDir,
+            softness: card.box.softness,
+            depth: card.box.depth,
           }),
         },
       ]
@@ -92,9 +94,11 @@ export function renderText(card: TextCard, scale: number): TextRender {
   const w = Math.ceil(lay.w + bleed * 2);
   const h = Math.ceil(lay.h + bleed * 2);
   const canvas = document.createElement('canvas');
-  canvas.width = w;
-  canvas.height = h;
+  const density = Math.min(quality, 4096 / w, 4096 / h, Math.sqrt(8_000_000 / (w * h)));
+  canvas.width = Math.ceil(w * density);
+  canvas.height = Math.ceil(h * density);
   const ctx = canvas.getContext('2d')!;
+  ctx.scale(density, density);
   const ox = bleed + (w - bleed * 2 - lay.w) / 2;
   const oy = bleed + (h - bleed * 2 - lay.h) / 2;
 
@@ -170,7 +174,13 @@ export function renderText(card: TextCard, scale: number): TextRender {
 
   const out = { canvas, w, h, key };
   cache.set(key, out);
-  if (cache.size > MAX_CACHE) cache.delete(cache.keys().next().value!);
+  let pixels = [...cache.values()].reduce((n, r) => n + r.canvas.width * r.canvas.height, 0);
+  while (cache.size > 1 && (cache.size > MAX_CACHE || pixels > 16_000_000)) {
+    const oldest = cache.keys().next().value!,
+      old = cache.get(oldest)!;
+    pixels -= old.canvas.width * old.canvas.height;
+    cache.delete(oldest);
+  }
   return out;
 }
 

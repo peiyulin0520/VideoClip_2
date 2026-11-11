@@ -69,7 +69,7 @@ export async function renderFrame(
           ? { source: p.source, ready: true, srcW: p.w || asset.width, srcH: p.h || asset.height }
           : null;
       });
-      comp.render(scene);
+      comp.render(scene, project.background ?? '#000000');
       const canvas = comp.toCanvas();
       const blob = await new Promise<Blob>((res, rej) =>
         canvas.toBlob((b) => (b ? res(b) : rej(new Error('PNG 轉檔失敗'))), 'image/png'),

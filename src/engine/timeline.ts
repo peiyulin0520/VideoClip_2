@@ -2,8 +2,8 @@ import { MAX_SPEED, MIN_CLIP_DURATION, MIN_SPEED, newId } from '../model/default
 import type { Asset, Item, Project, Track, VideoItem } from '../model/types';
 
 /** 主軌片段首尾相接：依序重算 start。回傳新陣列（不改原物件）。 */
-export function relayout(items: VideoItem[]): VideoItem[] {
-  let t = 0;
+export function relayout(items: VideoItem[], offset = 0): VideoItem[] {
+  let t = Math.max(0, offset);
   return items.map((it) => {
     const out = it.start === t ? it : { ...it, start: t };
     t += it.duration;
@@ -78,6 +78,7 @@ export function itemAt(items: VideoItem[], t: number): { item: VideoItem; index:
   if (items.length === 0) return null;
   for (let i = 0; i < items.length; i++) {
     const it = items[i]!;
+    if (t < it.start) return t < 0 && it.start === 0 ? { item: it, index: i } : null;
     if (t < it.start + it.duration) return { item: it, index: i };
   }
   return { item: items[items.length - 1]!, index: items.length - 1 };

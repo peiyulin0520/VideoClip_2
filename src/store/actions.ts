@@ -105,7 +105,7 @@ export function removeAnyItem(id: string): boolean {
       const tr = d.tracks[f.trackIndex]!;
       tr.items = (
         f.track.kind === 'main'
-          ? removeItem(tr.items as VideoItem[], id)
+          ? relayout(removeItem(tr.items as VideoItem[], id), d.mainOffset ?? 0)
           : tr.items.filter((x) => x.id !== id)
       ) as never;
     },
@@ -126,7 +126,9 @@ export function splitAny(id: string, t: number): string | null {
   const right = out[out.findIndex((x) => x.id === id) + 1]!;
   store().apply(
     (d) => {
-      d.tracks[f.trackIndex]!.items = out as never;
+      d.tracks[f.trackIndex]!.items = (
+        f.track.kind === 'main' ? relayout(out as VideoItem[], d.mainOffset ?? 0) : out
+      ) as never;
     },
     { select: right.id },
   );
@@ -144,7 +146,9 @@ export function duplicateAny(id: string): boolean {
   if (!r) return false;
   store().apply(
     (d) => {
-      d.tracks[f.trackIndex]!.items = r.items as never;
+      d.tracks[f.trackIndex]!.items = (
+        f.track.kind === 'main' ? relayout(r.items as VideoItem[], d.mainOffset ?? 0) : r.items
+      ) as never;
     },
     { select: r.newId },
   );
@@ -205,4 +209,17 @@ export function setProjectAspect(choice: Aspect | 'auto'): Aspect | null {
     assignAspect(d, aspect, choice === 'auto');
   });
   return aspect;
+}
+
+/** 主軌整組延後；字幕與疊加保持原來的全域時間，供開場使用。 */
+export function setMainOffset(seconds: number) {
+  if (!Number.isFinite(seconds)) return;
+  store().apply(
+    (d) => {
+      d.mainOffset = Math.min(600, Math.max(0, seconds));
+      const tr = d.tracks.find((t) => t.kind === 'main');
+      if (tr) tr.items = relayout(tr.items as VideoItem[], d.mainOffset);
+    },
+    { coalesce: 'main-offset' },
+  );
 }

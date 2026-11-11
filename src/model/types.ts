@@ -43,6 +43,8 @@ export type VideoItem = ItemBase & {
   speed: number; // 0.25–4；照片固定 1
   volume: number; // 0–1
   fit: 'cover' | 'contain';
+  /** 多格版型的固定視窗（畫面比例座標）；素材可在視窗內拖移/縮放。 */
+  slot?: { x: number; y: number; w: number; h: number };
 };
 
 // 字卡（規格見 docs/TEXT_CARDS.md）。新欄位都是選填，Phase 2 存的舊字卡不用轉換。
@@ -76,7 +78,7 @@ export type DecorationKind =
   | 'check'
   | 'corner-brackets';
 /** 字卡裝飾。width：線寬，佔文字墨跡高度的比例（星星、愛心、螢光筆不用） */
-export type Decoration = { kind: DecorationKind; color: string; width: number };
+export type Decoration = { kind: DecorationKind; color: string; width: number; offset?: number };
 export type BoxShape =
   | 'rect'
   | 'roundRect'
@@ -121,6 +123,8 @@ export type CardBox = {
   radius?: number; // roundRect / speech-round 的圓角 px；pill 固定半圓
   stroke?: Stroke; // 字塊外框（畫在圖形邊緣）
   tailDir?: 'bottom-left' | 'bottom-right'; // 對話框尾巴方向（預設左下）
+  softness?: number; // 0–1，輪廓轉角柔和程度
+  depth?: number; // 0–1，凹槽深度；舊資料預設 1
 };
 export type TextCard = {
   runs: TextRun[];
@@ -144,6 +148,7 @@ export type Track = {
   hidden: boolean;
   locked: boolean;
   muted?: boolean;
+  template?: boolean;
   items: Item[];
 };
 
@@ -158,6 +163,14 @@ export type Project = {
   width: number;
   height: number;
   fps: number;
+  mainOffset?: number;
+  background?: string;
+  layout?: {
+    style: 'photobooth' | 'filmstrip' | 'polaroid';
+    motion: 'none' | 'slide' | 'drift';
+    start: number;
+    duration: number;
+  };
   assets: Asset[];
   tracks: Track[];
   thumbnail?: string;

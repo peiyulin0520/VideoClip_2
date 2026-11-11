@@ -95,11 +95,11 @@ test('主軌：匯入後不自動選取；預覽單點不選；從時間軸選�
   await expect(page.getByTestId('selbox')).toBeVisible();
   await expect(page.getByTestId('selbox')).toHaveClass(/main/);
   await expect(page.getByRole('button', { name: '刪除圖層' })).toHaveCount(0);
-  await expect(page.getByTestId('scale-handle')).toBeVisible();
+  await expect(page.getByTestId('scale-handle')).toHaveCount(0);
   await page.screenshot({ path: `${SHOT}/after-main-selected.png` });
 
   // 疊加素材：匯入後仍自動選取，有 ✕
   await addOverlays(page, ['solid-green.webm']);
   await expect(page.getByTestId('selbox')).toBeVisible();
-  await expect(page.getByRole('button', { name: '刪除圖層' })).toBeVisible();
+  await expect(page.getByRole('button', { name: '刪除圖層' })).toHaveCount(0);
 });

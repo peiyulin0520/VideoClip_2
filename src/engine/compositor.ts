@@ -27,6 +27,7 @@ export type SceneLayer = {
   blend: BlendMode;
   cornerRadius: number; // 0–0.5
   outline?: Outline;
+  viewport?: { x: number; y: number; w: number; h: number };
 };
 
 type Obj = {
@@ -46,11 +47,15 @@ type Obj = {
 
 export class Compositor {
   private objs = new Map<string, Obj>();
+  private background = new Graphics();
+  private backgroundColor = '';
   private constructor(
     private app: Application,
     readonly width: number,
     readonly height: number,
-  ) {}
+  ) {
+    this.app.stage.addChild(this.background);
+  }
 
   static async create(opts: {
     width: number;
@@ -78,7 +83,11 @@ export class Compositor {
     return this.app.canvas as HTMLCanvasElement;
   }
 
-  render(layers: SceneLayer[]): void {
+  render(layers: SceneLayer[], background = '#000000'): void {
+    if (this.backgroundColor !== background) {
+      this.background.clear().rect(0, 0, this.width, this.height).fill(background);
+      this.backgroundColor = background;
+    }
     const stage = this.app.stage;
     const seen = new Set<string>();
     let allReady = true;
@@ -88,8 +97,8 @@ export class Compositor {
       if (!layer.ready) allReady = false;
       const o = this.ensure(layer);
       this.update(o, layer);
-      if (stage.children[index] !== o.container)
-        stage.addChildAt(o.container, Math.min(index, stage.children.length));
+      if (stage.children[index + 1] !== o.container)
+        stage.addChildAt(o.container, Math.min(index + 1, stage.children.length));
     });
 
     // 還沒準備好的新圖層出現時，先留著舊圖層（例如換片時的上一個片段），避免閃黑
@@ -178,7 +187,8 @@ export class Compositor {
     const { box } = layer;
     o.container.visible = o.hasFrame;
     o.container.position.set(box.cx, box.cy);
-    o.container.rotation = (box.rotation * Math.PI) / 180;
+    o.container.rotation = layer.viewport ? 0 : (box.rotation * Math.PI) / 180;
+    o.sprite.rotation = layer.viewport ? (box.rotation * Math.PI) / 180 : 0;
     o.container.alpha = layer.opacity;
     o.sprite.width = box.w;
     o.sprite.height = box.h;
@@ -186,8 +196,9 @@ export class Compositor {
 
     // ---- 圓角遮罩 ----
     const radius = Math.min(layer.cornerRadius * Math.min(box.w, box.h), Math.min(box.w, box.h) / 2);
-    if (radius > 0.5) {
-      const key = `${box.w.toFixed(1)}|${box.h.toFixed(1)}|${radius.toFixed(1)}`;
+    if (radius > 0.5 || layer.viewport) {
+      const vp = layer.viewport;
+      const key = `${box.w.toFixed(1)}|${box.h.toFixed(1)}|${radius.toFixed(1)}|${vp ? [vp.x - box.cx, vp.y - box.cy, vp.w, vp.h].join(',') : ''}`;
       if (!o.mask) {
         o.mask = new Graphics();
         o.container.addChild(o.mask);
@@ -195,7 +206,13 @@ export class Compositor {
       if (o.maskKey !== key) {
         o.mask
           .clear()
-          .roundRect(-box.w / 2, -box.h / 2, box.w, box.h, radius)
+          .roundRect(
+            vp ? vp.x - box.cx : -box.w / 2,
+            vp ? vp.y - box.cy : -box.h / 2,
+            vp?.w ?? box.w,
+            vp?.h ?? box.h,
+            radius,
+          )
           .fill(0xffffff);
         o.maskKey = key;
       }

@@ -1,3 +1,4 @@
+import { pinchSelection } from './helpers';
 import { expect, test } from '@playwright/test';
 import {
   addOverlays,
@@ -82,32 +83,18 @@ test('同一秒疊 3 支影片＋1 個字卡：換圖層順序後預覽正確，
   }
 });
 
-test('預覽上的選取框：點選、拖移、右上角縮放旋轉鈕、刪除鈕', async ({ page }) => {
+test('預覽上的選取框：點選、拖移、兩指縮放、不遮畫面的選取框與側欄刪除', async ({ page }) => {
   await createProjectWith(page, ['solid-red.webm']);
   await addOverlays(page, ['solid-green.webm']);
   await expect(clips(page)).toHaveCount(2);
 
   // 新加的疊加素材自動被選取，出現選取框與兩顆圓鈕
   await expect(page.getByTestId('selbox')).toBeVisible();
-  const handle = page.getByTestId('scale-handle');
-  await expect(handle).toBeVisible();
-  const hb = (await handle.boundingBox())!;
-  expect(hb.width).toBeGreaterThanOrEqual(44);
-  expect(hb.height).toBeGreaterThanOrEqual(44);
-  const del = page.getByRole('button', { name: '刪除圖層' });
-  expect((await del.boundingBox())!.width).toBeGreaterThanOrEqual(44);
-
+  await expect(page.getByTestId('scale-handle')).toHaveCount(0);
+  await expect(page.getByRole('button', { name: '刪除圖層' })).toHaveCount(0);
   const tf0 = (await project(page)).tracks[1]!.items[0]!.transform;
   expect(tf0.scale).toBeCloseTo(0.5);
-
-  // 拖右上角的鈕往外 → 變大
-  const hx = hb.x + hb.width / 2;
-  const hy = hb.y + hb.height / 2;
-  await page.mouse.move(hx, hy);
-  await page.mouse.down();
-  await page.mouse.move(hx + 20, hy - 20, { steps: 5 });
-  await page.mouse.move(hx + 40, hy - 40, { steps: 5 });
-  await page.mouse.up();
+  await pinchSelection(page, 1.8);
   const tf1 = (await project(page)).tracks[1]!.items[0]!.transform;
   expect(tf1.scale).toBeGreaterThan(0.6);
   await page.screenshot({ path: `${SHOT}/selection-box-scaled.png` });
@@ -131,7 +118,8 @@ test('預覽上的選取框：點選、拖移、右上角縮放旋轉鈕、刪�
   expect(tf3.x).toBeCloseTo(tf1.x, 1);
 
   // 刪除鈕
-  await page.getByRole('button', { name: '刪除圖層' }).tap();
+  await openTab(page, '圖層');
+  await page.getByRole('button', { name: '刪除選取圖層' }).tap();
   await expect(clips(page)).toHaveCount(1);
   await expect(page.getByTestId('selbox')).toHaveCount(0);
 });

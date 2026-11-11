@@ -4,7 +4,7 @@ import { Link, useParams } from 'react-router-dom';
 import { ensureUrls, releaseProjectUrls } from '../../engine/assetUrls';
 import { importFiles } from '../../engine/importMedia';
 import { addOverlayClips } from '../../store/actions';
-import { mainItems, relayout, totalDuration, formatTime } from '../../engine/timeline';
+import { relayout, totalDuration, formatTime } from '../../engine/timeline';
 import { getProject } from '../../storage/projects';
 import { startAutosave } from '../../store/autosave';
 import { useProjectStore } from '../../store/projectStore';
@@ -123,7 +123,7 @@ function EditorBody() {
             const first = res.assets[0];
             if (d.aspectAuto && tr.items.length === 0 && first)
               assignAspect(d, pickAspect(first.width, first.height), true);
-            tr.items = relayout([...(tr.items as typeof res.clips), ...res.clips]);
+            tr.items = relayout([...(tr.items as typeof res.clips), ...res.clips], d.mainOffset ?? 0);
           });
           player?.seek(startOfNew);
         }
@@ -136,7 +136,7 @@ function EditorBody() {
     }
   }, []);
 
-  const empty = mainItems(project).length === 0;
+  const empty = project.tracks.every((t) => t.items.length === 0);
 
   return (
     <main className="editor">

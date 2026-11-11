@@ -360,7 +360,7 @@ export function Timeline({
 
   const menuTrack = project.tracks.find((t) => t.id === menuTrackId) ?? null;
   const menuIndex = menuTrack ? project.tracks.indexOf(menuTrack) : -1;
-  const viewH = Math.min(Math.max(contentH, 112), 140);
+  const viewH = Math.min(Math.max(contentH, 80), 96);
 
   return (
     <div className="timeline" style={{ height: viewH }}>
@@ -416,6 +416,21 @@ export function Timeline({
                 ) : null}
               </button>
 
+              {track.kind === 'main' && (project.mainOffset ?? 0) > 0 && (
+                <div
+                  className="intro-gap"
+                  data-testid="intro-gap"
+                  style={{
+                    left: half,
+                    width: project.mainOffset! * pps,
+                    height: h,
+                    background: project.background ?? '#000000',
+                    color: project.background === '#ffffff' ? '#111' : '#fff',
+                  }}
+                >
+                  開場 {project.mainOffset}s
+                </div>
+              )}
               {track.items.map((it) => {
                 const asset = isVideoItem(it) ? project.assets.find((a) => a.id === it.assetId) : undefined;
                 const selected = it.id === selectedId;

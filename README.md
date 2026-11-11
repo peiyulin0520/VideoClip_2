@@ -20,7 +20,7 @@ npm run check
 npm run e2e -- --trace off
 ```
 
-`check` 包含 lint、220 個單元測試、TypeScript、正式建置及 GitHub Pages 路徑/PWA/字體檔案檢查。42 個瀏覽器測試已在 GitHub Actions 的 Chromium 153 通過，CI 保存截圖 artifact。本次已確認 38 張 CI 畫面（docs/screenshots）中文可讀；iPhone Safari 仍待真機驗證。
+`check` 包含 lint、225 個單元測試、TypeScript、正式建置及 GitHub Pages 路徑/PWA/字體檔案檢查。47 個瀏覽器測試（本次新增 5 個）交由 GitHub Actions 的 Chromium 153 執行，CI 保存截圖 artifact；最新成功狀態見 PROGRESS.md。本次已確認 38 張 CI 畫面（docs/screenshots）中文可讀；iPhone Safari 仍待真機驗證。
 
 ## GitHub Pages
 
@@ -42,3 +42,7 @@ npm run e2e -- --trace off
 ## 接手文件
 
 先讀 [AGENTS.md](AGENTS.md)，再看 [docs/PROGRESS.md](docs/PROGRESS.md) 的交接快照與 [docs/HANDOFF.md](docs/HANDOFF.md)。所有未完成項目與驗收限制均記在文件中。
+
+## 本次 iPhone 編輯體驗更新
+
+補強匯入首格、增加放大預覽、取消浮動圓鈕改兩指、任意顏色/HEX、裝飾距離、輪廓柔和與凹槽、1920/高密度文字。新增開場秒數/黑白自訂底色，以及拍貼/膠卷/四格相紙（每格獨立素材、滑動效果）。詳細驗收與 Safari 限制見 PROGRESS.md；完整影片匯出、繪畫與跨專案素材庫仍未做。

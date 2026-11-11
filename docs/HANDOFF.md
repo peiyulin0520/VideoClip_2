@@ -1,6 +1,10 @@
 # 交接手冊（HANDOFF）
 
 ## VideoClip_2 當前交接（優先於以下來源 repo 的歷史紀錄）
+- 最新工作：iPhone 實測 8 項修正，規劃/驗收見 docs/plans/2026-11-11-mobile-editor-feedback.md。最新偏好取消浮動圓鈕，用框上兩指手勢，與來源的右上角按鈕規格不同。
+- 新資料欄位皆選填：Project.mainOffset/background/layout、Track.template、VideoItem.slot、Decoration.offset、CardBox.softness/depth。主軌 store 寫回時必須重新套用 offset；itemAt 在第一個 start 之前回 null，不能提前畫原片。
+- 多格共用 buildScene/Compositor：固定視窗遮罩獨立於素材旋轉，素材可在格內拖移縮放；第一格音軌、其他格靜音，文字保留在版型上層。預覽提高至 1920；文字的物理 canvas 尺寸與邏輯 w/h 分離，不能拿 canvas.width 當選取框尺寸。
+
 - 來源 main `78b178343409c46c7ba353ef3a6db6f279a7bde6`，PR #3 在來源庫已合併；來源快照「等合併」已過時。
 - 目標 `peiyulin0520/VideoClip_2`、工作分支 `codex/establish-little-moments`、名稱 Little Moments、Pages base `/VideoClip_2/`。此明確子任務只建立已完成版本；不把尚未做的功能標為完成。
 - 新舊路徑在同一個 origin，所以另命名 IndexedDB、OPFS、字體快取與 localStorage；不改動原 VideoClip 資料。新增隔離測試覆蓋相同專案/素材 ID 的讀寫刪除。

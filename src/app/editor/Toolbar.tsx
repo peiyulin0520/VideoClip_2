@@ -7,6 +7,7 @@ import {
   Eye,
   EyeOff,
   Gauge,
+  Film,
   Layers,
   Lock,
   Maximize,
@@ -39,20 +40,24 @@ import {
   removeAnyItem,
   shiftTrackLayer,
   splitAny,
+  setMainOffset,
 } from '../../store/actions';
 import { setMainItems, setTrackItems, useProjectStore } from '../../store/projectStore';
 import { toast, useUI } from '../../store/uiStore';
 import { Slider } from '../../ui/Slider';
+import { ColorPicker } from '../../ui/ColorPicker';
+import { TemplatePanel } from './TemplatePanel';
 import { TextPanel } from './TextPanel';
 
-export type Tab = 'edit' | 'overlay' | 'text' | 'layers';
-type Panel = 'speed' | 'volume' | null;
+export type Tab = 'edit' | 'overlay' | 'text' | 'layers' | 'layout';
+type Panel = 'speed' | 'volume' | 'opening' | null;
 
 const TABS: { id: Tab; label: string }[] = [
   { id: 'edit', label: '剪輯' },
   { id: 'overlay', label: '疊加' },
   { id: 'text', label: '文字' },
   { id: 'layers', label: '圖層' },
+  { id: 'layout', label: '版型' },
 ];
 
 function ToolButton({
@@ -120,12 +125,13 @@ export function BottomBar({
           </button>
         ))}
       </div>
-      {tab === 'edit' && (
+      {!collapsed && tab === 'edit' && (
         <EditTab panel={panel} setPanel={setPanel} onImport={onImportMain} found={found} items={items} />
       )}
       {!collapsed && tab === 'overlay' && <OverlayTab onImportOverlay={onImportOverlay} />}
       {!collapsed && tab === 'text' && <TextTab found={found} />}
       {!collapsed && tab === 'layers' && <LayersTab />}
+      {!collapsed && tab === 'layout' && <TemplatePanel />}
     </div>
   );
 }
@@ -207,6 +213,58 @@ function EditTab({
     setPanel(p);
   };
 
+  if (panel === 'opening')
+    return (
+      <div className="panel" role="group" aria-label="開場留白">
+        <label className="number-control">
+          第一支影片開始（秒）
+          <input
+            aria-label="第一支影片開始秒數"
+            type="number"
+            min={0}
+            max={600}
+            step={0.1}
+            value={project.mainOffset ?? 0}
+            onChange={(e) => setMainOffset(Number(e.target.value))}
+          />
+        </label>
+        <p className="hint">前面保留空白底色，可在 0 秒加入文字或圖形做首圖；主軌片段一起延後。</p>
+        <div className="chips">
+          <button
+            className="chip"
+            onClick={() =>
+              useProjectStore.getState().apply((d) => {
+                d.background = '#000000';
+              })
+            }
+          >
+            黑底
+          </button>
+          <button
+            className="chip"
+            onClick={() =>
+              useProjectStore.getState().apply((d) => {
+                d.background = '#ffffff';
+              })
+            }
+          >
+            白底
+          </button>
+        </div>
+        <ColorPicker
+          label="畫布底色"
+          value={project.background ?? '#000000'}
+          onChange={(color) =>
+            useProjectStore.getState().apply((d) => {
+              d.background = color;
+            })
+          }
+        />
+        <button className="btn primary done" onClick={() => setPanel(null)}>
+          完成
+        </button>
+      </div>
+    );
   if (panel && selected && isVideoItem(selected)) {
     const asset = project.assets.find((a) => a.id === selected.assetId);
     const setVideo = (patch: Partial<VideoItem>, coalesce?: string) =>
@@ -301,6 +359,7 @@ function EditTab({
   return (
     <div className="toolbar" role="toolbar" aria-label="剪輯工具">
       <ToolButton icon={Plus} label="匯入" onClick={onImport} />
+      <ToolButton icon={Film} label="開場留白" onClick={() => setPanel('opening')} />
       <ToolButton icon={Scissors} label="分割" onClick={split} />
       <ToolButton icon={Trash2} label="刪除" onClick={remove} />
       <ToolButton icon={Copy} label="複製" onClick={() => need() && duplicateAny(selected!.id)} />
@@ -321,7 +380,7 @@ function OverlayTab({ onImportOverlay }: { onImportOverlay: () => void }) {
   return (
     <div className="panel">
       <p className="hint">
-        疊加的影片或照片會放在播放頭這一秒，同一秒可以疊很多個（每個放在自己的軌道）。加好後在預覽畫面上拖移、右上角的鈕縮放旋轉，細節到「圖層」調整。
+        疊加的影片或照片會放在播放頭這一秒，同一秒可以疊很多個（每個放在自己的軌道）。加好後在預覽畫面上拖移、用兩指縮放旋轉，細節到「圖層」調整。
       </p>
       <button className="btn primary done" onClick={onImportOverlay}>
         ＋ 加入影片或照片（疊在目前這一秒）
@@ -441,6 +500,31 @@ function LayersTab() {
           <div className="panel-head">
             <span>選取的圖層</span>
           </div>
+          <Slider
+            label="圖層大小"
+            value={Math.round(it.transform.scale * 100)}
+            min={5}
+            max={500}
+            step={1}
+            format={(v) => `${v}%`}
+            onChange={(v) =>
+              editItem(it.id, (x) => void (x.transform.scale = v / 100), { coalesce: `size:${it.id}` })
+            }
+          />
+          <Slider
+            label="圖層旋轉"
+            value={it.transform.rotation}
+            min={-180}
+            max={180}
+            step={1}
+            format={(v) => `${Math.round(v)}°`}
+            onChange={(v) =>
+              editItem(it.id, (x) => void (x.transform.rotation = v), { coalesce: `rot:${it.id}` })
+            }
+          />
+          <button className="btn" onClick={() => removeAnyItem(it.id)}>
+            刪除選取圖層
+          </button>
           <Slider
             label="透明度"
             value={Math.round(it.transform.opacity * 100)}

@@ -135,6 +135,7 @@ function heart(cx: number, cy: number, s: number): PathCmd[] {
 }
 
 export function decorationOps(d: Decoration, ink: Rect): Op[] {
+  ink = { ...ink, y: ink.y + Math.max(-1, Math.min(3, d.offset ?? 0)) * ink.h };
   const { x, y, w, h } = ink;
   const r = x + w;
   const b = y + h;

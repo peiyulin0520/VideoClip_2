@@ -62,14 +62,17 @@ export function installDebugHook(player: Player) {
       for (const r of card.runs) await ensureFont(r.fontId);
       const out = renderText(card, scale);
       const ctx = out.canvas.getContext('2d')!;
-      const { data } = ctx.getImageData(0, 0, out.w, out.h);
+      const pw = out.canvas.width,
+        ph = out.canvas.height,
+        density = pw / out.w;
+      const { data } = ctx.getImageData(0, 0, pw, ph);
       let top = Infinity;
       let bottom = -1;
       let left = Infinity;
       let right = -1;
-      for (let y = 0; y < out.h; y++)
-        for (let x = 0; x < out.w; x++) {
-          const i = (y * out.w + x) * 4;
+      for (let y = 0; y < ph; y++)
+        for (let x = 0; x < pw; x++) {
+          const i = (y * pw + x) * 4;
           if (data[i + 3]! > 200 && data[i + 1]! > 128 && data[i + 2]! > 128) {
             top = Math.min(top, y);
             bottom = Math.max(bottom, y);
@@ -77,7 +80,15 @@ export function installDebugHook(player: Player) {
             right = Math.max(right, x);
           }
         }
-      return { w: out.w, h: out.h, top, bottom, left, right };
+      return {
+        w: out.w,
+        h: out.h,
+        top: top / density,
+        bottom: (bottom + 1) / density - 1,
+        left: left / density,
+        right: (right + 1) / density - 1,
+        pixelRatio: density,
+      };
     },
     /** 把字卡畫成 PNG（dataURL），驗收截圖用；bg 是背景色（預設白） */
     async cardPng(card: TextCard, scale = 1, bg = '#ffffff') {
@@ -89,7 +100,7 @@ export function installDebugHook(player: Player) {
       const ctx = cv.getContext('2d')!;
       ctx.fillStyle = bg;
       ctx.fillRect(0, 0, out.w, out.h);
-      ctx.drawImage(out.canvas, 0, 0);
+      ctx.drawImage(out.canvas, 0, 0, out.w, out.h);
       return cv.toDataURL('image/png');
     },
     /** 用輸出解析度畫出 t 秒那一格（匯出共用的流程），回傳 PNG 大小與幾個取樣點的顏色 */

@@ -2,6 +2,7 @@ import type { Asset, Item, Project, Track, VideoItem } from '../model/types';
 import type { SceneLayer } from './compositor';
 import { fittedSize, itemBox, type GeoCtx } from './geometry';
 import { renderText, measureTextItem, uiScale } from './textRender';
+import { layoutArt, layoutMotion } from './layouts';
 import { visibleLayers } from './timeline';
 
 /** 預覽/匯出各自提供「這個影片/照片物件現在的畫面」 */
@@ -30,9 +31,42 @@ export function buildScene(
 ): SceneLayer[] {
   const ctx = geoCtx(project, canvasW, canvasH);
   const out: SceneLayer[] = [];
+  let artAdded = false;
+  const motion = layoutMotion(project.layout, t);
   for (const { item, track } of visibleLayers(project, t)) {
+    if (track.template && project.layout && !artAdded) {
+      const art = layoutArt(project.layout.style, canvasW, canvasH);
+      out.push({
+        id: 'layout-frame',
+        kind: 'image',
+        source: art,
+        ready: true,
+        srcW: canvasW,
+        srcH: canvasH,
+        frameW: canvasW,
+        frameH: canvasH,
+        box: { cx: canvasW / 2, cy: canvasH / 2, w: canvasW, h: canvasH, rotation: 0 },
+        opacity: 1,
+        blend: 'normal',
+        cornerRadius: 0,
+      });
+      artAdded = true;
+    }
     const layer = toLayer(item, track, project, ctx, provide);
-    if (layer) out.push(layer);
+    if (layer) {
+      if (track.template) {
+        layer.box = {
+          ...layer.box,
+          cx: layer.box.cx + motion.x * canvasW,
+          cy: layer.box.cy + motion.y * canvasH,
+        };
+        if (layer.viewport) {
+          layer.viewport.x += motion.x * canvasW;
+          layer.viewport.y += motion.y * canvasH;
+        }
+      }
+      out.push(layer);
+    }
   }
   return out;
 }
@@ -56,7 +90,11 @@ function toLayer(
     crop: item.crop,
   };
   if (item.type === 'text') {
-    const r = renderText(item.card, uiScale(ctx.canvasW, ctx.canvasH));
+    const r = renderText(
+      item.card,
+      uiScale(ctx.canvasW, ctx.canvasH),
+      Math.min(4, Math.max(2, Math.ceil(item.transform.scale))),
+    );
     return { ...common, kind: 'text', source: r.canvas, ready: true, srcW: r.w, srcH: r.h, textKey: r.key };
   }
   const asset = project.assets.find((a) => a.id === item.assetId);
@@ -67,7 +105,13 @@ function toLayer(
   const crop = item.crop ?? { l: 0, t: 0, r: 0, b: 0 };
   const cw = Math.max(asset.width * (1 - crop.l - crop.r), 1);
   const ch = Math.max(asset.height * (1 - crop.t - crop.b), 1);
-  const base = fittedSize(cw, ch, ctx.canvasW, ctx.canvasH, item.fit);
+  const base = fittedSize(
+    cw,
+    ch,
+    ctx.canvasW * (item.slot?.w ?? 1),
+    ctx.canvasH * (item.slot?.h ?? 1),
+    item.fit,
+  );
   const k = Math.min(2, Math.max(cw / base.w, 1));
   return {
     ...common,
@@ -76,6 +120,14 @@ function toLayer(
     ready: src.ready,
     srcW: src.srcW,
     srcH: src.srcH,
+    viewport: item.slot
+      ? {
+          x: item.slot.x * ctx.canvasW,
+          y: item.slot.y * ctx.canvasH,
+          w: item.slot.w * ctx.canvasW,
+          h: item.slot.h * ctx.canvasH,
+        }
+      : undefined,
     frameW: base.w * k,
     frameH: base.h * k,
   };

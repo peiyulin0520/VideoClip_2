@@ -4,7 +4,13 @@ import type { Layer } from './timeline';
 /** 畫面（canvas）像素座標下的物件方框；rotation 單位是度，順時針，繞中心 */
 export type Box = { cx: number; cy: number; w: number; h: number; rotation: number };
 export type TextSize = (item: TextItem, canvasW: number, canvasH: number) => { w: number; h: number };
-export type GeoCtx = { canvasW: number; canvasH: number; assets: Asset[]; textSize: TextSize };
+export type GeoCtx = {
+  canvasW: number;
+  canvasH: number;
+  assets: Asset[];
+  textSize: TextSize;
+  layoutMotion?: { x: number; y: number };
+};
 
 // 平台按鈕安全區：直式畫面底部約 250/1920、右側約 150/1080（見 docs 的字卡規則）
 export const SAFE_BOTTOM = 250 / 1920;
@@ -43,9 +49,15 @@ export function itemBox(item: Item, ctx: GeoCtx): Box | null {
     const asset = ctx.assets.find((a) => a.id === item.assetId);
     if (!asset) return null;
     const src = croppedSource(asset, item.crop);
-    ({ w, h } = fittedSize(src.w, src.h, cw, ch, item.fit));
+    ({ w, h } = fittedSize(src.w, src.h, cw * (item.slot?.w ?? 1), ch * (item.slot?.h ?? 1), item.fit));
   }
-  return { cx: x * cw, cy: y * ch, w: w * scale, h: h * scale, rotation };
+  return {
+    cx: (x + (item.type !== 'text' && item.slot ? (ctx.layoutMotion?.x ?? 0) : 0)) * cw,
+    cy: (y + (item.type !== 'text' && item.slot ? (ctx.layoutMotion?.y ?? 0) : 0)) * ch,
+    w: w * scale,
+    h: h * scale,
+    rotation,
+  };
 }
 
 /** 把畫面座標的點轉到方框自己的座標（原點在中心、沒有旋轉） */
@@ -87,6 +99,21 @@ export function topHit(layers: Layer[], ctx: GeoCtx, px: number, py: number): La
   for (let i = layers.length - 1; i >= 0; i--) {
     const l = layers[i]!;
     if (l.track.locked) continue;
+    if (l.item.type !== 'text' && l.item.slot) {
+      const source = l.item.slot;
+      const s = {
+        ...source,
+        x: source.x + (ctx.layoutMotion?.x ?? 0),
+        y: source.y + (ctx.layoutMotion?.y ?? 0),
+      };
+      if (
+        px < s.x * ctx.canvasW ||
+        px > (s.x + s.w) * ctx.canvasW ||
+        py < s.y * ctx.canvasH ||
+        py > (s.y + s.h) * ctx.canvasH
+      )
+        continue;
+    }
     const box = itemBox(l.item, ctx);
     if (box && pointInBox(box, px, py)) return l;
   }

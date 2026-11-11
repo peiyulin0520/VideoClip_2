@@ -7,12 +7,12 @@
 - **目標儲存庫**：`https://github.com/peiyulin0520/VideoClip_2`
 - **工作分支**：`codex/establish-little-moments`；main 原有初始 commit `2f8bdf9` 保留。最新本機程式 commit 見 `git log -1`；推送狀態見下方。
 - **來源**：`peiyulin0520/VideoClip` main `78b178343409c46c7ba353ef3a6db6f279a7bde6`（PR #3 已合併）。以下舊日誌屬來源 repo 的歷史，不代表 VideoClip_2 的部署/瀏覽器驗收。
-- **本次明確子任務**：依來源文件建立新 repo 網頁、保留 Little Moments 名稱、調整 `/VideoClip_2/` 發布路徑與 PWA，並隔離與舊 VideoClip 的本機資料；不重做或宣稱完成整份未來規劃。
-- **已驗證**：最新 main CI 43061662930：220 單元、lint、TypeScript、build、Pages 靜態檢查、42 Chromium e2e、正式 Pages 部署全過。39 款公開字體及授權/路徑檢查成功。
+- **本次明確子任務**：依使用者 iPhone 回饋同時處理 8 項編輯體驗：首格黑畫面、預覽與手勢、自由色彩、裝飾距離、輪廓調整、多格動態版型、文字清晰度、開場留白。詳見 docs/plans/2026-11-11-mobile-editor-feedback.md。
+- **已驗證**：本次本機 225 單元、lint、TypeScript、build、Pages 靜態檢查成功；47 個 Chromium e2e 待 GitHub CI 執行。
 - **瀏覽器驗證**：Playwright 1.63 / Chromium 153、iPhone 13 畫面尺寸；38 張本次生成截圖已更新至 docs/screenshots。已人工檢視首頁，繁體中文可讀。截圖來源為 main run 43061662930 / artifact 13872658901；不是來源庫的舊圖。iPhone Safari 仍需真機測試。
 - **階段**：來源 P0/P1/P2/P3B 與 P3A 第 1–4 前半保持；P3A 貼圖/雲朵字/模板及 P4–P7 尚未完成。此版本尚無完整影片匯出、繪畫或素材庫，不可把原 Sites 版功能當作已移植。
 - **發布狀態**：已完成。https://peiyulin0520.github.io/VideoClip_2/ 公開上線。已部署的程式提交 af14c795cbecb09c1d286ab1fcd6e9168b24cae5；Actions https://github.com/peiyulin0520/VideoClip_2/actions/runs/43061662930 成功。HTML/manifest/JavaScript HTTP 200 與路徑均已確認。此後若有 [skip ci] 提交，只更新交接文件和驗收圖，不改生產程式。
-- **下一步**：由使用者在 iPhone Safari 實測 PLAN §7；下一個功能子任務為 P3A-4 後半貼圖 icon。這次只建立並發布參考庫既有階段，完整影片匯出、繪畫、素材庫等仍未完成。
+- **下一步**：工作分支 CI 執行 47 e2e 並人工檢視新圖 → 修正失敗 → main Pages 發布 → 使用者 iPhone Safari 重測首格、手勢、記憶體與新 UI。
 - **等使用者**：目前不需再做帳號授權；程式及 Pages 設定已可存取。發布後再請使用者進行 PLAN §7 的 iPhone Safari 實測。
 
 ## 日誌格式（新增一筆時照這個）
@@ -27,6 +27,9 @@
 ```
 
 ## 使用者已確認的偏好
+- 最新實測（本次）：**移除預覽內浮動縮放/刪除圓鈕**，點選框後兩指直接縮放，取代先前右上角圓鈕需求。希望預覽更大、文字清楚、自訂任意顏色，裝飾可離文字遠近，輪廓可調柔和/凹槽。
+- 最新實測：要拍貼/膠卷多格影片與滑動效果；第一支影片可延後出現，以黑/白/自訂底色做文字首圖。
+
 - 2026-11-11：指定新 repo `peiyulin0520/VideoClip_2`，要求先依 `peiyulin0520/VideoClip` 的內容和指示建立網頁；沿用先前確認的名稱 Little Moments。
 - 2026-11-11：Icon、自己畫的東西與疊加素材要有選擇儲存、供其他影片重用的素材庫（PLAN R22）；星光手體即星光小熊貓幼兒體，檔案僅本機匯入。
 - 新專案比例預設「自動：跟第一支影片一樣」，但之後可以調整修改（2026-11-11 使用者選 A：「跟第一支影片一樣，但保留之後影片可以調整修改」；先前誤記為 B）
@@ -54,6 +57,12 @@
 - 2026-11-11 找到新字體來源 max32002/pop-gothic（大波浪圓體，含注音）→ 已加入手寫可愛包。問「能不能直接下載到我的 files 下載資料夾」→ 答：網頁在 iPhone 不能自動寫進「檔案」App 資料夾；官方字體存在瀏覽器裡，自己的字體用「匯入字體檔」從檔案 App 選
 
 ## 日誌（最新在最上面）
+- 2026-11-11 iPhone 編輯實測 8 項修正（待 CI）
+  - 實作：首格解碼 priming/事件補強；移除畫面圓鈕，雙指及放大預覽；完整 HEX/picker；裝飾距離；輪廓柔和/凹槽；拍貼/膠卷/四格相紙三版型與滑動；1920 預覽/高密度文字；開場 offset/畫布底色。
+  - 檔案：engine/{mediaPool,player,compositor,scene,layouts,textRender,shapes,decorations,timeline,geometry}.ts、model、store、app/editor、ColorPicker、e2e/usability 與既有手勢驗收。
+  - 驗證：225 單元、lint、TS、build 成功；新增 5 e2e（共 47）等待 CI。尚未驗證 Safari 真機、HEVC/HDR、多格同時解碼的手機效能。
+  - 進度：只更新工作分支，main/上線狀態以後續部署紀錄為準。所有專案新欄位選填，舊資料不重設；舊字卡陰影保留。
+
 - 2026-11-11 完成 GitHub Pages 發布與可讀手機截圖驗收
   - 最終程式 af14c795cbecb09c1d286ab1fcd6e9168b24cae5，main Actions 43061662930：220 單元/42 e2e/Pages 部署成功。
   - 38 張新截圖（artifact 13872658901）更新至 docs/screenshots，人工確認首頁中文可讀；TTF 與家族別名已解決 runner 的中文方框問題。相關截圖只含自製合成素材，沒有使用者影片。

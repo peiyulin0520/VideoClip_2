@@ -5,7 +5,12 @@ import type { PathCmd } from './decorations';
 // 每個圖形：(w, h, 選項) → 路徑指令。當字塊用時，圖形大小 = 文字墨跡 + 內距，再乘上 inset，
 // 讓文字（矩形）剛好放得進圖形裡面（橢圓、星形、愛心的可放文字區比外框小）。
 
-export type ShapeOpts = { radius?: number; tail?: 'bottom-left' | 'bottom-right' };
+export type ShapeOpts = {
+  radius?: number;
+  tail?: 'bottom-left' | 'bottom-right';
+  softness?: number;
+  depth?: number;
+};
 export type ShapeDef = {
   id: BoxShape;
   label: string;
@@ -598,5 +603,82 @@ export const SHAPES: ShapeDef[] = [
 
 export const SHAPE_CATS = ['基本', '對話框', '星形', '標籤箭頭'] as const;
 export const shapeDef = (id: BoxShape): ShapeDef => SHAPES.find((s) => s.id === id) ?? SHAPES[0]!;
-export const shapePath = (id: BoxShape, w: number, h: number, o: ShapeOpts = {}): PathCmd[] =>
-  shapeDef(id).path(w, h, o);
+/** Adjustable contour depth and rounded joins, shared by text and shape cards. */
+export function shapePath(id: BoxShape, w: number, h: number, o: ShapeOpts = {}): PathCmd[] {
+  let path = shapeDef(id).path(w, h, o);
+  if (o.depth !== undefined && !['rect', 'roundRect', 'pill', 'ellipse'].includes(id)) {
+    const depth = Math.max(0, Math.min(1, o.depth));
+    path = path.map((cmd) => {
+      if (cmd[0] === 'Z') return cmd;
+      const out: number[] = [];
+      for (let i = 1; i < cmd.length; i += 2) {
+        const x = Number(cmd[i]),
+          y = Number(cmd[i + 1]);
+        const nx = (x - w / 2) / (w / 2),
+          ny = (y - h / 2) / (h / 2),
+          r = Math.hypot(nx, ny);
+        const k = r > 0.001 && r < 1 ? depth + (1 - depth) / r : 1;
+        out.push(w / 2 + (nx * k * w) / 2, h / 2 + (ny * k * h) / 2);
+      }
+      return [cmd[0], ...out] as PathCmd;
+    });
+  }
+  return (o.softness ?? 0) > 0 ? softenContour(path, Math.min(w, h) * 0.16 * o.softness!) : path;
+}
+
+function softenContour(path: PathCmd[], radius: number): PathCmd[] {
+  const contours: Pt[][] = [];
+  let points: Pt[] = [],
+    last: Pt = [0, 0];
+  for (const cmd of path) {
+    if (cmd[0] === 'M') {
+      if (points.length) contours.push(points);
+      points = [[cmd[1], cmd[2]]];
+      last = points[0]!;
+    } else if (cmd[0] === 'L') {
+      last = [cmd[1], cmd[2]];
+      points.push(last);
+    } else if (cmd[0] === 'C') {
+      const from = last;
+      for (let i = 1; i <= 12; i++) {
+        const t = i / 12,
+          u = 1 - t;
+        points.push([
+          u * u * u * from[0] + 3 * u * u * t * cmd[1] + 3 * u * t * t * cmd[3] + t * t * t * cmd[5],
+          u * u * u * from[1] + 3 * u * u * t * cmd[2] + 3 * u * t * t * cmd[4] + t * t * t * cmd[6],
+        ]);
+      }
+      last = [cmd[5], cmd[6]];
+    } else if (cmd[0] === 'Z') {
+      if (points.length) contours.push(points);
+      points = [];
+    }
+  }
+  if (points.length) contours.push(points);
+  const out: PathCmd[] = [];
+  for (const pts of contours) {
+    if (pts.length < 3) continue;
+    if (Math.hypot(pts[0]![0] - pts.at(-1)![0], pts[0]![1] - pts.at(-1)![1]) < 0.001) pts.pop();
+    pts.forEach((p, i) => {
+      const prev = pts[(i + pts.length - 1) % pts.length]!,
+        next = pts[(i + 1) % pts.length]!;
+      const a = Math.hypot(prev[0] - p[0], prev[1] - p[1]),
+        b = Math.hypot(next[0] - p[0], next[1] - p[1]);
+      const r = Math.min(radius, a * 0.45, b * 0.45);
+      const before: Pt = [p[0] + ((prev[0] - p[0]) * r) / (a || 1), p[1] + ((prev[1] - p[1]) * r) / (a || 1)];
+      const after: Pt = [p[0] + ((next[0] - p[0]) * r) / (b || 1), p[1] + ((next[1] - p[1]) * r) / (b || 1)];
+      out.push(
+        i === 0 ? M(...before) : L(...before),
+        C(
+          before[0] + ((p[0] - before[0]) * 2) / 3,
+          before[1] + ((p[1] - before[1]) * 2) / 3,
+          after[0] + ((p[0] - after[0]) * 2) / 3,
+          after[1] + ((p[1] - after[1]) * 2) / 3,
+          ...after,
+        ),
+      );
+    });
+    out.push(Z);
+  }
+  return out;
+}

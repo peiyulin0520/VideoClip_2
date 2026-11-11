@@ -3,6 +3,34 @@ import path from 'node:path';
 
 export const fixture = (name: string) => path.resolve(process.cwd(), 'tests/fixtures', name);
 
+/** Real Chromium touch input: exercise Pointer Events/capture rather than mutating state. */
+export async function pinchSelection(page: Page, factor = 1.7) {
+  const box = (await page.getByTestId('selbox').boundingBox())!;
+  const cx = box.x + box.width / 2,
+    cy = box.y + box.height / 2,
+    r = Math.min(12, box.width / 4);
+  const session = await page.context().newCDPSession(page);
+  await session.send('Input.dispatchTouchEvent', {
+    type: 'touchStart',
+    touchPoints: [
+      { x: cx - r, y: cy, id: 1 },
+      { x: cx + r, y: cy, id: 2 },
+    ],
+  });
+  for (let i = 1; i <= 5; i++) {
+    const distance = r * (1 + ((factor - 1) * i) / 5);
+    await session.send('Input.dispatchTouchEvent', {
+      type: 'touchMove',
+      touchPoints: [
+        { x: cx - distance, y: cy, id: 1 },
+        { x: cx + distance, y: cy, id: 2 },
+      ],
+    });
+  }
+  await session.send('Input.dispatchTouchEvent', { type: 'touchEnd', touchPoints: [] });
+  await session.detach();
+}
+
 /** 首頁按「＋」→ 選素材 → 自動建立專案並進入編輯器 */
 export async function createProjectWith(page: Page, files: string[]) {
   // 打開測試用的除錯掛鉤 window.__videoclip（正常使用者看不到）
@@ -71,6 +99,7 @@ type Hook = {
     tracks: {
       id: string;
       kind: string;
+      name: string;
       hidden: boolean;
       locked: boolean;
       items: {
@@ -140,7 +169,7 @@ export const exportFrame = (page: Page, t: number, pts: [number, number][]) =>
   );
 
 /** 切到底部分頁 */
-export async function openTab(page: Page, name: '剪輯' | '疊加' | '文字' | '圖層') {
+export async function openTab(page: Page, name: '剪輯' | '疊加' | '文字' | '圖層' | '版型') {
   const tab = page.getByRole('tab', { name });
   // 點「目前的分頁」會收合面板，所以已經在這個分頁且展開時就不用再點
   if (

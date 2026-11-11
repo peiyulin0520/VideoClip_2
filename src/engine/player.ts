@@ -17,9 +17,9 @@ const DRIFT = 0.3;
 const PREFETCH_S = 1.0;
 const POOL_SIZE = 6;
 
-/** 預覽畫面的內部解析度：長邊 960（1:1 也是 960） */
+/** 預覽保留專案解析度，長邊最多 1920，避免手機高密度螢幕把文字放糊。 */
 export function previewSize(p: Pick<Project, 'width' | 'height'>): { width: number; height: number } {
-  const k = 960 / Math.max(p.width, p.height);
+  const k = Math.min(1, 1920 / Math.max(p.width, p.height));
   return { width: Math.round(p.width * k), height: Math.round(p.height * k) };
 }
 
@@ -164,16 +164,17 @@ export class Player {
   }
 
   private syncVideo(el: HTMLVideoElement, item: VideoItem, asset: Asset, track: Track, t: number) {
+    el.dataset.previewIntent = this.playing ? 'play' : 'pause';
     const s = sourceTimeAt(item, t);
     el.volume = item.volume;
-    el.muted = !!track.muted || !asset.hasAudio || item.volume === 0;
+    el.muted = !!el.dataset.priming || !!track.muted || !asset.hasAudio || item.volume === 0;
     el.playbackRate = item.speed;
     if (this.playing) {
-      if (Math.abs(el.currentTime - s) > DRIFT) el.currentTime = s;
+      if (Math.abs(el.currentTime - s) > DRIFT && el.readyState >= 1) el.currentTime = s;
       if (el.paused) void el.play().catch(() => {});
     } else {
-      if (!el.paused) el.pause();
-      if (Math.abs(el.currentTime - s) > 0.02) el.currentTime = s;
+      if (!el.paused && !el.dataset.priming) el.pause();
+      if (Math.abs(el.currentTime - s) > 0.02 && el.readyState >= 1) el.currentTime = s;
     }
   }
 
@@ -203,6 +204,14 @@ export class Player {
       if (!el) return null; // 同時疊的影片超過上限，多的不畫
       used.add(el);
       this.syncVideo(el, item, asset, track, t);
+      if (
+        track.kind === 'main' &&
+        p.layout &&
+        t >= p.layout.start &&
+        t < p.layout.start + p.layout.duration &&
+        p.tracks.some((tr) => tr.template && !tr.hidden && tr.items.length)
+      )
+        el.muted = true;
       this.maybeCaptureThumb(el, asset);
       return {
         source: el,
@@ -220,13 +229,13 @@ export class Player {
       if (!el) continue;
       used.add(el);
       if (el.dataset.primed !== '1') {
-        el.currentTime = item.trimIn;
+        if (el.readyState >= 1) el.currentTime = item.trimIn;
         el.dataset.primed = '1';
       }
       if (!el.paused) el.pause();
     }
     this.pool.pauseAllExcept(used);
-    comp.render(scene);
+    comp.render(scene, p.background ?? '#000000');
   }
 
   private maybeCaptureThumb(el: HTMLVideoElement, asset: Asset) {
@@ -250,6 +259,11 @@ export class Player {
       if (track.hidden) continue;
       const items = track.items;
       if (track.kind === 'main') {
+        const first = items[0] as VideoItem | undefined;
+        if (first && t < first.start) {
+          if (first.start <= t + PREFETCH_S) push(first);
+          continue;
+        }
         const cur = (items as VideoItem[]).findIndex((x) => t < x.start + x.duration);
         const next = items[cur + 1] as VideoItem | undefined;
         if (cur >= 0 && next) push(next);
@@ -264,7 +278,7 @@ export class Player {
   currentMainItemId(): string | undefined {
     const p = this.deps.getProject();
     if (!p) return undefined;
-    return mainTrack(p).items.find((x) => this.t < x.start + x.duration)?.id;
+    return mainTrack(p).items.find((x) => this.t >= x.start && this.t < x.start + x.duration)?.id;
   }
 
   destroy() {

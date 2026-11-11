@@ -4,6 +4,7 @@ import { editText } from '../../store/actions';
 import { DECORATION_KINDS } from '../../engine/decorations';
 import { SHAPE_CATS, SHAPES, shapeDef } from '../../engine/shapes';
 import { Slider } from '../../ui/Slider';
+import { ColorPicker } from '../../ui/ColorPicker';
 import { DecoThumb } from './DecoThumb';
 import { ShapeThumb } from './ShapeThumb';
 import { FontSelect } from '../fonts/FontSelect';
@@ -41,17 +42,20 @@ function Swatches({
   onPick: (c: string) => void;
 }) {
   return (
-    <div className="chips">
-      {colors.map((c) => (
-        <button
-          key={c}
-          className={`swatch${value.toLowerCase() === c.toLowerCase() ? ' active' : ''}`}
-          style={{ background: c }}
-          aria-label={`${label} ${c}`}
-          onClick={() => onPick(c)}
-        />
-      ))}
-    </div>
+    <>
+      <div className="chips">
+        {colors.map((c) => (
+          <button
+            key={c}
+            className={`swatch${value.toLowerCase() === c.toLowerCase() ? ' active' : ''}`}
+            style={{ background: c }}
+            aria-label={`${label} ${c}`}
+            onClick={() => onPick(c)}
+          />
+        ))}
+      </div>
+      <ColorPicker label={label} value={value} onChange={onPick} />
+    </>
   );
 }
 
@@ -322,6 +326,24 @@ export function TextPanel({
                 />
               )}
               <Slider
+                label="邊界柔和程度"
+                value={Math.round((box.softness ?? 0) * 100)}
+                min={0}
+                max={100}
+                step={1}
+                format={(v) => `${v}%`}
+                onChange={(v) => edit((c) => void (c.box!.softness = v / 100), 'softness')}
+              />
+              <Slider
+                label="凹槽深度"
+                value={Math.round((box.depth ?? 1) * 100)}
+                min={0}
+                max={100}
+                step={1}
+                format={(v) => `${v}%`}
+                onChange={(v) => edit((c) => void (c.box!.depth = v / 100), 'depth')}
+              />
+              <Slider
                 label="字塊外框"
                 value={box.stroke?.width ?? 0}
                 min={0}
@@ -515,6 +537,15 @@ export function TextPanel({
                   value={d.color}
                   label={`${def.label}顏色`}
                   onPick={(col) => edit((c) => void (c.decorations![i]!.color = col))}
+                />
+                <Slider
+                  label={`${def.label}與文字距離`}
+                  value={Math.round((d.offset ?? 0) * 100)}
+                  min={-100}
+                  max={200}
+                  step={1}
+                  format={(v) => `${v}% 字高`}
+                  onChange={(v) => edit((c) => void (c.decorations![i]!.offset = v / 100), `decoOffset${i}`)}
                 />
                 {d.kind !== 'marker' && d.kind !== 'sparkles' && d.kind !== 'hearts' && (
                   <Slider

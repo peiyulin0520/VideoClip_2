@@ -1,6 +1,7 @@
 import { produce, type Draft } from 'immer';
 import { create } from 'zustand';
 import type { Item, Project, VideoItem } from '../model/types';
+import { relayout } from '../engine/timeline';
 
 const HISTORY_LIMIT = 100;
 const COALESCE_MS = 800;
@@ -118,7 +119,7 @@ export function setAssetThumbs(assetId: string, thumbs: string[]) {
 export function setMainItems(items: VideoItem[], opts?: ApplyOpts) {
   useProjectStore.getState().apply((d) => {
     const tr = d.tracks.find((t) => t.kind === 'main');
-    if (tr) tr.items = items;
+    if (tr) tr.items = relayout(items, d.mainOffset ?? 0);
   }, opts);
 }
 

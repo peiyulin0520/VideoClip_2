@@ -5,8 +5,14 @@
 export class VideoPool {
   readonly els: HTMLVideoElement[] = [];
   private tick = 0;
+  private destroyed = false;
+  private retries = new Map<HTMLVideoElement, number>();
 
-  constructor(host: HTMLElement, size: number, onChange: () => void) {
+  constructor(
+    host: HTMLElement,
+    size: number,
+    private onFrame: () => void,
+  ) {
     for (let i = 0; i < size; i++) {
       const v = document.createElement('video');
       v.playsInline = true;
@@ -14,8 +20,31 @@ export class VideoPool {
       v.preload = 'auto';
       v.setAttribute('playsinline', '');
       v.setAttribute('webkit-playsinline', '');
-      v.addEventListener('seeked', onChange);
-      v.addEventListener('loadeddata', onChange);
+      for (const name of ['seeked', 'loadeddata', 'canplay', 'resize', 'loadedmetadata'])
+        v.addEventListener(name, this.onFrame);
+      v.addEventListener('loadedmetadata', () => {
+        // Safari can expose metadata before a paused video has decoded a drawable
+        // frame. A tiny seek plus muted priming unlocks that first frame.
+        if (v.dataset.previewIntent === 'play') return;
+        const assetId = v.dataset.assetId;
+        v.dataset.priming = '1';
+        v.muted = true;
+        try {
+          if (v.currentTime === 0) v.currentTime = Math.min(0.001, v.duration / 2);
+        } catch {
+          /* metadata pending */
+        }
+        const finish = () => {
+          if (this.destroyed || v.dataset.assetId !== assetId) return;
+          delete v.dataset.priming;
+          if (v.dataset.previewIntent !== 'play') v.pause();
+          this.onFrame();
+        };
+        if (v.requestVideoFrameCallback) v.requestVideoFrameCallback(finish);
+        void v.play().then(() => {
+          if (!v.requestVideoFrameCallback) finish();
+        }, finish);
+      });
       host.appendChild(v);
       this.els.push(v);
     }
@@ -50,6 +79,19 @@ export class VideoPool {
       el.src = url;
       el.dataset.assetId = assetId;
       delete el.dataset.primed;
+      el.load();
+      const old = this.retries.get(el);
+      if (old) cancelAnimationFrame(old);
+      let frames = 0;
+      const poll = () => {
+        if (this.destroyed) return;
+        onChangeForPool();
+        if (++frames < 120 && (el!.readyState < 2 || el!.seeking || !el!.videoWidth))
+          this.retries.set(el!, requestAnimationFrame(poll));
+        else this.retries.delete(el!);
+      };
+      const onChangeForPool = this.onFrame;
+      this.retries.set(el, requestAnimationFrame(poll));
     }
     el.dataset.used = String(++this.tick);
     return el;
@@ -75,6 +117,9 @@ export class VideoPool {
   }
 
   destroy() {
+    this.destroyed = true;
+    for (const raf of this.retries.values()) cancelAnimationFrame(raf);
+    this.retries.clear();
     for (const v of this.els) {
       v.pause();
       v.removeAttribute('src');

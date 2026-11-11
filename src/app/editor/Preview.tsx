@@ -1,21 +1,14 @@
-import { Maximize2, ShieldCheck, X } from 'lucide-react';
+import { Expand, Minimize, ShieldCheck } from 'lucide-react';
 import { useEffect, useMemo, useRef, useState, type PointerEvent as RPointerEvent } from 'react';
 import { urlFor } from '../../engine/assetUrls';
 import { installDebugHook } from '../../engine/debug';
 import { useFonts } from '../../fonts/fontStore';
-import {
-  boxCorners,
-  itemBox,
-  snapMove,
-  snapRotation,
-  SAFE_BOTTOM,
-  SAFE_RIGHT,
-  topHit,
-} from '../../engine/geometry';
+import { itemBox, pointInBox, snapMove, SAFE_BOTTOM, SAFE_RIGHT, topHit } from '../../engine/geometry';
 import { Player } from '../../engine/player';
+import { layoutMotion } from '../../engine/layouts';
 import { geoCtx } from '../../engine/scene';
 import { findItem, visibleLayers } from '../../engine/timeline';
-import { removeAnyItem, setTransform } from '../../store/actions';
+import { setTransform } from '../../store/actions';
 import { setAssetThumbs, useProjectStore } from '../../store/projectStore';
 import { toast, useUI } from '../../store/uiStore';
 
@@ -31,10 +24,11 @@ const readSafe = () => {
 
 type Pt = { x: number; y: number };
 type Gesture =
-  | { type: 'move'; id: string; start: Pt; startX: number; startY: number; moved: boolean }
+  | { type: 'move'; id: string; key: string; start: Pt; startX: number; startY: number; moved: boolean }
   | {
       type: 'pinch';
       id: string;
+      key: string;
       startDist: number;
       startAngle: number;
       startScale: number;
@@ -46,6 +40,7 @@ export function Preview({ projectId, width, height }: { projectId: string; width
   const poolRef = useRef<HTMLDivElement>(null);
   const stageRef = useRef<HTMLDivElement>(null);
   const [cssW, setCssW] = useState(1);
+  const [expanded, setExpanded] = useState(false);
   const [safe, setSafe] = useState(readSafe);
   const [dragging, setDragging] = useState(false); // 拖移/縮放中：安全區參考線暫時出現
   const [guides, setGuides] = useState<{ x: number | null; y: number | null }>({ x: null, y: null });
@@ -120,7 +115,11 @@ export function Preview({ projectId, width, height }: { projectId: string; width
 
   const k = cssW / width; // 專案座標 → CSS px
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  const geo = useMemo(() => geoCtx(project, width, height), [project, width, height, fontEpoch]);
+  const timelineTime = player?.time ?? 0;
+  const geo = useMemo(
+    () => ({ ...geoCtx(project, width, height), layoutMotion: layoutMotion(project.layout, timelineTime) }),
+    [project, width, height, fontEpoch, timelineTime],
+  );
   const sel = findItem(project, selectedId);
   const box = sel && selVisible ? itemBox(sel.item, geo) : null;
   const selLocked = !!sel?.track.locked || !!sel?.track.hidden;
@@ -139,6 +138,7 @@ export function Preview({ projectId, width, height }: { projectId: string; width
     gesture.current = {
       type: 'move',
       id,
+      key: `move:${id}:${performance.now()}`,
       start: at,
       startX: f.item.transform.x,
       startY: f.item.transform.y,
@@ -154,12 +154,13 @@ export function Preview({ projectId, width, height }: { projectId: string; width
     const st = useProjectStore.getState();
     const cur = findItem(st.project!, st.selectedId);
 
-    if (pointers.current.size === 2 && cur && !cur.track.locked) {
+    if (pointers.current.size === 2 && cur && !cur.track.locked && !cur.track.hidden) {
       const [a, b] = [...pointers.current.values()] as [Pt, Pt];
       setDragging(true);
       gesture.current = {
         type: 'pinch',
         id: cur.item.id,
+        key: `pinch:${cur.item.id}:${performance.now()}`,
         startDist: Math.hypot(b.x - a.x, b.y - a.y) || 1,
         startAngle: Math.atan2(b.y - a.y, b.x - a.x),
         startScale: cur.item.transform.scale,
@@ -171,7 +172,21 @@ export function Preview({ projectId, width, height }: { projectId: string; width
 
     useUI.getState().player?.pause();
     const t = useUI.getState().player?.time ?? 0;
-    const hit = topHit(visibleLayers(st.project!, t), geo, pt.x, pt.y);
+    let hit = topHit(visibleLayers(st.project!, t), geo, pt.x, pt.y);
+    const currentBox = cur && itemBox(cur.item, geo);
+    if (
+      cur &&
+      !cur.track.locked &&
+      !cur.track.hidden &&
+      currentBox &&
+      (!hit || hit.track.kind === 'main') &&
+      pointInBox(
+        { ...currentBox, w: Math.max(currentBox.w, 72 / k), h: Math.max(currentBox.h, 72 / k) },
+        pt.x,
+        pt.y,
+      )
+    )
+      hit = cur;
     if (!hit) {
       st.select(null);
       gesture.current = null;
@@ -200,10 +215,14 @@ export function Preview({ projectId, width, height }: { projectId: string; width
       const [a, b] = [...pointers.current.values()] as [Pt, Pt];
       const dist = Math.hypot(b.x - a.x, b.y - a.y) || 1;
       const ang = Math.atan2(b.y - a.y, b.x - a.x);
-      setTransform(g.id, {
-        scale: clamp((g.startScale * dist) / g.startDist, 0.05, 10),
-        rotation: g.startRot + ((ang - g.startAngle) * 180) / Math.PI,
-      });
+      setTransform(
+        g.id,
+        {
+          scale: clamp((g.startScale * dist) / g.startDist, 0.05, 10),
+          rotation: g.startRot + ((ang - g.startAngle) * 180) / Math.PI,
+        },
+        g.key,
+      );
       return;
     }
     if (g.type === 'move' && pointers.current.size === 1) {
@@ -221,7 +240,7 @@ export function Preview({ projectId, width, height }: { projectId: string; width
       cx += snap.dx;
       cy += snap.dy;
       setGuides({ x: snap.guideX, y: snap.guideY });
-      setTransform(g.id, { x: cx / width, y: cy / height });
+      setTransform(g.id, { x: cx / width, y: cy / height }, g.key);
     }
   };
 
@@ -237,41 +256,6 @@ export function Preview({ projectId, width, height }: { projectId: string; width
     }
   };
 
-  // ---- 右上角：縮放＋旋轉 ----
-  const onScaleDown = (e: RPointerEvent) => {
-    if (!sel || !box || selLocked) return;
-    e.stopPropagation();
-    e.preventDefault();
-    useUI.getState().player?.pause();
-    const target = e.currentTarget as HTMLElement;
-    target.setPointerCapture(e.pointerId);
-    const id = sel.item.id;
-    const r = stageRef.current!.getBoundingClientRect();
-    const cx = r.left + (box.cx / width) * r.width;
-    const cy = r.top + (box.cy / height) * r.height;
-    const v0 = { x: e.clientX - cx, y: e.clientY - cy };
-    const d0 = Math.hypot(v0.x, v0.y) || 1;
-    const a0 = Math.atan2(v0.y, v0.x);
-    setDragging(true);
-    const s0 = sel.item.transform.scale;
-    const r0 = sel.item.transform.rotation;
-    const move = (ev: PointerEvent) => {
-      const v = { x: ev.clientX - cx, y: ev.clientY - cy };
-      const d = Math.hypot(v.x, v.y);
-      const rot = snapRotation(r0 + ((Math.atan2(v.y, v.x) - a0) * 180) / Math.PI);
-      setTransform(id, { scale: clamp((s0 * d) / d0, 0.05, 10), rotation: rot }, `scale:${id}`);
-    };
-    const up = () => {
-      setDragging(false);
-      target.removeEventListener('pointermove', move);
-      target.removeEventListener('pointerup', up);
-      target.removeEventListener('pointercancel', up);
-    };
-    target.addEventListener('pointermove', move);
-    target.addEventListener('pointerup', up);
-    target.addEventListener('pointercancel', up);
-  };
-
   const toggleSafe = () => {
     const v = !safe;
     setSafe(v);
@@ -283,20 +267,8 @@ export function Preview({ projectId, width, height }: { projectId: string; width
     }
   };
 
-  // 縮放鈕（右上）與刪除鈕（左上）：跟著方框的角走，但夾在舞台內，方框比畫面大時（例如填滿的影片）也按得到
-  let handles: { tl: Pt; tr: Pt } | null = null;
-  if (box) {
-    const [tl, tr] = boxCorners(box);
-    const m = 22;
-    const cl = (p: [number, number]): Pt => ({
-      x: clamp(p[0] * k, m, cssW - m),
-      y: clamp(p[1] * k, m, (height / width) * cssW - m),
-    });
-    handles = { tl: cl(tl!), tr: cl(tr!) };
-  }
-
   return (
-    <div className="stage-wrap">
+    <div className={`stage-wrap${expanded ? ' expanded-preview' : ''}`}>
       <div
         ref={stageRef}
         className="stage"
@@ -337,37 +309,16 @@ export function Preview({ projectId, width, height }: { projectId: string; width
             }}
           />
         )}
-        {box && sel && !selLocked && handles && (
-          <>
-            {/* 主軌不放 ✕：在預覽上一鍵刪掉整段主軌太容易誤觸，刪除請用工具列 */}
-            {sel.track.kind !== 'main' && (
-              <button
-                data-handle="del"
-                className="sel-handle"
-                aria-label="刪除圖層"
-                style={{ left: handles.tl.x, top: handles.tl.y }}
-                onClick={() => removeAnyItem(sel.item.id)}
-              >
-                <span>
-                  <X size={14} />
-                </span>
-              </button>
-            )}
-            <button
-              data-handle="scale"
-              className="sel-handle scale"
-              aria-label="縮放與旋轉"
-              data-testid="scale-handle"
-              style={{ left: handles.tr.x, top: handles.tr.y }}
-              onPointerDown={onScaleDown}
-            >
-              <span>
-                <Maximize2 size={14} />
-              </span>
-            </button>
-          </>
-        )}
       </div>
+      <button
+        className="preview-expand"
+        aria-label={expanded ? '縮回預覽' : '放大預覽'}
+        aria-pressed={expanded}
+        onClick={() => setExpanded(!expanded)}
+      >
+        {expanded ? <Minimize size={18} /> : <Expand size={18} />}
+        <span>{expanded ? '返回編輯' : '放大預覽'}</span>
+      </button>
       <button
         className={`safe-toggle${safe ? ' on' : ''}`}
         aria-label="安全區參考線"

@@ -20,7 +20,7 @@ import { ConfirmSheet, Sheet } from '../../ui/Sheet';
 
 function coverOf(p: Project): string | undefined {
   const first = mainItems(p)[0];
-  return first ? p.assets.find((a) => a.id === first.assetId)?.thumbs[0] : undefined;
+  return first ? p.assets.find((a) => a.id === first.assetId)?.thumbs[0] : p.assets[0]?.thumbs[0];
 }
 
 const isIOS =
