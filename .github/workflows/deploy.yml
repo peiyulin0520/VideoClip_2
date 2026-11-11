@@ -30,6 +30,12 @@ jobs:
       - name: Install pinned Chromium
         timeout-minutes: 5
         run: npx playwright install chromium --only-shell
+      - name: Install repository CJK font for readable screenshots
+        run: |
+          mkdir -p "$HOME/.local/share/fonts/little-moments"
+          cp public/fonts/noto-sans-tc/noto-sans-tc-100-900.woff2 "$HOME/.local/share/fonts/little-moments/"
+          fc-cache -f "$HOME/.local/share/fonts/little-moments"
+          fc-match -f '%{family}\n' ':lang=zh-tw'
       - name: Prepare fresh browser screenshots
         run: node -e "require('node:fs').rmSync('docs/screenshots', { recursive:true, force:true })"
       - name: Browser tests

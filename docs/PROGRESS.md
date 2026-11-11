@@ -9,10 +9,10 @@
 - **來源**：`peiyulin0520/VideoClip` main `78b178343409c46c7ba353ef3a6db6f279a7bde6`（PR #3 已合併）。以下舊日誌屬來源 repo 的歷史，不代表 VideoClip_2 的部署/瀏覽器驗收。
 - **本次明確子任務**：依來源文件建立新 repo 網頁、保留 Little Moments 名稱、調整 `/VideoClip_2/` 發布路徑與 PWA，並隔離與舊 VideoClip 的本機資料；不重做或宣稱完成整份未來規劃。
 - **已驗證**：來源 218 單元、lint、build 通過；新版 220 單元、lint、TypeScript、build 通過。Pages 靜態檢查通過（PWA/腳本/圖示/39 款字體及授權檔）；42 e2e 僅列出。
-- **未驗證**：本次未執行 Chromium e2e（42 個已列出）、未產生新版截圖、未做 iPhone Safari 真機測試。GitHub Actions 已安排在其 runner 跑 e2e/上傳截圖。
+- **瀏覽器驗證**：CI 43059345131 與正式部署 43059868070 均已通過 42 個 e2e（Chromium）。已產生新版截圖；第一次截圖 UI 中文缺字，CI 加入 repo 既有 Noto Sans TC，待重跑確認可讀畫面。iPhone Safari 仍未真機測試。
 - **階段**：來源 P0/P1/P2/P3B 與 P3A 第 1–4 前半保持；P3A 貼圖/雲朵字/模板及 P4–P7 尚未完成。此版本尚無完整影片匯出、繪畫或素材庫，不可把原 Sites 版功能當作已移植。
-- **發布狀態**：GitHub App 安裝授權已完成，工作分支已推送（3f6b98ef90adf2de98c54c277a3599583c98f6c4）；Pages build_type=workflow。首次 CI 43057394524 的 npm ci/check 已過，但 Playwright --with-deps 卡在 Ubuntu apt DNS 解析，已取消以取得日誌。現改為僅安裝 pinned Chromium headless shell、沿用 runner 現有系統函式庫，等待修正版 CI；main 與正式網站尚未更新。預定 URL `https://peiyulin0520.github.io/VideoClip_2/` 不是已驗證上線網址。
-- **下一步**：取得目標 repo 寫入授權 → 推送工作分支 → 確認 CI 的 42 e2e/截圖 → 一般 fast-forward main → Pages 部署 → iPhone 實測；有新遠端提交先整合，不 force push，不自動開 PR。之後再做 P3A-4 後半貼圖 icon。
+- **發布狀態**：GitHub 授權已完成，工作分支與 main 已推送；49f3bd79ca516067827dde6d4dba37e67bee242f 已由 Actions run 43059868070 成功部署。https://peiyulin0520.github.io/VideoClip_2/ 的 HTML、主程式與 manifest 實測 HTTP 200、名稱/路徑正確。補齊 CI CJK 字體的後續提交不改任何剪輯功能。
+- **下一步**：完成 CI CJK 截圖確認與紀錄更新；請使用者 iPhone Safari 實測，之後再做 P3A-4 後半貼圖 icon。
 - **等使用者**：目前不需再做帳號授權；程式及 Pages 設定已可存取。發布後再請使用者進行 PLAN §7 的 iPhone Safari 實測。
 
 ## 日誌格式（新增一筆時照這個）
@@ -54,6 +54,16 @@
 - 2026-11-11 找到新字體來源 max32002/pop-gothic（大波浪圓體，含注音）→ 已加入手寫可愛包。問「能不能直接下載到我的 files 下載資料夾」→ 答：網頁在 iPhone 不能自動寫進「檔案」App 資料夾；官方字體存在瀏覽器裡，自己的字體用「匯入字體檔」從檔案 App 選
 
 ## 日誌（最新在最上面）
+- 2026-11-11 首次正式 GitHub Pages 上線
+  - main 已一般 fast-forward 至 49f3bd79ca516067827dde6d4dba37e67bee242f，Actions run 43059868070 的 build、42 e2e、Pages deploy 全部成功。
+  - 正式網址 https://peiyulin0520.github.io/VideoClip_2/；HTTP 檢查確認 HTML 200、Little Moments title、manifest scope=/VideoClip_2/、主 JavaScript 200/MIME 正確。
+  - iPhone Safari 尚未真機驗證。程式碼與資料模型沿用參考庫目前完成的階段，未實作的繪畫/完整影片匯出/素材庫仍屬後續工作。
+
+- 2026-11-11 瀏覽器驗收通過，補齊截圖用繁中字型
+  - CI 43059345131：220 單元、lint、build、Pages 靜態檢查、42 e2e 全過（Chromium 153，Playwright 1.63）。main 以一般 fast-forward 更新至 49f3bd79ca516067827dde6d4dba37e67bee242f，Pages run 43059868070 進行中。
+  - 實際下載並檢視 artifact 13873910247 的首頁圖：品牌正確，但 runner 沒有系統 CJK 字型，UI 出現 tofu 方框；功能斷言通過不能代表截圖可讀。
+  - 修正 CI：從 public/fonts 取現有 OFL Noto Sans TC 到 runner 使用者字型目錄並 fc-cache，不依賴 apt 或新增網路下載。這是測試環境修正，不改使用者字體設定；以後的驗收圖只用補齊字體後的 run。
+
 - 2026-11-11 修正首次 CI 的瀏覽器準備環境
   - 證據：run 43057394524 / job 130650406213 的 npm ci/check 成功；安裝依賴超過八分鐘，取消後日誌顯示 archive.ubuntu.com、security.ubuntu.com、azure.archive.ubuntu.com DNS 失敗。既有系統圖形函式庫皆已安裝，卡在補裝額外字型。
   - 修正：移除 Playwright --with-deps，僅安裝鎖定的 Chromium headless shell；瀏覽器安裝限五分鐘、測試限十分鐘。CI 先清除來源 repo 的舊 screenshots，只有瀏覽器測試實際執行後才上傳 artifact，避免把來源截圖當成新驗收。

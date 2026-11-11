@@ -20,13 +20,13 @@ npm run check
 npm run e2e -- --trace off
 ```
 
-`check` 包含 lint、220 個單元測試、TypeScript、正式建置及 GitHub Pages 路徑/PWA/字體檔案檢查。42 個瀏覽器測試已保留，當前 Codex 環境未執行；CI 會使用自己的 Chromium 執行並保留截圖 artifact。iPhone Safari 一律仍待真機驗證。
+`check` 包含 lint、220 個單元測試、TypeScript、正式建置及 GitHub Pages 路徑/PWA/字體檔案檢查。42 個瀏覽器測試已在 GitHub Actions 的 Chromium 153 通過，CI 保存截圖 artifact。iPhone Safari 一律仍待真機驗證。
 
 ## GitHub Pages
 
 目標儲存庫：https://github.com/peiyulin0520/VideoClip_2
 
-預定網址（部署成功前不能視為已上線）：https://peiyulin0520.github.io/VideoClip_2/
+正式網址（已部署並確認 HTTP 200）：https://peiyulin0520.github.io/VideoClip_2/
 
 - Settings → Pages → Build and deployment → Source 選 **GitHub Actions**。
 - `.github/workflows/deploy.yml`：所有分支執行檢查＋Chromium e2e；只有 `main` 成功後部署 `dist/`。

@@ -5,7 +5,7 @@
 - 目標 `peiyulin0520/VideoClip_2`、工作分支 `codex/establish-little-moments`、名稱 Little Moments、Pages base `/VideoClip_2/`。此明確子任務只建立已完成版本；不把尚未做的功能標為完成。
 - 新舊路徑在同一個 origin，所以另命名 IndexedDB、OPFS、字體快取與 localStorage；不改動原 VideoClip 資料。新增隔離測試覆蓋相同專案/素材 ID 的讀寫刪除。
 - 本機實際通過的項目看 PROGRESS.md。來源的 42 e2e 和 screenshot 是來源紀錄，不是本次跑過；GitHub CI 已安排 e2e，成功前不要聲稱已驗證瀏覽器。
-- GitHub App 安裝授權已完成，工作分支已成功推送；Pages 已是 workflow 模式。首次 CI run 43057394524 卡在 apt DNS，已取消並移除 --with-deps；僅安裝 pinned Chromium headless shell，先等待修正版瀏覽器驗收再更新 main，細節見 PROGRESS.md。先前 403 的原因是只有帳號 OAuth 連線、沒有 GitHub App repository 安裝授權，現已解除。
+- GitHub App 安裝授權已完成，工作分支已成功推送；Pages 已是 workflow 模式。首次 CI run 43057394524 的 apt DNS 問題已修復；43059345131 與 main 的 43059868070 均通過 42 e2e，Pages 已上線。另補 CI CJK 字型以取得可讀截圖，細節見 PROGRESS.md。先前 403 的原因是只有帳號 OAuth 連線、沒有 GitHub App repository 安裝授權，現已解除。
 - 下一個功能子任務仍是 Phase 3A-4 後半貼圖 icon；素材庫需求另記為 PLAN R22。
 
 
@@ -146,3 +146,5 @@ npm run e2e -- --trace off         # 22 個 e2e（iPhone 13 尺寸、Chromium）
 e2e 會產生 `docs/screenshots/phase*/` 截圖（給使用者審核用，也會被 commit）。
 
 > VideoClip_2 CI（2026-11-11）：Ubuntu apt mirrors 曾 DNS 解析失敗，`playwright install --with-deps` 因補裝額外字型卡住。runner 既有圖形函式庫已在日誌確認；CI 僅下載 pinned Chromium headless shell，設置 timeout，不能用反覆等待解決 apt DNS。上傳 screenshots 前必須清空舊生成圖；測試未執行就不產 artifact，避免誤用來源庫畫面。
+
+> VideoClip_2 截圖（2026-11-11）：CI 43059345131 的 42 e2e 成功，但人工檢視截圖時看到 UI 中文 tofu。去掉 apt 依賴安裝後，runner 沒有 CJK 系統字型；改從 repo 現有 Noto Sans TC WOFF2 註冊至 fontconfig。iPhone 本身有 PingFang TC；此修正只為 CI 可讀截圖，不把有方框的 artifact 當成最終視覺驗收。
