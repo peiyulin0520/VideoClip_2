@@ -9,6 +9,7 @@ import {
   project,
   pinchSelection,
   exportFrame,
+  seekTo,
 } from './helpers';
 
 const shot = 'docs/screenshots/usability';
@@ -48,7 +49,7 @@ test('移除大圓鈕，以雙指縮放；放大預覽可回到編輯', async ({
   await createProjectWith(page, ['solid-red.webm']);
   await openTab(page, '文字');
   await page.getByRole('button', { name: /新增文字/ }).tap();
-  await page.getByLabel('文字內容').fill('清楚看見每個片刻');
+  await page.getByLabel('文字內容').fill('每個片刻');
   await expect(page.getByTestId('scale-handle')).toHaveCount(0);
   await expect(page.locator('.sel-handle')).toHaveCount(0);
   const before = (await project(page)).tracks[1]!.items[0]!.transform.scale;
@@ -181,12 +182,15 @@ test('多格影片不同色塊同時顯示；三種版型、動態滑入、移�
   await page.getByRole('button', { name: '套用多格版型', exact: true }).tap();
   const p = await project(page);
   expect(p.tracks.filter((t) => t.name.includes('四格相紙'))).toHaveLength(4);
-  await page.getByTestId('timeline-scroll').evaluate((el) => {
-    el.scrollLeft = 1.2 * 60;
-  });
+  await expect.poll(async () => isRed(await samplePreview(page, 0.2, 0.2))).toBe(false);
+  await seekTo(page, 1.2);
+  await expect.poll(async () => isRed(await samplePreview(page, 0.2, 0.2))).toBe(true);
   await page.screenshot({ path: `${shot}/polaroid.png` });
   await page.getByLabel('版型動態效果').selectOption('drift');
   await page.getByRole('button', { name: '套用多格版型', exact: true }).tap();
+  await expect.poll(async () => isRed(await samplePreview(page, 0.2, 0.2))).toBe(false);
+  await seekTo(page, 2.7);
+  await expect.poll(async () => isRed(await samplePreview(page, 0.2, 0.2))).toBe(true);
   await page.getByRole('button', { name: '移除版型', exact: true }).tap();
   expect((await project(page)).tracks.filter((t) => t.name.includes('四格相紙'))).toHaveLength(0);
 });

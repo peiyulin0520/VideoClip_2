@@ -54,6 +54,37 @@ describe('projectStore 復原/重做', () => {
     expect(s().past).toHaveLength(100);
   });
 
+  it('一次持續手勢即使停頓超過 800ms 仍只復原一步；下一次手勢獨立', () => {
+    const clock = vi.spyOn(Date, 'now');
+    clock.mockReturnValue(1000);
+    s().apply(
+      (d) => {
+        d.name = '拖曳中';
+      },
+      { coalesce: 'gesture:move:one' },
+    );
+    clock.mockReturnValue(5000);
+    s().apply(
+      (d) => {
+        d.name = '拖曳完成';
+      },
+      { coalesce: 'gesture:move:one' },
+    );
+    expect(s().past).toHaveLength(1);
+    s().apply(
+      (d) => {
+        d.name = '第二次';
+      },
+      { coalesce: 'gesture:move:two' },
+    );
+    expect(s().past).toHaveLength(2);
+    s().undo();
+    expect(s().project!.name).toBe('拖曳完成');
+    s().undo();
+    expect(s().project!.name).toBe('測試');
+    clock.mockRestore();
+  });
+
   it('沒有實際變更就不記錄', () => {
     s().apply(() => {});
     expect(s().past).toHaveLength(0);

@@ -20,8 +20,12 @@ export class VideoPool {
       v.preload = 'auto';
       v.setAttribute('playsinline', '');
       v.setAttribute('webkit-playsinline', '');
+      const changed = () => {
+        v.dataset.frameStamp = String(Number(v.dataset.frameStamp ?? 0) + 1);
+        this.onFrame();
+      };
       for (const name of ['seeked', 'loadeddata', 'canplay', 'resize', 'loadedmetadata'])
-        v.addEventListener(name, this.onFrame);
+        v.addEventListener(name, changed);
       v.addEventListener('loadedmetadata', () => {
         // Safari can expose metadata before a paused video has decoded a drawable
         // frame. A tiny seek plus muted priming unlocks that first frame.
@@ -38,7 +42,7 @@ export class VideoPool {
           if (this.destroyed || v.dataset.assetId !== assetId) return;
           delete v.dataset.priming;
           if (v.dataset.previewIntent !== 'play') v.pause();
-          this.onFrame();
+          changed();
         };
         if (v.requestVideoFrameCallback) v.requestVideoFrameCallback(finish);
         void v.play().then(() => {
@@ -74,8 +78,10 @@ export class VideoPool {
       el = free[0]!;
       el.dataset.itemId = itemId;
       delete el.dataset.primed;
+      delete el.dataset.priming;
     }
     if (el.dataset.assetId !== assetId) {
+      delete el.dataset.priming;
       el.src = url;
       el.dataset.assetId = assetId;
       delete el.dataset.primed;

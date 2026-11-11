@@ -105,6 +105,9 @@ IndexedDB `videoclip`（專案 JSON、`meta.appState`、`meta.installedFonts`、
 | 縮圖：Mediabunny `CanvasSink` 優先 → `<video>` → 預覽播放器拿到畫面後 `setAssetThumbs`（不進復原歷史，歷史快照一併更新） | iPhone 隱藏 `<video>` 常不觸發 `loadeddata` |
 
 ## 5. 踩過的坑（避免再踩）
+- 高解析度預覽不能在每次字卡/位置變更時重繪並上傳未改變的媒體影格；Compositor 以來源、時間、解碼幀數、frameStamp、裁切快取。首格事件與 decoded callback 必須增加 frameStamp，避免同時間的未解碼畫面被快取。
+- 持續觸控手勢可能因渲染/中途停頓超過 800ms；每個 `gesture:` 唯一 key 跨停頓合併為一個復原步驟，下一次手勢用新 key。一般輸入/滑桿仍套用 800ms。
+
 - **iPhone Safari 沒辦法在沙盒測**：OPFS 寫入、Cache Storage、同時多個 `<video>` 解碼/自動播放解鎖、混合模式、手勢，全部在 `PLAN.md §7` 待真機驗證。
 - 沙盒的 Playwright Chromium **沒有 H.264**：測試素材用 WebM；ffmpeg 的 `color=c=green` 是 (0,128,0)，要純綠用 `0x00ff00`。
 - Pixi v8：stroke `alignment: 1` ＝**內側**（0＝外側）；`extract.canvas` 不指定 `frame` 時尺寸會差 1px、內容超出畫面還會位移 → 一律明確給 `Rectangle(0,0,w,h)`。

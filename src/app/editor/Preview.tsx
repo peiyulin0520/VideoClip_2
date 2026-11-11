@@ -114,14 +114,25 @@ export function Preview({ projectId, width, height }: { projectId: string; width
   }, [player, selectedId, project]);
 
   const k = cssW / width; // 專案座標 → CSS px
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   const timelineTime = player?.time ?? 0;
-  const geo = useMemo(
-    () => ({ ...geoCtx(project, width, height), layoutMotion: layoutMotion(project.layout, timelineTime) }),
-    [project, width, height, fontEpoch, timelineTime],
-  );
+  const geo = useMemo(() => {
+    void fontEpoch; // New font metrics invalidate selection geometry.
+    return { ...geoCtx(project, width, height), layoutMotion: layoutMotion(project.layout, timelineTime) };
+  }, [project, width, height, fontEpoch, timelineTime]);
   const sel = findItem(project, selectedId);
-  const box = sel && selVisible ? itemBox(sel.item, geo) : null;
+  const slot = sel?.item.type !== 'text' ? sel?.item.slot : undefined;
+  const box =
+    sel && selVisible
+      ? slot
+        ? {
+            cx: (slot.x + slot.w / 2 + geo.layoutMotion.x) * width,
+            cy: (slot.y + slot.h / 2 + geo.layoutMotion.y) * height,
+            w: slot.w * width,
+            h: slot.h * height,
+            rotation: 0,
+          }
+        : itemBox(sel.item, geo)
+      : null;
   const selLocked = !!sel?.track.locked || !!sel?.track.hidden;
 
   const pointers = useRef(new Map<number, Pt>());
@@ -138,7 +149,7 @@ export function Preview({ projectId, width, height }: { projectId: string; width
     gesture.current = {
       type: 'move',
       id,
-      key: `move:${id}:${performance.now()}`,
+      key: `gesture:move:${id}:${performance.now()}`,
       start: at,
       startX: f.item.transform.x,
       startY: f.item.transform.y,
@@ -160,7 +171,7 @@ export function Preview({ projectId, width, height }: { projectId: string; width
       gesture.current = {
         type: 'pinch',
         id: cur.item.id,
-        key: `pinch:${cur.item.id}:${performance.now()}`,
+        key: `gesture:pinch:${cur.item.id}:${performance.now()}`,
         startDist: Math.hypot(b.x - a.x, b.y - a.y) || 1,
         startAngle: Math.atan2(b.y - a.y, b.x - a.x),
         startScale: cur.item.transform.scale,

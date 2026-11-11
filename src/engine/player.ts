@@ -121,7 +121,7 @@ export class Player {
   refresh() {
     const total = this.total();
     if (this.t > total) this.t = total;
-    this.render(this.t);
+    this.scheduleRender();
     this.emit();
   }
 

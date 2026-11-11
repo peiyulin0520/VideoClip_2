@@ -52,7 +52,7 @@ export const useProjectStore = create<State>((set, get) => ({
     const coalesced =
       !!opts.coalesce &&
       lastEdit?.key === opts.coalesce &&
-      now - lastEdit.at < COALESCE_MS &&
+      (opts.coalesce.startsWith('gesture:') || now - lastEdit.at < COALESCE_MS) &&
       past.length > 0;
     const newPast = coalesced ? past : [...past, project].slice(-HISTORY_LIMIT);
     set({

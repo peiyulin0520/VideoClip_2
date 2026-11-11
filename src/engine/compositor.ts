@@ -39,6 +39,8 @@ type Obj = {
   frameCtx: CanvasRenderingContext2D | null;
   textKey: string | undefined;
   hasFrame: boolean;
+  lastSource: LayerSource | null;
+  frameKey: string;
   mask: Graphics | null;
   outline: Graphics | null;
   maskKey: string;
@@ -130,6 +132,8 @@ export class Compositor {
       frameCtx: null,
       textKey: undefined,
       hasFrame: false,
+      lastSource: null,
+      frameKey: '',
       mask: null,
       outline: null,
       maskKey: '',
@@ -169,17 +173,32 @@ export class Compositor {
       }
       if (layer.ready && o.frameCtx) {
         const crop = layer.crop ?? { l: 0, t: 0, r: 0, b: 0 };
+        const video = layer.kind === 'video' ? (layer.source as HTMLVideoElement) : null;
+        const frameKey = [
+          layer.srcW,
+          layer.srcH,
+          crop.l,
+          crop.t,
+          crop.r,
+          crop.b,
+          video?.currentTime,
+          video?.getVideoPlaybackQuality?.().totalVideoFrames,
+          video?.dataset.frameStamp,
+        ].join('|');
         const sx = layer.srcW * crop.l;
         const sy = layer.srcH * crop.t;
         const sw = Math.max(layer.srcW * (1 - crop.l - crop.r), 1);
         const sh = Math.max(layer.srcH * (1 - crop.t - crop.b), 1);
-        try {
-          o.frameCtx.drawImage(layer.source, sx, sy, sw, sh, 0, 0, fw, fh);
-          o.textureSource?.update();
-          o.hasFrame = true;
-        } catch {
-          /* 來源暫時畫不出來（解碼中），保留上一格 */
-        }
+        if (!o.hasFrame || o.lastSource !== layer.source || o.frameKey !== frameKey)
+          try {
+            o.frameCtx.drawImage(layer.source, sx, sy, sw, sh, 0, 0, fw, fh);
+            o.textureSource?.update();
+            o.hasFrame = true;
+            o.lastSource = layer.source;
+            o.frameKey = frameKey;
+          } catch {
+            /* 來源暫時畫不出來（解碼中），保留上一格 */
+          }
       }
     }
 
