@@ -11,9 +11,9 @@
 - **已驗證**：來源 218 單元、lint、build 通過；新版 220 單元、lint、TypeScript、build 通過。Pages 靜態檢查通過（PWA/腳本/圖示/39 款字體及授權檔）；42 e2e 僅列出。
 - **未驗證**：本次未執行 Chromium e2e（42 個已列出）、未產生新版截圖、未做 iPhone Safari 真機測試。GitHub Actions 已安排在其 runner 跑 e2e/上傳截圖。
 - **階段**：來源 P0/P1/P2/P3B 與 P3A 第 1–4 前半保持；P3A 貼圖/雲朵字/模板及 P4–P7 尚未完成。此版本尚無完整影片匯出、繪畫或素材庫，不可把原 Sites 版功能當作已移植。
-- **發布狀態**：本機已建立；GitHub 外掛已連接，CLI 已能辨識 peiyulin0520。但推送與 connector create_branch 均回傳 403（Resource not accessible by integration）；GitHub App installations/accounts 皆為空，缺少 repository 安裝授權。尚未推送或部署 Pages。預定 URL `https://peiyulin0520.github.io/VideoClip_2/` 不是已驗證上線網址。
+- **發布狀態**：GitHub App 安裝授權已完成，工作分支已推送（3f6b98ef90adf2de98c54c277a3599583c98f6c4）；Pages build_type=workflow。首次 CI 43057394524 的 npm ci/check 已過，但 Playwright --with-deps 卡在 Ubuntu apt DNS 解析，已取消以取得日誌。現改為僅安裝 pinned Chromium headless shell、沿用 runner 現有系統函式庫，等待修正版 CI；main 與正式網站尚未更新。預定 URL `https://peiyulin0520.github.io/VideoClip_2/` 不是已驗證上線網址。
 - **下一步**：取得目標 repo 寫入授權 → 推送工作分支 → 確認 CI 的 42 e2e/截圖 → 一般 fast-forward main → Pages 部署 → iPhone 實測；有新遠端提交先整合，不 force push，不自動開 PR。之後再做 P3A-4 後半貼圖 icon。
-- **等使用者**：透過官方 https://github.com/apps/chatgpt-codex-connector/installations/new 安裝 GitHub App，Only select repositories 勾選 VideoClip_2 並完成 Install/Save；目前 ChatGPT 帳號連線已完成。需要時在 repo Pages 設定選 GitHub Actions。不要在對話貼 token。
+- **等使用者**：目前不需再做帳號授權；程式及 Pages 設定已可存取。發布後再請使用者進行 PLAN §7 的 iPhone Safari 實測。
 
 ## 日誌格式（新增一筆時照這個）
 ```
@@ -54,6 +54,17 @@
 - 2026-11-11 找到新字體來源 max32002/pop-gothic（大波浪圓體，含注音）→ 已加入手寫可愛包。問「能不能直接下載到我的 files 下載資料夾」→ 答：網頁在 iPhone 不能自動寫進「檔案」App 資料夾；官方字體存在瀏覽器裡，自己的字體用「匯入字體檔」從檔案 App 選
 
 ## 日誌（最新在最上面）
+- 2026-11-11 修正首次 CI 的瀏覽器準備環境
+  - 證據：run 43057394524 / job 130650406213 的 npm ci/check 成功；安裝依賴超過八分鐘，取消後日誌顯示 archive.ubuntu.com、security.ubuntu.com、azure.archive.ubuntu.com DNS 失敗。既有系統圖形函式庫皆已安裝，卡在補裝額外字型。
+  - 修正：移除 Playwright --with-deps，僅安裝鎖定的 Chromium headless shell；瀏覽器安裝限五分鐘、測試限十分鐘。CI 先清除來源 repo 的舊 screenshots，只有瀏覽器測試實際執行後才上傳 artifact，避免把來源截圖當成新驗收。
+  - 未修改任何剪輯功能；下一步等待修正版 CI 的 42 e2e，再發布 main。
+
+- 2026-11-11 GitHub 授權完成、首次推送與 CI（目前進行中）
+  - 已驗證 GitHub App installation 可用；普通 git push 成功，遠端工作分支為 3f6b98ef90adf2de98c54c277a3599583c98f6c4。
+  - Pages 已設定 workflow，網址為 https://peiyulin0520.github.io/VideoClip_2/；目前 main 仍是初始 commit，不能當成新版已上線。
+  - CI：https://github.com/peiyulin0520/VideoClip_2/actions/runs/43057394524。npm ci 和 npm run check 成功，正在安裝 Chromium；42 個 e2e 尚未開始。
+  - 下一步：確認 CI 結果、必要時修正，再 fast-forward main 發布。沒有開 PR，也未 force push。
+
 - 2026-11-11 釐清 GitHub 帳號連線與 repository 安裝授權狀態（只有文件）
   - 使用者回覆「已連接」；已驗證 GitHub 外掛 installed=true、CLI user 為 peiyulin0520、目標 repo metadata 可讀。
   - 推送 dry-run 回 403；connector create_branch 回 Resource not accessible by integration。沒有建立遠端分支或其他遠端修改。

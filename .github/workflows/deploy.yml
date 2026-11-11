@@ -27,10 +27,17 @@ jobs:
       - run: npm run check
       # GitHub's runner installs its own pinned browser; the local managed
       # environment does not provide a supported Sites browser preview.
-      - run: npx playwright install --with-deps chromium
-      - run: npm run e2e -- --trace off --workers=2
+      - name: Install pinned Chromium
+        timeout-minutes: 5
+        run: npx playwright install chromium --only-shell
+      - name: Prepare fresh browser screenshots
+        run: node -e "require('node:fs').rmSync('docs/screenshots', { recursive:true, force:true })"
+      - name: Browser tests
+        id: browser-tests
+        timeout-minutes: 10
+        run: npm run e2e -- --trace off --workers=2
       - uses: actions/upload-artifact@v4
-        if: always()
+        if: always() && steps.browser-tests.outcome != 'skipped' && steps.browser-tests.outcome != ''
         with:
           name: browser-checks-${{ github.run_id }}
           path: |

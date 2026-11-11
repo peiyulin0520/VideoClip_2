@@ -5,7 +5,7 @@
 - 目標 `peiyulin0520/VideoClip_2`、工作分支 `codex/establish-little-moments`、名稱 Little Moments、Pages base `/VideoClip_2/`。此明確子任務只建立已完成版本；不把尚未做的功能標為完成。
 - 新舊路徑在同一個 origin，所以另命名 IndexedDB、OPFS、字體快取與 localStorage；不改動原 VideoClip 資料。新增隔離測試覆蓋相同專案/素材 ID 的讀寫刪除。
 - 本機實際通過的項目看 PROGRESS.md。來源的 42 e2e 和 screenshot 是來源紀錄，不是本次跑過；GitHub CI 已安排 e2e，成功前不要聲稱已驗證瀏覽器。
-- GitHub 外掛已連接，CLI 已能辨識 peiyulin0520；目前 git push dry-run 與 connector 建分支均為 403，installation/account 列表為空。需要在官方 https://github.com/apps/chatgpt-codex-connector/installations/new 安裝 App 並選擇 VideoClip_2。App 身分已由 API 驗證 owner=openai、具備 contents/workflows/actions write。repo metadata 的 admin=true 是使用者權限，不代表 integration 已有安裝授權；推送和 Pages 仍未完成。
+- GitHub App 安裝授權已完成，工作分支已成功推送；Pages 已是 workflow 模式。首次 CI run 43057394524 卡在 apt DNS，已取消並移除 --with-deps；僅安裝 pinned Chromium headless shell，先等待修正版瀏覽器驗收再更新 main，細節見 PROGRESS.md。先前 403 的原因是只有帳號 OAuth 連線、沒有 GitHub App repository 安裝授權，現已解除。
 - 下一個功能子任務仍是 Phase 3A-4 後半貼圖 icon；素材庫需求另記為 PLAN R22。
 
 
@@ -144,3 +144,5 @@ npm run check                      # lint + 41 個單元測試 + build
 npm run e2e -- --trace off         # 22 個 e2e（iPhone 13 尺寸、Chromium）
 ```
 e2e 會產生 `docs/screenshots/phase*/` 截圖（給使用者審核用，也會被 commit）。
+
+> VideoClip_2 CI（2026-11-11）：Ubuntu apt mirrors 曾 DNS 解析失敗，`playwright install --with-deps` 因補裝額外字型卡住。runner 既有圖形函式庫已在日誌確認；CI 僅下載 pinned Chromium headless shell，設置 timeout，不能用反覆等待解決 apt DNS。上傳 screenshots 前必須清空舊生成圖；測試未執行就不產 artifact，避免誤用來源庫畫面。
