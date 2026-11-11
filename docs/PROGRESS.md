@@ -8,11 +8,11 @@
 - **工作分支**：`codex/establish-little-moments`；main 原有初始 commit `2f8bdf9` 保留。最新本機程式 commit 見 `git log -1`；推送狀態見下方。
 - **來源**：`peiyulin0520/VideoClip` main `78b178343409c46c7ba353ef3a6db6f279a7bde6`（PR #3 已合併）。以下舊日誌屬來源 repo 的歷史，不代表 VideoClip_2 的部署/瀏覽器驗收。
 - **本次明確子任務**：依來源文件建立新 repo 網頁、保留 Little Moments 名稱、調整 `/VideoClip_2/` 發布路徑與 PWA，並隔離與舊 VideoClip 的本機資料；不重做或宣稱完成整份未來規劃。
-- **已驗證**：來源 218 單元、lint、build 通過；新版 220 單元、lint、TypeScript、build 通過。Pages 靜態檢查通過（PWA/腳本/圖示/39 款字體及授權檔）；42 e2e 僅列出。
-- **瀏覽器驗證**：CI 43059345131 與正式部署 43059868070 均已通過 42 個 e2e（Chromium）。已產生新版截圖；第一次截圖 UI 中文缺字，CI 加入 repo 既有 Noto Sans TC，待重跑確認可讀畫面。iPhone Safari 仍未真機測試。
+- **已驗證**：最新 main CI 43061662930：220 單元、lint、TypeScript、build、Pages 靜態檢查、42 Chromium e2e、正式 Pages 部署全過。39 款公開字體及授權/路徑檢查成功。
+- **瀏覽器驗證**：Playwright 1.63 / Chromium 153、iPhone 13 畫面尺寸；38 張本次生成截圖已更新至 docs/screenshots。已人工檢視首頁，繁體中文可讀。截圖來源為 main run 43061662930 / artifact 13872658901；不是來源庫的舊圖。iPhone Safari 仍需真機測試。
 - **階段**：來源 P0/P1/P2/P3B 與 P3A 第 1–4 前半保持；P3A 貼圖/雲朵字/模板及 P4–P7 尚未完成。此版本尚無完整影片匯出、繪畫或素材庫，不可把原 Sites 版功能當作已移植。
-- **發布狀態**：GitHub 授權已完成，工作分支與 main 已推送；49f3bd79ca516067827dde6d4dba37e67bee242f 已由 Actions run 43059868070 成功部署。https://peiyulin0520.github.io/VideoClip_2/ 的 HTML、主程式與 manifest 實測 HTTP 200、名稱/路徑正確。補齊 CI CJK 字體的後續提交不改任何剪輯功能。
-- **下一步**：完成 CI CJK 截圖確認與紀錄更新；請使用者 iPhone Safari 實測，之後再做 P3A-4 後半貼圖 icon。
+- **發布狀態**：已完成。https://peiyulin0520.github.io/VideoClip_2/ 公開上線。已部署的程式提交 af14c795cbecb09c1d286ab1fcd6e9168b24cae5；Actions https://github.com/peiyulin0520/VideoClip_2/actions/runs/43061662930 成功。HTML/manifest/JavaScript HTTP 200 與路徑均已確認。此後若有 [skip ci] 提交，只更新交接文件和驗收圖，不改生產程式。
+- **下一步**：由使用者在 iPhone Safari 實測 PLAN §7；下一個功能子任務為 P3A-4 後半貼圖 icon。這次只建立並發布參考庫既有階段，完整影片匯出、繪畫、素材庫等仍未完成。
 - **等使用者**：目前不需再做帳號授權；程式及 Pages 設定已可存取。發布後再請使用者進行 PLAN §7 的 iPhone Safari 實測。
 
 ## 日誌格式（新增一筆時照這個）
@@ -54,6 +54,13 @@
 - 2026-11-11 找到新字體來源 max32002/pop-gothic（大波浪圓體，含注音）→ 已加入手寫可愛包。問「能不能直接下載到我的 files 下載資料夾」→ 答：網頁在 iPhone 不能自動寫進「檔案」App 資料夾；官方字體存在瀏覽器裡，自己的字體用「匯入字體檔」從檔案 App 選
 
 ## 日誌（最新在最上面）
+- 2026-11-11 完成 GitHub Pages 發布與可讀手機截圖驗收
+  - 最終程式 af14c795cbecb09c1d286ab1fcd6e9168b24cae5，main Actions 43061662930：220 單元/42 e2e/Pages 部署成功。
+  - 38 張新截圖（artifact 13872658901）更新至 docs/screenshots，人工確認首頁中文可讀；TTF 與家族別名已解決 runner 的中文方框問題。相關截圖只含自製合成素材，沒有使用者影片。
+  - 正式網址：https://peiyulin0520.github.io/VideoClip_2/；程式與 PWA 使用 /VideoClip_2/，各使用者資料在本機，與原 VideoClip 命名隔離。網站使用不需要 Codex 常駐。
+  - 此提交只整理文件與驗收圖，使用 [skip ci] 避免重跑完全相同的生產程式；已部署程式的 SHA 與 CI 如上，不把文件提交當成另一次部署。
+  - 下一步：使用者 iPhone Safari 真機實測；依既定次序再做 P3A 貼圖，不自動擴大到其他 Phase。
+
 - 2026-11-11 修正 CI 系統中文字型封裝格式
   - CI 43060505717 已再度通過 220 單元/42 e2e 並部署，但人工檢視 home.png 的 SHA 和先前方框版本相同；日誌 fc-match 輸出 DejaVu Sans，證明 WOFF2 未被 runner 預設字型設定採用。
   - 將現有 OFL Noto Sans TC VC Subset 僅轉換容器為 TTF，放 tests/fixtures 並附同一 OFL。CI 安裝該 TTF，加入 Noto Sans TC→Noto Sans TC VC Subset 的 fontconfig 家族別名，並新增 fc-match（中字）必須包含 Noto Sans TC 的斷言。網站 public 字型與生產程式不改。

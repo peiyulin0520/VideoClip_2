@@ -20,7 +20,7 @@ npm run check
 npm run e2e -- --trace off
 ```
 
-`check` 包含 lint、220 個單元測試、TypeScript、正式建置及 GitHub Pages 路徑/PWA/字體檔案檢查。42 個瀏覽器測試已在 GitHub Actions 的 Chromium 153 通過，CI 保存截圖 artifact。iPhone Safari 一律仍待真機驗證。
+`check` 包含 lint、220 個單元測試、TypeScript、正式建置及 GitHub Pages 路徑/PWA/字體檔案檢查。42 個瀏覽器測試已在 GitHub Actions 的 Chromium 153 通過，CI 保存截圖 artifact。本次已確認 38 張 CI 畫面（docs/screenshots）中文可讀；iPhone Safari 仍待真機驗證。
 
 ## GitHub Pages
 

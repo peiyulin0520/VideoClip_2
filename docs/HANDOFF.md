@@ -5,7 +5,7 @@
 - 目標 `peiyulin0520/VideoClip_2`、工作分支 `codex/establish-little-moments`、名稱 Little Moments、Pages base `/VideoClip_2/`。此明確子任務只建立已完成版本；不把尚未做的功能標為完成。
 - 新舊路徑在同一個 origin，所以另命名 IndexedDB、OPFS、字體快取與 localStorage；不改動原 VideoClip 資料。新增隔離測試覆蓋相同專案/素材 ID 的讀寫刪除。
 - 本機實際通過的項目看 PROGRESS.md。來源的 42 e2e 和 screenshot 是來源紀錄，不是本次跑過；GitHub CI 已安排 e2e，成功前不要聲稱已驗證瀏覽器。
-- GitHub App 安裝授權已完成，工作分支已成功推送；Pages 已是 workflow 模式。首次 CI run 43057394524 的 apt DNS 問題已修復；43059345131 與 main 的 43059868070 均通過 42 e2e，Pages 已上線。另補 CI CJK 字型以取得可讀截圖，細節見 PROGRESS.md。先前 403 的原因是只有帳號 OAuth 連線、沒有 GitHub App repository 安裝授權，現已解除。
+- GitHub 授權、推送和 Pages 發布已完成。正式 URL https://peiyulin0520.github.io/VideoClip_2/；已部署程式 af14c795cbecb09c1d286ab1fcd6e9168b24cae5，main CI 43061662930 的 220 單元/42 e2e/部署全過，38 張可讀繁中驗收圖在 docs/screenshots。文件/驗收圖的後續 [skip ci] 提交不改已部署程式。
 - 下一個功能子任務仍是 Phase 3A-4 後半貼圖 icon；素材庫需求另記為 PLAN R22。
 
 
@@ -140,8 +140,8 @@ IndexedDB `videoclip`（專案 JSON、`meta.appState`、`meta.installedFonts`、
 ## 7. 怎麼驗證現在是好的
 ```
 npm ci
-npm run check                      # lint + 41 個單元測試 + build
-npm run e2e -- --trace off         # 22 個 e2e（iPhone 13 尺寸、Chromium）
+npm run check                      # lint + 220 個單元測試 + build + Pages 路徑檢查
+npm run e2e -- --trace off         # 42 個 e2e（iPhone 13 尺寸、Chromium）
 ```
 e2e 會產生 `docs/screenshots/phase*/` 截圖（給使用者審核用，也會被 commit）。
 
