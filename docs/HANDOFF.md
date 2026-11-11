@@ -5,7 +5,7 @@
 - 目標 `peiyulin0520/VideoClip_2`、工作分支 `codex/establish-little-moments`、名稱 Little Moments、Pages base `/VideoClip_2/`。此明確子任務只建立已完成版本；不把尚未做的功能標為完成。
 - 新舊路徑在同一個 origin，所以另命名 IndexedDB、OPFS、字體快取與 localStorage；不改動原 VideoClip 資料。新增隔離測試覆蓋相同專案/素材 ID 的讀寫刪除。
 - 本機實際通過的項目看 PROGRESS.md。來源的 42 e2e 和 screenshot 是來源紀錄，不是本次跑過；GitHub CI 已安排 e2e，成功前不要聲稱已驗證瀏覽器。
-- GitHub 讀取成功；目前 gh 寫入身分驗證失敗（HTTP 401），GitHub 外掛未連接。git push --dry-run 也因缺少登入憑證失敗。推送和 Pages 尚未完成；需要重新授權該 repo，不能把公開可讀視為可寫。
+- GitHub 外掛已連接，CLI 已能辨識 peiyulin0520；目前 git push dry-run 與 connector 建分支均為 403，installation/account 列表為空。需要在官方 https://github.com/apps/chatgpt-codex-connector/installations/new 安裝 App 並選擇 VideoClip_2。App 身分已由 API 驗證 owner=openai、具備 contents/workflows/actions write。repo metadata 的 admin=true 是使用者權限，不代表 integration 已有安裝授權；推送和 Pages 仍未完成。
 - 下一個功能子任務仍是 Phase 3A-4 後半貼圖 icon；素材庫需求另記為 PLAN R22。
 
 
