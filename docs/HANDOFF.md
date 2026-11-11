@@ -148,3 +148,5 @@ e2e 會產生 `docs/screenshots/phase*/` 截圖（給使用者審核用，也會
 > VideoClip_2 CI（2026-11-11）：Ubuntu apt mirrors 曾 DNS 解析失敗，`playwright install --with-deps` 因補裝額外字型卡住。runner 既有圖形函式庫已在日誌確認；CI 僅下載 pinned Chromium headless shell，設置 timeout，不能用反覆等待解決 apt DNS。上傳 screenshots 前必須清空舊生成圖；測試未執行就不產 artifact，避免誤用來源庫畫面。
 
 > VideoClip_2 截圖（2026-11-11）：CI 43059345131 的 42 e2e 成功，但人工檢視截圖時看到 UI 中文 tofu。去掉 apt 依賴安裝後，runner 沒有 CJK 系統字型；改從 repo 現有 Noto Sans TC WOFF2 註冊至 fontconfig。iPhone 本身有 PingFang TC；此修正只為 CI 可讀截圖，不把有方框的 artifact 當成最終視覺驗收。
+
+> CI fontconfig 的預設設定未採用放入 user fonts 目錄的 WOFF2（43060505717 的 fc-match 仍是 DejaVu Sans）；隔離 FONTCONFIG_FILE 下的 fc-scan 成功不能代表預設設定可用。已用同源 OFL Noto Sans TC 轉成 tests/fixtures/ui-noto-sans-tc.ttf，測試預設 fontconfig + XDG 目錄並加 CI fc-match 斷言，不能只看測試成功就聲稱截圖可讀。

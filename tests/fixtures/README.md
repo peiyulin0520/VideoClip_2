@@ -6,3 +6,16 @@
 - photo.png：400×300 漸層圖
 - solid-red.webm / solid-green.webm / solid-blue.webm：純色 320×568 直式，4 秒，沒有聲音（Phase 2 疊圖層測試用，可以用取樣顏色判斷誰在上面）
 - mini-font.ttf：從芫荽 Iansui（SIL OFL 1.1，https://github.com/ButTaiwan/iansui）裁切出幾個字的小字體，測試「匯入字體」用
+
+## CI 介面繁中字體
+
+`ui-noto-sans-tc.ttf` 只用於 Linux CI 的系統 UI fallback，不進網站 dist。來源是本 repo 的 `public/fonts/noto-sans-tc/noto-sans-tc-100-900.woff2`，以 fontTools 移除 WOFF2 壓縮封裝保存為 TTF；字形與 cmap 保持不變、保留原內部 VC Subset 名稱。授權：旁邊 `ui-noto-sans-tc-OFL.txt`（與來源 OFL.txt 相同）。轉換命令：
+
+```python
+from fontTools.ttLib import TTFont
+font = TTFont('public/fonts/noto-sans-tc/noto-sans-tc-100-900.woff2')
+font.flavor = None
+font.save('tests/fixtures/ui-noto-sans-tc.ttf')
+```
+
+原因：runner 的預設 fontconfig 沒有採用 WOFF2 作系統字體，fc-match 仍為 DejaVu Sans。改 TTF 另用 ui-fontconfig.conf 將原 CSS 家族 Noto Sans TC 對應到裁切後的內部家族名稱 Noto Sans TC VC Subset，並在 CI 斷言 fc-match 中字為 Noto Sans TC，避免產出中文字方框截圖。原網站公開 WOFF2、使用者字體及生產程式未變。

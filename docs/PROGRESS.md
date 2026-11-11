@@ -54,6 +54,11 @@
 - 2026-11-11 找到新字體來源 max32002/pop-gothic（大波浪圓體，含注音）→ 已加入手寫可愛包。問「能不能直接下載到我的 files 下載資料夾」→ 答：網頁在 iPhone 不能自動寫進「檔案」App 資料夾；官方字體存在瀏覽器裡，自己的字體用「匯入字體檔」從檔案 App 選
 
 ## 日誌（最新在最上面）
+- 2026-11-11 修正 CI 系統中文字型封裝格式
+  - CI 43060505717 已再度通過 220 單元/42 e2e 並部署，但人工檢視 home.png 的 SHA 和先前方框版本相同；日誌 fc-match 輸出 DejaVu Sans，證明 WOFF2 未被 runner 預設字型設定採用。
+  - 將現有 OFL Noto Sans TC VC Subset 僅轉換容器為 TTF，放 tests/fixtures 並附同一 OFL。CI 安裝該 TTF，加入 Noto Sans TC→Noto Sans TC VC Subset 的 fontconfig 家族別名，並新增 fc-match（中字）必須包含 Noto Sans TC 的斷言。網站 public 字型與生產程式不改。
+  - 本機以預設 fontconfig + 獨立 XDG 字型/別名設定，確認原 CSS 家族 Noto Sans TC 的中字能選到 TTF。最終截圖仍需以本修正之後的 CI 為準。
+
 - 2026-11-11 首次正式 GitHub Pages 上線
   - main 已一般 fast-forward 至 49f3bd79ca516067827dde6d4dba37e67bee242f，Actions run 43059868070 的 build、42 e2e、Pages deploy 全部成功。
   - 正式網址 https://peiyulin0520.github.io/VideoClip_2/；HTTP 檢查確認 HTML 200、Little Moments title、manifest scope=/VideoClip_2/、主 JavaScript 200/MIME 正確。
