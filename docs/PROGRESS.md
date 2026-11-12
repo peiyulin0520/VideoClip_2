@@ -8,12 +8,12 @@
 - **工作分支**：`codex/establish-little-moments`；main 原有初始 commit `2f8bdf9` 保留。最新本機程式 commit 見 `git log -1`；推送狀態見下方。
 - **來源**：`peiyulin0520/VideoClip` main `78b178343409c46c7ba353ef3a6db6f279a7bde6`（PR #3 已合併）。以下舊日誌屬來源 repo 的歷史，不代表 VideoClip_2 的部署/瀏覽器驗收。
 - **本次明確子任務**：整頁捲動補充，功能設定也自然展開，移除下方面板獨立小捲動框；見 docs/plans/2026-11-12-single-page-settings.md。預覽與圖層已由使用者合併 PR #1 發布，本次另走新 PR。
-- **已驗證**：本機 check 成功（246 單元、lint、TypeScript、build、Pages/39 字型）；73 個瀏覽器情境已列出，待 CI。本次前的 246/72 與 63 張截圖是基線，不代表新增長設定滑動已驗證。
-- **瀏覽器驗證**：Playwright 1.63 / Chromium 153、iPhone 13 尺寸與 320×568 窄螢幕；63 張本次 CI 截圖在 docs/screenshots，來源 run 43186969560 / artifact 13929546315，workspace/ 新 4 張。人工檢視精簡預覽、完整圖層頁面、文字工具與窄螢幕操作；繁中可讀、均為自製素材，非 Safari 真機。
-- **階段**：PR #1 已由使用者自行合併並發布；本次設定區整頁展開仍在功能分支驗收，需新 PR 交使用者合併。其餘動畫/轉場/備份等規劃未實作。
+- **已驗證**：程式 8194f7976414982e01902978fd56ba9c755a7d6c / Actions https://github.com/peiyulin0520/VideoClip_2/actions/runs/43206542321：246 單元、73 Chromium e2e（4.4 分鐘）、lint/格式/TypeScript/build/Pages 與 39 字體檢查全部成功。
+- **瀏覽器驗證**：Playwright 1.63 / Chromium 153、iPhone 13 尺寸與 320×568；64 張 CI 截圖已更新至 docs/screenshots，來源 run 43206542321 / artifact 13938271777，ZIP SHA-256 579dbd26e66d813c22553bac4a0b28c7e12cb1a16a409a9c087b0881ce7c4eef。人工檢視精簡預覽、13 層頁面及 single-page-controls；繁中可讀、自製素材，非 Safari 真機。
+- **階段**：PR #1 已由使用者合併發布；PR #2 https://github.com/peiyulin0520/VideoClip_2/pull/2 補齊設定區整頁展開，已驗收、待使用者自行 Merge；助手不代合併、未開 auto-merge。其餘動畫/轉場/備份等規劃未實作。
 - **發布狀態**：PR #1 由使用者於 2026-11-12 10:31:48 UTC 合併，main a1b455b2688874306a618745bea136cd30c592b1 / Actions https://github.com/peiyulin0520/VideoClip_2/actions/runs/43201177854 成功。公開 HTML/manifest/attribution 200，index-BQnZUr0n.js SHA-256 61fabaa80f502657e3996f7fc41b79bcaf68ad753fcce5058ca56362c405b818 與本機已驗證建置相同。新 .panel 整頁展開補充未發布；截圖未見新版捷徑，可能仍為舊頁籤。
-- **下一步**：73 個 CI 情境與截圖 → 新 PR → 使用者自行合併 → main Actions/Pages → Safari 真機確認。
-- **等使用者**：新 PR 完成驗收後提供連結，由使用者自行 Merge。已提醒關閉舊頁籤後重新開啟目前網址以載入 PR #1 新介面；不清除網站資料。
+- **下一步**：PR #2 由使用者自行合併 → main Actions/Pages → iPhone Safari 真機確認整頁滑動、長設定與雙指編輯。
+- **等使用者**：PR #2 已完成驗收，由使用者自行 Merge。已提醒關閉舊頁籤後重新開啟目前網址以載入 PR #1 新介面；不清除網站資料。
 
 ## 日誌格式（新增一筆時照這個）
 ```
@@ -66,6 +66,11 @@
 - 2026-11-11 找到新字體來源 max32002/pop-gothic（大波浪圓體，含注音）→ 已加入手寫可愛包。問「能不能直接下載到我的 files 下載資料夾」→ 答：網頁在 iPhone 不能自動寫進「檔案」App 資料夾；官方字體存在瀏覽器裡，自己的字體用「匯入字體檔」從檔案 App 選
 
 ## 日誌（最新在最上面）
+- 2026-11-12 設定區整頁捲動驗收完成，交 PR #2
+  - 程式 8194f79 / run 43206542321：246 單元與 73 e2e 全過。新增真實觸控確認 .editor 上下滑動、設定面板沒有獨立 scrollTop、末端控制項可操作；原有縮放/圖層/匯出情境仍通過。
+  - 匯入 64 張完整 CI 截圖，artifact 13938271777 已核對 ZIP hash；人工看過 workspace/compact-preview、all-layers-page、single-page-controls，中文可讀、預覽與時間軸會捲走。
+  - 同步 README、PLAN、HANDOFF、AGENTS 與使用說明。PR #2 已建立，交使用者自行合併；功能分支不發布，iPhone Safari 尚待真機。
+
 - 2026-11-12 核對 PR #1 已上線，補齊設定區整頁捲動
   - PR #1 已由使用者合併，main a1b455b / run 43201177854 成功；公開 JS hash 與驗證建置相符。使用者截圖缺少新版導航，已提醒關閉舊頁籤再開啟，沒有要求清除資料。
   - 移除 footer .panel/.panel.tall 高度上限和獨立垂直捲動，字卡設定分頁改正常文流；編輯器為同一垂直捲動區，時間軸仍只橫向控制時間。

@@ -12,3 +12,5 @@
 - 回歸新增從長字塊設定真實滑動，確認移動的是 .editor、面板 scrollTop 為 0；保留 13 層展開與左右時間/上下頁面分離。
 
 使用者原圖不加入 repo。完成後建立 PR #2 交使用者自行合併，不能代合併或推 main。Safari 的實際捲動仍需真機確認。
+
+驗收：8194f7976414982e01902978fd56ba9c755a7d6c / [Actions 43206542321](https://github.com/peiyulin0520/VideoClip_2/actions/runs/43206542321) 全過（246 單元、73 Chromium e2e）。64 張 CI 截圖已保存，新增 workspace/single-page-controls.png；artifact 13938271777 的 ZIP hash 與下載檔一致。PR #2 https://github.com/peiyulin0520/VideoClip_2/pull/2 待使用者自行合併，未開 auto-merge、未發布此補充。

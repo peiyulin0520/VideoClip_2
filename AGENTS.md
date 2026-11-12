@@ -52,4 +52,4 @@ Vite 8 · React 18 · TypeScript 5.9（別升 7：typescript-eslint 不支援）
 - 這個儲存庫來源是 VideoClip `78b178343409c46c7ba353ef3a6db6f279a7bde6`（main 已包含 PR #3），對外名稱 **Little Moments**。舊分支／PR 記錄只屬於來源 repo；本 repo 後續依最新指示建立 PR，由使用者自行合併。
 - 網址路徑 `/VideoClip_2/`；IndexedDB、OPFS、字體快取、localStorage 均使用獨立命名，避免同一個 github.io 網域的 `/VideoClip/` 被改動。不要刪除或自動搬移舊資料。
 - 現有 Sites 的 Little Moments 是另一套資料模型；未實作轉換，不能把 JSON 或素材庫 ZIP 當成這個版本可還原的檔案。
-- `npm run check` 仍須完成。此 Codex managed 環境缺少 Sites 指定的 `cua_repl.js`；Sites skill 明定不可另開 preview server／改用其他瀏覽器路徑，因此本機只列出 e2e。瀏覽器驗收已改由 GitHub Actions 執行：最新 246 單元/72 e2e 結果、run 及 63 張可讀繁中截圖來源見 PROGRESS.md。不要把來源 repo 或先前缺字的截圖當成最終驗收。
+- `npm run check` 仍須完成。此 Codex managed 環境缺少 Sites 指定的 `cua_repl.js`；Sites skill 明定不可另開 preview server／改用其他瀏覽器路徑，因此本機只列出 e2e。瀏覽器驗收已改由 GitHub Actions 執行：最新 246 單元/73 e2e 結果、run 及 64 張可讀繁中截圖來源見 PROGRESS.md。不要把來源 repo 或先前缺字的截圖當成最終驗收。

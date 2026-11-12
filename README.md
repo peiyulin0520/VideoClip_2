@@ -20,7 +20,7 @@ npm run check
 npm run e2e -- --trace off
 ```
 
-`check` 包含 lint、246 個單元測試、TypeScript、正式建置及 GitHub Pages 路徑/PWA/字體檔案檢查。72 個瀏覽器測試（含完整影片/音訊解碼、收藏、GIF、手動遮罩、Key 與主題）交由 GitHub Actions 的 Chromium 153 執行，CI 保存截圖 artifact；最新成功狀態見 PROGRESS.md。本次已更新 63 張 CI 畫面（docs/screenshots）中文可讀；iPhone Safari 仍待真機驗證。
+`check` 包含 lint、246 個單元測試、TypeScript、正式建置及 GitHub Pages 路徑/PWA/字體檔案檢查。73 個瀏覽器測試（含完整影片/音訊解碼、收藏、GIF、手動遮罩、Key 與主題）交由 GitHub Actions 的 Chromium 153 執行，CI 保存截圖 artifact；最新成功狀態見 PROGRESS.md。本次已更新 64 張 CI 畫面（docs/screenshots）中文可讀；iPhone Safari 仍待真機驗證。
 
 ## GitHub Pages
 
@@ -65,6 +65,8 @@ GIF 解碼器 gifuct-js 2.1.2 為 MIT，授權位於 public/licenses。輸出含
 
 最新驗收、發布與限制以 [PROGRESS](docs/PROGRESS.md) 為準，操作步驟見 [USAGE](docs/USAGE.md)。
 
-## 工作區捲動調整（PR #1，待使用者合併）
+## 工作區捲動調整（PR #1 已發布；設定補充 PR #2 待合併）
 
-預覽改為精簡尺寸並隨整頁捲動，時間軸按圖層數完整展開，工具欄接在列表下方。左右控制時間、上下查看圖層；可用「查看圖層」「編輯工具」「回到預覽」跳轉，仍可放大預覽與調整選取框。另修復續用設定的非同步儲存競態。246 單元/72 Chromium e2e 成功，截圖在 docs/screenshots/workspace；Safari 仍需真機確認。新工作區要使用者合併 [PR #1](https://github.com/peiyulin0520/VideoClip_2/pull/1) 後才會部署到公開站。
+預覽改為精簡尺寸並隨整頁捲動，時間軸按圖層數完整展開，工具欄接在列表下方。左右控制時間、上下查看圖層；可用「查看圖層」「編輯工具」「回到預覽」跳轉，仍可放大預覽與調整選取框。另修復續用設定的非同步儲存競態。246 單元/72 Chromium e2e 成功，截圖在 docs/screenshots/workspace；Safari 仍需真機確認。[PR #1](https://github.com/peiyulin0520/VideoClip_2/pull/1) 已由使用者合併並部署。
+
+[PR #2](https://github.com/peiyulin0520/VideoClip_2/pull/2) 讓下方字卡、素材等設定也在同一頁自然展開，移除面板固定高度與獨立捲動。246 單元/73 Chromium e2e 通過，新增 workspace/single-page-controls 截圖。此補充仍須使用者自行 Merge 後才會部署。若仍看到舊版固定大預覽，關閉舊頁籤再重新開啟網址，不需清除網站資料。
