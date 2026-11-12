@@ -131,6 +131,8 @@ IndexedDB `videoclip`（專案 JSON、`meta.appState`、`meta.installedFonts`、
 | 縮圖：Mediabunny `CanvasSink` 優先 → `<video>` → 預覽播放器拿到畫面後 `setAssetThumbs`（不進復原歷史，歷史快照一併更新） | iPhone 隱藏 `<video>` 常不觸發 `loadeddata` |
 
 ## 5. 踩過的坑（避免再踩）
+- 細把手從 16px 改 8px 後，right:-4 的中心恰在相鄰片段邊界，下一片段會蓋住；選取片段需 z-index 4，且左右把手放回片段內側（0）。觸控延伸區仍保留。
+- 真實 touch swipe 有慣性；測 scrollTop 與元素位移應同一 evaluate/frame 取樣，不能分次 await 後將移動中的值相減。仍保留精確位移斷言。
 - Autosave 現改為立即寫入、寫入期間合併最後狀態，不能恢復 800ms debounce：收藏素材重用後立即重整會丟最後一筆。每個儲存迴圈要綁 projectId，避免舊頁 cleanup 時讀到新專案。
 - Sheet 必須 portal 到 body，並設 max-height/overflow:auto；Crop 包含畫布與四個 slider 時超出可視高度，原本底對齊會把頂端按鈕推出 viewport。
 - MediaRecorder.isTypeSupported('video/mp4') 不保證產物可被當前 VideoDecoder 解碼；相容匯出指定 codec、檢查解碼/原生播放能力、偶數 canvas，不能只選 generic MP4。

@@ -1983,3 +1983,16 @@ progress {
 .editor .add-clip {
   top: 2px;
 }
+
+.editor .clip.selected {
+  z-index: 4;
+}
+.editor .clip.dragging {
+  z-index: 6;
+}
+.editor .clip .handle.left {
+  left: 0;
+}
+.editor .clip .handle.right {
+  right: 0;
+}

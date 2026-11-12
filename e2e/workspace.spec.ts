@@ -9,6 +9,7 @@ async function layers(page: Page) {
     Array.from({ length: 12 }, () => 'photo.png'),
   );
   await expect(page.getByTestId('track')).toHaveCount(13);
+  await expect(page.locator('.toast')).toHaveCount(0);
   await page.getByRole('button', { name: '回到預覽', exact: true }).tap();
 }
 async function swipe(page: Page, x: number, y: number, dx: number, dy: number) {
@@ -155,9 +156,14 @@ test('依參考順序：正常大預覽、細圖層、功能欄、再往下看�
   await page.screenshot({ path: `${shots}/reference-preview.png` });
   await swipe(page, 20, initialPreview.y + initialPreview.height * 0.7, 0, -180);
   await expect.poll(() => scrollTop(page)).toBeGreaterThan(100);
-  const offset = await scrollTop(page);
-  expect((await playbar.boundingBox())!.y).toBeCloseTo(initialPlaybar.y - offset, 0);
-  expect((await preview.boundingBox())!.y).toBeCloseTo(initialPreview.y - offset, 0);
+  // A touch swipe can still coast: sample scroll and geometry in one frame.
+  const positions = await page.locator('.editor').evaluate((el) => ({
+    scroll: el.scrollTop,
+    preview: el.querySelector('.stage-wrap')!.getBoundingClientRect().y,
+    playbar: el.querySelector('.playbar')!.getBoundingClientRect().y,
+  }));
+  expect(positions.playbar).toBeCloseTo(initialPlaybar.y - positions.scroll, 0);
+  expect(positions.preview).toBeCloseTo(initialPreview.y - positions.scroll, 0);
   await page.screenshot({ path: `${shots}/reference-mid-scroll.png` });
   await page.getByTestId('track').last().scrollIntoViewIfNeeded();
   const clip = page.getByTestId('track').nth(3).getByTestId('clip');
