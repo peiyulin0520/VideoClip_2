@@ -207,7 +207,7 @@ export function Timeline({
     e.stopPropagation();
     const startX = e.clientX;
     const startY = e.clientY;
-    const isMain = track.kind === 'main';
+    const isMain = track.kind === 'main' && !project.freeMain;
     const startItems = track.items;
     const idx = startItems.findIndex((x) => x.id === item.id);
     let mode: 'pending' | 'drag' | 'cancelled' = 'pending';
@@ -310,7 +310,7 @@ export function Timeline({
     const trimKey = `gesture:trim:${item.id}:${e.timeStamp}:${e.pointerId}`;
     const target = e.currentTarget as HTMLElement;
     target.setPointerCapture(e.pointerId);
-    const isMain = track.kind === 'main';
+    const isMain = track.kind === 'main' && !project.freeMain;
     const move = (ev: PointerEvent) => {
       const delta = (ev.clientX - startX) / pps;
       let next: Item[];
@@ -440,7 +440,7 @@ export function Timeline({
                 return (
                   <div
                     key={it.id}
-                    className={`clip${selected ? ' selected' : ''}${dragging ? ' dragging' : ''}${it.type === 'text' ? ' is-text' : ''}${it.duration * pps < 80 ? ' short' : ''}`}
+                    className={`clip${selected ? ' selected' : ''}${dragging ? ' dragging' : ''}${it.type === 'text' ? ' is-text' : it.type === 'audio' ? ' is-audio' : ''}${it.duration * pps < 80 ? ' short' : ''}`}
                     data-testid="clip"
                     data-selected={selected}
                     data-item-id={it.id}
@@ -458,10 +458,17 @@ export function Timeline({
                         ? it.card.runs[0]?.text === ''
                           ? '圖形'
                           : `Aa ${it.card.runs[0]?.text.replace(/\n/g, ' ') ?? ''}`
-                        : `${it.type === 'image' ? '照片' : '影片'} ${it.duration.toFixed(1)}s`}
+                        : `${asset?.generated ? '留白' : it.type === 'audio' ? '♫ 音訊' : it.type === 'image' ? '照片' : '影片'} ${it.duration.toFixed(1)}s`}
                       {isVideoItem(it) && it.speed !== 1 && ` · ${it.speed}x`}
                       {isVideoItem(it) && it.type === 'video' && it.volume === 0 && ' · 靜音'}
                     </div>
+                    {asset?.hasAudio && it.type === 'video' && (
+                      <div className="clip-audio">
+                        {it.audioEnabled === false || it.volume === 0 || track.muted
+                          ? '原音已關閉'
+                          : '♫ 原音'}
+                      </div>
+                    )}
                     {selected && !dragging && !track.locked && (
                       <>
                         <div

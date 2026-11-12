@@ -41,6 +41,7 @@
 | R20 | 首次使用就讓使用者選專案備份位置：手機檔案，或 Google 雲端（貼資料夾網址或登入後選資料夾） | P3 精靈＋P6 |
 | R21 | 依影片內容推薦 IG 音源 | P7 |
 | R23 | 拍貼/膠卷多格版型及滑動效果、可自訂底色的開場留白 | 本次實測更新 |
+| R24 | 自由留白素材/主軌間隔、裝置 GIPHY Key 與搜尋、共用自己的素材/畫作、四邊及套索 crop、同裝置續用、主題/色輪/裝飾長度透明度、播放效能、音軌/配樂、完整影片輸出 | 本次明確需求，見 2026-11-12-editor-completion |
 | R22 | Icon、手繪與疊加素材可選擇收藏，跨專案套用；本機素材庫備份/還原 | P6（新增需求，尚未實作） |
 
 ---
@@ -358,3 +359,5 @@ docs/
 2. Google Cloud OAuth Client ID / API key（P6 再做，Sonnet 會帶步驟；只有「存到 Google 雲端」需要，「存在手機檔案」不需要）。
 3. 字體清單已整理在 `fonts/manifest.json`。沒有下載網址的 6 款（佮逸體、LINE Seed TW、中規中矩體、星光小熊貓幼兒體、字言字型手繪體、致一宋體）請在 Phase 3 開始時上傳到 Sonnet 的對話（詳見 FONTS.md §4）。
 4. Sonnet 工作環境的網路需允許：`raw.githubusercontent.com`、`registry.npmjs.org`（已可用）；若要從 GitHub Release 下載字體還需 `github.com`、`objects.githubusercontent.com`；從 Drive 下載需 `drive.google.com`、`drive.usercontent.google.com`。
+
+本次真機待驗證：GIPHY Key 同瀏覽器保留與實際服務額度/CORS；原音與配樂的 Safari 使用者手勢解鎖；MP4 編碼可用性、相容即時錄製、iPhone 分享/儲存影片與長片記憶體；v2→v3 資料與同裝置字體/收藏保留；720/1080/1920 預覽與描邊觸控。

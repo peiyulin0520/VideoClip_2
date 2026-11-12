@@ -41,7 +41,7 @@ test('在空白編輯器匯入第一支影片，不重整就有首格；沒有 l
   await page.getByTestId('file-input').setInputFiles(fixture('solid-red.webm'));
   await expect(clips(page)).toHaveCount(1);
   await expect.poll(async () => isRed(await samplePreview(page, 0.5, 0.5))).toBe(true);
-  await expect(page.getByTestId('preview-canvas')).toHaveAttribute('height', '1920');
+  await expect(page.getByTestId('preview-canvas')).toHaveAttribute('height', '1080');
   await page.screenshot({ path: `${shot}/first-import.png` });
 });
 
@@ -63,12 +63,16 @@ test('移除大圓鈕，以雙指縮放；放大預覽可回到編輯', async ({
   await expect(page.locator('.expanded-preview')).toHaveCount(0);
 });
 
-test('完整色碼、裝飾距離、輪廓調整與高密度文字排版可保存及復原', async ({ page }) => {
+test('色輪 RGB、裝飾距離、輪廓調整與高密度文字排版可保存及復原', async ({ page }) => {
   await createProjectWith(page, ['solid-red.webm']);
   await openTab(page, '文字');
   await page.getByRole('button', { name: /新增文字/ }).tap();
   await page.getByLabel('文字內容').fill('好好收藏');
-  await page.getByLabel('文字顏色色碼', { exact: true }).fill('#125acd');
+  await page.getByRole('button', { name: '文字顏色自訂', exact: true }).tap();
+  await page.getByLabel('色彩 R', { exact: true }).fill('18');
+  await page.getByLabel('色彩 G', { exact: true }).fill('90');
+  await page.getByLabel('色彩 B', { exact: true }).fill('205');
+  await page.getByRole('button', { name: '套用顏色', exact: true }).tap();
   expect((await project(page)).tracks[1]!.items[0]!.card!.runs[0]!.color).toBe('#125acd');
   await page.getByRole('tab', { name: '裝飾', exact: true }).tap();
   await page.getByRole('button', { name: '裝飾 波浪底線', exact: true }).tap();
@@ -130,7 +134,11 @@ test('第一支影片延後，白底與開場文字正確合成，重新整理�
   await openTab(page, '文字');
   await page.getByRole('button', { name: /新增文字/ }).tap();
   await page.getByLabel('文字內容').fill('一段小小的開場');
-  await page.getByLabel('文字顏色色碼', { exact: true }).fill('#125acd');
+  await page.getByRole('button', { name: '文字顏色自訂', exact: true }).tap();
+  await page.getByLabel('色彩 R', { exact: true }).fill('18');
+  await page.getByLabel('色彩 G', { exact: true }).fill('90');
+  await page.getByLabel('色彩 B', { exact: true }).fill('205');
+  await page.getByRole('button', { name: '套用顏色', exact: true }).tap();
   await page.screenshot({ path: `${shot}/white-intro.png` });
   await page.getByTestId('timeline-scroll').evaluate((el) => {
     el.scrollLeft = 3 * 60;

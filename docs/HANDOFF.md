@@ -1,6 +1,13 @@
 # 交接手冊（HANDOFF）
 
 ## VideoClip_2 當前交接（優先於以下來源 repo 的歷史紀錄）
+- 最新子任務：docs/plans/2026-11-12-editor-completion.md，已寫本機 235 單元成功，60 e2e 待 CI。以下 227/50 是先前正式版。
+- 新資料：DB v3 library（獨立 Blob/裁切設定）；GIPHY Key 僅 meta:giphyKey，絕不可加入 Project/原始碼/日誌/分享檔。Asset.kind 加 audio，VideoItem.type 加 audio，音軌共用 Item 時間/修剪但 buildScene 跳過；Project.freeMain 選填，main 操作須改用 free 函式以保留空隙。
+- 新檔案：engine/materials（色塊/匯入/音訊分離）、audio（預覽音量規則/AudioBus）、gif（時間驅動 GIF）、exportVideo/exportAudio/exportRealtime（完整輸出）、storage/library、store/preferences；UI Assets/Audio/Blank/Crop/Drawing/Export 各有 editor 元件。
+- 遮罩 points 是未裁切來源的 0–1 座標，在 Compositor 裁切後的固定媒體暫存 canvas 以 destination-in 套用，與素材一起旋轉；mask/GIF stamp 要算入貼圖快取鍵。逐格輸出使用 CanvasSink 的 Canvas/OffscreenCanvas，不能誤當成 HTMLVideoElement 讀 dataset。
+- 預覽品質預設 1080，720/1920 可選；文字獨立高密度。AudioBus 的 AudioContext 必須由播放手勢 resume；音訊-only 素材的 priming 不能等永遠不會來的 video frame callback。
+- 逐格音訊用每 10 秒 chunk 混音避免整支音訊留在記憶體；相容匯出則先在按鈕手勢建立/解鎖 AudioContext，傳進獨立 Player。暫不把 MP4 視為所有瀏覽器都能輸出，格式在完成後明示。
+
 - 最新驗收：程式 c9709ed，工作分支 run 43130792200 與 main run 43131468570 均 227 單元/50 e2e 全過；Pages 已發布並核對公開主程式 SHA-256。45 張新截圖。Safari 真機限制見 PROGRESS 交接快照。
 - 最新工作：iPhone 實測 8 項修正，規劃/驗收見 docs/plans/2026-11-11-mobile-editor-feedback.md。最新偏好取消浮動圓鈕，用框上兩指手勢，與來源的右上角按鈕規格不同。
 - 新資料欄位皆選填：Project.mainOffset/background/layout、Track.template、VideoItem.slot、Decoration.offset、CardBox.softness/depth。主軌 store 寫回時必須重新套用 offset；itemAt 在第一個 start 之前回 null，不能提前畫原片。

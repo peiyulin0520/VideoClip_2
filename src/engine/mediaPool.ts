@@ -7,6 +7,7 @@ export class VideoPool {
   private tick = 0;
   private destroyed = false;
   private retries = new Map<HTMLVideoElement, number>();
+  private frameCallbacks = new Map<HTMLVideoElement, number>();
 
   constructor(
     host: HTMLElement,
@@ -44,13 +45,22 @@ export class VideoPool {
           if (v.dataset.previewIntent !== 'play') v.pause();
           changed();
         };
-        if (v.requestVideoFrameCallback) v.requestVideoFrameCallback(finish);
+        const audio = v.dataset.mediaKind === 'audio';
+        if (!audio && v.requestVideoFrameCallback) v.requestVideoFrameCallback(finish);
         void v.play().then(() => {
-          if (!v.requestVideoFrameCallback) finish();
+          if (audio || !v.requestVideoFrameCallback) finish();
         }, finish);
       });
       host.appendChild(v);
       this.els.push(v);
+      if (v.requestVideoFrameCallback) {
+        const frame = () => {
+          if (this.destroyed) return;
+          changed();
+          this.frameCallbacks.set(v, v.requestVideoFrameCallback(frame));
+        };
+        this.frameCallbacks.set(v, v.requestVideoFrameCallback(frame));
+      }
     }
   }
 
@@ -64,6 +74,7 @@ export class VideoPool {
     assetId: string,
     url: string,
     protect: Set<HTMLVideoElement>,
+    audio = false,
   ): HTMLVideoElement | null {
     let el = this.find(itemId);
     if (!el) {
@@ -80,6 +91,7 @@ export class VideoPool {
       delete el.dataset.primed;
       delete el.dataset.priming;
     }
+    el.dataset.mediaKind = audio ? 'audio' : 'video';
     if (el.dataset.assetId !== assetId) {
       delete el.dataset.priming;
       el.src = url;
@@ -92,7 +104,7 @@ export class VideoPool {
       const poll = () => {
         if (this.destroyed) return;
         onChangeForPool();
-        if (++frames < 120 && (el!.readyState < 2 || el!.seeking || !el!.videoWidth))
+        if (++frames < 120 && (el!.readyState < 2 || el!.seeking || (!audio && !el!.videoWidth)))
           this.retries.set(el!, requestAnimationFrame(poll));
         else this.retries.delete(el!);
       };
@@ -111,11 +123,11 @@ export class VideoPool {
   unlock() {
     for (const v of this.els) {
       if (!v.paused || v.dataset.unlocked) continue;
-      v.muted = true;
+      v.muted = false;
       void v.play().then(
         () => {
           v.dataset.unlocked = '1';
-          v.pause();
+          if (v.dataset.previewIntent !== 'play') v.pause();
         },
         () => {},
       );
@@ -126,6 +138,8 @@ export class VideoPool {
     this.destroyed = true;
     for (const raf of this.retries.values()) cancelAnimationFrame(raf);
     this.retries.clear();
+    for (const [el, id] of this.frameCallbacks) el.cancelVideoFrameCallback?.(id);
+    this.frameCallbacks.clear();
     for (const v of this.els) {
       v.pause();
       v.removeAttribute('src');

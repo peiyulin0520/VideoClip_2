@@ -37,6 +37,7 @@ export function croppedSource(asset: Asset, crop?: Crop): { w: number; h: number
 }
 
 export function itemBox(item: Item, ctx: GeoCtx): Box | null {
+  if (item.type === 'audio') return null;
   const { canvasW: cw, canvasH: ch } = ctx;
   const { x, y, scale, rotation } = item.transform;
   let w: number;

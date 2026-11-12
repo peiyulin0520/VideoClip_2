@@ -56,7 +56,12 @@ export function layersAt(p: Project, t: number, includeHidden: boolean): Layer[]
   p.tracks.forEach((track, trackIndex) => {
     if (track.hidden && !includeHidden) return;
     if (track.kind === 'main') {
-      const hit = itemAt(track.items as VideoItem[], t);
+      const hit = p.freeMain
+        ? (() => {
+            const item = track.items.find((x) => t >= x.start && t < itemEnd(x));
+            return item ? { item } : null;
+          })()
+        : itemAt(track.items as VideoItem[], t);
       if (hit) out.push({ item: hit.item, track, trackIndex });
       return;
     }

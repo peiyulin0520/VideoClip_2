@@ -48,8 +48,12 @@ import { Slider } from '../../ui/Slider';
 import { ColorPicker } from '../../ui/ColorPicker';
 import { TemplatePanel } from './TemplatePanel';
 import { TextPanel } from './TextPanel';
+import { AssetsPanel } from './AssetsPanel';
+import { AudioPanel } from './AudioPanel';
+import { BlankPanel } from './BlankPanel';
+import { CropEditor } from './CropEditor';
 
-export type Tab = 'edit' | 'overlay' | 'text' | 'layers' | 'layout';
+export type Tab = 'edit' | 'overlay' | 'text' | 'layers' | 'layout' | 'assets' | 'audio';
 type Panel = 'speed' | 'volume' | 'opening' | null;
 
 const TABS: { id: Tab; label: string }[] = [
@@ -58,6 +62,8 @@ const TABS: { id: Tab; label: string }[] = [
   { id: 'text', label: '文字' },
   { id: 'layers', label: '圖層' },
   { id: 'layout', label: '版型' },
+  { id: 'assets', label: '素材' },
+  { id: 'audio', label: '音訊' },
 ];
 
 function ToolButton({
@@ -132,6 +138,8 @@ export function BottomBar({
       {!collapsed && tab === 'text' && <TextTab found={found} />}
       {!collapsed && tab === 'layers' && <LayersTab />}
       {!collapsed && tab === 'layout' && <TemplatePanel />}
+      {!collapsed && tab === 'assets' && <AssetsPanel />}
+      {!collapsed && tab === 'audio' && <AudioPanel />}
     </div>
   );
 }
@@ -154,6 +162,7 @@ function EditTab({
   const project = useProjectStore((s) => s.project)!;
   const player = useUI((s) => s.player);
   const selected = found?.item;
+  const [cropping, setCropping] = useState(false);
   const isMain = found?.track.kind === 'main';
 
   const need = (): Item | undefined => {
@@ -188,7 +197,7 @@ function EditTab({
   const move = (dir: -1 | 1) => {
     const s = need();
     if (!s) return;
-    if (!isMain) return toast('疊加素材請長按後左右拖曳，調整出現的時間');
+    if (!isMain || project.freeMain) return toast('請長按片段後左右拖曳，調整出現的時間');
     const idx = found!.index;
     if (idx + dir < 0 || idx + dir >= items.length) return toast(dir < 0 ? '已經是第一個' : '已經是最後一個');
     setMainItems(moveItem(items, s.id, idx + dir));
@@ -228,7 +237,8 @@ function EditTab({
             onChange={(e) => setMainOffset(Number(e.target.value))}
           />
         </label>
-        <p className="hint">前面保留空白底色，可在 0 秒加入文字或圖形做首圖；主軌片段一起延後。</p>
+        <BlankPanel />
+        <p className="hint">舊版開場秒數仍保留相容；建議新增留白素材，可直接在時間軸移動與修剪。</p>
         <div className="chips">
           <button
             className="chip"
@@ -271,7 +281,7 @@ function EditTab({
       editItem(selected.id, (it) => void Object.assign(it, patch), coalesce ? { coalesce } : undefined);
     const applySpeed = (v: number, coalesce?: string) => {
       const f = findItem(project, selected.id)!;
-      if (f.track.kind === 'main')
+      if (f.track.kind === 'main' && !project.freeMain)
         setMainItems(
           setSpeed(f.track.items as VideoItem[], selected.id, v),
           coalesce ? { coalesce } : undefined,
@@ -359,6 +369,18 @@ function EditTab({
   return (
     <div className="toolbar" role="toolbar" aria-label="剪輯工具">
       <ToolButton icon={Plus} label="匯入" onClick={onImport} />
+      <ToolButton
+        icon={Maximize}
+        label="裁切"
+        onClick={() => {
+          if (!selected || selected.type === 'text' || selected.type === 'audio')
+            return toast('請先選擇影片或圖片');
+          setCropping(true);
+        }}
+      />
+      {cropping && selected && selected.type !== 'text' && selected.type !== 'audio' && (
+        <CropEditor item={selected} onClose={() => setCropping(false)} />
+      )}
       <ToolButton icon={Film} label="開場留白" onClick={() => setPanel('opening')} />
       <ToolButton icon={Scissors} label="分割" onClick={split} />
       <ToolButton icon={Trash2} label="刪除" onClick={remove} />

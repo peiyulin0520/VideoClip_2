@@ -8,6 +8,7 @@ import { storageEstimate } from '../../storage/media';
 import { useApp } from '../../store/appStore';
 import { toast, useUI } from '../../store/uiStore';
 import { percent, usePackInstall } from '../fonts/usePackInstall';
+import { THEMES, usePreferences, type Theme } from '../../store/preferences';
 
 const MODES: { mode: BackupMode; label: string }[] = [
   { mode: 'files', label: '存在手機檔案（匯出 .zip）' },
@@ -16,6 +17,7 @@ const MODES: { mode: BackupMode; label: string }[] = [
 ];
 
 export function Settings() {
+  const prefs = usePreferences();
   const installed = useFonts((s) => s.installed);
   const userFonts = useFonts((s) => s.userFonts);
   const backup = useApp((s) => s.state.backup);
@@ -55,6 +57,36 @@ export function Settings() {
         <h1>設定</h1>
       </header>
 
+      <section aria-label="介面外觀">
+        <h2>介面外觀與預覽</h2>
+        <label className="field">
+          網頁風格
+          <select
+            aria-label="網頁風格"
+            value={prefs.theme}
+            onChange={(e) => prefs.set({ theme: e.target.value as Theme })}
+          >
+            {Object.entries(THEMES).map(([id, name]) => (
+              <option key={id} value={id}>
+                {name}
+              </option>
+            ))}
+          </select>
+        </label>
+        <label className="field">
+          預覽品質
+          <select
+            aria-label="預覽品質"
+            value={prefs.preview}
+            onChange={(e) => prefs.set({ preview: Number(e.target.value) })}
+          >
+            <option value={720}>流暢（720）</option>
+            <option value={1080}>平衡（1080）</option>
+            <option value={1920}>精細（1920）</option>
+          </select>
+        </label>
+        <p className="hint">只影響編輯時的預覽，最終匯出可另外選擇解析度。</p>
+      </section>
       <section aria-label="字體">
         <h2>字體</h2>
         <p className="hint">

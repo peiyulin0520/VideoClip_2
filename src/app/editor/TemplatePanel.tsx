@@ -92,11 +92,13 @@ export function TemplatePanel() {
             }}
           >
             <option value="">選擇素材</option>
-            {project.assets.map((a) => (
-              <option key={a.id} value={a.id}>
-                {a.name}
-              </option>
-            ))}
+            {project.assets
+              .filter((a) => a.kind !== 'audio')
+              .map((a) => (
+                <option key={a.id} value={a.id}>
+                  {a.name}
+                </option>
+              ))}
           </select>
         </label>
       ))}

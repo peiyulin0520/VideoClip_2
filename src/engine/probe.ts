@@ -1,12 +1,13 @@
 import { ALL_FORMATS, BlobSource, CanvasSink, Input } from 'mediabunny';
 import type { Asset } from '../model/types';
 
-export type MediaKind = 'video' | 'image';
+export type MediaKind = 'video' | 'image' | 'audio';
 
 const VIDEO_EXT = /\.(mp4|m4v|mov|webm|mkv|3gp|avi)$/i;
 const IMAGE_EXT = /\.(jpe?g|png|webp|gif|heic|heif|avif|bmp)$/i;
 
 export function mediaKindOf(file: File): MediaKind | null {
+  if (file.type.startsWith('audio/') || /\.(mp3|m4a|wav|ogg|flac|aac|opus)$/i.test(file.name)) return 'audio';
   if (file.type.startsWith('video/')) return 'video';
   if (file.type.startsWith('image/')) return 'image';
   if (VIDEO_EXT.test(file.name)) return 'video';
@@ -165,6 +166,18 @@ export type ProbeResult =
 export async function probeMedia(file: File, kind: MediaKind): Promise<ProbeResult> {
   const url = URL.createObjectURL(file);
   try {
+    if (kind === 'audio') {
+      const input = new Input({ source: new BlobSource(file), formats: ALL_FORMATS });
+      try {
+        const track = await input.getPrimaryAudioTrack(),
+          duration = await input.computeDuration();
+        if (!track || !Number.isFinite(duration) || duration <= 0)
+          return { ok: false, reason: '讀不到音訊資訊' };
+        return { ok: true, info: { kind, duration, width: 1, height: 1, hasAudio: true, thumbs: [] } };
+      } finally {
+        input.dispose();
+      }
+    }
     if (kind === 'image') {
       const info = await imageInfo(file, url);
       if (!info) return { ok: false, reason: '這個瀏覽器讀不了這張圖片' };

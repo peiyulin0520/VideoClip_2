@@ -11,10 +11,11 @@ export type SourceProvider = (
   asset: Asset,
   track: Track,
 ) => {
-  source: HTMLVideoElement | HTMLImageElement | ImageBitmap;
+  source: HTMLVideoElement | HTMLImageElement | ImageBitmap | HTMLCanvasElement | OffscreenCanvas;
   ready: boolean;
   srcW: number;
   srcH: number;
+  stamp?: number;
 } | null;
 
 export function geoCtx(project: Project, canvasW: number, canvasH: number): GeoCtx {
@@ -78,6 +79,7 @@ function toLayer(
   ctx: GeoCtx,
   provide: SourceProvider,
 ): SceneLayer | null {
+  if (item.type === 'audio') return null;
   const box = itemBox(item, ctx);
   if (!box) return null;
   const common = {
@@ -88,6 +90,7 @@ function toLayer(
     cornerRadius: item.cornerRadius ?? 0,
     outline: item.outline,
     crop: item.crop,
+    mask: item.type !== 'text' ? item.mask : undefined,
   };
   if (item.type === 'text') {
     const r = renderText(
@@ -112,7 +115,7 @@ function toLayer(
     ctx.canvasH * (item.slot?.h ?? 1),
     item.fit,
   );
-  const k = Math.min(2, Math.max(cw / base.w, 1));
+  const k = 1; // Upload only the compositor's media resolution; titles keep their independent supersampling.
   return {
     ...common,
     kind: item.type,
@@ -120,6 +123,7 @@ function toLayer(
     ready: src.ready,
     srcW: src.srcW,
     srcH: src.srcH,
+    sourceStamp: src.stamp,
     viewport: item.slot
       ? {
           x: item.slot.x * ctx.canvasW,

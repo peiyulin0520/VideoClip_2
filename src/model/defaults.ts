@@ -101,7 +101,7 @@ export function nextProjectName(existing: string[]): string {
 
 export const TEXT_DEFAULT_DURATION = 3;
 
-const TRACK_NAMES: Record<TrackKind, string> = { main: '主軌', overlay: '疊加', text: '文字' };
+const TRACK_NAMES: Record<TrackKind, string> = { main: '主軌', overlay: '疊加', text: '文字', audio: '音軌' };
 
 export function createTrack(kind: TrackKind, existing: Track[]): Track {
   const n = existing.filter((t) => t.kind === kind).length + 1;

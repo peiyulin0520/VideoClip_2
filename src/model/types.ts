@@ -5,7 +5,7 @@ export type Aspect = '9:16' | '16:9' | '1:1' | '3:4' | '4:3';
 
 export type Asset = {
   id: string;
-  kind: 'video' | 'image';
+  kind: 'video' | 'image' | 'audio';
   name: string;
   mime: string;
   size: number; // bytes
@@ -15,6 +15,9 @@ export type Asset = {
   hasAudio: boolean;
   /** 小縮圖（JPEG dataURL），沿著素材時間平均取樣，用於時間軸與專案封面 */
   thumbs: string[];
+  generated?: { color: string };
+  origin?: 'upload' | 'drawing' | 'giphy';
+  attribution?: { title: string; url: string };
 };
 
 export type Transform = { x: number; y: number; scale: number; rotation: number; opacity: number };
@@ -37,11 +40,13 @@ export type ItemBase = {
 };
 
 export type VideoItem = ItemBase & {
-  type: 'video' | 'image';
+  type: 'video' | 'image' | 'audio';
   assetId: string;
   trimIn: number; // 素材內的起點（秒）
   speed: number; // 0.25–4；照片固定 1
   volume: number; // 0–1
+  audioEnabled?: boolean;
+  mask?: { points: [number, number][] };
   fit: 'cover' | 'contain';
   /** 多格版型的固定視窗（畫面比例座標）；素材可在視窗內拖移/縮放。 */
   slot?: { x: number; y: number; w: number; h: number };
@@ -78,7 +83,14 @@ export type DecorationKind =
   | 'check'
   | 'corner-brackets';
 /** 字卡裝飾。width：線寬，佔文字墨跡高度的比例（星星、愛心、螢光筆不用） */
-export type Decoration = { kind: DecorationKind; color: string; width: number; offset?: number };
+export type Decoration = {
+  kind: DecorationKind;
+  color: string;
+  width: number;
+  offset?: number;
+  length?: number;
+  opacity?: number;
+};
 export type BoxShape =
   | 'rect'
   | 'roundRect'
@@ -139,7 +151,7 @@ export type TextItem = ItemBase & { type: 'text'; card: TextCard };
 export type Item = VideoItem | TextItem;
 
 /** 軌道由下往上排列 = 圖層順序；index 0 一定是主軌 */
-export type TrackKind = 'main' | 'overlay' | 'text';
+export type TrackKind = 'main' | 'overlay' | 'text' | 'audio';
 
 export type Track = {
   id: string;
@@ -164,6 +176,7 @@ export type Project = {
   height: number;
   fps: number;
   mainOffset?: number;
+  freeMain?: boolean;
   background?: string;
   layout?: {
     style: 'photobooth' | 'filmstrip' | 'polaroid';

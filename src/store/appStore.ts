@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 import { DEFAULT_APP_STATE, loadAppState, saveAppState, type AppState } from '../storage/appState';
 import { listProjects } from '../storage/projects';
+import { getDB } from '../storage/db';
 
 type Store = {
   loaded: boolean;
@@ -26,7 +27,11 @@ export const useApp = create<Store>((set, get) => ({
     let st = await loadAppState();
     if (!st) {
       // 這台裝置已經有專案（精靈上線前就在用）：視為不是第一次，不跳精靈
-      const hasData = (await listProjects()).length > 0;
+      const db = await getDB();
+      const hasData =
+        (await listProjects()).length > 0 ||
+        (await db.count('userFonts')) > 0 ||
+        (await db.count('library')) > 0;
       st = { ...DEFAULT_APP_STATE, onboarded: hasData || skipFlag() };
       if (st.onboarded && !skipFlag()) await saveAppState(st);
     }

@@ -541,8 +541,8 @@ export function TextPanel({
                 <Slider
                   label={`${def.label}與文字距離`}
                   value={Math.round((d.offset ?? 0) * 100)}
-                  min={-100}
-                  max={200}
+                  min={-500}
+                  max={1000}
                   step={1}
                   format={(v) => `${v}% 字高`}
                   onChange={(v) => edit((c) => void (c.decorations![i]!.offset = v / 100), `decoOffset${i}`)}
@@ -551,13 +551,33 @@ export function TextPanel({
                   <Slider
                     label={`${def.label}粗細`}
                     value={Math.round(d.width * 100)}
-                    min={3}
-                    max={25}
-                    step={1}
+                    min={0.5}
+                    max={200}
+                    step={0.5}
                     format={(v) => `${v}%`}
                     onChange={(v) => edit((c) => void (c.decorations![i]!.width = v / 100), `deco${i}`)}
                   />
                 )}
+                <Slider
+                  label={`${def.label}長度`}
+                  value={Math.round((d.length ?? 1) * 100)}
+                  min={5}
+                  max={500}
+                  step={1}
+                  format={(v) => `${v}%`}
+                  onChange={(v) => edit((c) => void (c.decorations![i]!.length = v / 100), `decoLength${i}`)}
+                />
+                <Slider
+                  label={`${def.label}透明度`}
+                  value={Math.round((d.opacity ?? 1) * 100)}
+                  min={0}
+                  max={100}
+                  step={1}
+                  format={(v) => `${v}%`}
+                  onChange={(v) =>
+                    edit((c) => void (c.decorations![i]!.opacity = v / 100), `decoOpacity${i}`)
+                  }
+                />
               </div>
             );
           })}

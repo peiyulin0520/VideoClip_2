@@ -1,6 +1,7 @@
 import type { Asset, Project, VideoItem } from '../model/types';
 import { Compositor } from './compositor';
 import { buildScene } from './scene';
+import { AnimatedGif } from './gif';
 import { sourceTimeAt, visibleLayers } from './timeline';
 
 function once(el: EventTarget, ok: string, ms = 8000): Promise<void> {
@@ -17,7 +18,12 @@ function once(el: EventTarget, ok: string, ms = 8000): Promise<void> {
   });
 }
 
-type Prepared = { source: HTMLVideoElement | HTMLImageElement; w: number; h: number };
+type Prepared = {
+  source: HTMLVideoElement | HTMLImageElement | HTMLCanvasElement;
+  w: number;
+  h: number;
+  stamp?: number;
+};
 
 /**
  * 把專案在 t 秒的那一格，用「輸出解析度」畫成 PNG（匯出整支影片時每一格也是走同一套 buildScene + Compositor）。
@@ -34,11 +40,24 @@ export async function renderFrame(
   try {
     await Promise.all(
       visibleLayers(project, t).map(async ({ item }) => {
-        if (item.type === 'text') return;
+        if (item.type === 'text' || item.type === 'audio') return;
         const asset = project.assets.find((a) => a.id === item.assetId);
         const url = urlFor(item.assetId);
         if (!asset || !url) return;
         if (item.type === 'image') {
+          if (asset.mime === 'image/gif') {
+            const blob = await (await fetch(url)).blob(),
+              gif = await AnimatedGif.load(blob);
+            cleanup.push(() => gif.destroy());
+            const frame = gif.frame(sourceTimeAt(item, t));
+            prepared.set(item.id, {
+              source: frame.canvas,
+              w: frame.canvas.width,
+              h: frame.canvas.height,
+              stamp: frame.stamp,
+            });
+            return;
+          }
           const img = new Image();
           img.src = url;
           await img.decode();
@@ -66,7 +85,13 @@ export async function renderFrame(
       const scene = buildScene(project, t, size.width, size.height, (item: VideoItem, asset: Asset) => {
         const p = prepared.get(item.id);
         return p
-          ? { source: p.source, ready: true, srcW: p.w || asset.width, srcH: p.h || asset.height }
+          ? {
+              source: p.source,
+              ready: true,
+              srcW: p.w || asset.width,
+              srcH: p.h || asset.height,
+              stamp: p.stamp,
+            }
           : null;
       });
       comp.render(scene, project.background ?? '#000000');

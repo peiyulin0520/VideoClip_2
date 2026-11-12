@@ -74,6 +74,18 @@ export function Welcome() {
             <button className="btn big" onClick={() => setStep('restore')}>
               不是，我換了手機或清除過資料
             </button>
+            <button
+              className="btn big"
+              onClick={() => {
+                void requestPersistence();
+                void update({ onboarded: true });
+              }}
+            >
+              同一台裝置，繼續使用
+            </button>
+            <p className="hint">
+              已匯入字體、專案與收藏素材會留在這個瀏覽器，不需要重新匯入。完成設定後，下次會直接進首頁。
+            </p>
           </>
         )}
 

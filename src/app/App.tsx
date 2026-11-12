@@ -8,9 +8,14 @@ import { Home } from './pages/Home';
 import { Settings } from './pages/Settings';
 import { Welcome } from './Welcome';
 import { Placeholder } from './pages/Placeholder';
+import { usePreferences } from '../store/preferences';
 
 // HashRouter：GitHub Pages 是子路徑（/VideoClip_2/），用 #/ 路由才不會 404。
 export function App() {
+  const theme = usePreferences((s) => s.theme);
+  useEffect(() => {
+    document.documentElement.dataset.theme = theme;
+  }, [theme]);
   const loaded = useApp((s) => s.loaded);
   const onboarded = useApp((s) => s.state.onboarded);
   useEffect(() => {

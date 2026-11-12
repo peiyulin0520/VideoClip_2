@@ -104,7 +104,7 @@ export function removeAnyItem(id: string): boolean {
     (d) => {
       const tr = d.tracks[f.trackIndex]!;
       tr.items = (
-        f.track.kind === 'main'
+        f.track.kind === 'main' && !p.freeMain
           ? relayout(removeItem(tr.items as VideoItem[], id), d.mainOffset ?? 0)
           : tr.items.filter((x) => x.id !== id)
       ) as never;
@@ -119,7 +119,7 @@ export function splitAny(id: string, t: number): string | null {
   const f = p && findItem(p, id);
   if (!p || !f) return null;
   const out =
-    f.track.kind === 'main'
+    f.track.kind === 'main' && !p.freeMain
       ? splitItem(f.track.items as VideoItem[], id, t)
       : splitFree(f.track.items, id, t);
   if (!out) return null;
@@ -127,7 +127,7 @@ export function splitAny(id: string, t: number): string | null {
   store().apply(
     (d) => {
       d.tracks[f.trackIndex]!.items = (
-        f.track.kind === 'main' ? relayout(out as VideoItem[], d.mainOffset ?? 0) : out
+        f.track.kind === 'main' && !p.freeMain ? relayout(out as VideoItem[], d.mainOffset ?? 0) : out
       ) as never;
     },
     { select: right.id },
@@ -140,14 +140,14 @@ export function duplicateAny(id: string): boolean {
   const f = p && findItem(p, id);
   if (!p || !f) return false;
   const r =
-    f.track.kind === 'main'
+    f.track.kind === 'main' && !p.freeMain
       ? duplicateItem(f.track.items as VideoItem[], id)
       : duplicateFree(f.track.items, id);
   if (!r) return false;
   store().apply(
     (d) => {
       d.tracks[f.trackIndex]!.items = (
-        f.track.kind === 'main' ? relayout(r.items as VideoItem[], d.mainOffset ?? 0) : r.items
+        f.track.kind === 'main' && !p.freeMain ? relayout(r.items as VideoItem[], d.mainOffset ?? 0) : r.items
       ) as never;
     },
     { select: r.newId },
@@ -185,7 +185,7 @@ export function removeTrack(trackId: string) {
 export function placeItem(id: string, start: number, opts?: Opts) {
   const p = store().project;
   const f = p && findItem(p, id);
-  if (!p || !f || f.track.kind === 'main') return;
+  if (!p || !f || (f.track.kind === 'main' && !p.freeMain)) return;
   const s = findFreeStart(f.track.items, start, f.item.duration, id);
   editItem(id, (it) => void (it.start = s), opts);
 }

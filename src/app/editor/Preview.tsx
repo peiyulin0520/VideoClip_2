@@ -5,6 +5,7 @@ import { installDebugHook } from '../../engine/debug';
 import { useFonts } from '../../fonts/fontStore';
 import { itemBox, pointInBox, snapMove, SAFE_BOTTOM, SAFE_RIGHT, topHit } from '../../engine/geometry';
 import { Player } from '../../engine/player';
+import { usePreferences } from '../../store/preferences';
 import { layoutMotion } from '../../engine/layouts';
 import { geoCtx } from '../../engine/scene';
 import { findItem, visibleLayers } from '../../engine/timeline';
@@ -36,6 +37,7 @@ type Gesture =
     };
 
 export function Preview({ projectId, width, height }: { projectId: string; width: number; height: number }) {
+  const previewCap = usePreferences((s) => s.preview);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const poolRef = useRef<HTMLDivElement>(null);
   const stageRef = useRef<HTMLDivElement>(null);
@@ -88,7 +90,7 @@ export function Preview({ projectId, width, height }: { projectId: string; width
       created?.destroy();
       useUI.setState({ player: null });
     };
-  }, [projectId, width, height]); // 比例改了（寬高變了）就重建預覽引擎
+  }, [projectId, width, height, previewCap]); // 比例改了（寬高變了）就重建預覽引擎
 
   // ---- 舞台大小（CSS px）----
   useEffect(() => {
@@ -291,7 +293,7 @@ export function Preview({ projectId, width, height }: { projectId: string; width
         onPointerCancel={onPointerUp}
       >
         {/* key：比例改變就換一個新的 canvas（舊的 WebGL 環境被 Pixi 銷毀後不能在同一個 canvas 上重建） */}
-        <canvas key={`${width}x${height}`} ref={canvasRef} data-testid="preview-canvas" />
+        <canvas key={`${width}x${height}:${previewCap}`} ref={canvasRef} data-testid="preview-canvas" />
         <div ref={poolRef} className="pool" aria-hidden="true" />
 
         {(safe || dragging) && (

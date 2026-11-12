@@ -16,6 +16,7 @@ import { Sheet } from '../../ui/Sheet';
 import { Preview } from '../editor/Preview';
 import { Timeline, MAX_PPS, MIN_PPS } from '../editor/Timeline';
 import { BottomBar } from '../editor/Toolbar';
+import { ExportPanel } from '../editor/ExportPanel';
 
 export function Editor() {
   const { projectId = '' } = useParams();
@@ -80,6 +81,7 @@ function EditorBody() {
   const [playing, setPlaying] = useState(false);
   const [renaming, setRenaming] = useState(false);
   const [ratioOpen, setRatioOpen] = useState(false);
+  const [exportOpen, setExportOpen] = useState(false);
   const [nameDraft, setNameDraft] = useState('');
   const total = totalDuration(project);
 
@@ -123,7 +125,15 @@ function EditorBody() {
             const first = res.assets[0];
             if (d.aspectAuto && tr.items.length === 0 && first)
               assignAspect(d, pickAspect(first.width, first.height), true);
-            tr.items = relayout([...(tr.items as typeof res.clips), ...res.clips], d.mainOffset ?? 0);
+            tr.items = d.freeMain
+              ? [
+                  ...tr.items,
+                  ...res.clips.map((it, i) => ({
+                    ...it,
+                    start: startOfNew + res.clips.slice(0, i).reduce((n, x) => n + x.duration, 0),
+                  })),
+                ]
+              : relayout([...(tr.items as typeof res.clips), ...res.clips], d.mainOffset ?? 0);
           });
           player?.seek(startOfNew);
         }
@@ -177,7 +187,11 @@ function EditorBody() {
         >
           <Redo2 size={22} />
         </button>
+        <button className="export-button" aria-label="匯出影片" onClick={() => setExportOpen(true)}>
+          匯出
+        </button>
       </header>
+      {exportOpen && <ExportPanel onClose={() => setExportOpen(false)} />}
 
       <Preview projectId={project.id} width={project.width} height={project.height} />
       {empty && (

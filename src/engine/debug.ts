@@ -4,6 +4,7 @@ import { ensureFont } from '../fonts/fontStore';
 import type { TextCard } from '../model/types';
 import { renderFrame } from './exportFrame';
 import { renderText } from './textRender';
+import { ALL_FORMATS, AudioBufferSink, BlobSource, CanvasSink, Input } from 'mediabunny';
 import type { Player } from './player';
 
 /** 測試/除錯用：localStorage 的 lm2-debug 設成 1 才會掛出 window.__videoclip。正常使用者看不到。 */
@@ -20,6 +21,52 @@ export function installDebugHook(player: Player) {
     project: () => JSON.parse(JSON.stringify(useProjectStore.getState().project)),
     time: () => player.time,
     selected: () => useProjectStore.getState().selectedId,
+    audioEnergy: () => player.audioEnergy(),
+    async inspectMovie(url: string, t: number, points: [number, number][] = []) {
+      if (!url.startsWith('blob:')) throw Error('Only local exported movies');
+      const blob = await (await fetch(url)).blob();
+      const input = new Input({ source: new BlobSource(blob), formats: ALL_FORMATS });
+      try {
+        const duration = await input.computeDuration(),
+          video = await input.getPrimaryVideoTrack(),
+          audio = await input.getPrimaryAudioTrack();
+        const frame = video ? await new CanvasSink(video).getCanvas(t) : null;
+        const canvas = document.createElement('canvas');
+        canvas.width = frame?.canvas.width ?? 1;
+        canvas.height = frame?.canvas.height ?? 1;
+        const ctx = canvas.getContext('2d')!;
+        if (frame) ctx.drawImage(frame.canvas, 0, 0);
+        let rms = 0;
+        if (audio && (await audio.canDecode()))
+          for await (const chunk of new AudioBufferSink(audio).buffers(
+            Math.max(0, t),
+            Math.min(duration, t + 0.2),
+          )) {
+            const data = chunk.buffer.getChannelData(0);
+            rms = Math.max(rms, Math.sqrt(data.reduce((n, v) => n + v * v, 0) / data.length));
+          }
+        const pixels = ctx.getImageData(0, 0, canvas.width, canvas.height).data;
+        let whitePixels = 0;
+        for (let i = 0; i < pixels.length; i += 4)
+          if (pixels[i]! > 230 && pixels[i + 1]! > 230 && pixels[i + 2]! > 230) whitePixels++;
+        return {
+          whitePixels,
+          duration,
+          width: video?.displayWidth ?? 0,
+          height: video?.displayHeight ?? 0,
+          audio: !!audio,
+          rms,
+          bytes: blob.size,
+          samples: points.map(([x, y]) =>
+            Array.from(
+              ctx.getImageData(Math.floor(x * canvas.width), Math.floor(y * canvas.height), 1, 1).data,
+            ),
+          ),
+        };
+      } finally {
+        input.dispose();
+      }
+    },
     /** 預覽畫面某區塊（0–1 比例）裡，和 rgb 差不多（每個色版差 tol 以內）的像素有幾個 */
     countColor(
       rgb: [number, number, number],

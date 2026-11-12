@@ -19,3 +19,5 @@ font.save('tests/fixtures/ui-noto-sans-tc.ttf')
 ```
 
 原因：runner 的預設 fontconfig 沒有採用 WOFF2 作系統字體，fc-match 仍為 DejaVu Sans。改 TTF 另用 ui-fontconfig.conf 將原 CSS 家族 Noto Sans TC 對應到裁切後的內部家族名稱 Noto Sans TC VC Subset，並在 CI 斷言 fc-match 中字為 Noto Sans TC，避免產出中文字方框截圖。原網站公開 WOFF2、使用者字體及生產程式未變。
+
+2026-11-12：tone-video.webm 為 ffmpeg color=red 160×284/24fps/3 秒，合成 440Hz 正弦波/48kHz/Opus；music.wav 為 660Hz/48kHz/3 秒 PCM。animated-sticker.gif 是自行生成的 120×120 透明背景紅/綠圓，兩格各 300ms、disposal=2，測試透明動畫與匯出，沒有第三方圖片或真人影片。

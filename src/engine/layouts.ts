@@ -46,7 +46,7 @@ export function collagePlan(
   wanted: number,
 ) {
   const slots = layoutSlots(style),
-    assets = slots.map((_, i) => project.assets.find((a) => a.id === ids[i]));
+    assets = slots.map((_, i) => project.assets.find((a) => a.id === ids[i] && a.kind !== 'audio'));
   if (assets.some((a) => !a)) throw Error('請為每格選擇影片或照片');
   const duration = Math.min(
     Math.max(0.2, wanted),

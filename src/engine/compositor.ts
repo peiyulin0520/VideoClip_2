@@ -4,7 +4,8 @@ import type { BlendMode, Crop, Outline } from '../model/types';
 import type { Box } from './geometry';
 import { uiScale } from './textRender';
 
-export type LayerSource = HTMLVideoElement | HTMLImageElement | HTMLCanvasElement | ImageBitmap;
+export type LayerSource =
+  HTMLVideoElement | HTMLImageElement | HTMLCanvasElement | OffscreenCanvas | ImageBitmap;
 
 /** 一個要畫的圖層（由 scene.ts 依專案與時間算出）。座標都是合成器畫布的像素。 */
 export type SceneLayer = {
@@ -23,6 +24,8 @@ export type SceneLayer = {
   frameW?: number;
   frameH?: number;
   crop?: Crop;
+  mask?: { points: [number, number][] };
+  sourceStamp?: number;
   opacity: number;
   blend: BlendMode;
   cornerRadius: number; // 0–0.5
@@ -173,7 +176,7 @@ export class Compositor {
       }
       if (layer.ready && o.frameCtx) {
         const crop = layer.crop ?? { l: 0, t: 0, r: 0, b: 0 };
-        const video = layer.kind === 'video' ? (layer.source as HTMLVideoElement) : null;
+        const video = layer.source instanceof HTMLVideoElement ? layer.source : null;
         const frameKey = [
           layer.srcW,
           layer.srcH,
@@ -181,7 +184,9 @@ export class Compositor {
           crop.t,
           crop.r,
           crop.b,
-          video?.currentTime,
+          layer.sourceStamp,
+          JSON.stringify(layer.mask),
+          video && !video.requestVideoFrameCallback ? Math.floor(video.currentTime * 30) : undefined,
           video?.getVideoPlaybackQuality?.().totalVideoFrames,
           video?.dataset.frameStamp,
         ].join('|');
@@ -191,7 +196,22 @@ export class Compositor {
         const sh = Math.max(layer.srcH * (1 - crop.t - crop.b), 1);
         if (!o.hasFrame || o.lastSource !== layer.source || o.frameKey !== frameKey)
           try {
+            o.frameCtx.clearRect(0, 0, fw, fh);
             o.frameCtx.drawImage(layer.source, sx, sy, sw, sh, 0, 0, fw, fh);
+            if (layer.mask && layer.mask.points.length >= 3) {
+              o.frameCtx.save();
+              o.frameCtx.globalCompositeOperation = 'destination-in';
+              o.frameCtx.beginPath();
+              layer.mask.points.forEach(([x, y], i) => {
+                const px = ((x - crop.l) / (1 - crop.l - crop.r)) * fw,
+                  py = ((y - crop.t) / (1 - crop.t - crop.b)) * fh;
+                if (i) o.frameCtx!.lineTo(px, py);
+                else o.frameCtx!.moveTo(px, py);
+              });
+              o.frameCtx.closePath();
+              o.frameCtx.fill();
+              o.frameCtx.restore();
+            }
             o.textureSource?.update();
             o.hasFrame = true;
             o.lastSource = layer.source;

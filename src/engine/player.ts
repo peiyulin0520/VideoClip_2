@@ -4,6 +4,10 @@ import { VideoPool } from './mediaPool';
 import { captureThumb } from './probe';
 import { buildScene } from './scene';
 import { mainTrack, sourceTimeAt, totalDuration } from './timeline';
+import { usePreferences } from '../store/preferences';
+import { AudioBus, audibleClips } from './audio';
+import { AnimatedGif } from './gif';
+import { getMedia } from '../storage/media';
 
 type Deps = {
   getProject: () => Project | null;
@@ -15,11 +19,14 @@ type Listener = (t: number, playing: boolean) => void;
 
 const DRIFT = 0.3;
 const PREFETCH_S = 1.0;
-const POOL_SIZE = 6;
+const POOL_SIZE = 8;
 
 /** 預覽保留專案解析度，長邊最多 1920，避免手機高密度螢幕把文字放糊。 */
-export function previewSize(p: Pick<Project, 'width' | 'height'>): { width: number; height: number } {
-  const k = Math.min(1, 1920 / Math.max(p.width, p.height));
+export function previewSize(
+  p: Pick<Project, 'width' | 'height'>,
+  maxSize = usePreferences.getState().preview,
+): { width: number; height: number } {
+  const k = Math.min(1, maxSize / Math.max(p.width, p.height));
   return { width: Math.round(p.width * k), height: Math.round(p.height * k) };
 }
 
@@ -39,20 +46,36 @@ export class Player {
   private listeners = new Set<Listener>();
   private images = new Map<string, HTMLImageElement>();
   private thumbTried = new Set<string>();
+  private gifs = new Map<string, AnimatedGif>();
+  private gifLoading = new Set<string>();
+  private destroyed = false;
+  private bus: AudioBus;
+  private lastEmit = 0;
+  frameReady = false;
 
   private constructor(
     readonly compositor: Compositor,
     private pool: VideoPool,
     private deps: Deps,
-  ) {}
+    audioContext?: AudioContext,
+  ) {
+    this.bus = new AudioBus(pool.els, audioContext);
+  }
 
-  static async create(opts: { host: HTMLElement; canvas: HTMLCanvasElement } & Deps): Promise<Player> {
+  static async create(
+    opts: {
+      host: HTMLElement;
+      canvas: HTMLCanvasElement;
+      maxSize?: number;
+      audioContext?: AudioContext;
+    } & Deps,
+  ): Promise<Player> {
     const p = opts.getProject();
-    const size = p ? previewSize(p) : { width: 540, height: 960 };
+    const size = p ? previewSize(p, opts.maxSize) : { width: 540, height: 960 };
     const compositor = await Compositor.create({ ...size, canvas: opts.canvas });
     let player: Player | null = null;
     const pool = new VideoPool(opts.host, POOL_SIZE, () => player?.scheduleRender());
-    player = new Player(compositor, pool, opts);
+    player = new Player(compositor, pool, opts, opts.audioContext);
     return player;
   }
 
@@ -69,6 +92,9 @@ export class Player {
   }
 
   private emit() {
+    const now = performance.now();
+    if (this.playing && now - this.lastEmit < 80) return;
+    this.lastEmit = now;
     for (const l of this.listeners) l(this.t, this.playing);
   }
 
@@ -100,6 +126,7 @@ export class Player {
     if (total <= 0 || this.playing) return;
     this.previewTime = null;
     if (this.t >= total - 0.01) this.t = 0;
+    this.bus.unlock();
     this.pool.unlock();
     this.playing = true;
     this.wallStart = performance.now();
@@ -143,6 +170,11 @@ export class Player {
     if (!this.playing) return;
     const total = this.total();
     const t = this.tStart + (performance.now() - this.wallStart) / 1000;
+    const frameStep = 1 / (this.deps.getProject()?.fps ?? 30);
+    if (t < this.t + frameStep - 0.002 && t < total) {
+      this.raf = requestAnimationFrame(this.tick);
+      return;
+    }
     if (t >= total) {
       this.t = total;
       this.playing = false;
@@ -172,8 +204,10 @@ export class Player {
   private syncVideo(el: HTMLVideoElement, item: VideoItem, asset: Asset, track: Track, t: number) {
     el.dataset.previewIntent = this.playing ? 'play' : 'pause';
     const s = sourceTimeAt(item, t);
-    el.volume = item.volume;
-    el.muted = !!el.dataset.priming || !!track.muted || !asset.hasAudio || item.volume === 0;
+    const gain = track.muted || item.audioEnabled === false || !asset.hasAudio ? 0 : item.volume;
+    this.bus.set(el, gain);
+    el.muted = !!el.dataset.priming || gain === 0;
+    el.preservesPitch = false;
     el.playbackRate = item.speed;
     if (this.playing) {
       if (Math.abs(el.currentTime - s) > DRIFT && el.readyState >= 1) el.currentTime = s;
@@ -192,11 +226,36 @@ export class Player {
       return;
     }
     const used = new Set<HTMLVideoElement>();
+    this.bus.clear();
 
     const scene = buildScene(p, t, comp.width, comp.height, (item, asset, track) => {
       const url = this.deps.urlFor(asset.id);
       if (!url) return null;
       if (item.type === 'image') {
+        if (asset.mime === 'image/gif') {
+          const gif = this.gifs.get(asset.id);
+          if (gif) {
+            const frame = gif.frame(sourceTimeAt(item, t));
+            return {
+              source: frame.canvas,
+              ready: true,
+              srcW: frame.canvas.width,
+              srcH: frame.canvas.height,
+              stamp: frame.stamp,
+            };
+          }
+          if (!this.gifLoading.has(asset.id)) {
+            this.gifLoading.add(asset.id);
+            void getMedia(p.id, asset.id, asset.mime)
+              .then(AnimatedGif.load)
+              .then((loaded) => {
+                if (this.destroyed) return loaded.destroy();
+                this.gifs.set(asset.id, loaded);
+                this.scheduleRender();
+              })
+              .catch(() => this.scheduleRender());
+          }
+        }
         const img = this.imageFor(asset.id);
         if (!img) return null;
         return {
@@ -226,6 +285,19 @@ export class Player {
         srcH: el.videoHeight || asset.height,
       };
     });
+
+    for (const { item, asset, track } of audibleClips(p, t)) {
+      if (item.type !== 'audio') continue;
+      const url = this.deps.urlFor(asset.id);
+      if (!url) continue;
+      const el = this.pool.acquire(item.id, asset.id, url, used, true);
+      if (!el) continue;
+      used.add(el);
+      this.syncVideo(el, item, asset, track, t);
+    }
+
+    this.frameReady =
+      scene.every((layer) => layer.ready) && [...used].every((el) => el.readyState >= 2 && !el.seeking);
 
     // 預載：下一個主軌片段、1 秒內要開始的疊加影片
     for (const { item, asset } of this.upcoming(p, t)) {
@@ -264,7 +336,7 @@ export class Player {
     for (const track of p.tracks) {
       if (track.hidden) continue;
       const items = track.items;
-      if (track.kind === 'main') {
+      if (track.kind === 'main' && !p.freeMain) {
         const first = items[0] as VideoItem | undefined;
         if (first && t < first.start) {
           if (first.start <= t + PREFETCH_S) push(first);
@@ -273,11 +345,19 @@ export class Player {
         const cur = (items as VideoItem[]).findIndex((x) => t < x.start + x.duration);
         const next = items[cur + 1] as VideoItem | undefined;
         if (cur >= 0 && next) push(next);
-      } else if (track.kind === 'overlay') {
+      } else if (track.kind === 'overlay' || track.kind === 'main') {
         for (const it of items as VideoItem[]) if (it.start > t && it.start <= t + PREFETCH_S) push(it);
       }
     }
     return out;
+  }
+
+  audioEnergy() {
+    return this.bus.energy();
+  }
+
+  captureAudio(): MediaStream | null {
+    return this.bus.stream();
   }
 
   /** 預覽主軌目前的片段 id（測試用） */
@@ -288,11 +368,15 @@ export class Player {
   }
 
   destroy() {
+    this.destroyed = true;
+    for (const gif of this.gifs.values()) gif.destroy();
+    this.gifs.clear();
     cancelAnimationFrame(this.raf);
     cancelAnimationFrame(this.renderRaf);
     this.playing = false;
     this.listeners.clear();
     this.pool.destroy();
+    this.bus.destroy();
     this.compositor.destroy();
   }
 }

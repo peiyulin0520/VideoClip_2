@@ -135,7 +135,20 @@ function heart(cx: number, cy: number, s: number): PathCmd[] {
 }
 
 export function decorationOps(d: Decoration, ink: Rect): Op[] {
-  ink = { ...ink, y: ink.y + Math.max(-1, Math.min(3, d.offset ?? 0)) * ink.h };
+  const length = Math.max(0.05, Math.min(5, d.length ?? 1));
+  const shifted = {
+    ...ink,
+    x: ink.x + (ink.w * (1 - length)) / 2,
+    w: ink.w * length,
+    y: ink.y + Math.max(-5, Math.min(10, d.offset ?? 0)) * ink.h,
+  };
+  return baseDecorationOps(d, shifted).map((op) => ({
+    ...op,
+    alpha: (op.alpha ?? 1) * Math.max(0, Math.min(1, d.opacity ?? 1)),
+  }));
+}
+
+function baseDecorationOps(d: Decoration, ink: Rect): Op[] {
   const { x, y, w, h } = ink;
   const r = x + w;
   const b = y + h;

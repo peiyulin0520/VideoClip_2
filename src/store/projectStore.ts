@@ -119,7 +119,7 @@ export function setAssetThumbs(assetId: string, thumbs: string[]) {
 export function setMainItems(items: VideoItem[], opts?: ApplyOpts) {
   useProjectStore.getState().apply((d) => {
     const tr = d.tracks.find((t) => t.kind === 'main');
-    if (tr) tr.items = relayout(items, d.mainOffset ?? 0);
+    if (tr) tr.items = d.freeMain ? items : relayout(items, d.mainOffset ?? 0);
   }, opts);
 }
 

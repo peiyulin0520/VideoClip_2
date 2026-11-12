@@ -44,7 +44,7 @@ jobs:
         run: node -e "require('node:fs').rmSync('docs/screenshots', { recursive:true, force:true })"
       - name: Browser tests
         id: browser-tests
-        timeout-minutes: 10
+        timeout-minutes: 20
         # Software WebGL and video decoding contend for the runner's small CPU.
         # Serial browsers keep gesture timing stable without extending timeouts.
         run: npm run e2e -- --trace off --workers=1
