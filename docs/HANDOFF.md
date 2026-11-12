@@ -1,6 +1,7 @@
 # 交接手冊（HANDOFF）
 
 ## VideoClip_2 當前交接（優先於以下來源 repo 的歷史紀錄）
+- 工作區首輪 run 43185102894 為 244/71 of 72，原有 69 全過。最後工具輸入框 bottom 比 viewport 多 1.36px，已補 editor 底部 16px/safe area 與 scroll padding；測試仍要求輸入框完全可視，不放寬像素斷言。下一個成功 run 及 PR 狀態見 PROGRESS。
 - 最新工作區回饋：docs/plans/2026-11-12-scrollable-editor-workspace.md。Editor 垂直整頁捲動，Preview 預設 24dvh/140–240px，Timeline height 隨 contentH 展開全部層、tl-scroll 僅橫向。工具欄正常文流，頁首和播放條 sticky；預覽/圖層/工具捷徑以 scrollIntoView/scrollTo 操作。
 - Touch 未選取舞台可 pan-y，selbox touch-action:none 保留編輯；先點選後移動，避免滑頁誤動物件。Timeline 取消每次內容更新自動拉回選取列，圖層拖曳的邊緣捲動改用 .editor。
 - 本機 244/check 成功，72 e2e 待 CI；目前更新既有尚未合併的 PR #1（draft），不能直接發布或代使用者合併。

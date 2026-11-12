@@ -68,6 +68,7 @@ test('查看圖層、工具與回到預覽可直接切換，填文字不會被�
       t.items.some((it) => it.type === 'text' && it.card.runs[0]?.text === '每一層都看得清楚'),
     ),
   ).toBe(true);
+  await page.screenshot({ path: `${shots}/editing-tools.png` });
   const inputBox = (await input.boundingBox())!;
   expect(inputBox.y).toBeGreaterThanOrEqual((await page.locator('.playbar').boundingBox())!.y + 44);
   expect(inputBox.y + inputBox.height).toBeLessThanOrEqual(page.viewportSize()!.height);

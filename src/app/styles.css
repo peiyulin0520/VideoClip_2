@@ -1908,3 +1908,15 @@ progress {
   overflow: hidden;
   text-overflow: ellipsis;
 }
+.editor {
+  padding-bottom: calc(16px + var(--safe-bottom));
+  scroll-padding-bottom: calc(16px + var(--safe-bottom));
+}
+.editor .panel {
+  scroll-padding-top: 52px;
+  scroll-padding-bottom: 16px;
+}
+.editor .text-input.area {
+  scroll-margin-top: 8px;
+  scroll-margin-bottom: 16px;
+}
