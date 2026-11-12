@@ -1,6 +1,7 @@
 # 交接手冊（HANDOFF）
 
 ## VideoClip_2 當前交接（優先於以下來源 repo 的歷史紀錄）
+- **最新發布規則（2026-11-12）**：使用者明確要求「之後要建立 PR，給我連結，讓我自己點入去按 Merge pull request」。助手完成修改、適當測試、推送功能分支與建立 PR，回覆必附 PR 網址；由使用者合併，助手不得代合併、開 auto-merge 或直接推 main，包含文件更新。舊 fast-forward 直接發布紀錄只是歷史，不能沿用。
 - 首輪本輪 run 43165347867 為 244/66 of 69，已修正真實 touch 拖圖層的過早自動捲動、框線新建預設值和舊測試標籤。compositor continuity 僅保留相同軌道換片的舊畫面；不能因另一軌解碼未完成，就留下已刪版型/貼圖（有慢解碼回歸）。後續成功 run 以 PROGRESS 為準。
 - 本輪優先：docs/plans/2026-11-12-timeline-and-template-feedback.md，第二輪七點正在驗收；工作分支 4a004e8 / run 43166533551 已 244 單元/69 e2e 全過，59 張截圖，main run 43167202348 的 244/69 與 Pages 發布成功，公開主程式 hash 與本機已驗證建置相符；下方 237/60 是前一正式版。
 - 版型現在是一個 Track.template 含多個同時 Item；visibleLayers 對 template 回傳全部 active items。Track.layout 帶獨立框架/動態/時間，Project.layout 保留舊版及目前選擇相容；複製/分割整組，不能只複製一格。舊每格一軌且無 Track.layout 的版型 load 時 mergeLegacyTemplate，不變更 media IDs/原檔。時間軸只畫群組首個片段，畫面仍可選格子調位置。

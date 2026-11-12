@@ -7,13 +7,13 @@
 - **目標儲存庫**：`https://github.com/peiyulin0520/VideoClip_2`
 - **工作分支**：`codex/establish-little-moments`；main 原有初始 commit `2f8bdf9` 保留。最新本機程式 commit 見 `git log -1`；推送狀態見下方。
 - **來源**：`peiyulin0520/VideoClip` main `78b178343409c46c7ba353ef3a6db6f279a7bde6`（PR #3 已合併）。以下舊日誌屬來源 repo 的歷史，不代表 VideoClip_2 的部署/瀏覽器驗收。
-- **本次明確子任務**：第二輪 iPhone 實測七點：非破壞來源修剪/時間軸留白、GIF 播放、直接拖曳圖層、裁切預覽、填滿/框線透明度、可辨識格子素材、版型整組操作。見 docs/plans/2026-11-12-timeline-and-template-feedback.md，工作分支與 main（4a004e8）驗收成功並已正式發布；前一版 8489d1c 保留歷史紀錄。
+- **本次明確子任務**：記錄「所有後續變更建立 PR、提供連結、由使用者自行合併」的新規則，僅文件更新；前一輪功能狀態如下。第二輪 iPhone 實測七點：非破壞來源修剪/時間軸留白、GIF 播放、直接拖曳圖層、裁切預覽、填滿/框線透明度、可辨識格子素材、版型整組操作。見 docs/plans/2026-11-12-timeline-and-template-feedback.md，工作分支與 main（4a004e8）驗收成功並已正式發布；前一版 8489d1c 保留歷史紀錄。
 - **已驗證**：本輪工作分支 run 43166533551 與 main run 43167202348（4a004e8）均 244 單元/69 Chromium e2e 全過，含真實 touch 圖層拖曳、完整來源恢復、GIF 原尺寸、多格群組與影片實際解碼、獨立透明填滿框線、慢解碼刪組不留框、裁切透明預覽。lint/TypeScript/build/Pages/39 字型授權檢查全過。
 - **瀏覽器驗證**：Playwright 1.63 / Chromium 153、iPhone 13 尺寸；59 張本輪 CI 截圖在 docs/screenshots，來源工作分支 run 43166533551 / artifact 13920122834，feedback/ 有 6 張新驗收。人工檢視完整來源選區、透明框線、直接排序後的疊放、四格群組與透明裁切；繁中可讀，測試素材均自製。Safari 仍待真機。
 - **階段**：第二輪七點已實作並通過 Chromium，main 已部署並確認公開主程式相符。完整雲朵字/動畫轉場/調色/備份 Drive/IG 音源等其餘規劃仍未實作；手動描邊是固定來源範圍，非人物追蹤。
 - **發布狀態**：第二輪七點已正式發布：https://peiyulin0520.github.io/VideoClip_2/ 。程式 4a004e80d3654b5ea48ef57744484960e8d599a8；main Actions https://github.com/peiyulin0520/VideoClip_2/actions/runs/43167202348 成功（build job 131011729097 / deploy job 131013709565）。HTML/manifest/GIPHY attribution 均 HTTP 200；index-DcmSgmO1.js SHA-256 363202f6ee667285a7ceae4219cfdbb675a3d4445f8dfdddbc3118ea4325effa 與本機已驗證建置一致，包含新來源選區/框線/群組功能標記。後續 [skip ci] 僅記錄文件/截圖，不另改程式部署。
 - **下一步**：iPhone Safari 實測左/右修剪及還原、左側圖層拖曳、GIF/多影片流暢度、裁切手感、透明框線與舊版型群組；其餘功能待後續明確子任務。操作說明 docs/USAGE.md。
-- **等使用者**：目前不需再做帳號授權；程式及 Pages 設定已可存取。發布後再請使用者進行 PLAN §7 的 iPhone Safari 實測。
+- **等使用者**：本次流程文件 PR 建立後，提供網址由使用者自行合併。現有網站保持已發布程式 4a004e8；Safari 真機清單仍見 PLAN §7。
 
 ## 日誌格式（新增一筆時照這個）
 ```
@@ -27,6 +27,7 @@
 ```
 
 ## 使用者已確認的偏好
+- 2026-11-12 最新發布規則：之後一律建立 PR，助手提供 PR 連結，由使用者自行按 Merge pull request；助手不代合併、不開 auto-merge、不直接推 main，文件也走 PR。
 - 第二輪實測：左端修剪要留空白且可還原完整來源；圖層在時間軸左側直接拖曳；字塊填滿/框線各調色彩透明度；版型要明確格子位置/素材縮圖、選取回饋，整組移除不留框架。
 - 2026-11-12 新回饋：留白像素材可拖到任何段落；可以主軌插入、色塊圖層與自由時間軸。自己的貼圖/畫作可選擇收藏，GIPHY 不入共用素材庫。
 - GIPHY API Key 由裝置自己輸入/儲存，不能寫進公開程式碼、日誌或專案。使用者在聊天提供過 Key，此文件不抄錄。說明要連 GIPHY 申請，應用名稱 LittleMoments / Web。
@@ -63,6 +64,11 @@
 - 2026-11-11 找到新字體來源 max32002/pop-gothic（大波浪圓體，含注音）→ 已加入手寫可愛包。問「能不能直接下載到我的 files 下載資料夾」→ 答：網頁在 iPhone 不能自動寫進「檔案」App 資料夾；官方字體存在瀏覽器裡，自己的字體用「匯入字體檔」從檔案 App 選
 
 ## 日誌（最新在最上面）
+- 2026-11-12 發布改由使用者自行合併 PR
+  - 使用者原話：「之後要建立PR，然後你要給我連結，讓我自己點入去按merge pull request」。此指示取代先前直接 fast-forward main 的流程。
+  - 更新 AGENTS.md 規則 10、README 發布步驟、HANDOFF 和本快照。文件更新也推功能分支並建立 PR；助手不代合併、不開 auto-merge、不直接推 main。
+  - 此次只改文件，網站程式與資料模型無變動。提交前執行 npm run check；既有 69 Chromium e2e 已在程式 4a004e8 通過，本次文件不重跑瀏覽器。PR 連結於建立成功後回覆使用者。
+
 - 2026-11-12 第二輪七點 69 瀏覽器情境全過，已正式發布
   - 程式 4a004e80d3654b5ea48ef57744484960e8d599a8；工作分支 run 43166533551 / build job 131009603294：244 單元/69 e2e 成功（3.5 分鐘），首輪 3 項失敗全部修正並通過，無跳過或移除斷言。
   - docs/screenshots 更新 59 張，來源 artifact 13920122834；新增 feedback/ 6 張（完整來源、直接圖層、GIF 紋理、獨立填滿框線、版型群組、裁切預覽），人工檢視可讀繁中與實際畫面。

@@ -30,7 +30,7 @@ npm run e2e -- --trace off
 
 - Settings → Pages → Build and deployment → Source 選 **GitHub Actions**。
 - `.github/workflows/deploy.yml`：所有分支執行檢查＋Chromium e2e；只有 `main` 成功後部署 `dist/`。
-- 專案建立分支：`codex/establish-little-moments`，不自動開 PR。取得寫入授權後，先推送並確認 CI，再以一般 fast-forward 更新新 repo 的 main；若 main 有新提交，先整合，不能 force push。
+- 修改流程：功能分支完成修改與適當測試 → 推送 → 建立指向 `main` 的 PR → 提供 PR 連結 → **使用者自行按 Merge pull request**。助手不合併、不開 auto-merge、不直接推送 main，文件更新也一樣。合併後 GitHub Actions 驗收並發布 Pages。分支落後時先整合 main，不 force push。
 - 發布後可直接使用，不需要 Codex 或 ChatGPT 持續運作。網址公開，但使用者的影片不會跟著上傳。
 
 ## 資料與授權
