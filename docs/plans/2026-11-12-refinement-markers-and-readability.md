@@ -11,4 +11,7 @@
 - 色塊優先共用同名、可編輯且區間不重疊的色塊軌，重疊才新建；完整色輪、RGB 保留並改善可讀性。
 
 基線：PR #3 已由使用者自行合併（main 5ebd1a1），本次另開 PR，不代合併、不推 main、不啟用 auto-merge。
-驗證：基線 npm run check 成功（262 單元）；新增 5 單元、12 Chromium 情境，預計總 267/91。完整瀏覽器與截圖交由 GitHub Actions；尚未驗證前不宣稱成功。iPhone Safari 真機觸控與原音仍待使用者驗證。
+驗證：基線 npm run check 成功（262 單元）；新增 5 單元、12 Chromium 情境，最終總 267/91。完整瀏覽器與截圖交由 GitHub Actions；成功證據見下方最終驗收。iPhone Safari 真機觸控與原音仍待使用者驗證。
+
+
+最終驗收：程式 3b9de60dc2cb325652b075313e1636d47e00f092 / [Actions 43262467680](https://github.com/peiyulin0520/VideoClip_2/actions/runs/43262467680)：267 單元、91 Chromium e2e 全過；lint/格式/TypeScript/build/Pages/39 字體檢查成功。 107 張截圖已更新，artifact 13965235972 / ZIP hash abc5fc912058d59aaea8cca8c47ad191fc30a4c37f8b6402933387ba4ff3a07c。PR #4 待使用者自行合併，Safari 真機待確認。

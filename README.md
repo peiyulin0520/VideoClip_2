@@ -6,7 +6,7 @@
 
 已具備多專案、多素材拼接、修剪/分割/變速、多軌疊加、拖移縮放旋轉、字卡排版/描邊/陰影、13 種裝飾、33 種圖形、字體下載/快取/本機匯入、首次使用精靈與 PWA。
 
-仍在規劃中：Fluent Emoji 內建貼圖、雲朵字與完整字卡模板、動畫/轉場/調色、進階動態遮罩追蹤、專案備份/Google Drive、IG 音樂推薦。本次新增完整逐格影片與音訊混音、相容即時匯出；格式依瀏覽器編碼能力明示 MP4 或 WebM。新功能及第二輪回饋 244 單元/69 Chromium e2e 通過並已發布，細節見 PROGRESS。Google Drive 選項目前只是規劃入口。
+仍在規劃中：Fluent Emoji 內建貼圖、雲朵字與完整字卡模板、動畫/轉場/調色、進階動態遮罩追蹤、專案備份/Google Drive、IG 音樂推薦。本次新增完整逐格影片與音訊混音、相容即時匯出；格式依瀏覽器編碼能力明示 MP4 或 WebM。先前匯出與第二輪回饋已發布；本次 PR #4 尚待使用者合併，最新驗收見下方，細節見 PROGRESS。Google Drive 選項目前只是規劃入口。
 
 原 Sites 的 Little Moments 是另一個版本；這個建立工作不修改原 Sites。兩套模型不同，目前沒有自動轉換專案或素材庫 ZIP，請保留舊資料與原始影片。
 
@@ -20,7 +20,7 @@ npm run check
 npm run e2e -- --trace off
 ```
 
-`check` 包含 lint、262 個單元測試、TypeScript、正式建置及 GitHub Pages 路徑/PWA/字體檔案檢查。79 個瀏覽器測試（含完整影片/音訊解碼、收藏、GIF、手動遮罩、Key 與主題）交由 GitHub Actions 的 Chromium 153 執行，CI 保存截圖 artifact；最新成功狀態見 PROGRESS.md。本次已更新 80 張 CI 畫面（docs/screenshots）中文可讀；iPhone Safari 仍待真機驗證。
+`check` 包含 lint、267 個單元測試、TypeScript、正式建置及 GitHub Pages 路徑/PWA/字體檔案檢查。91 個瀏覽器測試（含完整影片/音訊解碼、收藏、GIF、手動遮罩、Key 與主題）交由 GitHub Actions 的 Chromium 153 執行，CI 保存截圖 artifact；最新成功狀態見 PROGRESS.md。本次已更新 107 張 CI 畫面（docs/screenshots）中文可讀；iPhone Safari 仍待真機驗證。
 
 ## GitHub Pages
 
@@ -61,11 +61,11 @@ GIF 解碼器 gifuct-js 2.1.2 為 MIT，授權位於 public/licenses。輸出含
 
 ## 第二輪手機操作修正
 
-來源影片可用完整來源選區還原，左端修剪會留空白並固定片尾；左側軌道 icon 可直接拖曳疊放順序。字塊填滿與框線顏色/透明度獨立。版型提供位置編號和素材縮圖，支援將現有疊加片段合成單軌多格群組；整組移動/修剪/複製/分割/隱藏/刪除，框架一起處理。裁切新增透明結果預覽與上一筆描邊復原。降低小 GIF 的紋理上傳量並重用影格，Safari 真機流暢度仍待確認。
+來源影片可用完整來源選區還原，左端修剪會留空白並固定片尾；單一片段可長按跨同類軌道與時間拖移；左側 icon 開軌道設定。字塊填滿與框線顏色/透明度獨立。版型提供位置編號和素材縮圖，支援將現有疊加片段合成單軌多格群組；整組移動/修剪/複製/分割/隱藏/刪除，框架一起處理。裁切新增透明結果預覽與上一筆描邊復原。降低小 GIF 的紋理上傳量並重用影格，Safari 真機流暢度仍待確認。
 
 最新驗收、發布與限制以 [PROGRESS](docs/PROGRESS.md) 為準，操作步驟見 [USAGE](docs/USAGE.md)。
 
-## 工作區捲動調整（PR #1、#2 已合併；參考圖補充 PR #3 待合併）
+## 工作區捲動調整（PR #1、#2 已合併；參考圖補充 PR #3 已合併）
 
 預覽改為精簡尺寸並隨整頁捲動，時間軸按圖層數完整展開，工具欄接在列表下方。左右控制時間、上下查看圖層；可用「查看圖層」「編輯工具」「回到預覽」跳轉，仍可放大預覽與調整選取框。另修復續用設定的非同步儲存競態。246 單元/72 Chromium e2e 成功，截圖在 docs/screenshots/workspace；Safari 仍需真機確認。[PR #1](https://github.com/peiyulin0520/VideoClip_2/pull/1) 已由使用者合併並部署。
 
@@ -76,13 +76,22 @@ GIF 解碼器 gifuct-js 2.1.2 為 MIT，授權位於 public/licenses。輸出含
 
 預覽恢復正常大小（螢幕高度約六成），預覽與播放列都隨頁面捲走。往下依序是全部圖層、功能欄與選取功能的完整選項。可見圖層條更細，把手更窄，保留方便點選的觸控面積；片尾把手不會被相鄰片段蓋住。
 
-246 單元/74 Chromium e2e 成功，68 張截圖在 docs/screenshots；四張連續畫面為 workspace/reference-*.png。[PR #3](https://github.com/peiyulin0520/VideoClip_2/pull/3) 交使用者自行 Merge 後才發布，iPhone Safari 尚待真機確認。
+246 單元/74 Chromium e2e 成功，68 張截圖在 docs/screenshots；四張連續畫面為 workspace/reference-*.png。[PR #3](https://github.com/peiyulin0520/VideoClip_2/pull/3) 已由使用者自行合併，iPhone Safari 尚待真機確認。
 
 
-## 自由影像軌與預覽選取（PR #3 待使用者合併）
+## 自由影像軌與預覽選取（PR #3 已由使用者合併）
 
 原影片與其他影像都能從預覽直接點選、拖移與兩指縮放。長按顯示該位置的可編輯物件，選擇被蓋住的素材暫時置頂，完成後回原層次；暫時置頂不改儲存順序與匯出。
 
 時間軸長按單一素材，可調時間、跨同類軌道或在層間新建；影像/字卡/音效不混軌，鎖定或跨層占用位置拒絕放置。同軌其他素材不會跟著拖走，原主軌也沒有固定底層限制。多格模板保留群組。明確「插入留白片段」則會在游標切開並推後同軌片段，保留原空隙。
 
-新增米色紙感，已選主題保留，深色媒體區與選取分頁維持對比。262 單元/79 Chromium e2e 通過，80 張截圖在 docs/screenshots，最新十二張在 layer-editing/；Safari 真機仍待確認。[PR #3](https://github.com/peiyulin0520/VideoClip_2/pull/3) 由使用者自行 Merge 後才發布。
+新增米色紙感，已選主題保留，深色媒體區與選取分頁維持對比。262 單元/79 Chromium e2e 通過，80 張截圖在 docs/screenshots，最新十二張在 layer-editing/；Safari 真機仍待確認。[PR #3](https://github.com/peiyulin0520/VideoClip_2/pull/3) 已由使用者自行合併。
+
+
+## 裁切補邊與倒三角聲音選取（PR #4）
+
+圈選後可用保留筆刷補回缺角、橡皮擦去除多餘範圍，粗細可調並可逐筆復原。手繪增加毛筆、顆粒鉛筆。影片/音訊細部選段使用時間刻度上方小倒三角，保留正常色、未選反灰；音訊可多組保留以排除中間聲音，搭配來源縮圖與當秒畫面，不縮短影片或移動其位置。
+
+新字塊預設無填色，次分類採淺暖色；裝飾距離改為 px 並解釋方向。六主題的自訂色、選取字體/圖層與白字 PNG 預覽都補齊對比。疊色模式有用途說明。0 秒靠左、色塊不重疊就共用一軌；右下浮動回頂有獨立觸控空間。
+
+程式 3b9de60dc2cb325652b075313e1636d47e00f092 / [Actions 43262467680](https://github.com/peiyulin0520/VideoClip_2/actions/runs/43262467680)：267 單元、91 Chromium e2e 全過；lint/格式/TypeScript/build/Pages/39 字體檢查成功。 107 張驗收圖在 docs/screenshots；[本次畫面](docs/screenshots/refinement/)包括裁切、多段聲音、筆刷、色塊與六種主題字體。[PR #4](https://github.com/peiyulin0520/VideoClip_2/pull/4) 由使用者自行 Merge，Safari 真機仍待確認。

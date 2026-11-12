@@ -372,4 +372,7 @@ docs/
 
 最新互動規格補充：主題對比、米色與自由分型圖層見 docs/plans/2026-11-12-flexible-layers-and-contrast.md；取代舊的主軌固定底層/預覽不可直接選取限制。尚未完成的特效/轉場不因新增分型軌道而視為已實作。
 
-2026-11-12 本次裁切筆刷、倒三角多段音訊、六主題對比與時間軸原點仍待 CI；Safari 真機需驗證筆刷、密集標記觸控、來源音訊試聽/匯出、浮動回頂。詳見 refinement-markers-and-readability 規劃。
+2026-11-12 本次裁切筆刷、倒三角多段音訊、六主題對比與時間軸原點已通過 267 單元/91 Chromium e2e；Safari 真機需驗證筆刷、密集標記觸控、來源音訊試聽/匯出、浮動回頂。詳見 refinement-markers-and-readability 規劃。
+
+
+本次局部裁切與倒三角多段聲音已驗收：程式 3b9de60dc2cb325652b075313e1636d47e00f092 / [Actions 43262467680](https://github.com/peiyulin0520/VideoClip_2/actions/runs/43262467680)：267 單元、91 Chromium e2e 全過；lint/格式/TypeScript/build/Pages/39 字體檢查成功。 107 張截圖保存；PR #4 交使用者自行合併。Safari 真機仍依 §7 驗證筆刷、密集標記觸控與試聽/匯出。

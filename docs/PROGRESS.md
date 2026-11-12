@@ -3,13 +3,13 @@
 規則：每完成一個有意義的步驟，就在同一個 commit 裡 **覆寫「交接快照」** 並 **在「日誌」最上面新增一筆**（規則全文見 `AGENTS.md`「紀錄規則」，背景與架構見 `docs/HANDOFF.md`）。
 
 ## 交接快照（VideoClip_2 最新狀態）
-- **日期/分支**：2026-11-12 / codex/establish-little-moments；基於使用者已自行合併 PR #3 的 main 5ebd1a1。
-- **本次子任務**：docs/plans/2026-11-12-refinement-markers-and-readability.md：12 點＋最新倒三角與多段聲音補充，裁切問題依第一點處理。
-- **程式**：保留/擦除遮罩筆畫共用合成與匯出；毛筆/鉛筆；透明新字塊、淺暖次選單、px 裝飾距離、字體/圖層/調色對比。SourceRanges 小倒三角取代側拉霸；原音/配樂多組來源保留區間、縮圖與試聽畫面；輸出依區間靜音不移動影片。左側 56px 時間原點、浮動回預覽、無重疊共用色塊軌。
-- **驗證**：基線 262 單元/check 成功；新增 5 單元、12 e2e，267/91 第二輪全過，第三輪補字體 PNG 預覽對比待 check/CI；首輪 267 單元、86/91 e2e，不能把基線截圖當本次驗收。
-- **PR/發布**：上一個 PR #3 已由使用者合併（13:53:14 UTC），本次新 PR #4 https://github.com/peiyulin0520/VideoClip_2/pull/4 保留 draft；不代合併、不開 auto-merge、不推 main。
-- **下一步**：本機 check → 功能分支 commit/push、新 PR → CI → 檢視截圖 → 完成紀錄與交付。Safari 真機待確認。
-- **等使用者**：目前無；完成後提供新 PR 讓使用者自行 Merge。
+- **日期/分支**：2026-11-12 / codex/establish-little-moments；基於使用者自行合併 PR #3 的 main 5ebd1a1。本次 PR #4。
+- **任務**：docs/plans/2026-11-12-refinement-markers-and-readability.md 的 12 點＋倒三角、多段聲音補充已完成。
+- **驗證**：程式 3b9de60dc2cb325652b075313e1636d47e00f092 / [Actions 43262467680](https://github.com/peiyulin0520/VideoClip_2/actions/runs/43262467680)：267 單元、91 Chromium e2e 全過；lint/格式/TypeScript/build/Pages/39 字體檢查成功。
+- **目前程式**：裁切 keep/erase 多筆及復原共用來源 UV 遮罩；毛筆/顆粒鉛筆；新字塊無填色、淺暖次分類、裝飾 px；選取字體/圖層與調色對比，包含四淺主題的白字 PNG 預覽。來源選區小倒三角、保留原色/其餘灰；多組來源音訊保留區間及當秒畫面，匯出不縮短影片。時間原點 56px、色塊無碰撞共用軌、浮動回頂保留底部觸控帶。
+- **截圖**：107 張本次完整成功 CI 截圖已保存（refinement/ 新畫面含六主題、字體 PNG、裁切補邊、音訊多區間、畫筆與色塊）；artifact 13965235972，ZIP SHA-256 abc5fc912058d59aaea8cca8c47ad191fc30a4c37f8b6402933387ba4ff3a07c 已核對。人工檢視通過，全部自製測試素材。
+- **PR/發布**：[PR #4](https://github.com/peiyulin0520/VideoClip_2/pull/4) 完成驗收，交使用者自行 Merge；本次尚未發布，不代合併、不開 auto-merge、不推 main。PR #3 已由使用者合併。
+- **下一步/等使用者**：使用者自行 Merge PR #4 → main Actions/Pages 發布 → iPhone Safari 真機確認筆刷、密集標記、音訊/匯出與回頂。最後文件/截圖提交 [skip ci]，程式與測試保持上述成功 CI 完全相同。
 
 ## 日誌格式（新增一筆時照這個）
 ```
@@ -67,6 +67,14 @@
 - 2026-11-11 找到新字體來源 max32002/pop-gothic（大波浪圓體，含注音）→ 已加入手寫可愛包。問「能不能直接下載到我的 files 下載資料夾」→ 答：網頁在 iPhone 不能自動寫進「檔案」App 資料夾；官方字體存在瀏覽器裡，自己的字體用「匯入字體檔」從檔案 App 選
 
 ## 日誌（最新在最上面）
+
+- 2026-11-12 局部裁切、倒三角多段聲音與可讀性完整驗收
+  - 程式 3b9de60dc2cb325652b075313e1636d47e00f092 / [Actions 43262467680](https://github.com/peiyulin0520/VideoClip_2/actions/runs/43262467680)：267 單元、91 Chromium e2e 全過；lint/格式/TypeScript/build/Pages/39 字體檢查成功。
+  - 包括來源完整還原、mask keep/erase 真實像素與匯出/重開、多段音訊原長度與輸出中間靜音、六主題選取及 PNG 像素對比、毛筆/鉛筆、共用/碰撞色塊、0 秒位置與回頂；所有舊測試保留。
+  - 107 張成功 CI 畫面保存，artifact 13965235972 / ZIP hash abc5fc912058d59aaea8cca8c47ad191fc30a4c37f8b6402933387ba4ff3a07c；人工檢視字體預覽、裁切補邊與透明挖空、多組音訊標記、暖色字塊次層及回頂，中文可讀，無使用者或第三方影片。
+  - README、AGENTS、PLAN、EFFECTS、TEXT_CARDS、HANDOFF、USAGE 與本次計畫同步；文件/截圖提交 [skip ci] 與成功 CI 的程式/測試一致。Safari 真機待確認。
+  - 下一步：PR #4 交使用者自行 Merge，本次未代合併、未發布。
+
 
 - 2026-11-12 267/91 全過後補正字體圖片預覽
   - 程式 48128ac / run 43260960541：267 單元、91 Chromium e2e 全過，artifact 13963233845（8f0f6741be7a4f989e5db697cc0e364c955e76123257da94a0f0115072ec3983）。

@@ -1,6 +1,8 @@
 # 交接手冊（HANDOFF）
 
 ## VideoClip_2 當前交接（優先於以下來源 repo 的歷史紀錄）
+- 本次最終：程式 3b9de60dc2cb325652b075313e1636d47e00f092 / [Actions 43262467680](https://github.com/peiyulin0520/VideoClip_2/actions/runs/43262467680)：267 單元、91 Chromium e2e 全過；lint/格式/TypeScript/build/Pages/39 字體檢查成功。 107 張截圖（artifact 13965235972，ZIP hash abc5fc912058d59aaea8cca8c47ad191fc30a4c37f8b6402933387ba4ff3a07c），PR #4 待使用者自行合併；Safari 待真機。下列「第三輪待 CI」「#3 待合併」均為過程/歷史。最新仕様見 refinement-markers-and-readability 計畫。
+
 - 第二輪 48128ac / run 43260960541：267/91 全過。但 fancy-free 的 preview.png 原圖為白字透明，非選取時四種淺主題仍需 CSS brightness(0)，不能只改 font-row 的 color（PNG 不繼承字色）。dark/mono 與選取深底保留白色。六主題新增 PNG 經 filter 的像素對比回歸，第三輪待 CI。
 
 - 首輪本次 run 43258871988：267 單元、86/91 e2e。Crop keep updater 不可延後讀 SyntheticEvent.currentTarget，要先 point(e) 再 setStrokes；浮動回頂需要獨立底部觸控帶（has-return 高度），不能蓋到工具。來源標記一般同列、密集才 end 上錯位；音訊可細至 0.01 秒，影片最低值 MIN_CLIP_DURATION*speed。PR #4 待下一輪 CI。
