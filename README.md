@@ -20,7 +20,7 @@ npm run check
 npm run e2e -- --trace off
 ```
 
-`check` 包含 lint、225 個單元測試、TypeScript、正式建置及 GitHub Pages 路徑/PWA/字體檔案檢查。47 個瀏覽器測試（本次新增 5 個）交由 GitHub Actions 的 Chromium 153 執行，CI 保存截圖 artifact；最新成功狀態見 PROGRESS.md。本次已確認 38 張 CI 畫面（docs/screenshots）中文可讀；iPhone Safari 仍待真機驗證。
+`check` 包含 lint、227 個單元測試、TypeScript、正式建置及 GitHub Pages 路徑/PWA/字體檔案檢查。47 個瀏覽器測試（本次新增 5 個）交由 GitHub Actions 的 Chromium 153 執行，CI 保存截圖 artifact；最新成功狀態見 PROGRESS.md。本次已更新 45 張 CI 畫面（docs/screenshots）中文可讀；iPhone Safari 仍待真機驗證。
 
 ## GitHub Pages
 
@@ -46,3 +46,5 @@ npm run e2e -- --trace off
 ## 本次 iPhone 編輯體驗更新
 
 補強匯入首格、增加放大預覽、取消浮動圓鈕改兩指、任意顏色/HEX、裝飾距離、輪廓柔和與凹槽、1920/高密度文字。新增開場秒數/黑白自訂底色，以及拍貼/膠卷/四格相紙（每格獨立素材、滑動效果）。詳細驗收與 Safari 限制見 PROGRESS.md；完整影片匯出、繪畫與跨專案素材庫仍未做。
+
+操作位置：預覽左下「放大預覽」；選取框內單指拖移、兩指縮放/旋轉；「文字」內切到文字/裝飾/字塊以調整完整色彩、裝飾距離、輪廓；「版型」選多格與每格素材；「剪輯 → 開場留白」調整首支影片起點和底色。

@@ -307,6 +307,7 @@ export function Timeline({
     const startX = e.clientX;
     const startItems = track.items;
     const asset = isVideoItem(item) ? project.assets.find((a) => a.id === item.assetId) : undefined;
+    const trimKey = `gesture:trim:${item.id}:${e.timeStamp}:${e.pointerId}`;
     const target = e.currentTarget as HTMLElement;
     target.setPointerCapture(e.pointerId);
     const isMain = track.kind === 'main';
@@ -319,13 +320,13 @@ export function Timeline({
           side === 'start'
             ? trimStart(list, item.id, delta)
             : trimEnd(list, item.id, item.duration + delta, asset);
-        setMainItems(next as VideoItem[], { coalesce: `trim:${item.id}` });
+        setMainItems(next as VideoItem[], { coalesce: trimKey });
       } else {
         next =
           side === 'start'
             ? trimStartFree(startItems, item.id, delta)
             : trimEndFree(startItems, item.id, item.duration + delta, asset);
-        setTrackItems(track.id, next, { coalesce: `trim:${item.id}` });
+        setTrackItems(track.id, next, { coalesce: trimKey });
       }
       const cur = next.find((x) => x.id === item.id)!;
       player?.peek(side === 'start' ? cur.start : cur.start + cur.duration - 0.05);

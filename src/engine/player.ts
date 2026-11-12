@@ -33,6 +33,7 @@ export class Player {
   private playing = false;
   private raf = 0;
   private renderRaf = 0;
+  private previewTime: number | null = null;
   private wallStart = 0;
   private tStart = 0;
   private listeners = new Set<Listener>();
@@ -77,6 +78,7 @@ export class Player {
   }
 
   seek(t: number) {
+    this.previewTime = null;
     this.t = Math.min(Math.max(t, 0), this.total());
     if (this.playing) {
       this.wallStart = performance.now();
@@ -88,12 +90,15 @@ export class Player {
 
   /** 只更新畫面到 t 秒，不移動播放頭（修剪時預覽邊緣畫格用） */
   peek(t: number) {
-    if (!this.playing) this.render(Math.min(Math.max(t, 0), this.total()));
+    if (this.playing) return;
+    this.previewTime = Math.min(Math.max(t, 0), this.total());
+    this.scheduleRender();
   }
 
   play() {
     const total = this.total();
     if (total <= 0 || this.playing) return;
+    this.previewTime = null;
     if (this.t >= total - 0.01) this.t = 0;
     this.pool.unlock();
     this.playing = true;
@@ -119,6 +124,7 @@ export class Player {
 
   /** 專案內容改變後呼叫：修正播放頭並重新對畫面 */
   refresh() {
+    this.previewTime = null;
     const total = this.total();
     if (this.t > total) this.t = total;
     this.scheduleRender();
@@ -129,7 +135,7 @@ export class Player {
     if (this.playing || this.renderRaf) return;
     this.renderRaf = requestAnimationFrame(() => {
       this.renderRaf = 0;
-      if (!this.playing) this.render(this.t);
+      if (!this.playing) this.render(this.previewTime ?? this.t);
     });
   }
 

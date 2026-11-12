@@ -1,6 +1,7 @@
 # 交接手冊（HANDOFF）
 
 ## VideoClip_2 當前交接（優先於以下來源 repo 的歷史紀錄）
+- 最新驗收：程式 608c7d0，工作分支 run 43076680996，226 單元/47 e2e 全過，45 張新截圖。main 發布與真機限制見 PROGRESS 交接快照。
 - 最新工作：iPhone 實測 8 項修正，規劃/驗收見 docs/plans/2026-11-11-mobile-editor-feedback.md。最新偏好取消浮動圓鈕，用框上兩指手勢，與來源的右上角按鈕規格不同。
 - 新資料欄位皆選填：Project.mainOffset/background/layout、Track.template、VideoItem.slot、Decoration.offset、CardBox.softness/depth。主軌 store 寫回時必須重新套用 offset；itemAt 在第一個 start 之前回 null，不能提前畫原片。
 - 多格共用 buildScene/Compositor：固定視窗遮罩獨立於素材旋轉，素材可在格內拖移縮放；第一格音軌、其他格靜音，文字保留在版型上層。預覽提高至 1920；文字的物理 canvas 尺寸與邏輯 w/h 分離，不能拿 canvas.width 當選取框尺寸。
@@ -79,7 +80,7 @@ docs/      PLAN / TEXT_CARDS / EFFECTS / FONTS / PROGRESS / HANDOFF / font-cover
 
 ### 座標與單位
 - `transform.x/y`：物件中心，佔畫面寬/高的比例（0–1）；`scale`：乘上「填滿(cover)/完整(contain)」算出的基本大小；`rotation`：度，順時針。
-- 專案座標＝專案解析度（9:16 為 1080×1920）；預覽 canvas 長邊 960。字卡字級以 1080 寬為基準，畫的時候乘 `canvasW/1080`。
+- 專案座標＝專案解析度（9:16 為 1080×1920）；預覽 canvas 長邊最多 1920。字卡字級以 1080 寬為基準，畫的時候乘 `canvasW/1080`。
 - 圖層順序＝`project.tracks` 陣列順序；`tracks[0]` 一定是主軌。同一條疊加/文字軌的物件不能重疊（`findFreeStart`）。
 
 ### 儲存位置
@@ -105,6 +106,8 @@ IndexedDB `videoclip`（專案 JSON、`meta.appState`、`meta.installedFonts`、
 | 縮圖：Mediabunny `CanvasSink` 優先 → `<video>` → 預覽播放器拿到畫面後 `setAssetThumbs`（不進復原歷史，歷史快照一併更新） | iPhone 隱藏 `<video>` 常不觸發 `loadeddata` |
 
 ## 5. 踩過的坑（避免再踩）
+- 修剪會同時觸發 store refresh 和 peek；兩者必須合併同一 RAF，否則每次 pointermove 重畫兩個高解析度畫面。Player.previewTime 保留邊緣時間給解碼事件，refresh/seek/play 清除後回播放頭；不能用延長測試逾時掩蓋重複繪製。
+
 - 高解析度預覽不能在每次字卡/位置變更時重繪並上傳未改變的媒體影格；Compositor 以來源、時間、解碼幀數、frameStamp、裁切快取。首格事件與 decoded callback 必須增加 frameStamp，避免同時間的未解碼畫面被快取。
 - 持續觸控手勢可能因渲染/中途停頓超過 800ms；每個 `gesture:` 唯一 key 跨停頓合併為一個復原步驟，下一次手勢用新 key。一般輸入/滑桿仍套用 800ms。
 
@@ -147,8 +150,8 @@ IndexedDB `videoclip`（專案 JSON、`meta.appState`、`meta.installedFonts`、
 ## 7. 怎麼驗證現在是好的
 ```
 npm ci
-npm run check                      # lint + 220 個單元測試 + build + Pages 路徑檢查
-npm run e2e -- --trace off         # 42 個 e2e（iPhone 13 尺寸、Chromium）
+npm run check                      # lint + 227 個單元測試 + build + Pages 路徑檢查
+npm run e2e -- --trace off         # 47 個 e2e（iPhone 13 尺寸、Chromium）
 ```
 e2e 會產生 `docs/screenshots/phase*/` 截圖（給使用者審核用，也會被 commit）。
 
