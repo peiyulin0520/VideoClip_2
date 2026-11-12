@@ -132,6 +132,7 @@ test('點預覽畫面會選到最上面那個物件；鎖定的軌道不會被�
 
   // 開關底部分頁會讓舞台大小改變，所以每次點擊前重新量舞台的位置
   const click = async (nx: number, ny: number) => {
+    await page.getByRole('button', { name: '回到預覽', exact: true }).tap();
     const stage = (await page.getByTestId('stage').boundingBox())!;
     await page.mouse.click(stage.x + stage.width * nx, stage.y + stage.height * ny);
   };

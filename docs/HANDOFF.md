@@ -1,6 +1,8 @@
 # 交接手冊（HANDOFF）
 
 ## VideoClip_2 當前交接（優先於以下來源 repo 的歷史紀錄）
+- **目前任務**：docs/plans/2026-11-12-single-page-settings.md。PR #1 已由使用者合併且部署成功（main a1b455b / run 43201177854，公開 JS hash 相符）；下方「PR #1 未合併」是歷史。最新截圖未見導航，可能開舊頁籤。
+- 新補充：.editor .panel/.panel.tall max-height:none / overflow:visible，設定也隨整頁展開；取消內部 sticky-tabs。保留對話框、字體 picker 等真正彈出框捲動，時間軸仍按層展開。新 73 e2e 待 CI，246/check 成功；之後建立新 PR，不代合併。
 - **工作區最新驗收**：c6f196c / run 43186969560 的 246 單元、72 e2e 全過，63 張截圖（workspace/ 4 張）。PR #1 https://github.com/peiyulin0520/VideoClip_2/pull/1 已涵蓋精簡預覽、完整圖層列表、整頁捲動及續用儲存競態修正；由使用者自行合併，未部署。以下「待 CI」是過程紀錄，最新快照見 PROGRESS。
 - 工作區第二輪 run 43186048643 的三項新驗收全過，僅舊續用重開測試抓到競態。appStore.init 現共用 initializing Promise；update 序列化、等 saveAppState 完成才 set，避免畫面已完成但 IDB 尚未持久化與重複初始化蓋狀態。新增 2 單元，總 246；歡迎頁 e2e 等完成畫面再做後續操作，不用 sleep。
 - 工作區首輪 run 43185102894 為 244/71 of 72，原有 69 全過。最後工具輸入框 bottom 比 viewport 多 1.36px，已補 editor 底部 16px/safe area 與 scroll padding；測試仍要求輸入框完全可視，不放寬像素斷言。下一個成功 run 及 PR 狀態見 PROGRESS。
