@@ -7,12 +7,12 @@
 - **目標儲存庫**：`https://github.com/peiyulin0520/VideoClip_2`
 - **工作分支**：`codex/establish-little-moments`；main 原有初始 commit `2f8bdf9` 保留。最新本機程式 commit 見 `git log -1`；推送狀態見下方。
 - **來源**：`peiyulin0520/VideoClip` main `78b178343409c46c7ba353ef3a6db6f279a7bde6`（PR #3 已合併）。以下舊日誌屬來源 repo 的歷史，不代表 VideoClip_2 的部署/瀏覽器驗收。
-- **本次明確子任務**：手機圖層檢視/整頁捲動，見 docs/plans/2026-11-12-scrollable-editor-workspace.md。縮小預覽並隨頁捲走、時間軸展開全部列、工具不遮圖層、保留編輯手勢及捷徑。PR #1（尚未合併）已更新為本次範圍並暫設 draft，驗收後交使用者自行 Merge。
-- **已驗證**：本次本機 npm run check：244 單元、lint、TypeScript、build、Pages/39 字型授權檢查成功；瀏覽器共 72 情境（新 3）已列出，待 CI。前次程式 4a004e8 的 244/69 僅是基線，不代表本次版面已驗證。
-- **瀏覽器驗證**：Playwright 1.63 / Chromium 153、iPhone 13 尺寸；59 張本輪 CI 截圖在 docs/screenshots，來源工作分支 run 43166533551 / artifact 13920122834，feedback/ 有 6 張新驗收。人工檢視完整來源選區、透明框線、直接排序後的疊放、四格群組與透明裁切；繁中可讀，測試素材均自製。Safari 仍待真機。
-- **階段**：第二輪七點已實作並通過 Chromium，main 已部署並確認公開主程式相符。完整雲朵字/動畫轉場/調色/備份 Drive/IG 音源等其餘規劃仍未實作；手動描邊是固定來源範圍，非人物追蹤。
+- **本次明確子任務**：手機圖層檢視/整頁捲動，見 docs/plans/2026-11-12-scrollable-editor-workspace.md。縮小預覽並隨頁捲走、時間軸展開全部列、工具不遮圖層、保留編輯手勢及捷徑。PR #1 尚未合併，已更新為本次範圍與驗收結果，交使用者自行 Merge。
+- **已驗證**：本次程式 c6f196cc9f7c5b0ee7be2f078da627daf58e50ab / 工作分支 run 43186969560（build job 131076433714）246 單元、72 Chromium e2e 全過；含 13 層觸控捲頁、原有 69 情境、窄螢幕、工具跳轉、填字完整可視、放大預覽與重開設定。lint/TypeScript/build/Pages/39 字型檢查通過。
+- **瀏覽器驗證**：Playwright 1.63 / Chromium 153、iPhone 13 尺寸與 320×568 窄螢幕；63 張本次 CI 截圖在 docs/screenshots，來源 run 43186969560 / artifact 13929546315，workspace/ 新 4 張。人工檢視精簡預覽、完整圖層頁面、文字工具與窄螢幕操作；繁中可讀、均為自製素材，非 Safari 真機。
+- **階段**：工作區與續用設定競態修正已完成驗收，透過 PR #1 交使用者自行合併，尚未部署。本次不推 main、不代合併。先前發布的第二輪七點保留；動畫/轉場/調色/備份等其餘規劃未實作。
 - **發布狀態**：第二輪七點已正式發布：https://peiyulin0520.github.io/VideoClip_2/ 。程式 4a004e80d3654b5ea48ef57744484960e8d599a8；main Actions https://github.com/peiyulin0520/VideoClip_2/actions/runs/43167202348 成功（build job 131011729097 / deploy job 131013709565）。HTML/manifest/GIPHY attribution 均 HTTP 200；index-DcmSgmO1.js SHA-256 363202f6ee667285a7ceae4219cfdbb675a3d4445f8dfdddbc3118ea4325effa 與本機已驗證建置一致，包含新來源選區/框線/群組功能標記。後續 [skip ci] 僅記錄文件/截圖，不另改程式部署。
-- **下一步**：工作分支 72 Chromium 情境/新截圖 → 修正真實失敗 → PR #1 標為 ready 並提供連結，使用者自行合併。Safari 實測仍見 PLAN §7。
+- **下一步**：使用者自行合併 PR #1 → main Actions 驗收/Pages 發布 → Safari 真機確認捲動與選取手勢。PR：https://github.com/peiyulin0520/VideoClip_2/pull/1 。
 - **等使用者**：本次 UI 更新驗收後，由使用者自行合併 PR #1：https://github.com/peiyulin0520/VideoClip_2/pull/1 。不代合併、不開 auto-merge、不推 main；正式網站目前仍是 4a004e8。
 
 ## 日誌格式（新增一筆時照這個）
@@ -65,6 +65,11 @@
 - 2026-11-11 找到新字體來源 max32002/pop-gothic（大波浪圓體，含注音）→ 已加入手寫可愛包。問「能不能直接下載到我的 files 下載資料夾」→ 答：網頁在 iPhone 不能自動寫進「檔案」App 資料夾；官方字體存在瀏覽器裡，自己的字體用「匯入字體檔」從檔案 App 選
 
 ## 日誌（最新在最上面）
+- 2026-11-12 可捲動工作區完整驗收，PR #1 交使用者合併
+  - 程式 c6f196cc9f7c5b0ee7be2f078da627daf58e50ab / run 43186969560：246 單元、72 e2e 全過（3.1 分鐘）。前兩輪找到的文字框底部裁切與續用儲存競態均回歸通過，沒有放寬可視斷言或跳過測試。
+  - 更新 63 張截圖（artifact 13929546315），workspace/ 4 張：精簡預覽、全層捲頁、編輯文字工具、窄螢幕工具。使用者原始錄影未加入 repo。
+  - PR #1 已包含新工作區與先前發布流程偏好。合併權留給使用者；網站目前仍是上一版 4a004e8，尚未部署新工作區。交接文件/截圖後續提交不改已驗收程式，PR 最終檢查以 GitHub 顯示為準。
+
 - 2026-11-12 工作區三項全過，修復續用設定的儲存競態
   - 第二輪 run 43186048643（399fdca）：244 單元/71 of 72 e2e；工作區 3 項含填字完整可視全過。唯一失敗是原有「同裝置續用重開不顯示歡迎頁」。
   - 發現 appStore.update 先改畫面、再非同步儲存，快速重開可能早於資料交易完成；StrictMode 也可能同時啟動兩次 init。改為 init 共用單次載入、update 排隊組合最新狀態且儲存完成才切畫面，新增 2 個實際競態回歸（總 246）。
