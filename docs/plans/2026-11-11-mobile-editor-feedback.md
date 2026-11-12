@@ -11,4 +11,4 @@
 7. 清晰度：預覽長邊最多 1920（不超過專案原尺寸）；文字用 2–4 倍點陣貼圖、保持邏輯幾何一致，單卡上限 4096px/8MP、快取 16MP。新字卡不預設模糊陰影；舊卡外觀設定不抹除。
 8. 開場：Project.mainOffset/background 選填，主軌可整組延後 0–600 秒，底色黑/白/自訂，時間軸顯示開場區。前段真正無影片，文字可從 0 秒出現。修剪/分割/複製/刪除仍維持 offset，可復原；預覽與單格匯出共用底色。
 
-驗收：227 單元測試；既有 e2e 改為兩指操作，加 5 個回歸 e2e（共 47）與 docs/screenshots/usability/ 新圖。瀏覽器驗收透過 GitHub CI；不能把 Chromium 當作 iPhone Safari 真機。
+驗收：227 單元測試；既有 e2e 改為兩指操作，加 5 個回歸 e2e（長修剪拆成 3 情境後共 49）與 docs/screenshots/usability/ 新圖。瀏覽器驗收透過 GitHub CI；不能把 Chromium 當作 iPhone Safari 真機。

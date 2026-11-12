@@ -106,6 +106,8 @@ IndexedDB `videoclip`（專案 JSON、`meta.appState`、`meta.installedFonts`、
 | 縮圖：Mediabunny `CanvasSink` 優先 → `<video>` → 預覽播放器拿到畫面後 `setAssetThumbs`（不進復原歷史，歷史快照一併更新） | iPhone 隱藏 `<video>` 常不觸發 `loadeddata` |
 
 ## 5. 踩過的坑（避免再踩）
+- GitHub runner 無硬體 GPU；多個高解析度 WebGL 瀏覽器會爭用 CPU。CI 以 workers=1 執行；原五手勢修剪驗收拆成片頭界限/片尾界限/單步復原三個獨立情境，保留所有斷言與 30 秒時限（合計 49 e2e）。
+
 - 修剪會同時觸發 store refresh 和 peek；兩者必須合併同一 RAF，否則每次 pointermove 重畫兩個高解析度畫面。Player.previewTime 保留邊緣時間給解碼事件，refresh/seek/play 清除後回播放頭；不能用延長測試逾時掩蓋重複繪製。
 
 - 高解析度預覽不能在每次字卡/位置變更時重繪並上傳未改變的媒體影格；Compositor 以來源、時間、解碼幀數、frameStamp、裁切快取。首格事件與 decoded callback 必須增加 frameStamp，避免同時間的未解碼畫面被快取。
@@ -151,7 +153,7 @@ IndexedDB `videoclip`（專案 JSON、`meta.appState`、`meta.installedFonts`、
 ```
 npm ci
 npm run check                      # lint + 227 個單元測試 + build + Pages 路徑檢查
-npm run e2e -- --trace off         # 47 個 e2e（iPhone 13 尺寸、Chromium）
+npm run e2e -- --trace off         # 49 個 e2e（iPhone 13 尺寸、Chromium）
 ```
 e2e 會產生 `docs/screenshots/phase*/` 截圖（給使用者審核用，也會被 commit）。
 

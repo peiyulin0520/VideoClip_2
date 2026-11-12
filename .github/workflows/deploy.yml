@@ -45,7 +45,9 @@ jobs:
       - name: Browser tests
         id: browser-tests
         timeout-minutes: 10
-        run: npm run e2e -- --trace off --workers=2
+        # Software WebGL and video decoding contend for the runner's small CPU.
+        # Serial browsers keep gesture timing stable without extending timeouts.
+        run: npm run e2e -- --trace off --workers=1
       - uses: actions/upload-artifact@v4
         if: always() && steps.browser-tests.outcome != 'skipped' && steps.browser-tests.outcome != ''
         with:

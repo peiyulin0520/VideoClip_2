@@ -188,38 +188,39 @@ async function clipsStartSeconds(page: import('@playwright/test').Page): Promise
   });
 }
 
-test('修剪頭尾：拖把手會改片段長度，素材範圍受限', async ({ page }) => {
-  await createProjectWith(page, ['clip-a.webm', 'clip-b.webm']);
-  await clips(page).first().tap();
-  await expect(page.getByTestId('trim-end')).toBeVisible();
+// Keep each independent interaction below the test budget on software-WebGL CI.
+// All head/tail bounds and undo assertions from the combined scenario remain.
+for (const scenario of ['片尾素材範圍', '片頭素材範圍', '單次拖曳復原'] as const)
+  test(`修剪：${scenario}`, async ({ page }) => {
+    await createProjectWith(page, ['clip-a.webm', 'clip-b.webm']);
+    await clips(page).first().tap();
+    await expect(page.getByTestId('trim-end')).toBeVisible();
 
-  const drag = async (testId: string, dx: number) => {
-    const box = (await page.getByTestId(testId).boundingBox())!;
-    const x = box.x + box.width / 2;
-    const y = box.y + box.height / 2;
-    await page.mouse.move(x, y);
-    await page.mouse.down();
-    await page.mouse.move(x + dx / 2, y, { steps: 4 });
-    await page.mouse.move(x + dx, y, { steps: 4 });
-    await page.mouse.up();
-  };
+    const drag = async (testId: string, dx: number) => {
+      const box = (await page.getByTestId(testId).boundingBox())!;
+      const x = box.x + box.width / 2;
+      const y = box.y + box.height / 2;
+      await page.mouse.move(x, y);
+      await page.mouse.down();
+      await page.mouse.move(x + dx / 2, y, { steps: 4 });
+      await page.mouse.move(x + dx, y, { steps: 4 });
+      await page.mouse.up();
+    };
 
-  await expect(clips(page).first()).toContainText('2.0s');
-  await drag('trim-end', -60); // 60px = 1 秒
-  await expect(clips(page).first()).toContainText('1.0s');
-  await drag('trim-end', 600); // 往右拉回，最多回到素材原長 2.0
-  await expect(clips(page).first()).toContainText('2.0s');
-  await drag('trim-start', 60); // 頭端切掉 1 秒
-  await expect(clips(page).first()).toContainText('1.0s');
-  await drag('trim-start', -600); // 還原到素材起點
-  await expect(clips(page).first()).toContainText('2.0s');
-
-  // 一次拖曳 = 一步復原
-  await drag('trim-end', -60);
-  await expect(clips(page).first()).toContainText('1.0s');
-  await page.getByRole('button', { name: '復原' }).tap();
-  await expect(clips(page).first()).toContainText('2.0s');
-});
+    await expect(clips(page).first()).toContainText('2.0s');
+    if (scenario === '片頭素材範圍') {
+      await drag('trim-start', 60);
+      await expect(clips(page).first()).toContainText('1.0s');
+      await drag('trim-start', -600);
+      await expect(clips(page).first()).toContainText('2.0s');
+    } else {
+      await drag('trim-end', -60); // 60px = 1 second.
+      await expect(clips(page).first()).toContainText('1.0s');
+      if (scenario === '片尾素材範圍') await drag('trim-end', 600);
+      else await page.getByRole('button', { name: '復原' }).tap();
+      await expect(clips(page).first()).toContainText('2.0s');
+    }
+  });
 
 test('長按拖曳片段可以重新排序', async ({ page }) => {
   await createProjectWith(page, ['clip-a.webm', 'clip-b.webm', 'clip-c.webm']);
