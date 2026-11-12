@@ -1,6 +1,7 @@
 import { Application, CanvasSource, Container, Graphics, Rectangle, Sprite, Texture } from 'pixi.js';
 import 'pixi.js/advanced-blend-modes';
-import type { BlendMode, Crop, Outline } from '../model/types';
+import { paintMask } from './mediaMask';
+import type { MediaMask, BlendMode, Crop, Outline } from '../model/types';
 import type { Box } from './geometry';
 import { uiScale } from './textRender';
 
@@ -25,7 +26,7 @@ export type SceneLayer = {
   frameW?: number;
   frameH?: number;
   crop?: Crop;
-  mask?: { points: [number, number][] };
+  mask?: MediaMask;
   sourceStamp?: number;
   opacity: number;
   blend: BlendMode;
@@ -49,6 +50,8 @@ type Obj = {
   mask: Graphics | null;
   outline: Graphics | null;
   maskKey: string;
+  alphaCanvas?: HTMLCanvasElement;
+  alphaKey?: string;
   outlineKey: string;
 };
 
@@ -201,18 +204,26 @@ export class Compositor {
           try {
             o.frameCtx.clearRect(0, 0, fw, fh);
             o.frameCtx.drawImage(layer.source, sx, sy, sw, sh, 0, 0, fw, fh);
-            if (layer.mask && layer.mask.points.length >= 3) {
+            if (layer.mask) {
+              const key = JSON.stringify([layer.mask, fw, fh, crop]);
+              if (o.alphaKey !== key) {
+                const c = o.alphaCanvas ?? document.createElement('canvas');
+                c.width = fw;
+                c.height = fh;
+                const ctx = c.getContext('2d')!;
+                ctx.save();
+                ctx.scale(fw / (1 - crop.l - crop.r), fh / (1 - crop.t - crop.b));
+                ctx.translate(-crop.l, -crop.t);
+                // Draw in source pixel space to keep circular brush geometry.
+                ctx.scale(1 / layer.srcW, 1 / layer.srcH);
+                paintMask(ctx, layer.mask, layer.srcW, layer.srcH);
+                ctx.restore();
+                o.alphaCanvas = c;
+                o.alphaKey = key;
+              }
               o.frameCtx.save();
               o.frameCtx.globalCompositeOperation = 'destination-in';
-              o.frameCtx.beginPath();
-              layer.mask.points.forEach(([x, y], i) => {
-                const px = ((x - crop.l) / (1 - crop.l - crop.r)) * fw,
-                  py = ((y - crop.t) / (1 - crop.t - crop.b)) * fh;
-                if (i) o.frameCtx!.lineTo(px, py);
-                else o.frameCtx!.moveTo(px, py);
-              });
-              o.frameCtx.closePath();
-              o.frameCtx.fill();
+              o.frameCtx.drawImage(o.alphaCanvas!, 0, 0);
               o.frameCtx.restore();
             }
             o.textureSource?.update();

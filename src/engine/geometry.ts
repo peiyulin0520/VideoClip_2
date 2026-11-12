@@ -1,3 +1,4 @@
+import { maskContains } from './mediaMask';
 import type { Asset, BlendMode, Crop, Item, TextItem } from '../model/types';
 import type { Layer } from './timeline';
 
@@ -121,19 +122,14 @@ export function hitLayers(layers: Layer[], ctx: GeoCtx, px: number, py: number):
     }
     const box = itemBox(l.item, ctx);
     if (!box || !pointInBox(box, px, py)) continue;
-    if (l.item.type !== 'text' && l.item.mask?.points.length) {
+    if (l.item.type !== 'text' && l.item.mask) {
       const local = toLocal(box, px, py);
       const crop = l.item.crop ?? { l: 0, t: 0, r: 0, b: 0 };
       const x = crop.l + (local.x / box.w + 0.5) * (1 - crop.l - crop.r);
       const y = crop.t + (local.y / box.h + 0.5) * (1 - crop.t - crop.b);
-      const points = l.item.mask.points;
-      let inside = false;
-      for (let a = 0, b = points.length - 1; a < points.length; b = a++) {
-        const [ax, ay] = points[a]!,
-          [bx, by] = points[b]!;
-        if (ay > y !== by > y && x < ((bx - ax) * (y - ay)) / (by - ay) + ax) inside = !inside;
-      }
-      if (!inside) continue;
+      const assetId = l.item.assetId;
+      const asset = ctx.assets.find((a) => a.id === assetId);
+      if (!maskContains(l.item.mask, x, y, asset ? asset.width / asset.height : 1)) continue;
     }
     hits.push(l);
   }

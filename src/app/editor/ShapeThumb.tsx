@@ -4,7 +4,15 @@ import { shapeDef, shapePath } from '../../engine/shapes';
 import type { BoxShape } from '../../model/types';
 
 /** 圖形縮圖：用同一個路徑函式實際畫出來（不是靜態圖片），並依範圍縮放置中 */
-export function ShapeThumb({ shape, color = '#ff4d8d' }: { shape: BoxShape; color?: string }) {
+export function ShapeThumb({
+  shape,
+  color = '#ff4d8d',
+  outline = false,
+}: {
+  shape: BoxShape;
+  color?: string;
+  outline?: boolean;
+}) {
   const ref = useRef<HTMLCanvasElement>(null);
   useEffect(() => {
     const cv = ref.current;
@@ -13,7 +21,7 @@ export function ShapeThumb({ shape, color = '#ff4d8d' }: { shape: BoxShape; colo
     ctx.clearRect(0, 0, cv.width, cv.height);
     const def = shapeDef(shape);
     const cmds = shapePath(shape, 100, def.inset[0] > 1.8 ? 100 : 56, { radius: 12 });
-    const ops = [{ type: 'fill' as const, cmds }];
+    const ops = outline ? [{ type: 'stroke' as const, cmds, width: 2 }] : [{ type: 'fill' as const, cmds }];
     const b = opsBounds(ops)!;
     const pad = 6;
     const k = Math.min((cv.width - pad * 2) / (b.r - b.l), (cv.height - pad * 2) / (b.b - b.t));
@@ -22,6 +30,6 @@ export function ShapeThumb({ shape, color = '#ff4d8d' }: { shape: BoxShape; colo
     ctx.scale(k, k);
     drawOps(ctx, ops, color);
     ctx.restore();
-  }, [shape, color]);
+  }, [shape, color, outline]);
   return <canvas ref={ref} width={120} height={72} className="shape-thumb" aria-hidden="true" />;
 }

@@ -6,6 +6,7 @@ import { captureThumb } from './probe';
 import { buildScene } from './scene';
 import { mainTrack, sourceTimeAt, totalDuration } from './timeline';
 import { usePreferences } from '../store/preferences';
+import { audioRetained } from './audioRanges';
 import { AudioBus, audibleClips } from './audio';
 import { AnimatedGif } from './gif';
 import { getMedia } from '../storage/media';
@@ -245,7 +246,10 @@ export class Player {
   private syncVideo(el: HTMLVideoElement, item: VideoItem, asset: Asset, track: Track, t: number) {
     el.dataset.previewIntent = this.playing ? 'play' : 'pause';
     const s = sourceTimeAt(item, t);
-    const gain = track.muted || item.audioEnabled === false || !asset.hasAudio ? 0 : item.volume;
+    const gain =
+      track.muted || item.audioEnabled === false || !audioRetained(item, s) || !asset.hasAudio
+        ? 0
+        : item.volume;
     this.bus.set(el, gain);
     el.muted = !!el.dataset.priming || gain === 0;
     el.preservesPitch = false;

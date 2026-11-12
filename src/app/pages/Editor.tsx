@@ -84,6 +84,8 @@ function EditorBody() {
   const [ratioOpen, setRatioOpen] = useState(false);
   const [exportOpen, setExportOpen] = useState(false);
   const [nameDraft, setNameDraft] = useState('');
+  const [showTop, setShowTop] = useState(false);
+  const editorRef = useRef<HTMLElement>(null);
   const total = totalDuration(project);
 
   useEffect(() => {
@@ -160,7 +162,26 @@ function EditorBody() {
   const empty = project.tracks.every((t) => t.items.length === 0);
 
   return (
-    <main className="editor">
+    <main
+      className={`editor${showTop ? ' has-return' : ''}`}
+      ref={editorRef}
+      onScroll={() => {
+        const editor = editorRef.current!,
+          preview = editor.querySelector('.stage-wrap'),
+          header = editor.querySelector('.ed-top');
+        if (preview && header)
+          setShowTop(preview.getBoundingClientRect().top < header.getBoundingClientRect().bottom - 2);
+      }}
+    >
+      {showTop && (
+        <button
+          className="back-to-preview"
+          aria-label="回到最上方預覽"
+          onClick={() => editorRef.current?.scrollTo({ top: 0, behavior: 'smooth' })}
+        >
+          <ArrowUp size={24} />
+        </button>
+      )}
       <header className="ed-top">
         <Link className="icon-btn" to="/" aria-label="回首頁">
           <ChevronLeft />

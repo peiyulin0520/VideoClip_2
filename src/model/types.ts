@@ -39,6 +39,9 @@ export type ItemBase = {
   crop?: Crop;
 };
 
+export type MaskStroke = { tool: 'keep' | 'erase'; size: number; points: [number, number][] };
+export type MediaMask = { points: [number, number][]; strokes?: MaskStroke[] };
+
 export type VideoItem = ItemBase & {
   type: 'video' | 'image' | 'audio';
   assetId: string;
@@ -46,7 +49,9 @@ export type VideoItem = ItemBase & {
   speed: number; // 0.25–4；照片固定 1
   volume: number; // 0–1
   audioEnabled?: boolean;
-  mask?: { points: [number, number][] };
+  mask?: MediaMask;
+  /** Retained source-time audio intervals; omitted = all sound. Empty = silent. */
+  audioRanges?: [number, number][];
   fit: 'cover' | 'contain';
   /** 多格版型的固定視窗（畫面比例座標）；素材可在視窗內拖移/縮放。 */
   slot?: { x: number; y: number; w: number; h: number };

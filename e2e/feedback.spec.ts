@@ -60,19 +60,19 @@ test('左端修剪固定片尾並留下空白，完整來源隨時可以還原',
   await expect.poll(async () => isRed(await samplePreview(page, 0.5, 0.5))).toBe(true);
 });
 
-test('完整來源選區左右拉桿獨立，裁掉的範圍可以再次展開', async ({ page }) => {
+test('完整來源選區倒三角起迄獨立，裁掉的範圍可以再次展開', async ({ page }) => {
   await createProjectWith(page, ['tone-video.webm']);
   await clips(page).first().tap();
   await page.getByRole('button', { name: '片段範圍', exact: true }).tap();
   const box = (await page.getByTestId('source-range').boundingBox())!;
-  await drag(page, page.getByRole('button', { name: '來源起點拉桿' }), box.width * 0.2);
-  await drag(page, page.getByRole('button', { name: '來源終點拉桿' }), -box.width * 0.2);
+  await drag(page, page.getByRole('button', { name: '來源起點標記' }), box.width * 0.2);
+  await drag(page, page.getByRole('button', { name: '來源終點標記' }), -box.width * 0.2);
   await expect(page.getByTestId('source-range-values')).toContainText('來源 0.6 秒 → 2.4 秒');
   await page.getByRole('button', { name: '套用片段範圍' }).tap();
   let it = (await current(page)).tracks[0]!.items[0]!;
   expect(it.duration).toBeCloseTo(1.8, 1);
   await page.getByRole('button', { name: '片段範圍', exact: true }).tap();
-  await drag(page, page.getByRole('button', { name: '來源終點拉桿' }), box.width * 0.2);
+  await drag(page, page.getByRole('button', { name: '來源終點標記' }), box.width * 0.2);
   await page.getByRole('button', { name: '套用片段範圍' }).tap();
   it = (await current(page)).tracks[0]!.items[0]!;
   expect(it.duration).toBeCloseTo(2.4, 1);

@@ -3,17 +3,13 @@
 規則：每完成一個有意義的步驟，就在同一個 commit 裡 **覆寫「交接快照」** 並 **在「日誌」最上面新增一筆**（規則全文見 `AGENTS.md`「紀錄規則」，背景與架構見 `docs/HANDOFF.md`）。
 
 ## 交接快照（VideoClip_2 最新狀態）
-- **日期**：2026-11-12
-- **目標儲存庫**：`https://github.com/peiyulin0520/VideoClip_2`
-- **工作分支**：`codex/establish-little-moments`；main 原有初始 commit `2f8bdf9` 保留。最新本機程式 commit 見 `git log -1`；推送狀態見下方。
-- **來源**：`peiyulin0520/VideoClip` main `78b178343409c46c7ba353ef3a6db6f279a7bde6`（PR #3 已合併）。以下舊日誌屬來源 repo 的歷史，不代表 VideoClip_2 的部署/瀏覽器驗收。
-- **本次明確子任務**：主題對比與米色、預覽直接選取/遮擋素材暫時置頂、單片段跨類型限定軌道與時間移動、取消固定主軌；見 docs/plans/2026-11-12-flexible-layers-and-contrast.md。
-- **已驗證**：程式 3aadf4be1cfc78453d0db6421763e3d30b87b533 / Actions https://github.com/peiyulin0520/VideoClip_2/actions/runs/43228902863：262 單元、79 Chromium e2e 全過，lint/格式/TypeScript/build/Pages/39 字體檢查成功。包含六主題（含 active tab）、直接預覽與透明角落、長按遮擋選單/暫時置頂/輸出原層次、原生跨層/時間拖曳、異型拒絕、層間新建與留白插入。
-- **目前變更**：Editor 保留舊 IDs/時間/堆疊，啟用 flexibleLayers/freeMain，影像無固定底層；moveLayerItem 驗證後原子轉移單片，群組維持多格/框架。insertVisualClip 明確插入時切開並推後同軌，拖移不推其他片段。liftedId 僅 Player 預覽，完成/播放恢復、匯出不採用。米色與深底語意前景，選取分頁使用 fg/加粗。
-- **瀏覽器驗證**：80 張完整 CI 截圖已更新（layer-editing/ 新 12 張，含六主題），artifact 13949497199 / ZIP SHA-256 fc580e98aa69905be9dbd3cf9c5ee53f50e9fffa6537eceb52aaf0f54d4b15e1 已核對。人工檢視米色/圖層 icon、遮擋選單、暫時編輯、單片轉移與異型拒絕；繁中可讀、全自製素材。iPhone Safari 長按/雙指/拖移仍待真機。
-- **PR/發布**：PR #3 https://github.com/peiyulin0520/VideoClip_2/pull/3 已更新本次範圍，完成驗收並附截圖，待使用者自行 Merge；尚未發布。助手不代合併、不開 auto-merge、不推 main。
-- **下一步**：使用者自行 Merge PR #3 → main Actions/Pages 發布 → iPhone Safari 實測。
-- **等使用者**：點入 PR #3 看截圖並自行合併。最後純文件/截圖提交使用 [skip ci]，程式與測試和上述成功 CI 完全相同，不重跑同一輪瀏覽器測試。
+- **日期/分支**：2026-11-12 / codex/establish-little-moments；基於使用者自行合併 PR #3 的 main 5ebd1a1。本次 PR #4。
+- **任務**：docs/plans/2026-11-12-refinement-markers-and-readability.md 的 12 點＋倒三角、多段聲音補充已完成。
+- **驗證**：程式 3b9de60dc2cb325652b075313e1636d47e00f092 / [Actions 43262467680](https://github.com/peiyulin0520/VideoClip_2/actions/runs/43262467680)：267 單元、91 Chromium e2e 全過；lint/格式/TypeScript/build/Pages/39 字體檢查成功。
+- **目前程式**：裁切 keep/erase 多筆及復原共用來源 UV 遮罩；毛筆/顆粒鉛筆；新字塊無填色、淺暖次分類、裝飾 px；選取字體/圖層與調色對比，包含四淺主題的白字 PNG 預覽。來源選區小倒三角、保留原色/其餘灰；多組來源音訊保留區間及當秒畫面，匯出不縮短影片。時間原點 56px、色塊無碰撞共用軌、浮動回頂保留底部觸控帶。
+- **截圖**：107 張本次完整成功 CI 截圖已保存（refinement/ 新畫面含六主題、字體 PNG、裁切補邊、音訊多區間、畫筆與色塊）；artifact 13965235972，ZIP SHA-256 abc5fc912058d59aaea8cca8c47ad191fc30a4c37f8b6402933387ba4ff3a07c 已核對。人工檢視通過，全部自製測試素材。
+- **PR/發布**：[PR #4](https://github.com/peiyulin0520/VideoClip_2/pull/4) 完成驗收，交使用者自行 Merge；本次尚未發布，不代合併、不開 auto-merge、不推 main。PR #3 已由使用者合併。
+- **下一步/等使用者**：使用者自行 Merge PR #4 → main Actions/Pages 發布 → iPhone Safari 真機確認筆刷、密集標記、音訊/匯出與回頂。最後文件/截圖提交 [skip ci]，程式與測試保持上述成功 CI 完全相同。
 
 ## 日誌格式（新增一筆時照這個）
 ```
@@ -27,6 +23,9 @@
 ```
 
 ## 使用者已確認的偏好
+- 2026-11-12 最新補充：細部影片/音訊選段不要兩側拉霸，以秒數上方小倒三角標起迄；聲音可多組保留區間以去掉中間聲音，保留正常色、未選反灰，選段可看該秒影片畫面。裁切補充「已列入第一點」=圈選後用筆刷與橡皮擦局部精修。
+- 2026-11-12 最新 12 點：字塊分類要暖色次層且預設無填色；裝飾距離不要難懂百分比；毛筆/鉛筆；深底淺字（字體/圖層/自訂色）；細部選段把手不要遮縮圖；疊色模式要說明；音訊縮圖識別；浮動回頂；色塊無碰撞共用軌、0 秒靠近圖示、自訂色輪/RGB。
+
 - 最新六點：主題深底要配淺字/icon，可參考米色；原影片可直接從預覽點選縮放，露出處可選底層，長按能選被蓋住的素材暫時置頂編輯、完成後恢復；單一片段可跨層/時間移動，影像、字卡、音效不能同軌混放；取消固定主軌與疊加差別。
 - 最新連續參考圖更正：預覽要正常大、比圖中稍小，往下依序看圖層、功能欄，再選功能往下看選項；圖層拖拉軸要更細。優先於上一版把預覽縮成 24dvh，播放列也不應卡住。
 - 圈圖補充：整個編輯頁可上下滑，預覽和時間軸不固定在大區塊；不僅限下方設定可滑動，時間軸依圖層數展開。功能設定也取消小捲動框，隨整頁展開。
@@ -68,6 +67,35 @@
 - 2026-11-11 找到新字體來源 max32002/pop-gothic（大波浪圓體，含注音）→ 已加入手寫可愛包。問「能不能直接下載到我的 files 下載資料夾」→ 答：網頁在 iPhone 不能自動寫進「檔案」App 資料夾；官方字體存在瀏覽器裡，自己的字體用「匯入字體檔」從檔案 App 選
 
 ## 日誌（最新在最上面）
+
+- 2026-11-12 局部裁切、倒三角多段聲音與可讀性完整驗收
+  - 程式 3b9de60dc2cb325652b075313e1636d47e00f092 / [Actions 43262467680](https://github.com/peiyulin0520/VideoClip_2/actions/runs/43262467680)：267 單元、91 Chromium e2e 全過；lint/格式/TypeScript/build/Pages/39 字體檢查成功。
+  - 包括來源完整還原、mask keep/erase 真實像素與匯出/重開、多段音訊原長度與輸出中間靜音、六主題選取及 PNG 像素對比、毛筆/鉛筆、共用/碰撞色塊、0 秒位置與回頂；所有舊測試保留。
+  - 107 張成功 CI 畫面保存，artifact 13965235972 / ZIP hash abc5fc912058d59aaea8cca8c47ad191fc30a4c37f8b6402933387ba4ff3a07c；人工檢視字體預覽、裁切補邊與透明挖空、多組音訊標記、暖色字塊次層及回頂，中文可讀，無使用者或第三方影片。
+  - README、AGENTS、PLAN、EFFECTS、TEXT_CARDS、HANDOFF、USAGE 與本次計畫同步；文件/截圖提交 [skip ci] 與成功 CI 的程式/測試一致。Safari 真機待確認。
+  - 下一步：PR #4 交使用者自行 Merge，本次未代合併、未發布。
+
+
+- 2026-11-12 267/91 全過後補正字體圖片預覽
+  - 程式 48128ac / run 43260960541：267 單元、91 Chromium e2e 全過，artifact 13963233845（8f0f6741be7a4f989e5db697cc0e364c955e76123257da94a0f0115072ec3983）。
+  - 人工對照使用者字體畫面，確認 fancy-free/preview.png 是白字透明 PNG；四種淺主題未選時仍會白底白字。僅 UI 預覽以 CSS brightness(0) 轉黑，dark/mono 與選取深底保留白字，不修改字型或使用者作品。
+  - 六主題驗收新增實際 PNG 經 CSS filter 的像素對比斷言與截圖，仍共 91 情境；此具體可讀性問題需第三輪 CI，先不交付 ready。
+
+
+- 2026-11-12 首輪 267/86 of 91 後修正操作遮擋與裁切事件
+  - 首輪程式 578be98 / run 43258871988，267 單元通過、86/91 Chromium 通過；多段音訊實際輸出中間靜音與六主題對比已成功。
+  - 真實修正：浮動回頂與工具重疊，改為出現時保留底部觸控帶；裁切 keep 的 state updater 不能讀事件 currentTarget，改先擷取來源座標；密集標記才上下錯位，短聲音可 0.01 秒精調，影片最小值跟隨速度。
+  - 舊粉紅預設驗收改為先檢查透明，再由 UI 選粉紅保留像素斷言；新測試的文字子分頁定位限於「字卡設定」，不與上層同名 tab 混淆。
+  - 鉛筆改細顆粒紋理；聲音測試補還原、移除與鍵盤精調；純聲音預覽保留該秒專案畫面。失敗 artifact 僅放臨時目錄，不當最終截圖。
+  - 下一步：完整 check 與第二輪 CI；PR #4 仍 draft，不代使用者合併。
+
+
+- 2026-11-12 裁切局部修正與倒三角多段聲音選取（功能分支，commit 見 git log）
+  - 完成 12 點與後續倒三角補充；基線 PR #3 已由使用者合併，另開新 PR。
+  - 新增 SourceRanges、AudioRangeEditor、mediaMask/audioRanges、五項單元及十二項瀏覽器驗收；同步更新 Text/Crop/Drawing/Audio/Timeline/Editor、合成/匯出與規格。
+  - 本機基線 check 262 通過；修改後 267 單元、91 瀏覽器情境待完整 CI。未宣稱 Safari 成功，參考截圖未入 repo。
+  - 下一步：功能分支推送與新 PR draft，CI 截圖檢查後再交付使用者自行合併。
+
 - 2026-11-12 主題、遮擋預覽與單片跨層完整驗收，PR #3 交使用者合併
   - 程式 3aadf4be1cfc78453d0db6421763e3d30b87b533 / run 43228902863：262 單元、79 e2e 全過。人工發現的 active tab 白字淺底已修正並在六主題對比驗收；沒有跳過測試或放寬原生拖曳/像素/復原斷言。
   - 80 張 CI 截圖保存，artifact 13949497199，ZIP hash fc580e98aa69905be9dbd3cf9c5ee53f50e9fffa6537eceb52aaf0f54d4b15e1；新增 layer-editing/ 十二張含六主題、直接預覽、遮擋選單、暫時置頂、單片轉移、異型拒絕與底層以下新建。

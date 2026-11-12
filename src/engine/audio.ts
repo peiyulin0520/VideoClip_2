@@ -1,4 +1,5 @@
 import type { Project, VideoItem, Track, Asset } from '../model/types';
+import { audioRetained } from './audioRanges';
 export type AudibleClip = { item: VideoItem; track: Track; asset: Asset; gain: number };
 export function audibleClips(project: Project, t: number): AudibleClip[] {
   const templateActive = project.tracks.some(
@@ -12,6 +13,7 @@ export function audibleClips(project: Project, t: number): AudibleClip[] {
         item.type === 'text' ||
         item.type === 'image' ||
         item.audioEnabled === false ||
+        !audioRetained(item, item.trimIn + (t - item.start) * item.speed) ||
         item.volume <= 0 ||
         t < item.start ||
         t >= item.start + item.duration

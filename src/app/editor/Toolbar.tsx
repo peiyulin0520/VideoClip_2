@@ -578,7 +578,7 @@ function LayersTab() {
               editItem(it.id, (x) => void (x.transform.opacity = v / 100), { coalesce: `op:${it.id}` })
             }
           />
-          <div className="slider-label">混合模式</div>
+          <div className="slider-label">與下方畫面如何疊色</div>
           <div className="chips">
             {BLENDS.map((b) => (
               <button
@@ -590,6 +590,17 @@ function LayersTab() {
               </button>
             ))}
           </div>
+          <p className="hint" data-testid="blend-help">
+            {
+              {
+                normal: '正常：直接顯示這個素材；一般剪輯選這個即可。',
+                multiply: '色彩加深：與下方畫面相乘，白色變透明、其他顏色變暗，適合紙張或陰影。',
+                screen: '濾色：與下方畫面混合變亮，黑色會消失，適合光效。',
+                overlay: '覆蓋：同時加強明暗對比，適合材質與色調。',
+                add: '加亮：把亮度相加，容易變白，適合發光特效。',
+              }[it.blend ?? 'normal']
+            }
+          </p>
           <Slider
             label="圓角"
             value={Math.round((it.cornerRadius ?? 0) * 100)}
