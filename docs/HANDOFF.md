@@ -1,6 +1,8 @@
 # 交接手冊（HANDOFF）
 
 ## VideoClip_2 當前交接（優先於以下來源 repo 的歷史紀錄）
+- 第二輪 48128ac / run 43260960541：267/91 全過。但 fancy-free 的 preview.png 原圖為白字透明，非選取時四種淺主題仍需 CSS brightness(0)，不能只改 font-row 的 color（PNG 不繼承字色）。dark/mono 與選取深底保留白色。六主題新增 PNG 經 filter 的像素對比回歸，第三輪待 CI。
+
 - 首輪本次 run 43258871988：267 單元、86/91 e2e。Crop keep updater 不可延後讀 SyntheticEvent.currentTarget，要先 point(e) 再 setStrokes；浮動回頂需要獨立底部觸控帶（has-return 高度），不能蓋到工具。來源標記一般同列、密集才 end 上錯位；音訊可細至 0.01 秒，影片最低值 MIN_CLIP_DURATION*speed。PR #4 待下一輪 CI。
 
 - 最新子任務 docs/plans/2026-11-12-refinement-markers-and-readability.md。PR #3 使用者已自行合併，main 5ebd1a1；本次新 PR 待 CI。舊「#3 待合併」為歷史。

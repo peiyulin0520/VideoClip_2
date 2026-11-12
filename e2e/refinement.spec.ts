@@ -12,6 +12,11 @@ import {
   seekTo,
 } from './helpers';
 const shots = 'docs/screenshots/refinement';
+async function capture(page: Page, options: { path: string }) {
+  await expect(page.locator('.toast')).toHaveCount(0);
+  await page.screenshot(options);
+}
+
 const current = (page: Page): Promise<Project> =>
   page.evaluate(() =>
     (window as unknown as { __videoclip: { project: () => Project } }).__videoclip.project(),
@@ -57,7 +62,7 @@ test('裁切後保留筆刷補缺角，橡皮擦去多餘區域，重開與輸�
     [0.3, 0.3],
     [0.3, 0.7],
   ]);
-  await page.screenshot({ path: `${shots}/crop-refine.png` });
+  await capture(page, { path: `${shots}/crop-refine.png` });
   await page.getByRole('button', { name: '套用裁切', exact: true }).tap();
   const item = (await current(page)).tracks[1]!.items[0] as VideoItem;
   expect(item.mask!.strokes).toHaveLength(2);
@@ -73,7 +78,7 @@ test('裁切後保留筆刷補缺角，橡皮擦去多餘區域，重開與輸�
   await page.goBack();
   await expect(clips(page)).toHaveCount(2);
   await expect.poll(async () => isRed(await samplePreview(page, 0.4, 0.5))).toBe(true);
-  await page.screenshot({ path: `${shots}/crop-refined-result.png` });
+  await capture(page, { path: `${shots}/crop-refined-result.png` });
 });
 
 test('透明字塊、次級選單與深底前景可讀，裝飾距離使用像素', async ({ page }) => {
@@ -104,7 +109,7 @@ test('透明字塊、次級選單與深底前景可讀，裝飾距離使用像�
   expect(
     (await current(page)).tracks.flatMap((t) => t.items).find((i) => i.type === 'text')!.card.box,
   ).toMatchObject({ fill: '#325064', opacity: 1 });
-  await page.screenshot({ path: `${shots}/box-submenu-and-fill.png` });
+  await capture(page, { path: `${shots}/box-submenu-and-fill.png` });
   await page.getByRole('tab', { name: '裝飾', exact: true }).tap();
   await page.getByRole('button', { name: '裝飾 波浪底線', exact: true }).tap();
   await slider(page, '波浪底線與文字距離', 120);
@@ -118,7 +123,7 @@ test('透明字塊、次級選單與深底前景可讀，裝飾距離使用像�
   const selected = page.locator('.font-row.active');
   await expect(selected).toBeVisible();
   expect(await selected.evaluate((el) => getComputedStyle(el).color)).toBe('rgb(255, 250, 240)');
-  await page.screenshot({ path: `${shots}/font-selected-contrast.png` });
+  await capture(page, { path: `${shots}/font-selected-contrast.png` });
 });
 
 test('毛筆與鉛筆畫出不同筆觸並可儲存為素材', async ({ page }) => {
@@ -146,7 +151,7 @@ test('毛筆與鉛筆畫出不同筆觸並可儲存為素材', async ({ page }) 
     return data.some((v, i) => i % 4 === 3 && v > 0);
   });
   expect(count).toBe(true);
-  await page.screenshot({ path: `${shots}/ink-pencil-brushes.png` });
+  await capture(page, { path: `${shots}/ink-pencil-brushes.png` });
   await page.getByRole('button', { name: '加入畫作', exact: true }).tap();
   await expect(clips(page)).toHaveCount(2);
 });
@@ -168,7 +173,7 @@ test('音訊來源有縮圖，多組倒三角排除中間聲音但影片不縮�
   await strip.tap({ position: { x: box.width * 0.8, y: 30 } });
   await page.getByRole('button', { name: '將目前前後 0.25 秒靜音', exact: true }).tap();
   await expect(page.locator('.source-marker')).toHaveCount(6);
-  await page.screenshot({ path: `${shots}/multi-audio-markers.png` });
+  await capture(page, { path: `${shots}/multi-audio-markers.png` });
   await page.getByRole('button', { name: '套用聲音選段', exact: true }).tap();
   const after = (await current(page)).tracks[0]!.items[0] as VideoItem;
   expect(after.audioRanges).toHaveLength(3);
@@ -218,7 +223,7 @@ test('0 秒靠近圖層圖示，色塊不重疊時共用一層，浮動按鈕回
   p = await current(page);
   expect(p.tracks.filter((t) => t.name === '留白色塊')).toHaveLength(2);
   await page.locator('.bottombar').scrollIntoViewIfNeeded();
-  await page.screenshot({ path: `${shots}/shared-solids-and-return.png` });
+  await capture(page, { path: `${shots}/shared-solids-and-return.png` });
   await page.getByRole('button', { name: '回到最上方預覽', exact: true }).tap();
   await expect.poll(() => page.locator('.editor').evaluate((el) => el.scrollTop)).toBe(0);
 });
@@ -253,11 +258,43 @@ for (const theme of ['dark', 'mono', 'light', 'fresh', 'warm', 'beige'])
     expect(await contrast('.color-custom-button')).toBeGreaterThanOrEqual(4.5);
     await page.getByRole('button', { name: '字體', exact: true }).tap();
     expect(await contrast('.font-row.active')).toBeGreaterThanOrEqual(4.5);
-    await page.screenshot({ path: `${shots}/font-${theme}.png` });
+    await capture(page, { path: `${shots}/font-${theme}.png` });
+    const image = page.locator('[data-font-key="fancy-free"] .font-prev-img');
+    await image.scrollIntoViewIfNeeded();
+    const imageContrast = await image.evaluate(async (el) => {
+      const img = el as HTMLImageElement;
+      await img.decode();
+      const c = document.createElement('canvas');
+      c.width = img.naturalWidth;
+      c.height = img.naturalHeight;
+      const ctx = c.getContext('2d')!;
+      ctx.filter = getComputedStyle(img).filter;
+      ctx.drawImage(img, 0, 0);
+      const data = ctx.getImageData(0, 0, c.width, c.height).data;
+      let ink: number[] = [];
+      for (let i = 0; i < data.length; i += 4)
+        if (data[i + 3]! > 240) {
+          ink = [data[i]!, data[i + 1]!, data[i + 2]!];
+          break;
+        }
+      const lum = (c: number[]) => {
+        const l = c.map((v) => (v / 255 <= 0.04045 ? v / 255 / 12.92 : ((v / 255 + 0.055) / 1.055) ** 2.4));
+        return l[0]! * 0.2126 + l[1]! * 0.7152 + l[2]! * 0.0722;
+      };
+      const bg = getComputedStyle(img.closest('.sheet')!)
+          .backgroundColor.match(/[\d.]+/g)!
+          .slice(0, 3)
+          .map(Number),
+        a = lum(ink),
+        b = lum(bg);
+      return (Math.max(a, b) + 0.05) / (Math.min(a, b) + 0.05);
+    });
+    expect(imageContrast).toBeGreaterThanOrEqual(4.5);
+    await capture(page, { path: `${shots}/font-image-${theme}.png` });
     await page.locator('.font-row.active').tap();
     await openTab(page, '圖層');
     expect(await contrast('.layer-row.selected')).toBeGreaterThanOrEqual(4.5);
-    await page.screenshot({ path: `${shots}/layers-${theme}.png` });
+    await capture(page, { path: `${shots}/layers-${theme}.png` });
     await page.getByRole('button', { name: '濾色', exact: true }).tap();
     await expect(page.getByTestId('blend-help')).toContainText('黑色會消失');
   });
@@ -298,5 +335,5 @@ test('匯出保留兩側聲音與中間靜音，畫面長度不變', async ({ pa
   expect(energies[2]!.rms).toBeGreaterThan(0.01);
   expect(energies[1]!.duration).toBeCloseTo(3, 1);
   expect(energies[1]!.samples[0]![0]).toBeGreaterThan(200);
-  await page.screenshot({ path: `${shots}/audio-ranges-export.png` });
+  await capture(page, { path: `${shots}/audio-ranges-export.png` });
 });

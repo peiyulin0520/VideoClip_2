@@ -2332,3 +2332,9 @@ progress {
 .editor.has-return {
   height: calc(100dvh - 72px - env(safe-area-inset-bottom));
 }
+/* The bundled Fancy Free preview PNG contains white glyphs on transparency. */
+:root:is([data-theme='light'], [data-theme='fresh'], [data-theme='warm'], [data-theme='beige'])
+  .font-row:not(.active)
+  .font-prev-img {
+  filter: brightness(0);
+}
