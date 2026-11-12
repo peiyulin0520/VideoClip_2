@@ -4,6 +4,7 @@ import { useProjectStore } from '../../store/projectStore';
 import { useUI, toast } from '../../store/uiStore';
 import { trimSourceRange } from '../../engine/groupTiming';
 import { urlFor } from '../../engine/assetUrls';
+import { MIN_CLIP_DURATION } from '../../model/defaults';
 import { SourceRanges } from '../../ui/SourceRanges';
 import { Sheet } from '../../ui/Sheet';
 
@@ -22,11 +23,12 @@ export function TrimEditor({ item, onClose }: { item: VideoItem; onClose: () => 
         playsInline
         muted
         onLoadedMetadata={(e) => {
-          e.currentTarget.currentTime = Math.min(Math.max(item.trimIn, 0.001), asset.duration - 0.001);
+          e.currentTarget.currentTime = Math.min(Math.max(cursor, 0.001), asset.duration - 0.001);
         }}
       />
       <SourceRanges
         duration={asset.duration}
+        minimum={MIN_CLIP_DURATION * item.speed}
         ranges={[range as [number, number]]}
         thumbs={asset.thumbs}
         cursor={cursor}

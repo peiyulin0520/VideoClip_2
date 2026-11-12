@@ -163,7 +163,7 @@ function EditorBody() {
 
   return (
     <main
-      className="editor"
+      className={`editor${showTop ? ' has-return' : ''}`}
       ref={editorRef}
       onScroll={() => {
         const editor = editorRef.current!,

@@ -6,7 +6,7 @@ import { urlFor } from '../../engine/assetUrls';
 import { excludeAudio } from '../../engine/audioRanges';
 import { editItem } from '../../store/actions';
 import { useProjectStore } from '../../store/projectStore';
-import { useUI } from '../../store/uiStore';
+import { toast, useUI } from '../../store/uiStore';
 
 export function AudioRangeEditor({
   item,
@@ -75,7 +75,7 @@ export function AudioRangeEditor({
       }
     },
     onEnded: () => setPlaying(false),
-    onLoadedMetadata: () => seek(item.trimIn),
+    onLoadedMetadata: () => seek(cursor),
   };
   return (
     <Sheet open title="選擇保留的聲音片段" onClose={onClose}>
@@ -121,7 +121,10 @@ export function AudioRangeEditor({
             useUI.getState().player?.pause();
             if (media.current) {
               media.current.muted = !ranges.some(([a, b]) => cursor >= a && cursor < b);
-              void media.current.play().then(() => setPlaying(true));
+              void media.current
+                .play()
+                .then(() => setPlaying(true))
+                .catch(() => toast('此音訊暫時無法試聽，請重新點選播放或使用相容的音檔。'));
             }
           }
         }}
@@ -137,7 +140,7 @@ export function AudioRangeEditor({
         onSeek={seek}
       />
       <p className="hint">
-        拖曳秒數上方的小倒三角調整各段起點與終點。原色是保留的聲音，反灰處靜音；畫面與時間位置保持連續。點縮圖查看該秒畫面。
+        拖曳秒數上方的小倒三角調整各段起點與終點。原色是保留的聲音，反灰處靜音；畫面與時間位置保持連續。點縮圖定位，再加入靜音區段；拖動兩旁倒三角可改變靜音長度。
       </p>
       <div className="chips">
         <button

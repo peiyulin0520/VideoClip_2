@@ -54,16 +54,24 @@ export function DrawingEditor({
           ctx.stroke();
         }
       } else if (s.brush === 'pencil' && s.points.length > 1) {
-        for (let strand = 0; strand < 5; strand++) {
-          ctx.lineWidth = Math.max(0.6, (s.size * k) / 14);
-          ctx.beginPath();
-          s.points.forEach(([x, y], i) => {
-            const jitter = Math.sin(i * 13 + strand * 7) * s.size * k * 0.08,
-              d = (strand - 2) * s.size * k * 0.16;
-            if (i) ctx.lineTo(x * w + d + jitter, y * h + d);
-            else ctx.moveTo(x * w + d, y * h + d);
-          });
-          ctx.stroke();
+        const random = (seed: number) => {
+          const v = Math.sin(seed * 127.1 + 311.7) * 43758.5453;
+          return v - Math.floor(v);
+        };
+        for (let i = 1; i < s.points.length; i++) {
+          const a = s.points[i - 1]!,
+            b = s.points[i]!;
+          const distance = Math.hypot((b[0] - a[0]) * w, (b[1] - a[1]) * h),
+            steps = Math.max(1, Math.ceil(distance));
+          for (let j = 0; j <= steps; j++)
+            for (let grain = 0; grain < 5; grain++) {
+              const seed = i * 100003 + j * 31 + grain,
+                angle = random(seed) * Math.PI * 2,
+                radius = Math.sqrt(random(seed + 7)) * s.size * k * 0.5;
+              const x = (a[0] + ((b[0] - a[0]) * j) / steps) * w + Math.cos(angle) * radius;
+              const y = (a[1] + ((b[1] - a[1]) * j) / steps) * h + Math.sin(angle) * radius;
+              ctx.fillRect(x, y, Math.max(0.7, k), Math.max(0.7, k));
+            }
         }
       } else if (s.points.length === 1) {
         ctx.beginPath();

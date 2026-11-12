@@ -2246,10 +2246,10 @@ progress {
   font-size: 10px;
   line-height: 14px;
 }
-.source-marker.end {
+.source-marker.crowded {
   top: -96px;
 }
-.marker-range:has(.source-marker.end) {
+.marker-range:has(.source-marker.crowded) {
   margin-top: 98px;
 }
 .marker-range .range-selection {
@@ -2327,4 +2327,8 @@ progress {
 }
 :root[data-theme] .font-row.active .font-tags .ok {
   color: #a5e598;
+}
+/* A small bottom touch area keeps the floating button clear of every control. */
+.editor.has-return {
+  height: calc(100dvh - 72px - env(safe-area-inset-bottom));
 }

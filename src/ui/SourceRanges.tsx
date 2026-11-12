@@ -1,5 +1,4 @@
-import { useRef, type PointerEvent } from 'react';
-import { MIN_CLIP_DURATION } from '../model/defaults';
+import { useLayoutEffect, useRef, useState, type PointerEvent } from 'react';
 
 /** Small visible markers above the seconds; each retains a 44px touch target. */
 export function SourceRanges({
@@ -9,6 +8,7 @@ export function SourceRanges({
   onChange,
   onSeek,
   cursor = 0,
+  minimum = 0.01,
 }: {
   duration: number;
   ranges: [number, number][];
@@ -16,13 +16,23 @@ export function SourceRanges({
   onChange: (ranges: [number, number][]) => void;
   onSeek: (time: number) => void;
   cursor?: number;
+  minimum?: number;
 }) {
   const bar = useRef<HTMLDivElement>(null);
+  const [width, setWidth] = useState(300);
+  useLayoutEffect(() => {
+    const el = bar.current!,
+      observer = new ResizeObserver(() => setWidth(el.clientWidth));
+    observer.observe(el);
+    setWidth(el.clientWidth);
+    return () => observer.disconnect();
+  }, []);
   const update = (index: number, side: number, value: number) => {
     const next = ranges.map((r) => [...r] as [number, number]);
     const r = next[index]!;
-    const low = side ? r[0] + MIN_CLIP_DURATION : (next[index - 1]?.[1] ?? 0);
-    const high = side ? (next[index + 1]?.[0] ?? duration) : r[1] - MIN_CLIP_DURATION;
+    const span = Math.min(minimum, r[1] - r[0]);
+    const low = side ? r[0] + span : (next[index - 1]?.[1] ?? 0);
+    const high = side ? (next[index + 1]?.[0] ?? duration) : r[1] - span;
     r[side] = Math.max(low, Math.min(high, value));
     onChange(next);
     onSeek(r[side]!);
@@ -104,7 +114,7 @@ export function SourceRanges({
         r.map((v, side) => (
           <button
             key={`${index}-${side}`}
-            className={`source-marker ${side ? 'end' : 'start'}`}
+            className={`source-marker ${side ? 'end' : 'start'}${side && (((r[1] - r[0]) / duration) * width < 44 || (ranges[index + 1] && ((ranges[index + 1]![0] - r[1]) / duration) * width < 44)) ? ' crowded' : ''}`}
             aria-label={`${ranges.length > 1 ? `第${index + 1}段` : '來源'}${side ? '終點' : '起點'}標記`}
             title={`${side ? '終點' : '起點'} ${v.toFixed(2)} 秒`}
             style={{ left: `${(v / duration) * 100}%` }}

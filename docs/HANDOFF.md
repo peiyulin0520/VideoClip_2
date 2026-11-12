@@ -1,6 +1,8 @@
 # 交接手冊（HANDOFF）
 
 ## VideoClip_2 當前交接（優先於以下來源 repo 的歷史紀錄）
+- 首輪本次 run 43258871988：267 單元、86/91 e2e。Crop keep updater 不可延後讀 SyntheticEvent.currentTarget，要先 point(e) 再 setStrokes；浮動回頂需要獨立底部觸控帶（has-return 高度），不能蓋到工具。來源標記一般同列、密集才 end 上錯位；音訊可細至 0.01 秒，影片最低值 MIN_CLIP_DURATION*speed。PR #4 待下一輪 CI。
+
 - 最新子任務 docs/plans/2026-11-12-refinement-markers-and-readability.md。PR #3 使用者已自行合併，main 5ebd1a1；本次新 PR 待 CI。舊「#3 待合併」為歷史。
 - 遮罩 mask.strokes 是來源 UV＋直徑佔來源寬（y 距離須除來源 aspect）；依序 keep/erase、後筆覆蓋前筆。paintMask 用同源像素繪製，Compositor 依 mask/crop/解析度快取 alpha canvas，幀只 destination-in；hit testing 使用 maskContains 同序判斷。不要把筆畫直接畫進原影片，或用 crop 後 UV 保存。
 - audioRanges 選填來源秒數保留區間（undefined 全聲，[] 靜音）。Player.syncVideo 原音與 audibleClips 獨立音軌都要套用；AudioRenderer 加入換算後區間邊界再切 chunk，不能僅 chunk 中點取音量。影片時序不改。SourceRanges 上方小倒三角、44px 觸控；純配樂選段預覽暫時 seek 主 Player，關閉還原時間。

@@ -71,7 +71,8 @@ test('圖形庫：4 個分類、每個圖形都點得動、縮圖有畫、對話
   await setRange(page, '字塊外框', 0);
   expect((await boxOf(page))!.stroke).toBeUndefined();
 
-  // 換成星形：字塊顏色出現在預覽，文字仍在（白色字在粉紅星星裡）
+  // 選擇填色後換成星形：預覽必須有選色與白色文字。
+  await page.getByRole('button', { name: '字塊填滿顏色 #ff4d8d', exact: true }).tap();
   await page.getByRole('button', { name: '圖形分類 星形' }).tap();
   await page.getByRole('radio', { name: '五角星' }).tap();
   await expect.poll(() => countColor(page, [255, 77, 141], 30, [0.1, 0.3, 0.9, 0.7])).toBeGreaterThan(300);

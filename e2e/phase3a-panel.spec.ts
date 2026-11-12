@@ -75,7 +75,12 @@ test('字卡面板：文字／版面／字塊／描邊陰影，每個按鈕都�
   expect((await card(page)).box).toBeUndefined();
   await page.getByRole('radio', { name: '圓角' }).tap();
   expect((await card(page)).box!.shape).toBe('roundRect');
-  // 字塊是粉紅色：預覽中間出現粉紅像素
+  // 新字塊無填色；只有使用者選色後才填滿。
+  expect((await card(page)).box!.opacity).toBe(0);
+  expect(await countColor(page, [255, 77, 141], 30, [0.2, 0.4, 0.8, 0.6])).toBe(0);
+  await page.screenshot({ path: `${SHOT}/box-unfilled-default.png` });
+  await page.getByRole('button', { name: '字塊填滿顏色 #ff4d8d', exact: true }).tap();
+  expect((await card(page)).box!.opacity).toBe(1);
   await expect.poll(() => countColor(page, [255, 77, 141], 30, [0.2, 0.4, 0.8, 0.6])).toBeGreaterThan(200);
   await page.screenshot({ path: `${SHOT}/box-default.png` });
   await page.getByRole('radio', { name: '膠囊' }).tap();

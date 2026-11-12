@@ -113,7 +113,7 @@ test('透明字塊、次級選單與深底前景可讀，裝飾距離使用像�
       .locator('.slider-row')
       .filter({ has: page.getByRole('slider', { name: '波浪底線與文字距離', exact: true }) }),
   ).toContainText('+120 px');
-  await page.getByRole('tab', { name: '文字', exact: true }).tap();
+  await page.getByRole('tablist', { name: '字卡設定' }).getByRole('tab', { name: '文字', exact: true }).tap();
   await page.getByRole('button', { name: '字體', exact: true }).tap();
   const selected = page.locator('.font-row.active');
   await expect(selected).toBeVisible();
@@ -176,6 +176,14 @@ test('音訊來源有縮圖，多組倒三角排除中間聲音但影片不縮�
   expect(after.duration).toBe(original.duration);
   expect(after.trimIn).toBe((original as VideoItem).trimIn);
   await page.getByRole('button', { name: '聲音片段範圍', exact: true }).tap();
+  await page.getByRole('button', { name: '移除第1段聲音', exact: true }).tap();
+  await expect(page.locator('.source-marker')).toHaveCount(4);
+  await page.getByRole('button', { name: '還原完整聲音', exact: true }).tap();
+  await expect(page.locator('.source-marker')).toHaveCount(2);
+  const marker = page.getByRole('button', { name: '來源起點標記', exact: true });
+  await marker.focus();
+  await page.keyboard.press('ArrowRight');
+  await expect(page.locator('.audio-intervals')).toContainText('0.05');
   await page.getByRole('button', { name: '播放選段試聽', exact: true }).tap();
   await expect.poll(() => video.evaluate((el) => (el as HTMLVideoElement).paused)).toBe(false);
   await page.getByRole('button', { name: '暫停選段試聽', exact: true }).tap();

@@ -137,8 +137,9 @@ export function CropEditor({ item, onClose }: { item: VideoItem; onClose: () => 
               if (mode === 'crop') return;
               setSnapshots((h) => [...h, { points, strokes }]);
               if (mode === 'keep' || mode === 'erase') {
+                const first = point(e);
                 e.currentTarget.setPointerCapture(e.pointerId);
-                setStrokes((s) => [...s, { tool: mode, size: brushSize / 100, points: [point(e)] }]);
+                setStrokes((s) => [...s, { tool: mode, size: brushSize / 100, points: [first] }]);
                 setDrawing(true);
                 return;
               }
