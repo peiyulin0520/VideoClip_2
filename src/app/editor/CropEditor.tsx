@@ -1,5 +1,6 @@
-import { useState, type PointerEvent } from 'react';
-import type { VideoItem, Crop } from '../../model/types';
+import { useMemo, useState, type PointerEvent } from 'react';
+import { paintMask } from '../../engine/mediaMask';
+import type { MaskStroke, VideoItem, Crop } from '../../model/types';
 import { useProjectStore } from '../../store/projectStore';
 import { useUI } from '../../store/uiStore';
 import { editItem } from '../../store/actions';
@@ -13,10 +14,20 @@ export function CropEditor({ item, onClose }: { item: VideoItem; onClose: () => 
     asset = project.assets.find((a) => a.id === item.assetId)!;
   const [crop, setCrop] = useState<Crop>(item.crop ?? { l: 0, t: 0, r: 0, b: 0 }),
     [points, setPoints] = useState<[number, number][]>(item.mask?.points ?? []);
-  const [mode, setMode] = useState<'crop' | 'lasso'>('crop'),
+  const [mode, setMode] = useState<'crop' | 'lasso' | 'keep' | 'erase'>('crop'),
     [drawing, setDrawing] = useState(false),
-    [preview, setPreview] = useState(false),
-    [history, setHistory] = useState<[number, number][][]>([]);
+    [preview, setPreview] = useState(false);
+  const [strokes, setStrokes] = useState<MaskStroke[]>(item.mask?.strokes ?? []);
+  const [brushSize, setBrushSize] = useState(8);
+  const [snapshots, setSnapshots] = useState<{ points: [number, number][]; strokes: MaskStroke[] }[]>([]);
+  const maskUrl = useMemo(() => {
+    if (points.length < 3 && !strokes.length) return undefined;
+    const c = document.createElement('canvas');
+    c.width = Math.min(asset.width, 1000);
+    c.height = (c.width * asset.height) / asset.width;
+    paintMask(c.getContext('2d')!, { points, strokes }, c.width, c.height);
+    return `url(${c.toDataURL()})`;
+  }, [points, strokes, asset.width, asset.height]);
   const source = urlFor(project.id, asset.id),
     ratio = asset.width / asset.height;
   const point = (e: PointerEvent<HTMLElement | SVGSVGElement>): [number, number] => {
@@ -51,7 +62,30 @@ export function CropEditor({ item, onClose }: { item: VideoItem; onClose: () => 
         <button className={`chip${mode === 'lasso' ? ' active' : ''}`} onClick={() => setMode('lasso')}>
           自由描邊保留區域
         </button>
+        {(['keep', 'erase'] as const).map((tool) => (
+          <button
+            key={tool}
+            className={`chip${mode === tool ? ' active' : ''}`}
+            onClick={() => {
+              setMode(tool);
+              setPreview(false);
+            }}
+          >
+            {tool === 'keep' ? '保留筆刷' : '裁切橡皮擦'}
+          </button>
+        ))}
       </div>
+      {(mode === 'keep' || mode === 'erase') && (
+        <Slider
+          label={mode === 'keep' ? '保留筆刷粗細' : '裁切橡皮擦粗細'}
+          value={brushSize}
+          min={1}
+          max={40}
+          step={1}
+          format={(v) => `${v}% 素材寬`}
+          onChange={setBrushSize}
+        />
+      )}
       <div
         className="crop-stage"
         style={{ aspectRatio: `${asset.width}/${asset.height}`, width: `min(100%,${52 * ratio}dvh)` }}
@@ -68,8 +102,13 @@ export function CropEditor({ item, onClose }: { item: VideoItem; onClose: () => 
           <div
             className="crop-media"
             style={
-              preview && points.length >= 3
-                ? { clipPath: `polygon(${points.map(([x, y]) => `${x * 100}% ${y * 100}%`).join(',')})` }
+              preview || mode === 'keep' || mode === 'erase'
+                ? {
+                    maskImage: maskUrl,
+                    maskSize: '100% 100%',
+                    WebkitMaskImage: maskUrl,
+                    WebkitMaskSize: '100% 100%',
+                  }
                 : undefined
             }
           >
@@ -95,8 +134,15 @@ export function CropEditor({ item, onClose }: { item: VideoItem; onClose: () => 
             viewBox="0 0 1 1"
             preserveAspectRatio="none"
             onPointerDown={(e) => {
-              if (mode !== 'lasso') return;
-              setHistory((h) => [...h, points]);
+              if (mode === 'crop') return;
+              setSnapshots((h) => [...h, { points, strokes }]);
+              if (mode === 'keep' || mode === 'erase') {
+                e.currentTarget.setPointerCapture(e.pointerId);
+                setStrokes((s) => [...s, { tool: mode, size: brushSize / 100, points: [point(e)] }]);
+                setDrawing(true);
+                return;
+              }
+              setStrokes([]);
               e.currentTarget.setPointerCapture(e.pointerId);
               setPoints([point(e)]);
               setDrawing(true);
@@ -104,6 +150,12 @@ export function CropEditor({ item, onClose }: { item: VideoItem; onClose: () => 
             onPointerMove={(e) => {
               if (!drawing) return;
               const p = point(e);
+              if (mode === 'keep' || mode === 'erase') {
+                setStrokes((s) =>
+                  s.map((v, i) => (i === s.length - 1 ? { ...v, points: [...v.points, p] } : v)),
+                );
+                return;
+              }
               setPoints((a) =>
                 a.length < 500 && Math.hypot(p[0] - a.at(-1)![0], p[1] - a.at(-1)![1]) > 0.003
                   ? [...a, p]
@@ -164,10 +216,12 @@ export function CropEditor({ item, onClose }: { item: VideoItem; onClose: () => 
         </button>
         <button
           className="chip"
-          disabled={!history.length}
+          disabled={!snapshots.length}
           onClick={() => {
-            setPoints(history.at(-1)!);
-            setHistory(history.slice(0, -1));
+            const previous = snapshots.at(-1)!;
+            setPoints(previous.points);
+            setStrokes(previous.strokes);
+            setSnapshots((s) => s.slice(0, -1));
             setPreview(false);
           }}
         >
@@ -175,9 +229,11 @@ export function CropEditor({ item, onClose }: { item: VideoItem; onClose: () => 
         </button>
       </div>
       <p className="hint">
-        {mode === 'lasso'
-          ? '直接沿著想保留的部位畫一圈，框外會透明。這是手動遮罩，會隨素材移動縮放。'
-          : '拖曳四邊或角落，決定要保留的範圍。'}
+        {mode === 'keep' || mode === 'erase'
+          ? '保留筆刷補回缺角；橡皮擦移除多餘區域。筆畫會隨素材縮放，復原可退回上一筆。'
+          : mode === 'lasso'
+            ? '直接沿著想保留的部位畫一圈，框外會透明。這是手動遮罩，會隨素材移動縮放。'
+            : '拖曳四邊或角落，決定要保留的範圍。'}
       </p>
       {mode === 'crop' &&
         (
@@ -205,6 +261,8 @@ export function CropEditor({ item, onClose }: { item: VideoItem; onClose: () => 
           onClick={() => {
             setCrop({ l: 0, r: 0, t: 0, b: 0 });
             setPoints([]);
+            setStrokes([]);
+            setSnapshots([]);
             setPreview(false);
           }}
         >
@@ -219,7 +277,7 @@ export function CropEditor({ item, onClose }: { item: VideoItem; onClose: () => 
             editItem(item.id, (it) => {
               if (it.type === 'text') return;
               it.crop = crop;
-              if (points.length >= 3) it.mask = { points };
+              if (points.length >= 3 || strokes.length) it.mask = { points, strokes };
               else delete it.mask;
             });
             onClose();

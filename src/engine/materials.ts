@@ -80,10 +80,26 @@ export async function addSolid(color: string, t: number, layer = false) {
       d.assets.push(asset);
       if (layer) {
         clip.start = Math.max(0, t);
-        const track = createTrack('overlay', d.tracks);
-        track.name = '留白色塊';
-        track.items = [clip];
-        d.tracks.push(track);
+        const existing = d.tracks.find(
+          (tr) =>
+            tr.name === '留白色塊' &&
+            !tr.template &&
+            !tr.locked &&
+            !tr.hidden &&
+            tr.items.every(
+              (it) =>
+                it.type === 'image' &&
+                d.assets.find((a) => a.id === it.assetId)?.generated &&
+                (it.start + it.duration <= clip.start || clip.start + clip.duration <= it.start),
+            ),
+        );
+        if (existing) existing.items.push(clip);
+        else {
+          const track = createTrack('overlay', d.tracks);
+          track.name = '留白色塊';
+          track.items = [clip];
+          d.tracks.push(track);
+        }
       } else {
         const tr = d.tracks.find((x) => x.kind === 'main')!;
         let list = [...tr.items] as VideoItem[];

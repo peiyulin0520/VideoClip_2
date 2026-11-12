@@ -36,12 +36,36 @@ export function DrawingEditor({
     for (const s of [...strokes.current, ...(active.current ? [active.current] : [])]) {
       ctx.save();
       ctx.globalCompositeOperation = s.brush === 'eraser' ? 'destination-out' : 'source-over';
-      ctx.globalAlpha = s.opacity * (s.brush === 'marker' ? 0.45 : 1);
+      ctx.globalAlpha = s.opacity * (s.brush === 'marker' ? 0.45 : s.brush === 'pencil' ? 0.55 : 1);
       ctx.strokeStyle = ctx.fillStyle = s.color;
       ctx.lineWidth = s.size * k;
       ctx.lineCap = ctx.lineJoin = 'round';
       if (s.brush === 'dots') ctx.setLineDash([0.1, s.size * k * 1.8]);
-      if (s.points.length === 1) {
+      if (s.brush === 'ink' && s.points.length > 1) {
+        for (let i = 1; i < s.points.length; i++) {
+          const a = s.points[i - 1]!,
+            b = s.points[i]!;
+          const distance = Math.hypot((b[0] - a[0]) * w, (b[1] - a[1]) * h);
+          const taper = Math.max(0.18, Math.sin((Math.PI * i) / s.points.length));
+          ctx.lineWidth = (s.size * k * taper) / (1 + distance / 40);
+          ctx.beginPath();
+          ctx.moveTo(a[0] * w, a[1] * h);
+          ctx.lineTo(b[0] * w, b[1] * h);
+          ctx.stroke();
+        }
+      } else if (s.brush === 'pencil' && s.points.length > 1) {
+        for (let strand = 0; strand < 5; strand++) {
+          ctx.lineWidth = Math.max(0.6, (s.size * k) / 14);
+          ctx.beginPath();
+          s.points.forEach(([x, y], i) => {
+            const jitter = Math.sin(i * 13 + strand * 7) * s.size * k * 0.08,
+              d = (strand - 2) * s.size * k * 0.16;
+            if (i) ctx.lineTo(x * w + d + jitter, y * h + d);
+            else ctx.moveTo(x * w + d, y * h + d);
+          });
+          ctx.stroke();
+        }
+      } else if (s.points.length === 1) {
         ctx.beginPath();
         ctx.arc(s.points[0]![0] * w, s.points[0]![1] * h, ctx.lineWidth / 2, 0, Math.PI * 2);
         ctx.fill();
@@ -101,6 +125,8 @@ export function DrawingEditor({
           ['pen', '圓筆'],
           ['marker', '螢光筆'],
           ['dots', '點點筆'],
+          ['ink', '毛筆'],
+          ['pencil', '鉛筆'],
           ['eraser', '橡皮擦'],
         ].map(([id, label]) => (
           <button className={`chip${brush === id ? ' active' : ''}`} key={id} onClick={() => setBrush(id!)}>

@@ -23,8 +23,8 @@ const px = (v: number) => `${v}px`;
 
 export const DEFAULT_BOX: CardBox = {
   shape: 'roundRect',
-  fill: '#ff4d8d',
-  opacity: 1,
+  fill: '#ffffff',
+  opacity: 0,
   padding: { top: 24, right: 40, bottom: 24, left: 40 },
   nudgeY: 0,
   radius: 28,
@@ -227,7 +227,7 @@ export function TextPanel({
 
       {section === '字塊' && (
         <>
-          <div className="chips">
+          <div className="chips box-categories" aria-label="字塊分類">
             <button
               role="radio"
               aria-checked={!box}
@@ -266,7 +266,7 @@ export function TextPanel({
                     })
                   }
                 >
-                  <ShapeThumb shape={s.id} />
+                  <ShapeThumb shape={s.id} color="#8d624d" outline />
                   <span>{s.label}</span>
                 </button>
               );
@@ -283,7 +283,12 @@ export function TextPanel({
                 colors={BOX_COLORS}
                 value={box.fill}
                 label="字塊填滿顏色"
-                onPick={(col) => edit((c) => void (c.box!.fill = col))}
+                onPick={(col) =>
+                  edit((c) => {
+                    c.box!.fill = col;
+                    c.box!.opacity = 1;
+                  })
+                }
               />
               <Slider
                 label="填滿透明度"
@@ -567,13 +572,16 @@ export function TextPanel({
                 />
                 <Slider
                   label={`${def.label}與文字距離`}
-                  value={Math.round((d.offset ?? 0) * 100)}
-                  min={-500}
-                  max={1000}
+                  value={Math.round((d.offset ?? 0) * run.size)}
+                  min={-Math.round(run.size * 5)}
+                  max={Math.round(run.size * 10)}
                   step={1}
-                  format={(v) => `${v}% 字高`}
-                  onChange={(v) => edit((c) => void (c.decorations![i]!.offset = v / 100), `decoOffset${i}`)}
+                  format={(v) => `${v > 0 ? '+' : ''}${v} px`}
+                  onChange={(v) =>
+                    edit((c) => void (c.decorations![i]!.offset = v / run.size), `decoOffset${i}`)
+                  }
                 />
+                <p className="hint">0 為原始位置；往右移遠，往左靠近或穿過文字（以 1080 畫布像素計）。</p>
                 {d.kind !== 'marker' && d.kind !== 'sparkles' && d.kind !== 'hearts' && (
                   <Slider
                     label={`${def.label}粗細`}

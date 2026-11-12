@@ -1,12 +1,15 @@
-import { useRef } from 'react';
+import { useRef, useState } from 'react';
 import { useProjectStore } from '../../store/projectStore';
 import { editItem, removeAnyItem } from '../../store/actions';
 import { useUI, toast } from '../../store/uiStore';
 import { addMaterialFiles, separateAudio, setAudioEnabled } from '../../engine/materials';
+import type { VideoItem } from '../../model/types';
+import { AudioRangeEditor } from './AudioRangeEditor';
 import { Slider } from '../../ui/Slider';
 
 export function AudioPanel() {
   const project = useProjectStore((s) => s.project)!;
+  const [editing, setEditing] = useState<VideoItem | null>(null);
   const input = useRef<HTMLInputElement>(null);
   const entries = project.tracks.flatMap((track) =>
     track.items.flatMap((item) => {
@@ -17,6 +20,13 @@ export function AudioPanel() {
   );
   return (
     <div className="panel scroll" aria-label="音訊設定">
+      {editing && (
+        <AudioRangeEditor
+          item={editing}
+          asset={project.assets.find((a) => a.id === editing.assetId)!}
+          onClose={() => setEditing(null)}
+        />
+      )}
       <button className="btn primary" onClick={() => input.current?.click()}>
         ＋ 匯入背景音樂
       </button>
@@ -44,13 +54,23 @@ export function AudioPanel() {
       {entries.map(({ item, asset, track }) => (
         <div className="audio-row" key={item.id}>
           <button
-            className="chip"
+            className="chip audio-source"
             onClick={() => {
               useProjectStore.getState().select(item.id);
               useUI.getState().player?.seek(item.start);
             }}
           >
-            {item.type === 'audio' ? '♫' : '原音'} {asset.name}
+            {asset.thumbs[0] ? (
+              <img src={asset.thumbs[0]} alt={`${asset.name} 素材縮圖`} />
+            ) : (
+              <span className="audio-note">♫</span>
+            )}
+            <span>
+              {item.type === 'audio' ? '♫' : '原音'} {asset.name}
+              <small>
+                {track.name} · 時間軸 {item.start.toFixed(2)}–{(item.start + item.duration).toFixed(2)} 秒
+              </small>
+            </span>
           </button>
           <label className="check-row">
             <input
@@ -79,6 +99,15 @@ export function AudioPanel() {
             }
           />
           <div className="chips">
+            <button
+              className="chip"
+              onClick={() => {
+                useUI.getState().player?.pause();
+                setEditing(item);
+              }}
+            >
+              聲音片段範圍
+            </button>
             {item.type === 'video' && (
               <button
                 className="chip"

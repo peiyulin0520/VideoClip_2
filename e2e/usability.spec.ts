@@ -99,7 +99,7 @@ test('色輪 RGB、裝飾距離、輪廓調整與高密度文字排版可保存�
   });
   expect(settings?.box?.softness).toBe(0.7);
   expect(settings?.box?.depth).toBe(0.35);
-  expect(settings?.decorations?.[0]?.offset).toBe(0.75);
+  expect(settings?.decorations?.[0]?.offset).toBeCloseTo(75 / 96);
   await page.screenshot({ path: `${shot}/soft-cloud-controls.png` });
   await page.getByRole('button', { name: '復原' }).tap();
   const density = await page.evaluate(async () => {

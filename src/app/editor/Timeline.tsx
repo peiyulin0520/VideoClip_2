@@ -94,7 +94,8 @@ export function Timeline({
   const player = useUI((s) => s.player);
   const scrollRef = useRef<HTMLDivElement>(null);
   const lastSet = useRef(-100);
-  const [half, setHalf] = useState(180);
+  const half = 56;
+  const [viewportWidth, setViewportWidth] = useState(360);
   const [drag, setDrag] = useState<Drag | null>(null);
   const [menuTrackId, setMenuTrackId] = useState<string | null>(null);
 
@@ -114,9 +115,9 @@ export function Timeline({
 
   useLayoutEffect(() => {
     const el = scrollRef.current!;
-    const ro = new ResizeObserver(() => setHalf(el.clientWidth / 2));
+    const ro = new ResizeObserver(() => setViewportWidth(el.clientWidth));
     ro.observe(el);
-    setHalf(el.clientWidth / 2);
+    setViewportWidth(el.clientWidth);
     return () => ro.disconnect();
   }, []);
 
@@ -403,7 +404,11 @@ export function Timeline({
         }}
         data-testid="timeline-scroll"
       >
-        <div className="tl-content" data-bg="1" style={{ width: half * 2 + total * pps, height: contentH }}>
+        <div
+          className="tl-content"
+          data-bg="1"
+          style={{ width: viewportWidth + total * pps, height: contentH }}
+        >
           <div className="ruler" style={{ height: RULER_H }}>
             {ticks.map((t) => (
               <span key={t} className="tick" style={{ left: half + t * pps }}>

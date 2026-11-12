@@ -1,6 +1,11 @@
 # 交接手冊（HANDOFF）
 
 ## VideoClip_2 當前交接（優先於以下來源 repo 的歷史紀錄）
+- 最新子任務 docs/plans/2026-11-12-refinement-markers-and-readability.md。PR #3 使用者已自行合併，main 5ebd1a1；本次新 PR 待 CI。舊「#3 待合併」為歷史。
+- 遮罩 mask.strokes 是來源 UV＋直徑佔來源寬（y 距離須除來源 aspect）；依序 keep/erase、後筆覆蓋前筆。paintMask 用同源像素繪製，Compositor 依 mask/crop/解析度快取 alpha canvas，幀只 destination-in；hit testing 使用 maskContains 同序判斷。不要把筆畫直接畫進原影片，或用 crop 後 UV 保存。
+- audioRanges 選填來源秒數保留區間（undefined 全聲，[] 靜音）。Player.syncVideo 原音與 audibleClips 獨立音軌都要套用；AudioRenderer 加入換算後區間邊界再切 chunk，不能僅 chunk 中點取音量。影片時序不改。SourceRanges 上方小倒三角、44px 觸控；純配樂選段預覽暫時 seek 主 Player，關閉還原時間。
+- Timeline 原點與 playhead 都在 56px，content width=viewport+total*pps，scrollLeft/pps 仍代表時間；不能只移縮圖或刻度，否則播放頭時間錯位。
+
 - **最新任務**：docs/plans/2026-11-12-flexible-layers-and-contrast.md。PR #3 本次擴充已完成驗收，待使用者自行合併：米色/深底淺前景、原影片預覽點選、550ms 長按遮擋選單、暫時置頂編輯、單片段跨分型軌與時間移動。最新 3aadf4b / run 43228902863 的 262 單元、79 e2e 全過；80 張截圖保存（layer-editing/ 十二張），PR #3 待使用者自行合併，未發布。
 - editableProject 只在 Editor 載入啟用 flexibleLayers/freeMain，保留舊 IDs/時間/層次；main kind 只是相容匯入錨點，可位於任意層，UI 與 overlay 一律「影像」。moveLayerItem 先驗證後修改，跨層不移同軌其他物件；模板群組保持同步與框架。
 - useUI.liftedId 是短暫狀態，僅 Player 的 buildScene 最後參數使用，匯出不傳；禁止把它存進 Project 或實際 reorder tracks。選另一素材、播放/超出區間、完成/卸載均恢復。左側點選設定，單片段用 Timeline 長按拖曳，灰/紅提示不可混放/碰撞。

@@ -2,6 +2,7 @@ import { ALL_FORMATS, AudioBufferSink, BlobSource, Input } from 'mediabunny';
 import type { Project, VideoItem, Track, Asset } from '../model/types';
 import { getMedia } from '../storage/media';
 import { audibleClips } from './audio';
+import { audioBoundaries } from './audioRanges';
 
 export function audioEntries(project: Project) {
   return project.tracks.flatMap((track) =>
@@ -28,9 +29,12 @@ export class AudioRenderer {
     private project: Project,
     private entries: { item: VideoItem; track: Track; asset: Asset }[],
   ) {
-    this.boundaries = project.tracks
-      .filter((tr) => tr.template && !tr.hidden)
-      .flatMap((tr) => tr.items.flatMap((it) => [it.start, it.start + it.duration]));
+    this.boundaries = [
+      ...entries.flatMap(({ item }) => audioBoundaries(item)),
+      ...project.tracks
+        .filter((tr) => tr.template && !tr.hidden)
+        .flatMap((tr) => tr.items.flatMap((it) => [it.start, it.start + it.duration])),
+    ];
   }
   static async create(project: Project, signal: AbortSignal) {
     const renderer = new AudioRenderer(project, audioEntries(project));
