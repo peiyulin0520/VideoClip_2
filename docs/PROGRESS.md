@@ -8,12 +8,12 @@
 - **工作分支**：`codex/establish-little-moments`；main 原有初始 commit `2f8bdf9` 保留。最新本機程式 commit 見 `git log -1`；推送狀態見下方。
 - **來源**：`peiyulin0520/VideoClip` main `78b178343409c46c7ba353ef3a6db6f279a7bde6`（PR #3 已合併）。以下舊日誌屬來源 repo 的歷史，不代表 VideoClip_2 的部署/瀏覽器驗收。
 - **本次明確子任務**：依連續參考圖調整正常大預覽、播放列隨頁捲走、較細的時間軸片段，順序為預覽→完整圖層→功能→選項；見 docs/plans/2026-11-12-reference-page-flow.md。
-- **已驗證基線**：PR #2 最後提交 5f2d542 / Actions 43207709190：246 單元/73 Chromium e2e 全過；本次 check 成功（246 單元、lint/格式/TypeScript/build/Pages），首輪 run 43213276140 為 246 單元、71/74 e2e；把手遮擋已修正，待新 CI。
-- **目前變更**：預覽 60dvh（280–600px）；播放列正常文流；軌道 44/48px、間距 2px、可見條 32/36px、把手 8px，保留點選/修剪觸控範圍。頁首仍 sticky；設定沿同一頁展開。
-- **瀏覽器驗證**：既有 64 張截圖為上一版基線；本次將更新並新增連續參考流程截圖，不宣稱已驗收。Safari 仍待真機。
+- **已驗證**：程式 1c00aeb4f2005d601cf5ce925f910c2509da8477 / Actions https://github.com/peiyulin0520/VideoClip_2/actions/runs/43214593485：246 單元、74 Chromium e2e 全過，lint/格式/TypeScript/build/Pages 與 39 字體檢查成功。首輪的片尾把手命中已修正且回歸通過。
+- **目前變更**：預覽 60dvh（280–600px）；播放列正常文流；軌道 44/48px、間距 2px、可見條 32/36px、把手 8px，保留點選/修剪觸控範圍。選取片段 z-index 4，左右把手置內側 0；頁首仍 sticky，設定沿同一頁展開。
+- **瀏覽器驗證**：68 張完整 CI 截圖已更新至 docs/screenshots；新增 workspace/reference-preview、reference-mid-scroll、reference-layers-tools、reference-function-options 四張連續流程。artifact 13943396937 / ZIP SHA-256 fdb869ae09710ec091b98939abec63f7c8407cf0946eb2b415e3ef4dc3afa5a3 已核對；人工檢視正常大預覽、細圖層、功能與末端選項。只在 Chromium 驗收，Safari 真機仍待確認。
 - **發布狀態**：PR #2 已由使用者於 2026-11-12 11:39:05 UTC 合併，origin/main daef8ca；目前功能分支已快轉至此基準。本次變更未發布。
-- **下一步**：check → CI/截圖 → 新 PR → 使用者自行 Merge → main Actions/Pages → iPhone Safari 真機確認。
-- **等使用者**：完成驗收後提供新 PR 連結，自行合併；助手不合併、不開 auto-merge、不推 main。
+- **下一步**：PR #3 https://github.com/peiyulin0520/VideoClip_2/pull/3 交使用者自行 Merge → main Actions/Pages → iPhone Safari 真機確認。
+- **等使用者**：PR #3 已驗收並附四張連續畫面，待使用者自行 Merge；助手不合併、不開 auto-merge、不推 main。
 
 ## 日誌格式（新增一筆時照這個）
 ```
@@ -67,6 +67,11 @@
 - 2026-11-11 找到新字體來源 max32002/pop-gothic（大波浪圓體，含注音）→ 已加入手寫可愛包。問「能不能直接下載到我的 files 下載資料夾」→ 答：網頁在 iPhone 不能自動寫進「檔案」App 資料夾；官方字體存在瀏覽器裡，自己的字體用「匯入字體檔」從檔案 App 選
 
 ## 日誌（最新在最上面）
+- 2026-11-12 正常預覽與細圖層完整驗收，PR #3 交使用者合併
+  - 程式 1c00aeb4f2005d601cf5ce925f910c2509da8477 / run 43214593485：246 單元、74 e2e 全過；片尾修剪/來源上限/單次復原、13 層上下滑、左右播放頭、雙指、匯出及新連續流程皆通過。
+  - 68 張完整 CI 截圖更新（artifact 13943396937，ZIP hash fdb869ae09710ec091b98939abec63f7c8407cf0946eb2b415e3ef4dc3afa5a3），人工檢視新增四張連續畫面，中文可讀、全為自製素材。Safari 真機仍待確認。
+  - README/PLAN/HANDOFF/AGENTS 與使用說明同步。最後紀錄/截圖提交使用 [skip ci]，只改文件及截圖，程式與測試和上述成功 CI 完全一致；不重跑相同瀏覽器測試。PR #3 提供使用者自行合併，未發布此變更。
+
 - 2026-11-12 修正細把手與相鄰片段的重疊命中
   - run 43213276140：71/74 通過；全部既有工作區情境成功。兩個片尾修剪抓到 8px 把手中心恰在相鄰片段邊緣，下一段覆蓋導致取消選取；選取片段提高至 z-index 4，把手移回自身邊界內，保留延伸區。
   - 新連續流程測試抓到觸控慣性仍在移動，分次取 scrollTop/座標差 6px；改同一 frame 原子取得座標，仍要求位移精確一致，沒有放寬斷言。

@@ -11,3 +11,5 @@
 驗收以真實滑動檢查預覽與播放列位移、13 層展開、細片段的點選/把手，以及頁面下方功能和末端選項；另存連續 4 張自製素材截圖，不能將使用者附圖加入 repo。Safari 真機仍待確認。
 
 PR #2 已由使用者於 2026-11-12 11:39:05 UTC 合併（main daef8ca），本次需另建 PR，交使用者自行合併，不直接發布。
+
+驗收：程式 1c00aeb4f2005d601cf5ce925f910c2509da8477 / [Actions 43214593485](https://github.com/peiyulin0520/VideoClip_2/actions/runs/43214593485) 的 246 單元、74 Chromium e2e 全過。首輪片尾把手被鄰片遮住已修正（選取 z-index 4、把手內側）；觸控慣性改同一 frame 取幾何值，未放寬斷言。68 張 CI 截圖保存，artifact 13943396937 已驗 ZIP hash；最後純文件/截圖提交 [skip ci] 不改上述已驗程式。PR #3 https://github.com/peiyulin0520/VideoClip_2/pull/3 待使用者自行合併，未代合併、未發布。
