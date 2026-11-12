@@ -233,7 +233,9 @@ function EditTab({
             min={0}
             max={600}
             step={0.1}
-            value={project.mainOffset ?? 0}
+            value={
+              project.freeMain ? Math.min(...items.map((it) => it.start), 600) : (project.mainOffset ?? 0)
+            }
             onChange={(e) => setMainOffset(Number(e.target.value))}
           />
         </label>
@@ -375,6 +377,7 @@ function EditTab({
         onClick={() => {
           if (!selected || selected.type === 'text' || selected.type === 'audio')
             return toast('請先選擇影片或圖片');
+          useUI.getState().player?.pause();
           setCropping(true);
         }}
       />

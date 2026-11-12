@@ -2,12 +2,12 @@ import { useEffect, useRef, useState } from 'react';
 import { Sheet } from '../../ui/Sheet';
 import { useProjectStore } from '../../store/projectStore';
 import { useUI, toast } from '../../store/uiStore';
-import { exportVideo, type VideoResult } from '../../engine/exportVideo';
+import { exportSize, exportVideo, type VideoResult } from '../../engine/exportVideo';
 import { exportRealtime, unlockExportAudio } from '../../engine/exportRealtime';
 
 export function ExportPanel({ onClose }: { onClose: () => void }) {
   const project = useProjectStore((s) => s.project)!;
-  const [size, setSize] = useState(1080),
+  const [size, setSize] = useState(1920),
     [fps, setFps] = useState(30),
     [audio, setAudio] = useState(true),
     [method, setMethod] = useState('offline');
@@ -80,10 +80,21 @@ export function ExportPanel({ onClose }: { onClose: () => void }) {
           <label className="field">
             解析度
             <select aria-label="匯出解析度" value={size} onChange={(e) => setSize(Number(e.target.value))}>
-              <option value={360}>360・小檔案</option>
-              <option value={720}>720・快速分享</option>
-              <option value={1080}>1080・標準</option>
-              <option value={1920}>1920・精細</option>
+              {[360, 720, 1080, 1920].map((limit) => {
+                const actual = exportSize(project, limit);
+                return (
+                  <option key={limit} value={limit}>
+                    {limit === 1920
+                      ? '高畫質'
+                      : limit === 1080
+                        ? '輕量'
+                        : limit === 720
+                          ? '快速分享'
+                          : '小檔案'}
+                    ・{actual.width} × {actual.height}
+                  </option>
+                );
+              })}
             </select>
           </label>
           <label className="field">

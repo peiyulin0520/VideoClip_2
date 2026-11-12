@@ -1553,7 +1553,7 @@ button {
 }
 .drawing-stage {
   position: relative;
-  max-height: 42dvh;
+  max-height: 52dvh;
   max-width: 100%;
   margin: auto;
   background-size: 100% 100%;
@@ -1659,4 +1659,19 @@ progress {
 .sheet:has(.export-result) {
   max-height: 94dvh;
   overflow: auto;
+}
+.giphy-attribution {
+  display: inline-block;
+  width: 200px;
+  max-width: 100%;
+  height: auto;
+  padding: 8px;
+  background: #111;
+  border-radius: 5px;
+  vertical-align: middle;
+}
+.sheet {
+  max-height: calc(100dvh - var(--safe-top) - 16px);
+  overflow-y: auto;
+  overscroll-behavior: contain;
 }

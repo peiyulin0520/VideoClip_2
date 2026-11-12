@@ -83,6 +83,7 @@ export async function exportVideo(project: Project, options: ExportOptions): Pro
     images = new Map<string, HTMLImageElement>(),
     gifs = new Map<string, AnimatedGif>();
   const prepared = new Map<string, NonNullable<ReturnType<SourceProvider>>>();
+  const imageUrls: string[] = [];
   let comp: Compositor | null = null,
     output: Output | null = null,
     mixer: AudioRenderer | null = null,
@@ -103,13 +104,10 @@ export async function exportVideo(project: Project, options: ExportOptions): Pro
         else {
           const img = new Image(),
             url = URL.createObjectURL(file);
-          try {
-            img.src = url;
-            await img.decode();
-            images.set(asset.id, img);
-          } finally {
-            URL.revokeObjectURL(url);
-          }
+          imageUrls.push(url);
+          img.src = url;
+          await img.decode();
+          images.set(asset.id, img);
         }
       } else {
         const input = new Input({
@@ -219,5 +217,6 @@ export async function exportVideo(project: Project, options: ExportOptions): Pro
     mixer?.destroy();
     for (const input of inputs.values()) input.dispose();
     for (const gif of gifs.values()) gif.destroy();
+    for (const url of imageUrls) URL.revokeObjectURL(url);
   }
 }

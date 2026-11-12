@@ -6,6 +6,7 @@ import { importFiles } from './importMedia';
 import { ensureUrls } from './assetUrls';
 import { relayout, findFreeStart, sourceTimeAt } from './timeline';
 import { putMedia } from '../storage/media';
+import { flushAutosave } from '../store/autosave';
 
 export async function addMaterialFiles(files: File[], t: number, origin: Asset['origin'] = 'upload') {
   const p = useProjectStore.getState().project!;
@@ -34,6 +35,7 @@ export async function addMaterialFiles(files: File[], t: number, origin: Asset['
     t,
   );
   if (result.failed.length) throw Error(result.failed.map((f) => `${f.name}：${f.reason}`).join('、'));
+  await flushAutosave();
   return { id, assets: result.assets };
 }
 
@@ -115,6 +117,7 @@ export async function addSolid(color: string, t: number, layer = false) {
     },
     { select: clip.id },
   );
+  await flushAutosave();
   return clip.id;
 }
 

@@ -50,6 +50,7 @@ export function BlankPanel() {
             const free = e.target.checked;
             useProjectStore.getState().apply((d) => {
               d.freeMain = free;
+              if (free) d.mainOffset = 0; // Existing starts already contain the legacy opening gap.
               if (!free) {
                 const tr = d.tracks.find((t) => t.kind === 'main')!;
                 tr.items = relayout(tr.items as VideoItem[], d.mainOffset ?? 0);

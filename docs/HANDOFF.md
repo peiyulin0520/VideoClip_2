@@ -1,7 +1,7 @@
 # 交接手冊（HANDOFF）
 
 ## VideoClip_2 當前交接（優先於以下來源 repo 的歷史紀錄）
-- 最新子任務：docs/plans/2026-11-12-editor-completion.md，已寫本機 235 單元成功，60 e2e 待 CI。以下 227/50 是先前正式版。
+- 最新子任務：docs/plans/2026-11-12-editor-completion.md，已寫本機 237 單元成功，首輪 57/60 e2e；3 項已修，待第二輪 CI。以下 227/50 是先前正式版。
 - 新資料：DB v3 library（獨立 Blob/裁切設定）；GIPHY Key 僅 meta:giphyKey，絕不可加入 Project/原始碼/日誌/分享檔。Asset.kind 加 audio，VideoItem.type 加 audio，音軌共用 Item 時間/修剪但 buildScene 跳過；Project.freeMain 選填，main 操作須改用 free 函式以保留空隙。
 - 新檔案：engine/materials（色塊/匯入/音訊分離）、audio（預覽音量規則/AudioBus）、gif（時間驅動 GIF）、exportVideo/exportAudio/exportRealtime（完整輸出）、storage/library、store/preferences；UI Assets/Audio/Blank/Crop/Drawing/Export 各有 editor 元件。
 - 遮罩 points 是未裁切來源的 0–1 座標，在 Compositor 裁切後的固定媒體暫存 canvas 以 destination-in 套用，與素材一起旋轉；mask/GIF stamp 要算入貼圖快取鍵。逐格輸出使用 CanvasSink 的 Canvas/OffscreenCanvas，不能誤當成 HTMLVideoElement 讀 dataset。
@@ -113,6 +113,10 @@ IndexedDB `videoclip`（專案 JSON、`meta.appState`、`meta.installedFonts`、
 | 縮圖：Mediabunny `CanvasSink` 優先 → `<video>` → 預覽播放器拿到畫面後 `setAssetThumbs`（不進復原歷史，歷史快照一併更新） | iPhone 隱藏 `<video>` 常不觸發 `loadeddata` |
 
 ## 5. 踩過的坑（避免再踩）
+- Autosave 現改為立即寫入、寫入期間合併最後狀態，不能恢復 800ms debounce：收藏素材重用後立即重整會丟最後一筆。每個儲存迴圈要綁 projectId，避免舊頁 cleanup 時讀到新專案。
+- Sheet 必須 portal 到 body，並設 max-height/overflow:auto；Crop 包含畫布與四個 slider 時超出可視高度，原本底對齊會把頂端按鈕推出 viewport。
+- MediaRecorder.isTypeSupported('video/mp4') 不保證產物可被當前 VideoDecoder 解碼；相容匯出指定 codec、檢查解碼/原生播放能力、偶數 canvas，不能只選 generic MP4。
+
 - GitHub runner 無硬體 GPU；多個高解析度 WebGL 瀏覽器會爭用 CPU。CI 以 workers=1 執行；原五手勢修剪驗收拆成片頭界限/片尾界限/單步復原三個獨立情境，保留所有斷言與 30 秒時限；多格綜合流程亦拆成拍貼/膠卷與四格動態兩項（合計 50 e2e）。
 
 - 修剪會同時觸發 store refresh 和 peek；兩者必須合併同一 RAF，否則每次 pointermove 重畫兩個高解析度畫面。Player.previewTime 保留邊緣時間給解碼事件，refresh/seek/play 清除後回播放頭；不能用延長測試逾時掩蓋重複繪製。

@@ -158,6 +158,7 @@ test('GIPHY Key 僅本裝置保留，搜尋動態透明貼圖，不進共用收�
     const url = new URL(route.request().url());
     expect(url.searchParams.get('api_key')).toBe('device-test-key');
     await route.fulfill({
+      headers: { 'access-control-allow-origin': '*' },
       json: {
         data: [
           {
@@ -174,7 +175,7 @@ test('GIPHY Key 僅本裝置保留，搜尋動態透明貼圖，不進共用收�
     });
   });
   await page.route('https://media.giphy.com/**', (route) =>
-    route.fulfill({ path: gif, contentType: 'image/gif' }),
+    route.fulfill({ path: gif, contentType: 'image/gif', headers: { 'access-control-allow-origin': '*' } }),
   );
   await createProjectWith(page, ['solid-blue.webm']);
   await openTab(page, '素材');
@@ -279,6 +280,15 @@ test('完整影片含文字與原音，下載的是可解碼的影片檔', async
   expect(output.height).toBeLessThanOrEqual(360);
   expect(output.width % 2).toBe(0);
   expect(output.bytes).toBeGreaterThan(2000);
+  await expect
+    .poll(() => page.getByLabel('匯出影片預覽').evaluate((el) => (el as HTMLVideoElement).readyState))
+    .toBeGreaterThanOrEqual(2);
+  await page.getByLabel('匯出影片預覽').evaluate((el) => {
+    (el as HTMLVideoElement).currentTime = 1;
+  });
+  await expect
+    .poll(() => page.getByLabel('匯出影片預覽').evaluate((el) => (el as HTMLVideoElement).seeking))
+    .toBe(false);
   await page.screenshot({ path: `${shots}/export-complete.png` });
   const download = page.waitForEvent('download');
   await page.getByRole('link', { name: '下載影片', exact: true }).click();

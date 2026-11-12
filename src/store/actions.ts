@@ -218,7 +218,13 @@ export function setMainOffset(seconds: number) {
     (d) => {
       d.mainOffset = Math.min(600, Math.max(0, seconds));
       const tr = d.tracks.find((t) => t.kind === 'main');
-      if (tr) tr.items = relayout(tr.items as VideoItem[], d.mainOffset);
+      if (tr) {
+        if (d.freeMain) {
+          const first = tr.items.reduce((min, it) => Math.min(min, it.start), Infinity);
+          if (Number.isFinite(first)) for (const item of tr.items) item.start += d.mainOffset - first;
+          d.mainOffset = 0;
+        } else tr.items = relayout(tr.items as VideoItem[], d.mainOffset);
+      }
     },
     { coalesce: 'main-offset' },
   );

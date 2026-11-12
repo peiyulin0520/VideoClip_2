@@ -8,7 +8,7 @@
 - **工作分支**：`codex/establish-little-moments`；main 原有初始 commit `2f8bdf9` 保留。最新本機程式 commit 見 `git log -1`；推送狀態見下方。
 - **來源**：`peiyulin0520/VideoClip` main `78b178343409c46c7ba353ef3a6db6f279a7bde6`（PR #3 已合併）。以下舊日誌屬來源 repo 的歷史，不代表 VideoClip_2 的部署/瀏覽器驗收。
 - **本次明確子任務**：新一批完整剪輯流程：自由色塊/間隔、GIPHY 裝置 Key、跨專案自己的素材/畫作、手動描邊與 crop、同裝置續用、主題/色輪/裝飾長度透明度、播放效能、原音/配樂、完整影片輸出。見 docs/plans/2026-11-12-editor-completion.md；目前開發中，舊正式站尚未更新。
-- **已驗證**：本次本機 235 單元、lint、TypeScript、build、Pages 檔案/39 字型授權檢查全過。瀏覽器共 60 個情境（新增 10 個，含完整影片/音訊解碼驗收），待 GitHub Actions。上一正式版驗收 227/50 保留歷史紀錄，不能當成新功能已驗證。
+- **已驗證**：本次本機 237 單元、lint、TypeScript、build、Pages 檔案/39 字型授權檢查全過。瀏覽器共 60 個情境（新增 10 個，含完整影片/音訊解碼驗收），首輪 run 43146355291 為 235 單元/57 of 60 e2e 成功；已修正 3 項失敗，待第二輪 CI。上一正式版驗收 227/50 保留歷史紀錄，不能當成新功能已驗證。
 - **瀏覽器驗證**：Playwright 1.63 / Chromium 153、iPhone 13 畫面尺寸；45 張本次生成截圖已更新至 docs/screenshots（含 usability/ 7 張），來源工作分支 run 43130792200 / artifact 13904869854。已人工檢視四格相紙、字塊、全畫面預覽及白底開場，繁中可讀、選取框不跨格。iPhone Safari 仍需真機測試。
 - **階段**：本次已寫好自由色塊/時間軸、自己的素材庫與手繪、GIPHY、手動遮罩/crop、音訊/配樂、完整逐格及相容影片匯出、主題/色輪/裝飾；尚待新 CI/真機。完整雲朵字、動畫轉場、調色、備份/Drive、IG 音源等其餘規劃未實作。
 - **發布狀態**：本次 8 項編輯體驗更新已正式發布：https://peiyulin0520.github.io/VideoClip_2/ 。部署程式 c9709edbb07e8a2488ce10d31e049ccae7f094b5；Actions https://github.com/peiyulin0520/VideoClip_2/actions/runs/43131468570 成功。公開 HTML/manifest/JavaScript HTTP 200，index-D1Rss_6p.js 的 SHA-256 與本機驗證建置完全一致，並含新功能標記。後續 [skip ci] 提交只更新交接文件及驗收圖，不代表另一次程式部署。
@@ -62,6 +62,14 @@
 - 2026-11-11 找到新字體來源 max32002/pop-gothic（大波浪圓體，含注音）→ 已加入手寫可愛包。問「能不能直接下載到我的 files 下載資料夾」→ 答：網頁在 iPhone 不能自動寫進「檔案」App 資料夾；官方字體存在瀏覽器裡，自己的字體用「匯入字體檔」從檔案 App 選
 
 ## 日誌（最新在最上面）
+- 2026-11-12 首輪影片/音訊驗收通過，修正續存與彈出面板/相容格式
+  - run 43146355291：235 單元、57/60 e2e 成功。真正匯出的文字/原音、延後配樂、透明 GIF 與下載通過；預覽音量分析證實原音開關有作用；GIPHY Key 隔離/重開、自己的畫作、自由間隔與既有 50 情境全過。
+  - 收藏重用後立刻重整仍在 800ms debounce 視窗會丟專案最後一筆；Autosave 改立即寫入、執行中的修改合併最新 immutable snapshot，綁定 projectId 避免切專案的舊迴圈寫到新專案。新增 2 個回歸單元（總 237），素材加入完成前等待 flush。
+  - Crop Sheet 內容高於手機可視範圍，按鈕在畫面外；所有 Sheet 改 portal 到 body、限制高度且可捲動。繪圖畫布也固定正確比例，避免被 max-height 擠扁。
+  - 相容錄製原只看 MediaRecorder 支援，generic MP4 可能選到無法再解碼的格式；改指定 AVC/VP9/VP8 並檢查 VideoDecoder 或原生播放能力，輸出 canvas 用偶數尺寸/所選 fps。
+  - 加入 GIPHY 官方 API attribution 標誌（官方提供 zip，原樣保留，public/branding/GIPHY-SOURCE.txt）。Key 沒有加入程式或文件。照片 blob URL 留到輸出完成才撤銷。
+  - 首輪 screenshot 人工檢視暖棕設定與完成匯出（WebM），新畫面繁中可讀；正式站仍保持舊版，待修正後完整 CI。
+
 - 2026-11-12 完整剪輯流程首輪實作（待瀏覽器 CI）
   - 新增素材/音訊分頁；主軌可插色塊、色塊可當自由圖層、freeMain 保留間隔；本機收藏與畫作可重用；GIPHY 個人 Key 只在 meta 儲存，搜尋不進收藏、選用 GIF 隨專案保留。
   - 字卡色輪/亮度/RGB、裝飾長度透明度與大範圍；五種主題；同裝置續用不重設。DB v2→v3 新 library，遷移測試確認字體與專案保留。

@@ -33,13 +33,36 @@ export async function exportRealtime(
   const missing = await ensureUrls(project.id, project.assets);
   if (missing.length) throw Error('找不到專案的部分素材，請先重新匯入');
   const hasAudio = options.audio && audioEntries(project).length > 0;
-  const type = [
-    'video/mp4;codecs=avc1.42E01E,mp4a.40.2',
-    'video/mp4',
-    'video/webm;codecs=vp9,opus',
-    'video/webm;codecs=vp8,opus',
-    'video/webm',
-  ].find((t) => MediaRecorder.isTypeSupported(t));
+  const candidates = [
+    {
+      mime: hasAudio ? 'video/mp4;codecs=avc1.42E01E,mp4a.40.2' : 'video/mp4;codecs=avc1.42E01E',
+      codec: 'avc1.42E01E',
+    },
+    { mime: hasAudio ? 'video/webm;codecs=vp9,opus' : 'video/webm;codecs=vp9', codec: 'vp09.00.10.08' },
+    { mime: hasAudio ? 'video/webm;codecs=vp8,opus' : 'video/webm;codecs=vp8', codec: 'vp8' },
+  ];
+  let type: string | undefined;
+  for (const candidate of candidates) {
+    if (!MediaRecorder.isTypeSupported(candidate.mime)) continue;
+    if (typeof VideoDecoder !== 'undefined') {
+      try {
+        if (
+          !(
+            await VideoDecoder.isConfigSupported({
+              codec: candidate.codec,
+              codedWidth: size.width,
+              codedHeight: size.height,
+            })
+          ).supported
+        )
+          continue;
+      } catch {
+        continue;
+      }
+    } else if (!document.createElement('video').canPlayType(candidate.mime)) continue;
+    type = candidate.mime;
+    break;
+  }
   if (!type) throw Error('此瀏覽器沒有可用的影片錄製格式');
   const host = document.createElement('div'),
     canvas = document.createElement('canvas');
@@ -53,6 +76,7 @@ export async function exportRealtime(
     recorder: MediaRecorder | null = null;
   try {
     const snapshot = structuredClone(project);
+    Object.assign(snapshot, size, { fps: options.fps });
     if (!options.audio) for (const track of snapshot.tracks) track.muted = true;
     player = await Player.create({
       host,

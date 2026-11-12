@@ -64,7 +64,11 @@ export function DrawingEditor({
     <Sheet open title="在影片上畫畫" onClose={onClose}>
       <div
         className="drawing-stage"
-        style={{ aspectRatio: `${w}/${h}`, backgroundImage: background ? `url(${background})` : undefined }}
+        style={{
+          width: `min(100%,${(52 * w) / h}dvh)`,
+          aspectRatio: `${w}/${h}`,
+          backgroundImage: background ? `url(${background})` : undefined,
+        }}
       >
         <canvas
           width={w}

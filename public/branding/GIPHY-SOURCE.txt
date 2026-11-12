@@ -1,0 +1,5 @@
+Official GIPHY API attribution mark, unchanged.
+Provided for API integrations by GIPHY. This trademark asset is not part of the app source license.
+https://developers.giphy.com/docs/api/#requirements
+https://media.giphy.com/giphy-attribution-marks.zip
+Retrieved 2026-11-12.

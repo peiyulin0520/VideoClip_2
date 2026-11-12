@@ -1,4 +1,5 @@
 import type { ReactNode } from 'react';
+import { createPortal } from 'react-dom';
 
 /** 從底部滑出的面板；點背景關閉。 */
 export function Sheet({
@@ -13,7 +14,7 @@ export function Sheet({
   children: ReactNode;
 }) {
   if (!open) return null;
-  return (
+  return createPortal(
     <div className="sheet-backdrop" onClick={onClose}>
       <div
         className="sheet"
@@ -25,7 +26,8 @@ export function Sheet({
         <div className="sheet-title">{title}</div>
         {children}
       </div>
-    </div>
+    </div>,
+    document.body,
   );
 }
 

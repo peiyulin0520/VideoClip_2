@@ -262,7 +262,11 @@ export function AssetsPanel() {
         <>
           <p className="hint">
             <a href="https://giphy.com/" target="_blank" rel="noreferrer">
-              Powered by GIPHY
+              <img
+                className="giphy-attribution"
+                src={`${import.meta.env.BASE_URL}branding/powered-by-giphy.png`}
+                alt="Powered By GIPHY"
+              />
             </a>{' '}
             · 搜尋結果每次重新取得；加入的貼圖只隨專案保存。
           </p>

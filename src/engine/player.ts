@@ -21,7 +21,7 @@ const DRIFT = 0.3;
 const PREFETCH_S = 1.0;
 const POOL_SIZE = 8;
 
-/** 預覽保留專案解析度，長邊最多 1920，避免手機高密度螢幕把文字放糊。 */
+/** 編輯預覽依裝置偏好；輸出可另外指定尺寸，文字仍獨立超取樣。 */
 export function previewSize(
   p: Pick<Project, 'width' | 'height'>,
   maxSize = usePreferences.getState().preview,
