@@ -1,3 +1,5 @@
+import { TemplateCells } from './TemplateCells';
+import { ensureFont } from '../../fonts/fontStore';
 import { useRef, useState } from 'react';
 import {
   collagePlan,
@@ -23,9 +25,9 @@ export function TemplatePanel() {
       activeGroup?.layout?.style ?? project.layout?.style ?? 'photobooth',
     ),
     [motion, setMotion] = useState<LayoutMotion>(
-      activeGroup?.layout?.motion ?? project.layout?.motion ?? 'slide',
+      activeGroup?.layout?.motion ?? project.layout?.motion ?? 'none',
     ),
-    [seconds, setSeconds] = useState(3),
+    [seconds, setSeconds] = useState(activeGroup?.layout?.duration ?? 3),
     [selected, setSelected] = useState<string[]>(
       project.tracks
         .filter((t) => t.id === activeGroup?.id)
@@ -33,6 +35,7 @@ export function TemplatePanel() {
     ),
     [focusSlot, setFocusSlot] = useState(0),
     [sourceIds, setSourceIds] = useState<string[] | null>(null);
+  const [storyCount, setStoryCount] = useState(Math.min(3, activeGroup?.layout?.count ?? 3));
   const media = project.assets.filter((a) => a.kind !== 'audio');
   const existing = project.tracks
     .filter((t) => !t.template)
@@ -47,7 +50,7 @@ export function TemplatePanel() {
       : '選擇素材';
   };
   const input = useRef<HTMLInputElement>(null),
-    count = LAYOUTS.find((x) => x.id === style)!.count;
+    count = style === 'story' ? storyCount : LAYOUTS.find((x) => x.id === style)!.count;
   const ids = Array.from(
     { length: count },
     (_, i) => sources?.[i]?.assetId ?? selected[i] ?? media[i % Math.max(media.length, 1)]?.id ?? '',
@@ -72,7 +75,7 @@ export function TemplatePanel() {
       if (input.current) input.current.value = '';
     }
   };
-  const apply = () => {
+  const apply = async () => {
     try {
       if (sources && sources.length !== count) throw Error(`請選擇 ${count} 個現有片段`);
       const plan = collagePlan(
@@ -84,6 +87,11 @@ export function TemplatePanel() {
         seconds,
         sources,
       );
+      if (plan.layout.story) {
+        useUI.getState().setBusy('正在準備故事模板字體…');
+        for (const id of plan.layout.story.fontIds)
+          if (!(await ensureFont(id))) throw Error('故事字體載入失敗，請確認網路後再套用');
+      }
       useProjectStore.getState().apply(
         (d) => {
           const others = d.tracks
@@ -97,9 +105,11 @@ export function TemplatePanel() {
         },
         { select: plan.tracks[0]!.items[0]!.id },
       );
-      toast(`已套用 ${plan.layout.duration.toFixed(1)} 秒版型，可選每格再用兩指調整`);
+      toast(`已套用 ${plan.layout.duration.toFixed(1)} 秒版型，預覽可移動縮放整組，每格另選來源片段`);
     } catch (e) {
       toast((e as Error).message);
+    } finally {
+      useUI.getState().setBusy(null);
     }
   };
   return (
@@ -125,12 +135,26 @@ export function TemplatePanel() {
           </button>
         ))}
       </div>
+      {style === 'story' && (
+        <div className="chips">
+          {[2, 3].map((n) => (
+            <button
+              key={n}
+              className={`chip${storyCount === n ? ' active' : ''}`}
+              aria-pressed={storyCount === n}
+              onClick={() => setStoryCount(n)}
+            >
+              {n} 格故事
+            </button>
+          ))}
+        </div>
+      )}
       <p className="template-choice" role="status">
         目前選擇：{LAYOUTS.find((l) => l.id === style)!.label}{' '}
         {project.layout?.style === style ? '（已套用）' : '（待套用）'}
       </p>
       <div className="slot-map" aria-label="版型格子位置對照">
-        {layoutSlots(style).map((slot, i) => {
+        {layoutSlots(style, count).map((slot, i) => {
           const a = media.find((a) => a.id === ids[i]);
           return (
             <button
@@ -254,7 +278,7 @@ export function TemplatePanel() {
         />
       </label>
       <p className="hint">
-        放在目前播放頭位置，每格可選不同素材。長度以最短影片為上限；套用會替換前一組版型，文字保留，可復原。整組在時間軸是一個圖層，刪除或隱藏時框架一起處理。預設播放第一格的聲音。
+        放在目前播放頭位置，每格可選不同素材。每格共用設定長度，來源不足補黑或補白；套用會替換前一組版型，文字保留，可復原。整組在時間軸是一個圖層，刪除或隱藏時框架一起處理。預設播放第一格的聲音。
       </p>
       {project.layout && (
         <button
@@ -272,7 +296,8 @@ export function TemplatePanel() {
           移除版型
         </button>
       )}
-      <button className="btn primary done" onClick={apply}>
+      {activeGroup && <TemplateCells track={activeGroup} />}
+      <button className="btn primary done" onClick={() => void apply()}>
         套用多格版型
       </button>
     </div>

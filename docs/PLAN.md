@@ -376,3 +376,6 @@ docs/
 
 
 本次局部裁切與倒三角多段聲音已驗收：程式 3b9de60dc2cb325652b075313e1636d47e00f092 / [Actions 43262467680](https://github.com/peiyulin0520/VideoClip_2/actions/runs/43262467680)：267 單元、91 Chromium e2e 全過；lint/格式/TypeScript/build/Pages/39 字體檢查成功。 107 張截圖保存；PR #4 交使用者自行合併。Safari 真機仍依 §7 驗證筆刷、密集標記觸控與試聽/匯出。
+
+
+2026-11-12 UTC：使用者 11/13 回報：時間軸預設收合與無頁尾保留區、整組模板縮放、每格獨立選段及黑白補時、明確多組音訊起迄、特效頁籤與展開故事，見 2026-11-13-template-story-workspace 計畫。Safari 真機待驗證整組雙指、格子選段、多組標記、音訊與匯出。

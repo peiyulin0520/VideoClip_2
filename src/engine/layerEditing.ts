@@ -11,8 +11,27 @@ export const FAMILY_LABELS: Record<LayerFamily, string> = { visual: '影像', te
 
 /** Legacy main is only an import anchor; existing IDs, timing and stack stay intact. */
 export function editableProject(project: Project): Project {
-  const tracks = project.tracks.map((track, i) => ({
+  const tracks: Track[] = project.tracks.map((track, i) => ({
     ...track,
+    layout: track.template ? (track.layout ?? project.layout) : track.layout,
+    items: track.template
+      ? track.items.map((it) =>
+          it.type === 'text' || it.cell
+            ? it
+            : {
+                ...it,
+                cell: {
+                  sourceEnd: Math.min(
+                    project.assets.find((a) => a.id === it.assetId)?.duration || 600,
+                    it.trimIn + it.duration * it.speed,
+                  ),
+                  offset: 0,
+                  blanks: [],
+                  background: '#000000' as const,
+                },
+              },
+        )
+      : track.items,
     name: /^(主軌|疊加(?: \d+)?)$/.test(track.name) ? `影像 ${i + 1}` : track.name,
   }));
   if (!tracks.some((t) => t.kind === 'main')) tracks.unshift(createMainTrack());

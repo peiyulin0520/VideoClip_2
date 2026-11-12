@@ -2328,13 +2328,112 @@ progress {
 :root[data-theme] .font-row.active .font-tags .ok {
   color: #a5e598;
 }
-/* A small bottom touch area keeps the floating button clear of every control. */
-.editor.has-return {
-  height: calc(100dvh - 72px - env(safe-area-inset-bottom));
-}
 /* The bundled Fancy Free preview PNG contains white glyphs on transparency. */
 :root:is([data-theme='light'], [data-theme='fresh'], [data-theme='warm'], [data-theme='beige'])
   .font-row:not(.active)
   .font-prev-img {
   filter: brightness(0);
+}
+/* The page ends with its last tool; no external strip is reserved for return. */
+.editor {
+  padding-bottom: var(--safe-bottom);
+  scroll-padding-bottom: 8px;
+}
+.timeline-toggle {
+  flex: none;
+  width: 100%;
+  min-height: 44px;
+  color: var(--fg);
+  background: var(--control);
+  border-radius: 0;
+  border-block: 1px solid var(--line);
+}
+#editor-timeline {
+  flex: none;
+}
+#editor-timeline[hidden] {
+  display: none;
+}
+.template-cells {
+  border-top: 1px solid var(--line);
+  margin-top: 20px;
+}
+.template-cell {
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  margin: 12px 0;
+  padding: 12px;
+}
+.template-cell summary {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 48px;
+  cursor: pointer;
+}
+.template-cell summary img {
+  width: 48px;
+  height: 48px;
+  object-fit: cover;
+  border-radius: 6px;
+}
+.template-cell summary span {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+.template-cell small {
+  display: block;
+  font-size: 12px;
+  color: var(--muted);
+}
+.cell-preview {
+  width: 100%;
+  height: 22dvh;
+  object-fit: contain;
+  background: #111;
+  margin-top: 12px;
+}
+.effect-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+.effect-grid .btn {
+  display: flex;
+  flex-direction: column;
+  align-items: start;
+  gap: 8px;
+  text-align: left;
+}
+.effect-grid small {
+  font-size: 12px;
+  color: var(--muted);
+}
+.effect-row {
+  border-top: 1px solid var(--line);
+  margin-top: 16px;
+  padding-top: 8px;
+}
+.template-art.story {
+  padding: 0;
+  gap: 2px;
+  background: #222;
+}
+.template-art.story i {
+  width: 100%;
+  height: auto;
+  min-height: 14px;
+}
+.story-settings {
+  border-block: 1px solid var(--line);
+  margin-top: 14px;
+  padding: 12px 0;
+}
+.editor .tabs {
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+.editor .tab {
+  flex: 1 0 48px;
+  min-width: 48px;
 }

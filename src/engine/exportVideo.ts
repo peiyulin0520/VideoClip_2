@@ -1,3 +1,4 @@
+import { cellMediaTime } from './templateTiming';
 import {
   ALL_FORMATS,
   AudioBufferSource,
@@ -44,11 +45,12 @@ export function exportSize(project: Pick<Project, 'width' | 'height'>, maxSize: 
 }
 export async function prepareFonts(project: Project) {
   const ids = [
-    ...new Set(
-      project.tracks.flatMap((t) =>
+    ...new Set([
+      ...project.tracks.flatMap((tr) => tr.layout?.story?.fontIds ?? []),
+      ...project.tracks.flatMap((t) =>
         t.items.flatMap((it) => (it.type === 'text' ? it.card.runs.map((r) => r.fontId) : [])),
       ),
-    ),
+    ]),
   ];
   for (const id of ids)
     if (id !== 'system' && !(await ensureFont(id)))
@@ -145,7 +147,8 @@ export async function exportVideo(project: Project, options: ExportOptions): Pro
       const t = frame / options.fps;
       prepared.clear();
       for (const { item } of visibleLayers(project, t)) {
-        if (item.type === 'text' || item.type === 'audio') continue;
+        if (item.type === 'text' || item.type === 'audio' || (item.cell && cellMediaTime(item, t) === null))
+          continue;
         const asset = project.assets.find((a) => a.id === item.assetId)!;
         const gif = gifs.get(item.id),
           img = images.get(asset.id);

@@ -1,3 +1,4 @@
+import { ensureFont } from '../../fonts/fontStore';
 import { ArrowUp, PanelBottom, ChevronLeft, Pause, Play, Redo2, Undo2, ZoomIn, ZoomOut } from 'lucide-react';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
@@ -37,6 +38,8 @@ function EditorLoader({ projectId }: { projectId: string }) {
       if (!p) return setStatus('missing');
       const missing = await ensureUrls(p.id, p.assets);
       if (cancelled) return;
+      for (const id of new Set(p.tracks.flatMap((tr) => tr.layout?.story?.fontIds ?? [])))
+        await ensureFont(id);
       useProjectStore.getState().load(editableProject(p));
       autosave = startAutosave();
       setStatus('ready');
@@ -85,6 +88,14 @@ function EditorBody() {
   const [exportOpen, setExportOpen] = useState(false);
   const [nameDraft, setNameDraft] = useState('');
   const [showTop, setShowTop] = useState(false);
+  const [atEnd, setAtEnd] = useState(false);
+  const [timelineOpen, setTimelineOpen] = useState(() => {
+    try {
+      return sessionStorage.getItem(`lm2-timeline:${project.id}`) === '1';
+    } catch {
+      return false;
+    }
+  });
   const editorRef = useRef<HTMLElement>(null);
   const total = totalDuration(project);
 
@@ -163,17 +174,18 @@ function EditorBody() {
 
   return (
     <main
-      className={`editor${showTop ? ' has-return' : ''}`}
+      className="editor"
       ref={editorRef}
       onScroll={() => {
         const editor = editorRef.current!,
           preview = editor.querySelector('.stage-wrap'),
           header = editor.querySelector('.ed-top');
+        setAtEnd(editor.scrollHeight - editor.scrollTop - editor.clientHeight < 12);
         if (preview && header)
           setShowTop(preview.getBoundingClientRect().top < header.getBoundingClientRect().bottom - 2);
       }}
     >
-      {showTop && (
+      {showTop && !atEnd && (
         <button
           className="back-to-preview"
           aria-label="回到最上方預覽"
@@ -284,7 +296,27 @@ function EditorBody() {
         </button>
       </div>
 
-      <Timeline pps={pps} setPps={setPps} onAdd={(trackId) => pick('main', trackId)} />
+      <button
+        className="timeline-toggle"
+        aria-expanded={timelineOpen}
+        aria-controls="editor-timeline"
+        onClick={() =>
+          setTimelineOpen((open) => {
+            const next = !open;
+            try {
+              sessionStorage.setItem(`lm2-timeline:${project.id}`, next ? '1' : '0');
+            } catch {
+              /* UI preference only */
+            }
+            return next;
+          })
+        }
+      >
+        {timelineOpen ? '收合時間軸' : '展開時間軸'} · {project.tracks.length} 個圖層
+      </button>
+      <div id="editor-timeline" hidden={!timelineOpen}>
+        <Timeline pps={pps} setPps={setPps} onAdd={(trackId) => pick('main', trackId)} />
+      </div>
       <BottomBar onImportMain={() => pick('main')} onImportOverlay={() => pick('overlay')} />
 
       <input

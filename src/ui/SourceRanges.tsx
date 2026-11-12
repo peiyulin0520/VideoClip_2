@@ -9,6 +9,9 @@ export function SourceRanges({
   onSeek,
   cursor = 0,
   minimum = 0.01,
+  markerRanges,
+  markerLabel,
+  onMarkerChange,
 }: {
   duration: number;
   ranges: [number, number][];
@@ -17,7 +20,11 @@ export function SourceRanges({
   onSeek: (time: number) => void;
   cursor?: number;
   minimum?: number;
+  markerRanges?: [number, number][];
+  markerLabel?: string;
+  onMarkerChange?: (ranges: [number, number][]) => void;
 }) {
+  const markers = markerRanges ?? ranges;
   const bar = useRef<HTMLDivElement>(null);
   const [width, setWidth] = useState(300);
   useLayoutEffect(() => {
@@ -28,13 +35,13 @@ export function SourceRanges({
     return () => observer.disconnect();
   }, []);
   const update = (index: number, side: number, value: number) => {
-    const next = ranges.map((r) => [...r] as [number, number]);
+    const next = markers.map((r) => [...r] as [number, number]);
     const r = next[index]!;
     const span = Math.min(minimum, r[1] - r[0]);
     const low = side ? r[0] + span : (next[index - 1]?.[1] ?? 0);
     const high = side ? (next[index + 1]?.[0] ?? duration) : r[1] - span;
     r[side] = Math.max(low, Math.min(high, value));
-    onChange(next);
+    (onMarkerChange ?? onChange)(next);
     onSeek(r[side]!);
   };
   const drag = (index: number, side: number, e: PointerEvent<HTMLButtonElement>) => {
@@ -42,7 +49,7 @@ export function SourceRanges({
     e.currentTarget.setPointerCapture(e.pointerId);
     const el = e.currentTarget,
       originX = e.clientX,
-      origin = ranges[index]![side]!;
+      origin = markers[index]![side]!;
     const move = (ev: globalThis.PointerEvent) =>
       update(index, side, origin + ((ev.clientX - originX) / bar.current!.clientWidth) * duration);
     const up = () => {
@@ -110,12 +117,12 @@ export function SourceRanges({
         />
       ))}
       <div className="source-cursor" style={{ left: `${(cursor / duration) * 100}%` }} />
-      {ranges.flatMap((r, index) =>
+      {markers.flatMap((r, index) =>
         r.map((v, side) => (
           <button
             key={`${index}-${side}`}
-            className={`source-marker ${side ? 'end' : 'start'}${side && (((r[1] - r[0]) / duration) * width < 44 || (ranges[index + 1] && ((ranges[index + 1]![0] - r[1]) / duration) * width < 44)) ? ' crowded' : ''}`}
-            aria-label={`${ranges.length > 1 ? `第${index + 1}段` : '來源'}${side ? '終點' : '起點'}標記`}
+            className={`source-marker ${side ? 'end' : 'start'}${side && (((r[1] - r[0]) / duration) * width < 44 || (markers[index + 1] && ((markers[index + 1]![0] - r[1]) / duration) * width < 44)) ? ' crowded' : ''}`}
+            aria-label={`${markerLabel ? `第${index + 1}組${markerLabel}` : markers.length > 1 ? `第${index + 1}段` : '來源'}${side ? '終點' : '起點'}標記`}
             title={`${side ? '終點' : '起點'} ${v.toFixed(2)} 秒`}
             style={{ left: `${(v / duration) * 100}%` }}
             onPointerDown={(e) => drag(index, side, e)}
@@ -128,6 +135,7 @@ export function SourceRanges({
           >
             <span aria-hidden="true">▼</span>
             <small>
+              {markerLabel}
               {index + 1}
               {side ? '迄' : '起'}
             </small>

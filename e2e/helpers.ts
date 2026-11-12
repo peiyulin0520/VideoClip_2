@@ -33,7 +33,7 @@ export async function pinchSelection(page: Page, factor = 1.7) {
 }
 
 /** 首頁按「＋」→ 選素材 → 自動建立專案並進入編輯器 */
-export async function createProjectWith(page: Page, files: string[]) {
+export async function createProjectWith(page: Page, files: string[], expandTimeline = true) {
   // 打開測試用的除錯掛鉤 window.__videoclip（正常使用者看不到）
   await page.addInitScript(() => {
     localStorage.setItem('lm2-debug', '1');
@@ -44,6 +44,7 @@ export async function createProjectWith(page: Page, files: string[]) {
   await page.getByTestId('new-project-files').setInputFiles(files.map(fixture));
   await expect(page).toHaveURL(/#\/p\//);
   await expect(page.getByTestId('clip')).toHaveCount(files.length, { timeout: 20_000 });
+  if (expandTimeline) await page.getByRole('button', { name: /^展開時間軸/ }).tap();
 }
 
 export const clips = (page: Page) => page.getByTestId('clip');
@@ -172,7 +173,7 @@ export const exportFrame = (page: Page, t: number, pts: [number, number][]) =>
 /** 切到底部分頁 */
 export async function openTab(
   page: Page,
-  name: '剪輯' | '影像' | '文字' | '圖層' | '版型' | '素材' | '音訊',
+  name: '剪輯' | '影像' | '文字' | '圖層' | '版型' | '素材' | '音訊' | '特效',
 ) {
   const tab = page.getByRole('tab', { name });
   // 點「目前的分頁」會收合面板，所以已經在這個分頁且展開時就不用再點

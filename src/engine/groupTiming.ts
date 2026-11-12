@@ -1,5 +1,6 @@
+import { sliceCell } from './templateTiming';
 import type { Item, Project, VideoItem } from '../model/types';
-import { findItem, itemEnd, maxDuration } from './timeline';
+import { findItem, itemEnd } from './timeline';
 import { MIN_CLIP_DURATION } from '../model/defaults';
 
 /** A template's cells share one timeline interval; transforms remain independent. */
@@ -18,27 +19,12 @@ export function setTimelineItems(project: Project, trackId: string, next: Item[]
     });
     const previous = changed && track.items.find((it) => it.id === changed.id);
     if (changed && previous) {
-      const wantedDelta = changed.start - previous.start;
-      const minimum = Math.max(
-        ...track.items.map((it) =>
-          Math.max(-it.start, it.type !== 'text' && it.type !== 'image' ? -it.trimIn / it.speed : -Infinity),
-        ),
-      );
-      const delta = Math.max(minimum, wantedDelta);
-      const duration = Math.min(
-        changed.duration + wantedDelta - delta,
-        ...track.items.map((it) => {
-          const a = it.type !== 'text' ? project.assets.find((a) => a.id === it.assetId) : undefined;
-          return it.type !== 'text'
-            ? maxDuration({ ...it, trimIn: it.trimIn + delta * it.speed }, a)
-            : Infinity;
-        }),
-      );
+      const delta = Math.max(-previous.start, changed.start - previous.start);
+      const duration = Math.max(MIN_CLIP_DURATION, changed.duration);
       track.items = track.items.map((it) => ({
-        ...it,
-        start: it.start + delta,
+        ...(it.type === 'text' ? it : sliceCell(it, delta)),
+        start: previous.start + delta,
         duration,
-        ...(it.type !== 'text' && it.type !== 'image' ? { trimIn: it.trimIn + delta * it.speed } : {}),
       }));
     }
   } else track.items = next;
@@ -65,6 +51,18 @@ export function trimSourceRange(project: Project, itemId: string, from: number, 
   if (!asset) return;
   const trimIn = Math.max(0, Math.min(asset.duration - MIN_CLIP_DURATION * item.speed, from));
   const end = Math.max(trimIn + MIN_CLIP_DURATION * item.speed, Math.min(asset.duration, to));
+  if (found.track.template) {
+    Object.assign(item, {
+      trimIn,
+      cell: {
+        sourceEnd: end,
+        offset: item.cell?.offset ?? 0,
+        blanks: item.cell?.blanks ?? [],
+        background: item.cell?.background ?? '#000000',
+      },
+    });
+    return;
+  }
   // Keep the original source anchored; restoring the first frame restores its former location.
   const start = Math.max(0, item.start + (trimIn - item.trimIn) / item.speed);
   const duration = (end - trimIn) / item.speed;

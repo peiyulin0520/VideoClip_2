@@ -1,3 +1,4 @@
+import { cellMediaTime } from './templateTiming';
 import type { Asset, Project, VideoItem } from '../model/types';
 import { Compositor } from './compositor';
 import { buildScene } from './scene';
@@ -40,7 +41,8 @@ export async function renderFrame(
   try {
     await Promise.all(
       visibleLayers(project, t).map(async ({ item }) => {
-        if (item.type === 'text' || item.type === 'audio') return;
+        if (item.type === 'text' || item.type === 'audio' || (item.cell && cellMediaTime(item, t) === null))
+          return;
         const asset = project.assets.find((a) => a.id === item.assetId);
         const url = urlFor(item.assetId);
         if (!asset || !url) return;

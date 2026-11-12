@@ -52,7 +52,7 @@ describe('開場留白與既有主軌編輯', () => {
   });
 });
 describe('多格影片版型', () => {
-  it('每格保留獨立素材與相同時鐘；最短素材限長、只第一格有聲音', () => {
+  it('每格保留獨立素材與相同時鐘；來源不足補色、只第一格有聲音', () => {
     const p = createProject('多格');
     p.assets = [asset('a', 4), asset('b', 7), asset('c', 5), asset('d', 8)];
     const plan = collagePlan(
@@ -63,7 +63,7 @@ describe('多格影片版型', () => {
       2,
       6,
     );
-    expect(plan.layout.duration).toBe(4);
+    expect(plan.layout.duration).toBe(6);
     expect(plan.tracks[0]!.items.map((it) => (it as ReturnType<typeof createClip>).assetId)).toEqual([
       'a',
       'b',
@@ -77,7 +77,7 @@ describe('多格影片版型', () => {
       false,
       false,
     ]);
-    expect(plan.tracks.every((t) => t.items[0]!.start === 2 && t.items[0]!.duration === 4)).toBe(true);
+    expect(plan.tracks.every((t) => t.items[0]!.start === 2 && t.items[0]!.duration === 6)).toBe(true);
     const slots = layoutSlots('polaroid');
     for (const s of slots) {
       expect(s.x + s.w).toBeLessThanOrEqual(1);
@@ -85,7 +85,7 @@ describe('多格影片版型', () => {
     }
     expect(layoutMotion(plan.layout, 2).x).toBe(1);
     expect(layoutMotion(plan.layout, 3).x).toBe(0);
-    expect(layoutMotion(plan.layout, 5.9).x).toBeLessThan(0);
+    expect(layoutMotion(plan.layout, 7.9).x).toBeLessThan(0);
     expect(() => collagePlan(p, ['missing'], 'filmstrip', 'none', 0, 3)).toThrow();
   });
 });

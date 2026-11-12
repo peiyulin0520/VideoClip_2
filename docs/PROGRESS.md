@@ -3,13 +3,12 @@
 規則：每完成一個有意義的步驟，就在同一個 commit 裡 **覆寫「交接快照」** 並 **在「日誌」最上面新增一筆**（規則全文見 `AGENTS.md`「紀錄規則」，背景與架構見 `docs/HANDOFF.md`）。
 
 ## 交接快照（VideoClip_2 最新狀態）
-- **日期/分支**：2026-11-12 / codex/establish-little-moments；基於使用者自行合併 PR #3 的 main 5ebd1a1。本次 PR #4。
-- **任務**：docs/plans/2026-11-12-refinement-markers-and-readability.md 的 12 點＋倒三角、多段聲音補充已完成。
-- **驗證**：程式 3b9de60dc2cb325652b075313e1636d47e00f092 / [Actions 43262467680](https://github.com/peiyulin0520/VideoClip_2/actions/runs/43262467680)：267 單元、91 Chromium e2e 全過；lint/格式/TypeScript/build/Pages/39 字體檢查成功。
-- **目前程式**：裁切 keep/erase 多筆及復原共用來源 UV 遮罩；毛筆/顆粒鉛筆；新字塊無填色、淺暖次分類、裝飾 px；選取字體/圖層與調色對比，包含四淺主題的白字 PNG 預覽。來源選區小倒三角、保留原色/其餘灰；多組來源音訊保留區間及當秒畫面，匯出不縮短影片。時間原點 56px、色塊無碰撞共用軌、浮動回頂保留底部觸控帶。
-- **截圖**：107 張本次完整成功 CI 截圖已保存（refinement/ 新畫面含六主題、字體 PNG、裁切補邊、音訊多區間、畫筆與色塊）；artifact 13965235972，ZIP SHA-256 abc5fc912058d59aaea8cca8c47ad191fc30a4c37f8b6402933387ba4ff3a07c 已核對。人工檢視通過，全部自製測試素材。
-- **PR/發布**：[PR #4](https://github.com/peiyulin0520/VideoClip_2/pull/4) 完成驗收，交使用者自行 Merge；本次尚未發布，不代合併、不開 auto-merge、不推 main。PR #3 已由使用者合併。
-- **下一步/等使用者**：使用者自行 Merge PR #4 → main Actions/Pages 發布 → iPhone Safari 真機確認筆刷、密集標記、音訊/匯出與回頂。最後文件/截圖提交 [skip ci]，程式與測試保持上述成功 CI 完全相同。
+- **日期/分支**：2026-11-12 UTC（使用者 11/13 iPhone 回報）/ codex/establish-little-moments；PR #4 已由使用者合併，基線 main d12b39c。
+- **本次子任務**：docs/plans/2026-11-13-template-story-workspace.md：預設收合時間軸、移除頁尾保留空白、整組模板縮放與獨立來源/補色、多組精確靜音標記、特效頁籤與展開故事。
+- **已實作**：layout.transform 與 canonical cell geometry；cell.sourceEnd/offset/blanks/background、mediaSegments 跨預覽/混音/匯出；來源不足補色不凍結。故事二/三格展開、三字體輪換/暖閃；Project.effects 四種轉場。時間軸依專案 session 記住自行展開，預設收合；回頂在頁尾隱藏，不再縮短 main 留白。
+- **驗證**：基線本機 check 267 成功；本次 277 單元、98 e2e 待完整 check 與 CI，未宣稱瀏覽器完成。既有 107 圖為上版，不當新驗收。iPhone Safari 待真機。
+- **PR/發布**：本次另開新 PR draft，完成驗收後交使用者自行 Merge；不代合併、不推 main、不開 auto-merge。
+- **下一步**：本機 check → 功能分支推送/新 PR → CI → 修正與截圖檢視 → 完成驗收紀錄。現在無需使用者補充。
 
 ## 日誌格式（新增一筆時照這個）
 ```
@@ -23,6 +22,8 @@
 ```
 
 ## 使用者已確認的偏好
+- 最新（使用者 11/13）時間軸先收合，有需要再展開；底部不要保留大空白。膠卷只能整組縮放/移動、內片同步，格子可點來選來源片段；各格共同秒數、不足補黑白，可插入色塊湊秒數。音訊要多組明確起迄以去中間聲音；新增特效頁籤，參考單片上下展開、多格依序放入、中央字快速換字體、閃光轉場。
+
 - 2026-11-12 最新補充：細部影片/音訊選段不要兩側拉霸，以秒數上方小倒三角標起迄；聲音可多組保留區間以去掉中間聲音，保留正常色、未選反灰，選段可看該秒影片畫面。裁切補充「已列入第一點」=圈選後用筆刷與橡皮擦局部精修。
 - 2026-11-12 最新 12 點：字塊分類要暖色次層且預設無填色；裝飾距離不要難懂百分比；毛筆/鉛筆；深底淺字（字體/圖層/自訂色）；細部選段把手不要遮縮圖；疊色模式要說明；音訊縮圖識別；浮動回頂；色塊無碰撞共用軌、0 秒靠近圖示、自訂色輪/RGB。
 
@@ -67,6 +68,13 @@
 - 2026-11-11 找到新字體來源 max32002/pop-gothic（大波浪圓體，含注音）→ 已加入手寫可愛包。問「能不能直接下載到我的 files 下載資料夾」→ 答：網頁在 iPhone 不能自動寫進「檔案」App 資料夾；官方字體存在瀏覽器裡，自己的字體用「匯入字體檔」從檔案 App 選
 
 ## 日誌（最新在最上面）
+
+- 2026-11-12 收合工作區與整組故事模板（功能分支，commit 見 git log）
+  - 實作與檔案：見快照及本次計畫；新增 templateTiming/templateGeometry/sceneEffects、TemplateCells/EffectsPanel、來源精確靜音操作；更新場景、音訊輸出、群組動作與 UI。
+  - 驗證：基線 267/check 成功；新 277/98 等完整 check 與 CI。舊最短來源單元改檢查共同長度與來源不足，保留動態出口斷言並對齊新片尾。
+  - 決定：使用者已合併 PR #4，本次新 PR 自行 Merge。參考錄影僅在 /tmp，測試用自製素材；Safari 仍待真機。
+  - 下一步：功能分支推送與 CI，成功後保存新截圖，不把舊107圖當本次證據。
+
 
 - 2026-11-12 局部裁切、倒三角多段聲音與可讀性完整驗收
   - 程式 3b9de60dc2cb325652b075313e1636d47e00f092 / [Actions 43262467680](https://github.com/peiyulin0520/VideoClip_2/actions/runs/43262467680)：267 單元、91 Chromium e2e 全過；lint/格式/TypeScript/build/Pages/39 字體檢查成功。

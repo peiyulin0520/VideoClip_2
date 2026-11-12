@@ -136,7 +136,7 @@ export function Timeline({
 
   useLayoutEffect(() => {
     if (player) syncScroll(player.time);
-  }, [player, total, pps, half, syncScroll]);
+  }, [player, total, pps, half, viewportWidth, syncScroll]);
 
   useEffect(() => {
     if (!player) return;

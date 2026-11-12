@@ -12,6 +12,7 @@ export type GeoCtx = {
   textSize: TextSize;
   layoutMotion?: { x: number; y: number };
   motions?: Record<string, { x: number; y: number }>;
+  templates?: ReturnType<typeof import('./templateGeometry').templateContexts>;
 };
 
 // 平台按鈕安全區：直式畫面底部約 250/1920、右側約 150/1080（見 docs 的字卡規則）
@@ -41,6 +42,22 @@ export function croppedSource(asset: Asset, crop?: Crop): { w: number; h: number
 export function itemBox(item: Item, ctx: GeoCtx): Box | null {
   if (item.type === 'audio') return null;
   const { canvasW: cw, canvasH: ch } = ctx;
+  const cell = ctx.templates?.[item.id];
+  if (cell && item.type !== 'text') {
+    const slot = cell.slot;
+    if (!slot) return null;
+    const a = ctx.assets.find((a) => a.id === item.assetId);
+    if (!a) return null;
+    const source = croppedSource(a, item.crop),
+      size = fittedSize(source.w, source.h, slot.w * cw, slot.h * ch, item.fit);
+    return {
+      cx: (slot.x + slot.w / 2) * cw,
+      cy: (slot.y + slot.h / 2) * ch,
+      w: size.w,
+      h: size.h,
+      rotation: 0,
+    };
+  }
   const { x, y, scale, rotation } = item.transform;
   const motion = ctx.motions?.[item.id] ?? ctx.layoutMotion;
   let w: number;
@@ -104,13 +121,19 @@ export function hitLayers(layers: Layer[], ctx: GeoCtx, px: number, py: number):
   for (let i = layers.length - 1; i >= 0; i--) {
     const l = layers[i]!;
     if (l.track.locked || l.item.transform.opacity <= 0.01) continue;
+    const cell = ctx.templates?.[l.item.id];
+    if (cell?.anchor && pointInBox(cell.frame, px, py)) {
+      hits.push(l);
+      continue;
+    }
+    if (cell && !cell.slot) continue;
     if (l.item.type !== 'text' && l.item.slot) {
-      const source = l.item.slot;
+      const source = cell?.slot ?? l.item.slot;
       const motion = ctx.motions?.[l.item.id] ?? ctx.layoutMotion;
       const s = {
         ...source,
-        x: source.x + (motion?.x ?? 0),
-        y: source.y + (motion?.y ?? 0),
+        x: source.x + (cell ? 0 : (motion?.x ?? 0)),
+        y: source.y + (cell ? 0 : (motion?.y ?? 0)),
       };
       if (
         px < s.x * ctx.canvasW ||

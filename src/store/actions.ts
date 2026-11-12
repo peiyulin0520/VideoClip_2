@@ -1,3 +1,4 @@
+import { sliceCell } from '../engine/templateTiming';
 import type { Draft } from 'immer';
 import {
   assignAspect,
@@ -46,10 +47,15 @@ export function editItem(id: string, recipe: (it: Draft<Item>) => void, opts?: O
 }
 
 export function setTransform(id: string, patch: Partial<Transform>, coalesce = `tf:${id}`) {
-  editItem(
-    id,
-    (it) => {
-      Object.assign(it.transform, patch);
+  store().apply(
+    (d) => {
+      const f = findItem(d, id);
+      if (!f) return;
+      if (f.track.template && f.track.layout) {
+        const tf = f.track.layout.transform ?? { x: 0.5, y: 0.5, scale: 1 };
+        f.track.layout.transform = { x: patch.x ?? tf.x, y: patch.y ?? tf.y, scale: patch.scale ?? tf.scale };
+        if (patch.opacity !== undefined) for (const it of f.track.items) it.transform.opacity = patch.opacity;
+      } else Object.assign(f.item.transform, patch);
     },
     { coalesce },
   );
@@ -135,11 +141,10 @@ export function splitAny(id: string, t: number): string | null {
       const copy = structuredClone(p.tracks[f.trackIndex]!);
       copy.id = newId('t_');
       copy.items = copy.items.map((it) => ({
-        ...it,
+        ...(it.type === 'text' ? it : sliceCell(it, local)),
         id: newId('i_'),
         start: t,
         duration: it.duration - local,
-        ...(it.type !== 'text' ? { trimIn: it.trimIn + local * it.speed } : {}),
       }));
       for (const it of tr.items) it.duration = local;
       const layout = tr.layout ?? d.layout;

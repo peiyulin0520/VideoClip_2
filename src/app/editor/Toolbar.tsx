@@ -1,3 +1,5 @@
+import { EffectsPanel } from './EffectsPanel';
+import { groupTransform } from '../../engine/templateGeometry';
 import {
   ArrowDown,
   ArrowLeft,
@@ -42,6 +44,7 @@ import {
   shiftTrackLayer,
   splitAny,
   setMainOffset,
+  setTransform,
 } from '../../store/actions';
 import { setMainItems, setTrackItems, useProjectStore } from '../../store/projectStore';
 import { toast, useUI } from '../../store/uiStore';
@@ -55,7 +58,7 @@ import { BlankPanel } from './BlankPanel';
 import { TrimEditor } from './TrimEditor';
 import { CropEditor } from './CropEditor';
 
-export type Tab = 'edit' | 'overlay' | 'text' | 'layers' | 'layout' | 'assets' | 'audio';
+export type Tab = 'edit' | 'overlay' | 'text' | 'layers' | 'layout' | 'assets' | 'audio' | 'effects';
 type Panel = 'speed' | 'volume' | 'opening' | null;
 
 const TABS: { id: Tab; label: string }[] = [
@@ -66,6 +69,7 @@ const TABS: { id: Tab; label: string }[] = [
   { id: 'layout', label: '版型' },
   { id: 'assets', label: '素材' },
   { id: 'audio', label: '音訊' },
+  { id: 'effects', label: '特效' },
 ];
 
 function ToolButton({
@@ -140,6 +144,7 @@ export function BottomBar({
       {!collapsed && tab === 'text' && <TextTab found={found} />}
       {!collapsed && tab === 'layers' && <LayersTab />}
       {!collapsed && tab === 'layout' && <TemplatePanel />}
+      {!collapsed && tab === 'effects' && <EffectsPanel />}
       {!collapsed && tab === 'assets' && <AssetsPanel />}
       {!collapsed && tab === 'audio' && <AudioPanel />}
     </div>
@@ -544,26 +549,30 @@ function LayersTab() {
           </div>
           <Slider
             label="圖層大小"
-            value={Math.round(it.transform.scale * 100)}
+            value={Math.round(
+              (findItem(project, it.id)?.track.template
+                ? groupTransform(findItem(project, it.id)!.track).scale
+                : it.transform.scale) * 100,
+            )}
             min={5}
             max={500}
             step={1}
             format={(v) => `${v}%`}
-            onChange={(v) =>
-              editItem(it.id, (x) => void (x.transform.scale = v / 100), { coalesce: `size:${it.id}` })
-            }
+            onChange={(v) => setTransform(it.id, { scale: v / 100 }, `size:${it.id}`)}
           />
-          <Slider
-            label="圖層旋轉"
-            value={it.transform.rotation}
-            min={-180}
-            max={180}
-            step={1}
-            format={(v) => `${Math.round(v)}°`}
-            onChange={(v) =>
-              editItem(it.id, (x) => void (x.transform.rotation = v), { coalesce: `rot:${it.id}` })
-            }
-          />
+          {!found?.track.template && (
+            <Slider
+              label="圖層旋轉"
+              value={it.transform.rotation}
+              min={-180}
+              max={180}
+              step={1}
+              format={(v) => `${Math.round(v)}°`}
+              onChange={(v) =>
+                editItem(it.id, (x) => void (x.transform.rotation = v), { coalesce: `rot:${it.id}` })
+              }
+            />
+          )}
           <button className="btn" onClick={() => removeAnyItem(it.id)}>
             刪除選取圖層
           </button>
