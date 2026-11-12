@@ -20,7 +20,7 @@ npm run check
 npm run e2e -- --trace off
 ```
 
-`check` 包含 lint、246 個單元測試、TypeScript、正式建置及 GitHub Pages 路徑/PWA/字體檔案檢查。74 個瀏覽器測試（含完整影片/音訊解碼、收藏、GIF、手動遮罩、Key 與主題）交由 GitHub Actions 的 Chromium 153 執行，CI 保存截圖 artifact；最新成功狀態見 PROGRESS.md。本次已更新 68 張 CI 畫面（docs/screenshots）中文可讀；iPhone Safari 仍待真機驗證。
+`check` 包含 lint、262 個單元測試、TypeScript、正式建置及 GitHub Pages 路徑/PWA/字體檔案檢查。79 個瀏覽器測試（含完整影片/音訊解碼、收藏、GIF、手動遮罩、Key 與主題）交由 GitHub Actions 的 Chromium 153 執行，CI 保存截圖 artifact；最新成功狀態見 PROGRESS.md。本次已更新 80 張 CI 畫面（docs/screenshots）中文可讀；iPhone Safari 仍待真機驗證。
 
 ## GitHub Pages
 
@@ -77,3 +77,12 @@ GIF 解碼器 gifuct-js 2.1.2 為 MIT，授權位於 public/licenses。輸出含
 預覽恢復正常大小（螢幕高度約六成），預覽與播放列都隨頁面捲走。往下依序是全部圖層、功能欄與選取功能的完整選項。可見圖層條更細，把手更窄，保留方便點選的觸控面積；片尾把手不會被相鄰片段蓋住。
 
 246 單元/74 Chromium e2e 成功，68 張截圖在 docs/screenshots；四張連續畫面為 workspace/reference-*.png。[PR #3](https://github.com/peiyulin0520/VideoClip_2/pull/3) 交使用者自行 Merge 後才發布，iPhone Safari 尚待真機確認。
+
+
+## 自由影像軌與預覽選取（PR #3 待使用者合併）
+
+原影片與其他影像都能從預覽直接點選、拖移與兩指縮放。長按顯示該位置的可編輯物件，選擇被蓋住的素材暫時置頂，完成後回原層次；暫時置頂不改儲存順序與匯出。
+
+時間軸長按單一素材，可調時間、跨同類軌道或在層間新建；影像/字卡/音效不混軌，鎖定或跨層占用位置拒絕放置。同軌其他素材不會跟著拖走，原主軌也沒有固定底層限制。多格模板保留群組。明確「插入留白片段」則會在游標切開並推後同軌片段，保留原空隙。
+
+新增米色紙感，已選主題保留，深色媒體區與選取分頁維持對比。262 單元/79 Chromium e2e 通過，80 張截圖在 docs/screenshots，最新十二張在 layer-editing/；Safari 真機仍待確認。[PR #3](https://github.com/peiyulin0520/VideoClip_2/pull/3) 由使用者自行 Merge 後才發布。

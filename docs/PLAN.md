@@ -368,4 +368,6 @@ docs/
 4. Sonnet 工作環境的網路需允許：`raw.githubusercontent.com`、`registry.npmjs.org`（已可用）；若要從 GitHub Release 下載字體還需 `github.com`、`objects.githubusercontent.com`；從 Drive 下載需 `drive.google.com`、`drive.usercontent.google.com`。
 
 
+本次主題對比與自由分型圖層驗收：262 單元/79 Chromium e2e、80 張截圖通過，PR #3 待使用者自行合併；Safari 真機仍待確認。
+
 最新互動規格補充：主題對比、米色與自由分型圖層見 docs/plans/2026-11-12-flexible-layers-and-contrast.md；取代舊的主軌固定底層/預覽不可直接選取限制。尚未完成的特效/轉場不因新增分型軌道而視為已實作。

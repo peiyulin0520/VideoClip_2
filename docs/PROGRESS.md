@@ -8,12 +8,12 @@
 - **工作分支**：`codex/establish-little-moments`；main 原有初始 commit `2f8bdf9` 保留。最新本機程式 commit 見 `git log -1`；推送狀態見下方。
 - **來源**：`peiyulin0520/VideoClip` main `78b178343409c46c7ba353ef3a6db6f279a7bde6`（PR #3 已合併）。以下舊日誌屬來源 repo 的歷史，不代表 VideoClip_2 的部署/瀏覽器驗收。
 - **本次明確子任務**：主題對比與米色、預覽直接選取/遮擋素材暫時置頂、單片段跨類型限定軌道與時間移動、取消固定主軌；見 docs/plans/2026-11-12-flexible-layers-and-contrast.md。
-- **基線**：1c00aeb / run 43214593485 的 246 單元/74 e2e、68 截圖通過。首輪 af4b1fe / run 43225584560：260 單元與 72/79 e2e；六主題對比、直接預覽/透明角落選取成功，其餘修正後待 CI；不可把基線截圖當成本次驗收。
-- **目前變更**：Editor 開啟保留舊 IDs/時間/堆疊，啟用 flexibleLayers/freeMain；main/overlay 影像介面相同。moveLayerItem 驗證類型/鎖定/衝突後原子移動單一物件或模板群組；Timeline 長按拖移中心合軌、層間新建。Preview 550ms 長按遮擋選單，liftedId 僅預覽，完成/播放復原且匯出不採用。米色與各主題深底前景修正。
-- **瀏覽器驗證**：本次尚待 CI；新增原生觸控拖移、六主題對比與預覽暫時置頂測試；舊「主軌不可選/移動」斷言依使用者新要求改為可選、可移，保留原有修剪/復原/匯出情境。Safari 尚待真機。
-- **PR/發布**：PR #3 https://github.com/peiyulin0520/VideoClip_2/pull/3 仍 OPEN，未由使用者合併；已轉回 draft 擴充本次需求。本次及之前 PR #3 工作均未發布，不建立重複 PR、不代合併、不開 auto-merge、不推 main。
-- **下一步**：check → 79 項 CI/截圖 → 更新 PR #3 並標可審核 → 使用者自行 Merge → main 發布 → iPhone Safari 真機確認。
-- **等使用者**：驗收後提供更新的 PR #3 連結，由使用者自行 Merge。
+- **已驗證**：程式 3aadf4be1cfc78453d0db6421763e3d30b87b533 / Actions https://github.com/peiyulin0520/VideoClip_2/actions/runs/43228902863：262 單元、79 Chromium e2e 全過，lint/格式/TypeScript/build/Pages/39 字體檢查成功。包含六主題（含 active tab）、直接預覽與透明角落、長按遮擋選單/暫時置頂/輸出原層次、原生跨層/時間拖曳、異型拒絕、層間新建與留白插入。
+- **目前變更**：Editor 保留舊 IDs/時間/堆疊，啟用 flexibleLayers/freeMain，影像無固定底層；moveLayerItem 驗證後原子轉移單片，群組維持多格/框架。insertVisualClip 明確插入時切開並推後同軌，拖移不推其他片段。liftedId 僅 Player 預覽，完成/播放恢復、匯出不採用。米色與深底語意前景，選取分頁使用 fg/加粗。
+- **瀏覽器驗證**：80 張完整 CI 截圖已更新（layer-editing/ 新 12 張，含六主題），artifact 13949497199 / ZIP SHA-256 fc580e98aa69905be9dbd3cf9c5ee53f50e9fffa6537eceb52aaf0f54d4b15e1 已核對。人工檢視米色/圖層 icon、遮擋選單、暫時編輯、單片轉移與異型拒絕；繁中可讀、全自製素材。iPhone Safari 長按/雙指/拖移仍待真機。
+- **PR/發布**：PR #3 https://github.com/peiyulin0520/VideoClip_2/pull/3 已更新本次範圍，完成驗收並附截圖，待使用者自行 Merge；尚未發布。助手不代合併、不開 auto-merge、不推 main。
+- **下一步**：使用者自行 Merge PR #3 → main Actions/Pages 發布 → iPhone Safari 實測。
+- **等使用者**：點入 PR #3 看截圖並自行合併。最後純文件/截圖提交使用 [skip ci]，程式與測試和上述成功 CI 完全相同，不重跑同一輪瀏覽器測試。
 
 ## 日誌格式（新增一筆時照這個）
 ```
@@ -68,6 +68,11 @@
 - 2026-11-11 找到新字體來源 max32002/pop-gothic（大波浪圓體，含注音）→ 已加入手寫可愛包。問「能不能直接下載到我的 files 下載資料夾」→ 答：網頁在 iPhone 不能自動寫進「檔案」App 資料夾；官方字體存在瀏覽器裡，自己的字體用「匯入字體檔」從檔案 App 選
 
 ## 日誌（最新在最上面）
+- 2026-11-12 主題、遮擋預覽與單片跨層完整驗收，PR #3 交使用者合併
+  - 程式 3aadf4be1cfc78453d0db6421763e3d30b87b533 / run 43228902863：262 單元、79 e2e 全過。人工發現的 active tab 白字淺底已修正並在六主題對比驗收；沒有跳過測試或放寬原生拖曳/像素/復原斷言。
+  - 80 張 CI 截圖保存，artifact 13949497199，ZIP hash fc580e98aa69905be9dbd3cf9c5ee53f50e9fffa6537eceb52aaf0f54d4b15e1；新增 layer-editing/ 十二張含六主題、直接預覽、遮擋選單、暫時置頂、單片轉移、異型拒絕與底層以下新建。
+  - README、PLAN、HANDOFF、AGENTS 與使用說明同步。最後純文件/截圖提交 [skip ci] 不更動已驗程式/測試；PR #3 仍交使用者自行合併。Safari 尚待真機。
+
 - 2026-11-12 262/79 全過後，人工截圖補強選取分頁對比
   - 2f0cb54 / run 43227481494：262 單元、79 e2e 全過，artifact 13949146109，共 80 張截圖，ZIP hash b3b06a45d5ea85ec1fa672a4eebf404ba7b8d9a7fff0a62c9cd2c969c2a4ebdf。
   - 人工檢視米色、遮擋選單與暫時置頂，發現 active tab 仍白字搭淺背景，改為主題 fg 並加粗；六主題測試加入選取分頁對比斷言。這個具體視覺問題需新一輪驗收，先不將 PR 標 ready。

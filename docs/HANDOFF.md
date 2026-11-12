@@ -1,10 +1,10 @@
 # 交接手冊（HANDOFF）
 
 ## VideoClip_2 當前交接（優先於以下來源 repo 的歷史紀錄）
-- **最新任務**：docs/plans/2026-11-12-flexible-layers-and-contrast.md。PR #3 尚未合併，已轉 draft 擴充：米色/深底淺前景、原影片預覽點選、550ms 長按遮擋選單、暫時置頂編輯、單片段跨分型軌與時間移動。260 單元成功，79 e2e 待 CI。
+- **最新任務**：docs/plans/2026-11-12-flexible-layers-and-contrast.md。PR #3 本次擴充已完成驗收，待使用者自行合併：米色/深底淺前景、原影片預覽點選、550ms 長按遮擋選單、暫時置頂編輯、單片段跨分型軌與時間移動。最新 3aadf4b / run 43228902863 的 262 單元、79 e2e 全過；80 張截圖保存（layer-editing/ 十二張），PR #3 待使用者自行合併，未發布。
 - editableProject 只在 Editor 載入啟用 flexibleLayers/freeMain，保留舊 IDs/時間/層次；main kind 只是相容匯入錨點，可位於任意層，UI 與 overlay 一律「影像」。moveLayerItem 先驗證後修改，跨層不移同軌其他物件；模板群組保持同步與框架。
 - useUI.liftedId 是短暫狀態，僅 Player 的 buildScene 最後參數使用，匯出不傳；禁止把它存進 Project 或實際 reorder tracks。選另一素材、播放/超出區間、完成/卸載均恢復。左側點選設定，單片段用 Timeline 長按拖曳，灰/紅提示不可混放/碰撞。
-- **最新更正優先**：docs/plans/2026-11-12-reference-page-flow.md。使用者要正常大預覽、細圖層，再一路往下到功能與選項。預覽改 60dvh/280–600px，播放列取消 sticky，只頁首 sticky；片段可見 32/36px，44/48px 觸控列、2px 間距、8px 可見把手。
+- **前次參考圖基線**：docs/plans/2026-11-12-reference-page-flow.md。使用者要正常大預覽、細圖層，再一路往下到功能與選項。預覽改 60dvh/280–600px，播放列取消 sticky，只頁首 sticky；片段可見 32/36px，44/48px 觸控列、2px 間距、8px 可見把手。
 - PR #2 已由使用者合併（main daef8ca）；本次另建 PR。既有 246/73 是基線，程式 1c00aeb / run 43214593485 的 246 單元與 74 e2e 全過；68 張截圖（四張 reference-* 連續畫面）已更新，PR #3 待使用者自行合併。下方「精簡預覽」「PR #2 待合併」屬歷史，不能當成最新要求。
 - **目前任務**：docs/plans/2026-11-12-single-page-settings.md。PR #1 已由使用者合併且部署成功（main a1b455b / run 43201177854，公開 JS hash 相符）；下方「PR #1 未合併」是歷史。最新截圖未見導航，可能開舊頁籤。
 - 新補充：.editor .panel/.panel.tall max-height:none / overflow:visible，設定也隨整頁展開；取消內部 sticky-tabs。保留對話框、字體 picker 等真正彈出框捲動，時間軸仍按層展開。8194f79 / run 43206542321：246 單元與 73 e2e 全過；64 張截圖已更新（workspace/single-page-controls 新增）。PR #2 https://github.com/peiyulin0520/VideoClip_2/pull/2 待使用者自行合併，未開 auto-merge，Safari 真機仍待確認。
@@ -108,7 +108,7 @@ docs/      PLAN / TEXT_CARDS / EFFECTS / FONTS / PROGRESS / HANDOFF / font-cover
 ### 座標與單位
 - `transform.x/y`：物件中心，佔畫面寬/高的比例（0–1）；`scale`：乘上「填滿(cover)/完整(contain)」算出的基本大小；`rotation`：度，順時針。
 - 專案座標＝專案解析度（9:16 為 1080×1920）；預覽 canvas 長邊預設 1080，可選 720/1920。字卡字級以 1080 寬為基準，畫的時候乘 `canvasW/1080`。
-- 圖層順序＝`project.tracks` 陣列順序；`tracks[0]` 一定是主軌。同一條疊加/文字軌的物件不能重疊（`findFreeStart`）。
+- 圖層順序＝`project.tracks` 陣列順序；舊 main 僅為相容匯入錨點、位置不固定（用 kind 尋找，不能假設 tracks[0]）；每條軌依影像/字卡/音效分型，非模板同軌不能重疊。
 
 ### 儲存位置
 IndexedDB `videoclip`（專案 JSON、`meta.appState`、`meta.installedFonts`、`userFonts`）；OPFS（素材原檔）；Cache Storage `vc-fonts-v1`（官方字體）；localStorage 只放小旗標（安全區開關、iOS 提示已關閉、測試旗標）。
@@ -131,7 +131,7 @@ IndexedDB `videoclip`（專案 JSON、`meta.appState`、`meta.installedFonts`、
 | 新專案比例預設「自動：跟主軌第一個素材」，編輯器頂列可隨時改（可復原）；比例多加 3:4、4:3 | 使用者 2026-11-11 選 A；位置/大小本來就是「佔畫面比例」，改比例不用搬資料 |
 | 字卡大小/外框粗細跟畫面短邊走（`uiScale = min(w,h)/1080`） | 改成橫式時字不會被放大 1.78 倍；9:16、3:4、1:1 不受影響 |
 | 安全區參考線預設關（localStorage `vc-safe-zone-v2`），只在拖移時自動出現；拖移一律吸附安全區邊界 | 使用者誤以為粉紅斜線是背景 |
-| 主軌：匯入不自動選、預覽單點不選也不拖、選取時只有細框和縮放鈕（沒有 ✕） | 主軌滿版，選取框像「需要手動縮小」 |
+| 影像：匯入不自動選，預覽可直接點選/拖移/雙指；長按選遮擋物件暫時置頂 | 使用者最新要求取代舊主軌不可直接選取規則，無固定底層 |
 | 縮圖：Mediabunny `CanvasSink` 優先 → `<video>` → 預覽播放器拿到畫面後 `setAssetThumbs`（不進復原歷史，歷史快照一併更新） | iPhone 隱藏 `<video>` 常不觸發 `loadeddata` |
 
 ## 5. 踩過的坑（避免再踩）
