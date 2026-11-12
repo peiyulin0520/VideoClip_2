@@ -1,7 +1,7 @@
 # 交接手冊（HANDOFF）
 
 ## VideoClip_2 當前交接（優先於以下來源 repo 的歷史紀錄）
-- 最新驗收：程式 608c7d0，工作分支 run 43076680996，226 單元/47 e2e 全過，45 張新截圖。main 發布與真機限制見 PROGRESS 交接快照。
+- 最新驗收：程式 c9709ed，工作分支 run 43130792200 與 main run 43131468570 均 227 單元/50 e2e 全過；Pages 已發布並核對公開主程式 SHA-256。45 張新截圖。Safari 真機限制見 PROGRESS 交接快照。
 - 最新工作：iPhone 實測 8 項修正，規劃/驗收見 docs/plans/2026-11-11-mobile-editor-feedback.md。最新偏好取消浮動圓鈕，用框上兩指手勢，與來源的右上角按鈕規格不同。
 - 新資料欄位皆選填：Project.mainOffset/background/layout、Track.template、VideoItem.slot、Decoration.offset、CardBox.softness/depth。主軌 store 寫回時必須重新套用 offset；itemAt 在第一個 start 之前回 null，不能提前畫原片。
 - 多格共用 buildScene/Compositor：固定視窗遮罩獨立於素材旋轉，素材可在格內拖移縮放；第一格音軌、其他格靜音，文字保留在版型上層。預覽提高至 1920；文字的物理 canvas 尺寸與邏輯 w/h 分離，不能拿 canvas.width 當選取框尺寸。

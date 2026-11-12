@@ -8,11 +8,11 @@
 - **工作分支**：`codex/establish-little-moments`；main 原有初始 commit `2f8bdf9` 保留。最新本機程式 commit 見 `git log -1`；推送狀態見下方。
 - **來源**：`peiyulin0520/VideoClip` main `78b178343409c46c7ba353ef3a6db6f279a7bde6`（PR #3 已合併）。以下舊日誌屬來源 repo 的歷史，不代表 VideoClip_2 的部署/瀏覽器驗收。
 - **本次明確子任務**：依使用者 iPhone 回饋同時處理 8 項編輯體驗：首格黑畫面、預覽與手勢、自由色彩、裝飾距離、輪廓調整、多格動態版型、文字清晰度、開場留白。詳見 docs/plans/2026-11-11-mobile-editor-feedback.md。
-- **已驗證**：新修剪合併版本本機 227 單元、lint、TypeScript、build、Pages 靜態檢查通過，上一輪 CI 227 單元成功、46/47 e2e 通過；修剪已到第五個手勢才達整項 30 秒總時限。已拆獨立情境並改序列瀏覽器，49 e2e 的修剪全過；剩多格綜合截圖流程逾時，已拆成獨立情境，待 50 e2e。前一程式 608c7d0 工作分支 run 43076680996 為 226 單元/47 e2e 成功；main run 43127717473 因長修剪測試逾時為 46/47，未部署。
-- **瀏覽器驗證**：Playwright 1.63 / Chromium 153、iPhone 13 畫面尺寸；45 張本次生成截圖已更新至 docs/screenshots（新增 usability/ 7 張）。已人工檢視四格相紙、字塊、放大預覽，繁體中文可讀且選取框不跨格。截圖來源為工作分支 run 43076680996 / artifact 13883240273；不是來源庫的舊圖。iPhone Safari 仍需真機測試。
-- **階段**：來源 P0/P1/P2/P3B 與 P3A 第 1–4 前半保持；P3A 貼圖/雲朵字/模板及 P4–P7 尚未完成。此版本尚無完整影片匯出、繪畫或素材庫，不可把原 Sites 版功能當作已移植。
-- **發布狀態**：已完成。https://peiyulin0520.github.io/VideoClip_2/ 公開上線。已部署的程式提交 af14c795cbecb09c1d286ab1fcd6e9168b24cae5；Actions https://github.com/peiyulin0520/VideoClip_2/actions/runs/43061662930 成功。HTML/manifest/JavaScript HTTP 200 與路徑均已確認。此後若有 [skip ci] 提交，只更新交接文件和驗收圖，不改生產程式。
-- **下一步**：主軌修剪重畫合併修正後重新執行 CI/發布 → 使用者 iPhone Safari 重測首格、手勢、記憶體與新 UI。
+- **已驗證**：正式程式 c9709edbb07e8a2488ce10d31e049ccae7f094b5；本機、工作分支 run 43130792200、main run 43131468570 均通過 227 單元、50/50 Chromium e2e、lint、TypeScript、build、Pages 靜態檢查。main 瀏覽器驗收 5.6 分鐘，Pages deploy 成功。
+- **瀏覽器驗證**：Playwright 1.63 / Chromium 153、iPhone 13 畫面尺寸；45 張本次生成截圖已更新至 docs/screenshots（含 usability/ 7 張），來源工作分支 run 43130792200 / artifact 13904869854。已人工檢視四格相紙、字塊、全畫面預覽及白底開場，繁中可讀、選取框不跨格。iPhone Safari 仍需真機測試。
+- **階段**：來源 P0/P1/P2/P3B 與 P3A 第 1–4 前半保持；本次 3 種多格動態版型已完成；P3A 貼圖/雲朵字/完整字卡模板庫及 P4–P7 其餘項目尚未完成。此版本尚無完整影片匯出、繪畫或素材庫，不可把原 Sites 版功能當作已移植。
+- **發布狀態**：本次 8 項編輯體驗更新已正式發布：https://peiyulin0520.github.io/VideoClip_2/ 。部署程式 c9709edbb07e8a2488ce10d31e049ccae7f094b5；Actions https://github.com/peiyulin0520/VideoClip_2/actions/runs/43131468570 成功。公開 HTML/manifest/JavaScript HTTP 200，index-D1Rss_6p.js 的 SHA-256 與本機驗證建置完全一致，並含新功能標記。後續 [skip ci] 提交只更新交接文件及驗收圖，不代表另一次程式部署。
+- **下一步**：使用者 iPhone Safari 重測首次匯入、兩指/放大預覽、文字清晰度、開場留白、多格同播的手機效能；再依新回饋安排後續子任務。
 - **等使用者**：目前不需再做帳號授權；程式及 Pages 設定已可存取。發布後再請使用者進行 PLAN §7 的 iPhone Safari 實測。
 
 ## 日誌格式（新增一筆時照這個）
@@ -57,6 +57,15 @@
 - 2026-11-11 找到新字體來源 max32002/pop-gothic（大波浪圓體，含注音）→ 已加入手寫可愛包。問「能不能直接下載到我的 files 下載資料夾」→ 答：網頁在 iPhone 不能自動寫進「檔案」App 資料夾；官方字體存在瀏覽器裡，自己的字體用「匯入字體檔」從檔案 App 選
 
 ## 日誌（最新在最上面）
+- 2026-11-12 八項 iPhone 編輯體驗更新正式上線
+  - 部署 c9709edbb07e8a2488ce10d31e049ccae7f094b5，main run 43131468570：227 單元/50 e2e 全過、Pages deploy 成功。程式內容最後變動為 af131aa；其後拆分驗收情境與設定序列 CI，沒有降低解析度或跳過斷言。
+  - 公開 HTML/manifest/JavaScript 均 HTTP 200；主程式 index-D1Rss_6p.js 的 SHA-256 與本機驗證建置完全一致，確認包含開場留白/多格/形狀輪廓/放大預覽等新功能。網址 https://peiyulin0520.github.io/VideoClip_2/。
+  - 45 張最新驗收圖取自同程式工作分支 run 43130792200 / artifact 13904869854，已人工檢視新版四格；本提交只同步交接及截圖，使用 [skip ci]。下一步是 iPhone Safari 真機確認，未把 Chromium 模擬當成真機通過。
+
+- 2026-11-12 227 單元與 50 瀏覽器驗收全部通過，正式部署中
+  - 最終程式 c9709edbb07e8a2488ce10d31e049ccae7f094b5，工作分支 run 43130792200：227 單元與 50/50 e2e 全過（3.9 分鐘）；片尾/片頭/復原 5.9/5.5/4.2 秒，拍貼膠卷 10.7 秒、四格動態 11.3 秒。全部原斷言/截圖保留，沒有提高單項時限或新增重試。
+  - 45 張新圖更新至 docs/screenshots，來源 artifact 13904869854。main 一般 fast-forward 到同一 SHA，部署 run 43131468570 進行中。資料在原裝置、舊專案不重設；Safari/HEVC/HDR/真機多格效能仍待使用者實測。
+
 - 2026-11-12 修剪驗收通過；拆分多格的綜合驗收
   - run 43129673834：227 單元與 48/49 e2e 成功；片尾/片頭/復原分別 9.2/8.8/6.3 秒通過。剩多格單項一次匯入四素材、三次套版、PNG 輸出、三張截圖、兩種動畫，總時限在第三張截圖時逾時；沒有像素/資料斷言失敗。
   - 將原多格單項拆成拍貼/膠卷（含不同素材與輸出取樣）及四格動態（含 slide/drift 取樣及移除）兩個獨立情境，保留全部斷言、截圖、原 30 秒時限，總共 50 e2e。網站程式不再變更。
