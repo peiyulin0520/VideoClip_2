@@ -302,11 +302,11 @@ export function trimEndFree(
   });
 }
 
-/** 交換圖層順序（dir = +1 往上層）。主軌固定在最底層。 */
+/** 交換任意圖層順序（dir = +1 往上層），包括舊 main 影像軌。 */
 export function moveTrack(tracks: Track[], id: string, dir: -1 | 1): Track[] {
   const i = tracks.findIndex((t) => t.id === id);
   const j = i + dir;
-  if (i < 1 || j < 1 || j >= tracks.length) return tracks;
+  if (i < 0 || j < 0 || j >= tracks.length) return tracks;
   const next = tracks.slice();
   [next[i], next[j]] = [next[j]!, next[i]!];
   return next;

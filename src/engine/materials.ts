@@ -4,7 +4,8 @@ import { useProjectStore } from '../store/projectStore';
 import { addOverlayClips, editItem } from '../store/actions';
 import { importFiles } from './importMedia';
 import { ensureUrls } from './assetUrls';
-import { relayout, findFreeStart, sourceTimeAt } from './timeline';
+import { relayout } from './timeline';
+import { insertVisualClip } from './layerEditing';
 import { putMedia } from '../storage/media';
 import { flushAutosave } from '../store/autosave';
 
@@ -92,27 +93,8 @@ export async function addSolid(color: string, t: number, layer = false) {
           d.mainOffset = 0;
           list = relayout(list);
         }
-        if (d.freeMain) {
-          clip.start = findFreeStart(list, t, clip.duration);
-          tr.items = [...list, clip].sort((a, b) => a.start - b.start);
-        } else {
-          const at = list.findIndex((it) => t < it.start + it.duration - 0.001);
-          if (at < 0) list.push(clip);
-          else {
-            const it = list[at]!,
-              local = t - it.start;
-            if (local >= 0.2 && it.duration - local >= 0.2)
-              list.splice(at, 1, { ...it, duration: local }, clip, {
-                ...it,
-                id: newId('i_'),
-                start: t,
-                duration: it.duration - local,
-                trimIn: it.type === 'image' ? 0 : sourceTimeAt(it, t),
-              });
-            else list.splice(local < 0.2 ? at : at + 1, 0, clip);
-          }
-          tr.items = relayout(list, d.mainOffset ?? 0);
-        }
+        const inserted = insertVisualClip(list, clip, t);
+        tr.items = d.freeMain ? inserted : relayout(inserted, d.mainOffset ?? 0);
       }
     },
     { select: clip.id },

@@ -1,3 +1,4 @@
+import { dragTimelineItem } from './helpers';
 import { expect, test, type Page, type Locator } from '@playwright/test';
 import type { Project } from '../src/model/types';
 import {
@@ -78,32 +79,20 @@ test('完整來源選區左右拉桿獨立，裁掉的範圍可以再次展開',
   expect(it.start).toBeCloseTo(0.6, 1);
 });
 
-test('時間軸左側直接觸控拖曳排序圖層，畫面疊放與復原一致', async ({ page }) => {
+test('時間軸可直接長按單一素材移到另一層，畫面與復原一致', async ({ page }) => {
   await createProjectWith(page, ['solid-blue.webm']);
   await addOverlays(page, ['solid-red.webm', 'solid-green.webm']);
   await expect.poll(async () => isGreen(await samplePreview(page, 0.5, 0.5))).toBe(true);
   const p = await current(page),
     top = p.tracks[2]!,
     lower = p.tracks[1]!;
-  const first = page.locator(`[data-track-id="${top.id}"]`).getByTestId('track-chip'),
-    second = page.locator(`[data-track-id="${lower.id}"]`).getByTestId('track-chip');
-  const a = (await first.boundingBox())!,
-    b = (await second.boundingBox())!;
-  const cdp = await page.context().newCDPSession(page);
-  await cdp.send('Input.dispatchTouchEvent', {
-    type: 'touchStart',
-    touchPoints: [{ x: a.x + 22, y: a.y + a.height / 2, id: 1 }],
-  });
-  for (let i = 1; i <= 8; i++)
-    await cdp.send('Input.dispatchTouchEvent', {
-      type: 'touchMove',
-      touchPoints: [{ x: a.x + 22, y: a.y + a.height / 2 + ((b.y - a.y) * i) / 8, id: 1 }],
-    });
-  await cdp.send('Input.dispatchTouchEvent', { type: 'touchEnd', touchPoints: [] });
-  await cdp.detach();
+  await page.locator('.timeline').evaluate((el) => el.scrollIntoView({ block: 'start' }));
+  const clip = page.locator(`.clip[data-item-id="${top.items[0]!.id}"]`),
+    a = (await clip.boundingBox())!;
+  const b = (await page.locator(`[data-track-id="${lower.id}"]`).boundingBox())!;
+  await dragTimelineItem(page, clip, 0, b.y + b.height + 1 - a.y - a.height / 2);
   await expect.poll(async () => isRed(await samplePreview(page, 0.5, 0.5))).toBe(true);
-  expect((await current(page)).tracks[2]!.id).toBe(lower.id);
-  await expect(page.getByRole('button', { name: '隱藏這條軌道', exact: true })).toHaveCount(0);
+  expect((await current(page)).tracks.find((t) => t.id === top.id)!.items).toHaveLength(0);
   await page.screenshot({ path: `${shots}/direct-layer-order.png` });
   await page.getByRole('button', { name: '復原', exact: true }).tap();
   await expect.poll(async () => isGreen(await samplePreview(page, 0.5, 0.5))).toBe(true);
@@ -219,12 +208,7 @@ test('版型格子位置與素材可辨識，套用後只有一個群組，刪�
   });
   await page.getByRole('button', { name: '刪除', exact: true }).tap();
   expect((await current(page)).layout).toBeUndefined();
-  await expect
-    .poll(async () => {
-      const c = await samplePreview(page, 0.05, 0.05);
-      return !!c && c.every((v, i) => i === 3 || v < 8);
-    })
-    .toBe(true);
+  await expect.poll(async () => isBlue(await samplePreview(page, 0.05, 0.05))).toBe(true);
   await page.evaluate(() => {
     for (const v of Array.from(document.querySelectorAll('.pool video')))
       Reflect.deleteProperty(v, 'readyState');
@@ -238,8 +222,12 @@ test('版型格子位置與素材可辨識，套用後只有一個群組，刪�
 test('現有疊加片段可整組套版，隱藏整組會連框架一起消失', async ({ page }) => {
   await createProjectWith(page, ['solid-blue.webm']);
   await addOverlays(page, ['solid-red.webm', 'solid-green.webm', 'photo.png']);
+  const chosen = (await current(page)).tracks.slice(1).flatMap((t) => t.items.map((it) => it.id));
   await openTab(page, '版型');
   await page.getByRole('button', { name: '群組現有圖層', exact: true }).tap();
+  for (const checkbox of await page.getByRole('checkbox', { name: /^群組片段 / }).all())
+    await checkbox.uncheck();
+  for (const id of chosen) await page.getByRole('checkbox', { name: `群組片段 ${id}`, exact: true }).check();
   await page.getByLabel('版型動態效果').selectOption('none');
   await page.getByRole('button', { name: '套用多格版型' }).tap();
   const p = await current(page),

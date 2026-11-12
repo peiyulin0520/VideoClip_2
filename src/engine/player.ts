@@ -1,5 +1,6 @@
 import type { Asset, Project, Track, VideoItem } from '../model/types';
-import { Compositor } from './compositor';
+import { Compositor, type SceneLayer } from './compositor';
+import { toLocal } from './geometry';
 import { VideoPool } from './mediaPool';
 import { captureThumb } from './probe';
 import { buildScene } from './scene';
@@ -11,6 +12,7 @@ import { getMedia } from '../storage/media';
 
 type Deps = {
   getProject: () => Project | null;
+  getLiftedId?: () => string | null;
   urlFor: (assetId: string) => string | undefined;
   /** 素材沒有縮圖時，播放器拿到畫面後順手擷取一張（iPhone 匯入時可能產生不出來） */
   onThumb?: (assetId: string, thumbs: string[]) => void;
@@ -52,6 +54,8 @@ export class Player {
   private bus: AudioBus;
   private lastEmit = 0;
   frameReady = false;
+  private lastScene: SceneLayer[] = [];
+  private hitCanvas: HTMLCanvasElement | null = null;
 
   private constructor(
     readonly compositor: Compositor,
@@ -82,6 +86,43 @@ export class Player {
   get time() {
     return this.t;
   }
+
+  /** One source pixel only on a selection gesture, never during playback/rendering. */
+  opaqueAt(id: string, nx: number, ny: number): boolean {
+    const layer = this.lastScene.find((l) => l.id === id);
+    if (!layer || !layer.ready || layer.kind === 'video') return true;
+    const point = toLocal(layer.box, nx * this.compositor.width, ny * this.compositor.height);
+    const crop = layer.crop ?? { l: 0, t: 0, r: 0, b: 0 };
+    const u = crop.l + (point.x / layer.box.w + 0.5) * (1 - crop.l - crop.r);
+    const v = crop.t + (point.y / layer.box.h + 0.5) * (1 - crop.t - crop.b);
+    const source = layer.source;
+    const sw = 'naturalWidth' in source ? source.naturalWidth : source.width;
+    const sh = 'naturalHeight' in source ? source.naturalHeight : source.height;
+    if (!sw || !sh) return true;
+    if (!this.hitCanvas) {
+      this.hitCanvas = document.createElement('canvas');
+      this.hitCanvas.width = this.hitCanvas.height = 1;
+    }
+    try {
+      const ctx = this.hitCanvas.getContext('2d', { willReadFrequently: true })!;
+      ctx.clearRect(0, 0, 1, 1);
+      ctx.drawImage(
+        source,
+        Math.min(sw - 1, Math.max(0, u * sw)),
+        Math.min(sh - 1, Math.max(0, v * sh)),
+        1,
+        1,
+        0,
+        0,
+        1,
+        1,
+      );
+      return ctx.getImageData(0, 0, 1, 1).data[3]! > 12;
+    } catch {
+      return true;
+    }
+  }
+
   get isPlaying() {
     return this.playing;
   }
@@ -228,63 +269,71 @@ export class Player {
     const used = new Set<HTMLVideoElement>();
     this.bus.clear();
 
-    const scene = buildScene(p, t, comp.width, comp.height, (item, asset, track) => {
-      const url = this.deps.urlFor(asset.id);
-      if (!url) return null;
-      if (item.type === 'image') {
-        if (asset.mime === 'image/gif') {
-          const gif = this.gifs.get(item.id);
-          if (gif) {
-            const frame = gif.frame(sourceTimeAt(item, t));
-            return {
-              source: frame.canvas,
-              ready: true,
-              srcW: frame.canvas.width,
-              srcH: frame.canvas.height,
-              stamp: frame.stamp,
-            };
+    const scene = buildScene(
+      p,
+      t,
+      comp.width,
+      comp.height,
+      (item, asset, track) => {
+        const url = this.deps.urlFor(asset.id);
+        if (!url) return null;
+        if (item.type === 'image') {
+          if (asset.mime === 'image/gif') {
+            const gif = this.gifs.get(item.id);
+            if (gif) {
+              const frame = gif.frame(sourceTimeAt(item, t));
+              return {
+                source: frame.canvas,
+                ready: true,
+                srcW: frame.canvas.width,
+                srcH: frame.canvas.height,
+                stamp: frame.stamp,
+              };
+            }
+            if (!this.gifLoading.has(item.id)) {
+              this.gifLoading.add(item.id);
+              void getMedia(p.id, asset.id, asset.mime)
+                .then(AnimatedGif.load)
+                .then((loaded) => {
+                  if (this.destroyed) return loaded.destroy();
+                  this.gifs.set(item.id, loaded);
+                  this.scheduleRender();
+                })
+                .catch(() => this.scheduleRender());
+            }
           }
-          if (!this.gifLoading.has(item.id)) {
-            this.gifLoading.add(item.id);
-            void getMedia(p.id, asset.id, asset.mime)
-              .then(AnimatedGif.load)
-              .then((loaded) => {
-                if (this.destroyed) return loaded.destroy();
-                this.gifs.set(item.id, loaded);
-                this.scheduleRender();
-              })
-              .catch(() => this.scheduleRender());
-          }
+          const img = this.imageFor(asset.id);
+          if (!img) return null;
+          return {
+            source: img,
+            ready: img.complete && img.naturalWidth > 0,
+            srcW: img.naturalWidth || asset.width,
+            srcH: img.naturalHeight || asset.height,
+          };
         }
-        const img = this.imageFor(asset.id);
-        if (!img) return null;
+        const el = this.pool.acquire(item.id, asset.id, url, used);
+        if (!el) return null; // 同時疊的影片超過上限，多的不畫
+        used.add(el);
+        this.syncVideo(el, item, asset, track, t);
+        if (
+          track.kind === 'main' &&
+          !p.flexibleLayers &&
+          p.layout &&
+          t >= p.layout.start &&
+          t < p.layout.start + p.layout.duration &&
+          p.tracks.some((tr) => tr.template && !tr.hidden && tr.items.length)
+        )
+          el.muted = true;
+        this.maybeCaptureThumb(el, asset);
         return {
-          source: img,
-          ready: img.complete && img.naturalWidth > 0,
-          srcW: img.naturalWidth || asset.width,
-          srcH: img.naturalHeight || asset.height,
+          source: el,
+          ready: el.readyState >= 2 && !el.seeking && el.videoWidth > 0,
+          srcW: el.videoWidth || asset.width,
+          srcH: el.videoHeight || asset.height,
         };
-      }
-      const el = this.pool.acquire(item.id, asset.id, url, used);
-      if (!el) return null; // 同時疊的影片超過上限，多的不畫
-      used.add(el);
-      this.syncVideo(el, item, asset, track, t);
-      if (
-        track.kind === 'main' &&
-        p.layout &&
-        t >= p.layout.start &&
-        t < p.layout.start + p.layout.duration &&
-        p.tracks.some((tr) => tr.template && !tr.hidden && tr.items.length)
-      )
-        el.muted = true;
-      this.maybeCaptureThumb(el, asset);
-      return {
-        source: el,
-        ready: el.readyState >= 2 && !el.seeking && el.videoWidth > 0,
-        srcW: el.videoWidth || asset.width,
-        srcH: el.videoHeight || asset.height,
-      };
-    });
+      },
+      this.deps.getLiftedId?.(),
+    );
 
     for (const { item, asset, track } of audibleClips(p, t)) {
       if (item.type !== 'audio') continue;
@@ -313,6 +362,7 @@ export class Player {
       if (!el.paused) el.pause();
     }
     this.pool.pauseAllExcept(used);
+    this.lastScene = scene;
     comp.render(scene, p.background ?? '#000000');
   }
 

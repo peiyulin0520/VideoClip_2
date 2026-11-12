@@ -122,7 +122,8 @@ test('第一支影片延後，白底與開場文字正確合成，重新整理�
   await page.getByLabel('第一支影片開始秒數').fill('2.5');
   await page.getByRole('button', { name: '白底', exact: true }).tap();
   await page.getByRole('button', { name: '完成', exact: true }).tap();
-  await expect(page.getByTestId('intro-gap')).toBeVisible();
+  await expect(page.getByTestId('intro-gap')).toHaveCount(0);
+  expect((await project(page)).tracks[0]!.items[0]!.start).toBe(2.5);
   await expect
     .poll(async () => {
       const c = await samplePreview(page, 0.5, 0.5);
@@ -192,6 +193,9 @@ test('拍貼與膠卷：不同素材同時顯示，預覽和輸出單格一致',
 
 test('四格相紙：每格素材、實際滑入與漂移畫面、移除版型', async ({ page }) => {
   await importTemplateAssets(page);
+  // Unified image lanes stay visible; explicitly hide the base to isolate template motion.
+  await page.getByRole('button', { name: '影像 1 軌道設定', exact: true }).tap();
+  await page.getByRole('button', { name: '隱藏這條軌道', exact: true }).tap();
   await page.getByRole('button', { name: '四格相紙', exact: true }).tap();
   await page.getByLabel('第 4 格素材').selectOption({ index: 5 });
   await page.getByLabel('版型動態效果').selectOption('slide');

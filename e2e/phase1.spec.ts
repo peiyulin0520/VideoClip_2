@@ -5,6 +5,7 @@ import {
   createProjectWith,
   expectToast,
   fixture,
+  project,
   isGray,
   isRed,
   isWhite,
@@ -40,8 +41,8 @@ test('兩個專案各匯入 2 個素材：重新整理後都還在，編輯一�
   await page.getByRole('button', { name: '刪除', exact: true }).tap();
   await expect(clips(page)).toHaveCount(1);
   await page.getByRole('link', { name: '回首頁' }).tap();
-  // 首頁是從資料庫讀的：封面角落的長度變成剩下那段（clip-b 1.6 秒）＝ 離開編輯器時已立即存檔
-  await expect(page.getByTestId('project-card').filter({ hasText: '新專案 1' })).toContainText('0:01.6');
+  // 首頁是從資料庫讀的：自由時間軸保留前方 2 秒空隙，總長仍為 3.6 秒＝ 離開編輯器時已立即存檔
+  await expect(page.getByTestId('project-card').filter({ hasText: '新專案 1' })).toContainText('0:03.6');
 
   // 專案 2 不受影響；專案 1 的修改有存下來（離開編輯器時立即存檔）
   await page.reload();
@@ -51,6 +52,7 @@ test('兩個專案各匯入 2 個素材：重新整理後都還在，編輯一�
   await page.getByRole('link', { name: '回首頁' }).tap();
   await page.getByRole('link', { name: '開啟 新專案 1' }).tap();
   await expect(clips(page)).toHaveCount(1);
+  expect((await project(page)).tracks[0]!.items[0]!.start).toBe(2);
   // 重新整理後素材檔還在、能播放
   await page.reload();
   await expect(clips(page)).toHaveCount(1);
@@ -100,16 +102,19 @@ test('編輯器工具列：每個按鈕都有反應', async ({ page }) => {
   // 複製
   await page.getByRole('button', { name: '複製' }).tap();
   await expect(clips(page)).toHaveCount(4);
-  expect(await selectedIndex(page)).toBe(1);
+  expect(await selectedIndex(page)).toBe(3);
 
-  // 後移 / 前移
-  const before = await clipIds(page);
+  // 自由時間軸：移動單一複本一秒，同軌其他素材不動，不重新串接。
+  const before = await clipIds(page),
+    starts = await clipsStartSeconds(page);
   await page.getByRole('button', { name: '後移' }).tap();
-  const after = await clipIds(page);
-  expect(after[2]).toBe(before[1]);
-  expect(await selectedIndex(page)).toBe(2);
+  const advanced = await clipsStartSeconds(page);
+  expect(advanced.slice(0, 3)).toEqual(starts.slice(0, 3));
+  expect(advanced[3]).toBeCloseTo(starts[3]! + 1);
+  expect(await selectedIndex(page)).toBe(3);
   await page.getByRole('button', { name: '前移' }).tap();
   expect(await clipIds(page)).toEqual(before);
+  expect(await clipsStartSeconds(page)).toEqual(starts);
 
   // 變速：2 倍速 → 這個 2 秒的片段變 1 秒
   const totalBefore = await timeText(page);
@@ -120,14 +125,14 @@ test('編輯器工具列：每個按鈕都有反應', async ({ page }) => {
   await page.screenshot({ path: `${SHOT}/editor-speed-panel.png` });
   await page.getByRole('button', { name: '完成' }).tap();
   expect(await timeText(page)).not.toBe(totalBefore);
-  await expect(clips(page).nth(1)).toContainText('2x');
+  await expect(clips(page).nth(3)).toContainText('2x');
 
   // 音量：靜音
   await page.getByRole('button', { name: '音量' }).tap();
   await page.getByRole('button', { name: '靜音', exact: true }).tap();
   await expect(page.getByTestId('volume-value')).toHaveText('0%');
   await page.getByRole('button', { name: '完成' }).tap();
-  await expect(clips(page).nth(1)).toContainText('靜音');
+  await expect(clips(page).nth(3)).toContainText('靜音');
 
   // 完整 / 填滿
   await page.getByRole('button', { name: '完整' }).tap();
@@ -136,9 +141,9 @@ test('編輯器工具列：每個按鈕都有反應', async ({ page }) => {
   await page.getByRole('button', { name: '填滿' }).tap();
 
   // 分割：把播放頭移到第 3 個片段（clip-b，1.6s）中間再分割
-  await clips(page).nth(2).tap();
+  await clips(page).nth(1).tap();
   const n = await clips(page).count();
-  const start = (await clipsStartSeconds(page))[2]!;
+  const start = (await clipsStartSeconds(page))[1]!;
   await seekTo(page, start + 0.8);
   await page.getByRole('button', { name: '分割' }).tap();
   await expect(clips(page)).toHaveCount(n + 1);

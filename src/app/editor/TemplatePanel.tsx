@@ -35,7 +35,7 @@ export function TemplatePanel() {
     [sourceIds, setSourceIds] = useState<string[] | null>(null);
   const media = project.assets.filter((a) => a.kind !== 'audio');
   const existing = project.tracks
-    .filter((t) => t.kind !== 'main' && !t.template)
+    .filter((t) => !t.template)
     .flatMap((t) => t.items.filter((it): it is VideoItem => it.type !== 'text' && it.type !== 'audio'));
   const sources = sourceIds
     ?.map((id) => existing.find((it) => it.id === id))
@@ -86,12 +86,13 @@ export function TemplatePanel() {
       );
       useProjectStore.getState().apply(
         (d) => {
-          const main = d.tracks.filter((t) => t.kind === 'main'),
-            others = d.tracks
-              .filter((t) => t.kind !== 'main' && t.id !== activeGroup?.id)
-              .map((t) => ({ ...t, items: t.items.filter((it) => !sourceIds?.includes(it.id)) }))
-              .filter((t) => t.items.length);
-          d.tracks = [...main, ...plan.tracks, ...others];
+          const others = d.tracks
+            .filter((t) => t.id !== activeGroup?.id)
+            .map((t) => ({ ...t, items: t.items.filter((it) => !sourceIds?.includes(it.id)) }))
+            .filter((t) => t.items.length || t.kind === 'main');
+          const firstText = others.findIndex((t) => t.kind === 'text');
+          others.splice(firstText < 0 ? others.length : firstText, 0, ...plan.tracks);
+          d.tracks = others;
           d.layout = plan.layout;
         },
         { select: plan.tracks[0]!.items[0]!.id },
@@ -183,7 +184,7 @@ export function TemplatePanel() {
               {assetLabel(it.assetId)}
             </label>
           ))}
-          {!existing.length && <p className="hint">先在疊加加入影片或照片，再選擇要群組的片段。</p>}
+          {!existing.length && <p className="hint">先在影像加入影片或照片，再選擇要群組的片段。</p>}
         </div>
       )}
       <button className="btn" onClick={() => input.current?.click()}>

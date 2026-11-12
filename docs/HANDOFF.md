@@ -1,6 +1,11 @@
 # 交接手冊（HANDOFF）
 
 ## VideoClip_2 當前交接（優先於以下來源 repo 的歷史紀錄）
+- **最新任務**：docs/plans/2026-11-12-flexible-layers-and-contrast.md。PR #3 本次擴充已完成驗收，待使用者自行合併：米色/深底淺前景、原影片預覽點選、550ms 長按遮擋選單、暫時置頂編輯、單片段跨分型軌與時間移動。最新 3aadf4b / run 43228902863 的 262 單元、79 e2e 全過；80 張截圖保存（layer-editing/ 十二張），PR #3 待使用者自行合併，未發布。
+- editableProject 只在 Editor 載入啟用 flexibleLayers/freeMain，保留舊 IDs/時間/層次；main kind 只是相容匯入錨點，可位於任意層，UI 與 overlay 一律「影像」。moveLayerItem 先驗證後修改，跨層不移同軌其他物件；模板群組保持同步與框架。
+- useUI.liftedId 是短暫狀態，僅 Player 的 buildScene 最後參數使用，匯出不傳；禁止把它存進 Project 或實際 reorder tracks。選另一素材、播放/超出區間、完成/卸載均恢復。左側點選設定，單片段用 Timeline 長按拖曳，灰/紅提示不可混放/碰撞。
+- **前次參考圖基線**：docs/plans/2026-11-12-reference-page-flow.md。使用者要正常大預覽、細圖層，再一路往下到功能與選項。預覽改 60dvh/280–600px，播放列取消 sticky，只頁首 sticky；片段可見 32/36px，44/48px 觸控列、2px 間距、8px 可見把手。
+- PR #2 已由使用者合併（main daef8ca）；本次另建 PR。既有 246/73 是基線，程式 1c00aeb / run 43214593485 的 246 單元與 74 e2e 全過；68 張截圖（四張 reference-* 連續畫面）已更新，PR #3 待使用者自行合併。下方「精簡預覽」「PR #2 待合併」屬歷史，不能當成最新要求。
 - **目前任務**：docs/plans/2026-11-12-single-page-settings.md。PR #1 已由使用者合併且部署成功（main a1b455b / run 43201177854，公開 JS hash 相符）；下方「PR #1 未合併」是歷史。最新截圖未見導航，可能開舊頁籤。
 - 新補充：.editor .panel/.panel.tall max-height:none / overflow:visible，設定也隨整頁展開；取消內部 sticky-tabs。保留對話框、字體 picker 等真正彈出框捲動，時間軸仍按層展開。8194f79 / run 43206542321：246 單元與 73 e2e 全過；64 張截圖已更新（workspace/single-page-controls 新增）。PR #2 https://github.com/peiyulin0520/VideoClip_2/pull/2 待使用者自行合併，未開 auto-merge，Safari 真機仍待確認。
 - **工作區最新驗收**：c6f196c / run 43186969560 的 246 單元、72 e2e 全過，63 張截圖（workspace/ 4 張）。PR #1 https://github.com/peiyulin0520/VideoClip_2/pull/1 已涵蓋精簡預覽、完整圖層列表、整頁捲動及續用儲存競態修正；已由使用者自行合併並部署；PR #2 為本次待合併補充。以下「待 CI」是過程紀錄，最新快照見 PROGRESS。
@@ -103,13 +108,15 @@ docs/      PLAN / TEXT_CARDS / EFFECTS / FONTS / PROGRESS / HANDOFF / font-cover
 ### 座標與單位
 - `transform.x/y`：物件中心，佔畫面寬/高的比例（0–1）；`scale`：乘上「填滿(cover)/完整(contain)」算出的基本大小；`rotation`：度，順時針。
 - 專案座標＝專案解析度（9:16 為 1080×1920）；預覽 canvas 長邊預設 1080，可選 720/1920。字卡字級以 1080 寬為基準，畫的時候乘 `canvasW/1080`。
-- 圖層順序＝`project.tracks` 陣列順序；`tracks[0]` 一定是主軌。同一條疊加/文字軌的物件不能重疊（`findFreeStart`）。
+- 圖層順序＝`project.tracks` 陣列順序；舊 main 僅為相容匯入錨點、位置不固定（用 kind 尋找，不能假設 tracks[0]）；每條軌依影像/字卡/音效分型，非模板同軌不能重疊。
 
 ### 儲存位置
 IndexedDB `videoclip`（專案 JSON、`meta.appState`、`meta.installedFonts`、`userFonts`）；OPFS（素材原檔）；Cache Storage `vc-fonts-v1`（官方字體）；localStorage 只放小旗標（安全區開關、iOS 提示已關閉、測試旗標）。
 
 ## 4. 決策與原因
 | 決策 | 原因 |
+| 影像取消固定主軌，單片段分型跨軌，暫時置頂僅改預覽 | 使用者要求每一層影像一樣可編輯，移動單片而非整層；完成編輯後須回到原堆疊，不能影響匯出與儲存 |
+| 正常大預覽＋播放列正常文流，圖層可見較細但觸控維持 44px | 使用者連續參考圖要求預覽→全部圖層→功能→選項，上一版預覽太小且播放列仍卡住 |
 |---|---|
 | 純前端、無後端，資料在裝置 | 使用者要求「不同裝置互相看不到專案」「免登入」；也避免上傳影片的隱私問題 |
 | GitHub Pages ＋ HashRouter | 免費、使用者已公開 repo；子路徑 `/VideoClip/` 用 `#/` 路由才不會 404 |
@@ -124,10 +131,15 @@ IndexedDB `videoclip`（專案 JSON、`meta.appState`、`meta.installedFonts`、
 | 新專案比例預設「自動：跟主軌第一個素材」，編輯器頂列可隨時改（可復原）；比例多加 3:4、4:3 | 使用者 2026-11-11 選 A；位置/大小本來就是「佔畫面比例」，改比例不用搬資料 |
 | 字卡大小/外框粗細跟畫面短邊走（`uiScale = min(w,h)/1080`） | 改成橫式時字不會被放大 1.78 倍；9:16、3:4、1:1 不受影響 |
 | 安全區參考線預設關（localStorage `vc-safe-zone-v2`），只在拖移時自動出現；拖移一律吸附安全區邊界 | 使用者誤以為粉紅斜線是背景 |
-| 主軌：匯入不自動選、預覽單點不選也不拖、選取時只有細框和縮放鈕（沒有 ✕） | 主軌滿版，選取框像「需要手動縮小」 |
+| 影像：匯入不自動選，預覽可直接點選/拖移/雙指；長按選遮擋物件暫時置頂 | 使用者最新要求取代舊主軌不可直接選取規則，無固定底層 |
 | 縮圖：Mediabunny `CanvasSink` 優先 → `<video>` → 預覽播放器拿到畫面後 `setAssetThumbs`（不進復原歷史，歷史快照一併更新） | iPhone 隱藏 `<video>` 常不觸發 `loadeddata` |
 
 ## 5. 踩過的坑（避免再踩）
+- 分型自由時間軸的「插入留白」須在游標切開並推後同軌，而非 findFreeStart；insertVisualClip 保留既有空隙/來源 trim/speed。整片拖曳則不推其他片段，兩種語意分開。
+- data-item-id 同時用於 pool video 和時間軸；原生拖曳測試必須限制 .clip。radio 選取會卸載 popover，改真實 tap 並斷言新的編輯模式與畫面，不對已卸載元素等 checked。
+- main/overlay 統一後模板不自動隱藏底層，動畫隔離測試須用 UI 主動隱藏；刪模板的慢解碼回歸看既有底層藍畫面，不期待黑底；仍不能保留刪掉的模板框架。
+- 細把手從 16px 改 8px 後，right:-4 的中心恰在相鄰片段邊界，下一片段會蓋住；選取片段需 z-index 4，且左右把手放回片段內側（0）。觸控延伸區仍保留。
+- 真實 touch swipe 有慣性；測 scrollTop 與元素位移應同一 evaluate/frame 取樣，不能分次 await 後將移動中的值相減。仍保留精確位移斷言。
 - Autosave 現改為立即寫入、寫入期間合併最後狀態，不能恢復 800ms debounce：收藏素材重用後立即重整會丟最後一筆。每個儲存迴圈要綁 projectId，避免舊頁 cleanup 時讀到新專案。
 - Sheet 必須 portal 到 body，並設 max-height/overflow:auto；Crop 包含畫布與四個 slider 時超出可視高度，原本底對齊會把頂端按鈕推出 viewport。
 - MediaRecorder.isTypeSupported('video/mp4') 不保證產物可被當前 VideoDecoder 解碼；相容匯出指定 codec、檢查解碼/原生播放能力、偶數 canvas，不能只選 generic MP4。

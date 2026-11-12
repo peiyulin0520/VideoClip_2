@@ -154,13 +154,13 @@ describe('圖層與軌道', () => {
     ).toEqual(['o2']);
   });
 
-  it('moveTrack 換圖層順序，主軌不動', () => {
+  it('moveTrack 換圖層順序，原主軌也可以移動', () => {
     const p = proj();
     const ids = p.tracks.map((t) => t.id);
     const up = moveTrack(p.tracks, ids[1]!, 1);
     expect(up.map((t) => t.id)).toEqual([ids[0], ids[2], ids[1], ids[3]]);
-    expect(moveTrack(p.tracks, ids[1]!, -1)).toBe(p.tracks); // 不能換到主軌下面
-    expect(moveTrack(p.tracks, ids[0]!, 1)).toBe(p.tracks); // 主軌不能動
+    expect(moveTrack(p.tracks, ids[1]!, -1).map((t) => t.id)).toEqual([ids[1], ids[0], ids[2], ids[3]]);
+    expect(moveTrack(p.tracks, ids[0]!, 1).map((t) => t.id)).toEqual([ids[1], ids[0], ids[2], ids[3]]);
     expect(moveTrack(p.tracks, ids[3]!, 1)).toBe(p.tracks); // 已經最上面
     const layers = visibleLayers({ ...p, tracks: up }, 2.2).map((l) => l.item.id);
     expect(layers.slice(1)).toEqual(['o2', 'o1']);

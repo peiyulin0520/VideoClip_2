@@ -98,10 +98,11 @@ export function aabb(box: Box): { l: number; t: number; r: number; b: number } {
 }
 
 /** 點在哪個圖層上（最上面的優先）。鎖定的軌道、隱藏的軌道不會被選到。 */
-export function topHit(layers: Layer[], ctx: GeoCtx, px: number, py: number): Layer | null {
+export function hitLayers(layers: Layer[], ctx: GeoCtx, px: number, py: number): Layer[] {
+  const hits: Layer[] = [];
   for (let i = layers.length - 1; i >= 0; i--) {
     const l = layers[i]!;
-    if (l.track.locked) continue;
+    if (l.track.locked || l.item.transform.opacity <= 0.01) continue;
     if (l.item.type !== 'text' && l.item.slot) {
       const source = l.item.slot;
       const motion = ctx.motions?.[l.item.id] ?? ctx.layoutMotion;
@@ -119,9 +120,28 @@ export function topHit(layers: Layer[], ctx: GeoCtx, px: number, py: number): La
         continue;
     }
     const box = itemBox(l.item, ctx);
-    if (box && pointInBox(box, px, py)) return l;
+    if (!box || !pointInBox(box, px, py)) continue;
+    if (l.item.type !== 'text' && l.item.mask?.points.length) {
+      const local = toLocal(box, px, py);
+      const crop = l.item.crop ?? { l: 0, t: 0, r: 0, b: 0 };
+      const x = crop.l + (local.x / box.w + 0.5) * (1 - crop.l - crop.r);
+      const y = crop.t + (local.y / box.h + 0.5) * (1 - crop.t - crop.b);
+      const points = l.item.mask.points;
+      let inside = false;
+      for (let a = 0, b = points.length - 1; a < points.length; b = a++) {
+        const [ax, ay] = points[a]!,
+          [bx, by] = points[b]!;
+        if (ay > y !== by > y && x < ((bx - ax) * (y - ay)) / (by - ay) + ax) inside = !inside;
+      }
+      if (!inside) continue;
+    }
+    hits.push(l);
   }
-  return null;
+  return hits;
+}
+
+export function topHit(layers: Layer[], ctx: GeoCtx, px: number, py: number): Layer | null {
+  return hitLayers(layers, ctx, px, py)[0] ?? null;
 }
 
 export const BLEND_LABELS: Record<BlendMode, string> = {

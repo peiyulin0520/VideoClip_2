@@ -47,6 +47,7 @@ test('拖移疊加物件時參考線才出現，放開就消失；匯出的畫�
   await addOverlays(page, ['solid-green.webm']);
   await expect(page.getByTestId('safe-zone')).toHaveCount(0);
 
+  await page.getByRole('button', { name: '回到預覽', exact: true }).tap();
   const stage = (await page.getByTestId('stage').boundingBox())!;
   const cx = stage.x + stage.width * 0.5;
   const cy = stage.y + stage.height * 0.5;
@@ -68,32 +69,33 @@ test('拖移疊加物件時參考線才出現，放開就消失；匯出的畫�
   expect(isRed(out.samples[1] as [number, number, number, number])).toBe(true);
 });
 
-test('主軌：匯入後不自動選取；預覽單點不選；從時間軸選才有細框（沒有 ✕、有縮放鈕）；疊加照舊自動選取', async ({
-  page,
-}) => {
+test('影像：匯入不自動選取；預覽可直接點選、拖移；時間軸也可選取', async ({ page }) => {
   await createProjectWith(page, ['solid-red.webm']);
   await expect(page.getByTestId('selbox')).toHaveCount(0);
   expect(await selectedItemId(page)).toBeNull();
 
   // 點預覽畫面（只有主軌）→ 不選取
+  await page.getByRole('button', { name: '回到預覽', exact: true }).tap();
   const stage = (await page.getByTestId('stage').boundingBox())!;
   await page.mouse.click(stage.x + stage.width * 0.5, stage.y + stage.height * 0.5);
-  expect(await selectedItemId(page)).toBeNull();
-  await expect(page.getByTestId('selbox')).toHaveCount(0);
+  expect(await selectedItemId(page)).toBe((await project(page)).tracks[0]!.items[0]!.id);
+  await expect(page.getByTestId('selbox')).toHaveCount(1);
 
-  // 在預覽上拖移也不會動到主軌
+  // 在預覽上可直接拖移影像
   const before = (await project(page)).tracks[0]!.items[0]!.transform;
   await page.mouse.move(stage.x + stage.width * 0.5, stage.y + stage.height * 0.5);
   await page.mouse.down();
   await page.mouse.move(stage.x + stage.width * 0.6, stage.y + stage.height * 0.55, { steps: 6 });
   await page.mouse.up();
   const after = (await project(page)).tracks[0]!.items[0]!.transform;
-  expect(after).toEqual(before);
+  expect(after.x).toBeGreaterThan(before.x);
+  expect(after.y).toBeGreaterThan(before.y);
+  await page.getByRole('button', { name: '復原', exact: true }).tap();
 
   // 從時間軸選主軌片段 → 細框、沒有 ✕、有縮放鈕
   await clips(page).first().tap();
   await expect(page.getByTestId('selbox')).toBeVisible();
-  await expect(page.getByTestId('selbox')).toHaveClass(/main/);
+  await expect(page.getByTestId('selbox')).not.toHaveClass(/main/);
   await expect(page.getByRole('button', { name: '刪除圖層' })).toHaveCount(0);
   await expect(page.getByTestId('scale-handle')).toHaveCount(0);
   await page.screenshot({ path: `${SHOT}/after-main-selected.png` });

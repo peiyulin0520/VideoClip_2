@@ -5,7 +5,8 @@ export function audibleClips(project: Project, t: number): AudibleClip[] {
     (tr) => tr.template && !tr.hidden && tr.items.some((it) => t >= it.start && t < it.start + it.duration),
   );
   return project.tracks.flatMap((track) => {
-    if (track.hidden || track.muted || (track.kind === 'main' && templateActive)) return [];
+    if (track.hidden || track.muted || (track.kind === 'main' && templateActive && !project.flexibleLayers))
+      return [];
     return track.items.flatMap((item) => {
       if (
         item.type === 'text' ||

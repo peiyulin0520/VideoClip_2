@@ -1,6 +1,7 @@
 import type { Draft } from 'immer';
 import {
   assignAspect,
+  createMainTrack,
   createOverlayClip,
   createShapeItem,
   createTextItem,
@@ -24,6 +25,7 @@ import {
   splitFree,
   splitItem,
 } from '../engine/timeline';
+import { moveLayerItem, type LayerDrop } from '../engine/layerEditing';
 import { useProjectStore } from './projectStore';
 
 const store = () => useProjectStore.getState();
@@ -224,13 +226,18 @@ export function removeTrack(trackId: string) {
   store().apply(
     (d) => {
       const i = d.tracks.findIndex((t) => t.id === trackId);
-      if (i > 0) {
+      if (i >= 0) {
         const template = d.tracks[i]!.template;
         if (template) {
           d.tracks = d.tracks.filter((t) => t.id !== trackId);
           if (!d.tracks.some((t) => t.template)) delete d.layout;
         } else d.tracks.splice(i, 1);
-      } // 主軌（0）不能刪
+        if (!d.tracks.some((t) => t.kind === 'main')) {
+          const visual = d.tracks.find((t) => t.kind === 'overlay' && !t.template);
+          if (visual) visual.kind = 'main';
+          else d.tracks.unshift(createMainTrack());
+        }
+      }
     },
     { select: null },
   );
@@ -296,13 +303,17 @@ export function setMainOffset(seconds: number) {
   );
 }
 
-/** Drop a timeline layer directly onto another row (main remains the bottom layer). */
+/** Reorder a whole lane; independent clip transfers use dropLayerItem instead. */
 export function reorderTrack(id: string, targetId: string) {
   store().apply((d) => {
     const from = d.tracks.findIndex((t) => t.id === id),
       to = d.tracks.findIndex((t) => t.id === targetId);
-    if (from < 1 || to < 1 || from === to) return;
+    if (from < 0 || to < 0 || from === to) return;
     const [track] = d.tracks.splice(from, 1);
     d.tracks.splice(to, 0, track!);
   });
+}
+
+export function dropLayerItem(id: string, start: number, drop: LayerDrop) {
+  store().apply((project) => moveLayerItem(project as never, id, start, drop), { select: id });
 }

@@ -3,7 +3,15 @@ import { useEffect, useMemo, useRef, useState, type PointerEvent as RPointerEven
 import { urlFor } from '../../engine/assetUrls';
 import { installDebugHook } from '../../engine/debug';
 import { useFonts } from '../../fonts/fontStore';
-import { itemBox, pointInBox, snapMove, SAFE_BOTTOM, SAFE_RIGHT, topHit } from '../../engine/geometry';
+import {
+  itemBox,
+  pointInBox,
+  snapMove,
+  SAFE_BOTTOM,
+  SAFE_RIGHT,
+  topHit,
+  hitLayers,
+} from '../../engine/geometry';
 import { Player } from '../../engine/player';
 import { usePreferences } from '../../store/preferences';
 import { layoutMotion } from '../../engine/layouts';
@@ -60,6 +68,33 @@ export function Preview({ projectId, width, height }: { projectId: string; width
   const project = useProjectStore((s) => s.project)!;
   const selectedId = useProjectStore((s) => s.selectedId);
   const player = useUI((s) => s.player);
+  const liftedId = useUI((s) => s.liftedId);
+  const [picker, setPicker] = useState<{ ids: string[]; x: number; y: number } | null>(null);
+  const holdTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const pendingTap = useRef<{
+    id: string | null;
+    x: number;
+    y: number;
+    moved: boolean;
+    held: boolean;
+  } | null>(null);
+  const clearHold = () => {
+    if (holdTimer.current) clearTimeout(holdTimer.current);
+    holdTimer.current = null;
+  };
+  useEffect(
+    () => () => {
+      if (holdTimer.current) clearTimeout(holdTimer.current);
+      useUI.setState({ liftedId: null });
+    },
+    [],
+  );
+  useEffect(() => {
+    player?.refresh();
+  }, [liftedId, player]);
+  useEffect(() => {
+    if (liftedId && selectedId !== liftedId) useUI.setState({ liftedId: null });
+  }, [selectedId, liftedId]);
   const fontEpoch = useFonts((s) => s.epoch); // 字體載入完成：字卡大小可能變，選取框要重算
 
   // ---- 建立 / 銷毀播放引擎（含 Pixi 合成器）----
@@ -73,6 +108,7 @@ export function Preview({ projectId, width, height }: { projectId: string; width
       host: poolRef.current!,
       canvas: canvasRef.current!,
       getProject: () => useProjectStore.getState().project,
+      getLiftedId: () => useUI.getState().liftedId,
       urlFor: (id) => urlFor(projectId, id),
       onThumb: setAssetThumbs,
     }).then((player) => {
@@ -117,9 +153,13 @@ export function Preview({ projectId, width, height }: { projectId: string; width
       const p = useProjectStore.getState().project;
       const id = useProjectStore.getState().selectedId;
       const f = p && findItem(p, id);
-      setSelVisible(
-        !!f && (f.track.kind === 'main' || (t >= f.item.start && t < f.item.start + f.item.duration)),
-      );
+      const lifted = p && findItem(p, useUI.getState().liftedId);
+      if (
+        lifted &&
+        (player.isPlaying || t < lifted.item.start || t >= lifted.item.start + lifted.item.duration)
+      )
+        useUI.setState({ liftedId: null });
+      setSelVisible(!!f && t >= f.item.start && t < f.item.start + f.item.duration);
     };
     check(player.time);
     return player.subscribe(check);
@@ -179,9 +219,20 @@ export function Preview({ projectId, width, height }: { projectId: string; width
     const pt = toProj(e);
     pointers.current.set(e.pointerId, pt);
     const st = useProjectStore.getState();
-    const cur = findItem(st.project!, st.selectedId);
+    let cur = findItem(st.project!, st.selectedId);
+    if (pointers.current.size === 2) {
+      const currentBox = cur && itemBox(cur.item, geo);
+      if (
+        !currentBox ||
+        ![...pointers.current.values()].every((point) => pointInBox(currentBox, point.x, point.y))
+      )
+        cur = findItem(st.project!, pendingTap.current?.id ?? st.selectedId);
+    }
 
     if (pointers.current.size === 2 && cur && !cur.track.locked && !cur.track.hidden) {
+      clearHold();
+      if (pendingTap.current) pendingTap.current.moved = true;
+      st.select(cur.item.id);
       const [a, b] = [...pointers.current.values()] as [Pt, Pt];
       setDragging(true);
       gesture.current = {
@@ -199,14 +250,20 @@ export function Preview({ projectId, width, height }: { projectId: string; width
 
     useUI.getState().player?.pause();
     const t = useUI.getState().player?.time ?? 0;
-    let hit = topHit(visibleLayers(st.project!, t), geo, pt.x, pt.y);
+    const layers = visibleLayers(st.project!, t).filter(
+      (layer) => player?.opaqueAt(layer.item.id, pt.x / width, pt.y / height) !== false,
+    );
+    const lift = useUI.getState().liftedId;
+    const liftIndex = layers.findIndex((l) => l.item.id === lift);
+    if (liftIndex >= 0) layers.push(layers.splice(liftIndex, 1)[0]!);
+    let hit = topHit(layers, geo, pt.x, pt.y);
     const currentBox = cur && itemBox(cur.item, geo);
     if (
       cur &&
       !cur.track.locked &&
       !cur.track.hidden &&
       currentBox &&
-      (!hit || hit.track.kind === 'main') &&
+      !hit &&
       pointInBox(
         { ...currentBox, w: Math.max(currentBox.w, 72 / k), h: Math.max(currentBox.h, 72 / k) },
         pt.x,
@@ -214,26 +271,40 @@ export function Preview({ projectId, width, height }: { projectId: string; width
       )
     )
       hit = cur;
-    if (!hit) {
-      st.select(null);
-      gesture.current = null;
-      return;
+    clearHold();
+    const ids = hitLayers(layers, geo, pt.x, pt.y).map((l) => l.item.id);
+    pendingTap.current = { id: hit?.item.id ?? null, x: e.clientX, y: e.clientY, moved: false, held: false };
+    if (ids.length) {
+      const wrap = stageRef.current!.parentElement!.getBoundingClientRect();
+      const x = Math.max(8, Math.min(wrap.width - 288, e.clientX - wrap.left + 12));
+      const y = Math.max(8, Math.min(wrap.height - 240, e.clientY - wrap.top + 12));
+      holdTimer.current = setTimeout(() => {
+        const pending = pendingTap.current;
+        if (!pending || pending.moved || pointers.current.size !== 1) return;
+        pending.held = true;
+        gesture.current = null;
+        st.select(ids[0]!);
+        setPicker({ ids, x, y });
+      }, 550);
     }
-    // 主軌是滿版的：預覽上單點它不選取、也不拖移（要選主軌請點時間軸）；已經從時間軸選了主軌時才可以在預覽上調整
-    if (hit.track.kind === 'main' && hit.item.id !== st.selectedId) {
-      st.select(null);
+    if (!hit) {
       gesture.current = null;
       return;
     }
     if (hit.item.id !== st.selectedId) {
+      if (e.pointerType === 'touch' && !expanded) return;
       st.select(hit.item.id);
-      if (e.pointerType === 'touch' && !expanded) return; // First tap selects; a swipe on unselected canvas scrolls.
     }
     startMove(hit.item.id, pt);
   };
 
   const onPointerMove = (e: RPointerEvent) => {
     if (!pointers.current.has(e.pointerId)) return;
+    const pending = pendingTap.current;
+    if (pending && Math.hypot(e.clientX - pending.x, e.clientY - pending.y) > 8) {
+      pending.moved = true;
+      clearHold();
+    }
     const pt = toProj(e);
     pointers.current.set(e.pointerId, pt);
     const g = gesture.current;
@@ -275,7 +346,18 @@ export function Preview({ projectId, width, height }: { projectId: string; width
   };
 
   const onPointerUp = (e: RPointerEvent) => {
+    clearHold();
+    const pending = pendingTap.current;
+    if (
+      pointers.current.size === 1 &&
+      e.type !== 'pointercancel' &&
+      pending &&
+      !pending.moved &&
+      !pending.held
+    )
+      useProjectStore.getState().select(pending.id);
     pointers.current.delete(e.pointerId);
+    if (pointers.current.size === 0) pendingTap.current = null;
     setGuides({ x: null, y: null });
     if (pointers.current.size === 0) setDragging(false);
     if (pointers.current.size === 0) gesture.current = null;
@@ -304,6 +386,7 @@ export function Preview({ projectId, width, height }: { projectId: string; width
         className="stage"
         style={{ ['--ratio' as string]: `${width} / ${height}` }}
         data-testid="stage"
+        onContextMenu={(e) => e.preventDefault()}
         onPointerDown={onPointerDown}
         onPointerMove={onPointerMove}
         onPointerUp={onPointerUp}
@@ -328,7 +411,7 @@ export function Preview({ projectId, width, height }: { projectId: string; width
 
         {box && sel && (
           <div
-            className={`selbox${selLocked ? ' locked' : ''}${sel.track.kind === 'main' ? ' main' : ''}`}
+            className={`selbox${selLocked ? ' locked' : ''}`}
             data-testid="selbox"
             style={{
               left: box.cx * k,
@@ -340,6 +423,60 @@ export function Preview({ projectId, width, height }: { projectId: string; width
           />
         )}
       </div>
+      {picker && (
+        <div
+          role="dialog"
+          aria-label="選取被遮住的素材"
+          className="preview-picker"
+          style={{ left: picker.x, top: picker.y }}
+          onPointerDown={(e) => e.stopPropagation()}
+        >
+          <header>
+            <strong>選擇要調整的素材</strong>
+            <button className="chip" onClick={() => setPicker(null)}>
+              關閉
+            </button>
+          </header>
+          {picker.ids.map((id) => {
+            const found = findItem(project, id);
+            if (!found) return null;
+            const name =
+              found.item.type === 'text'
+                ? found.item.card.runs[0]?.text || '圖形'
+                : project.assets.find((a) => a.id === (found.item.type !== 'text' ? found.item.assetId : ''))
+                    ?.name || '影像';
+            return (
+              <label key={id}>
+                <input
+                  type="radio"
+                  name="preview-layer"
+                  aria-label={`暫時編輯 ${name}`}
+                  checked={liftedId === id}
+                  onChange={() => {
+                    useProjectStore.getState().select(id);
+                    useUI.setState({ liftedId: id });
+                    setPicker(null);
+                  }}
+                />
+                <span>{name}</span>
+              </label>
+            );
+          })}
+        </div>
+      )}
+      {liftedId && (
+        <div className="preview-isolation" data-testid="preview-isolation">
+          <span>暫時置頂編輯</span>
+          <button
+            onClick={() => {
+              useUI.setState({ liftedId: null });
+              setPicker(null);
+            }}
+          >
+            完成
+          </button>
+        </div>
+      )}
       <button
         className="preview-expand"
         aria-label={expanded ? '縮回預覽' : '放大預覽'}

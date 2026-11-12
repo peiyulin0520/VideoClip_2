@@ -7,13 +7,13 @@
 - **目標儲存庫**：`https://github.com/peiyulin0520/VideoClip_2`
 - **工作分支**：`codex/establish-little-moments`；main 原有初始 commit `2f8bdf9` 保留。最新本機程式 commit 見 `git log -1`；推送狀態見下方。
 - **來源**：`peiyulin0520/VideoClip` main `78b178343409c46c7ba353ef3a6db6f279a7bde6`（PR #3 已合併）。以下舊日誌屬來源 repo 的歷史，不代表 VideoClip_2 的部署/瀏覽器驗收。
-- **本次明確子任務**：整頁捲動補充，功能設定也自然展開，移除下方面板獨立小捲動框；見 docs/plans/2026-11-12-single-page-settings.md。預覽與圖層已由使用者合併 PR #1 發布，本次另走新 PR。
-- **已驗證**：程式 8194f7976414982e01902978fd56ba9c755a7d6c / Actions https://github.com/peiyulin0520/VideoClip_2/actions/runs/43206542321：246 單元、73 Chromium e2e（4.4 分鐘）、lint/格式/TypeScript/build/Pages 與 39 字體檢查全部成功。
-- **瀏覽器驗證**：Playwright 1.63 / Chromium 153、iPhone 13 尺寸與 320×568；64 張 CI 截圖已更新至 docs/screenshots，來源 run 43206542321 / artifact 13938271777，ZIP SHA-256 579dbd26e66d813c22553bac4a0b28c7e12cb1a16a409a9c087b0881ce7c4eef。人工檢視精簡預覽、13 層頁面及 single-page-controls；繁中可讀、自製素材，非 Safari 真機。
-- **階段**：PR #1 已由使用者合併發布；PR #2 https://github.com/peiyulin0520/VideoClip_2/pull/2 補齊設定區整頁展開，已驗收、待使用者自行 Merge；助手不代合併、未開 auto-merge。其餘動畫/轉場/備份等規劃未實作。
-- **發布狀態**：PR #1 由使用者於 2026-11-12 10:31:48 UTC 合併，main a1b455b2688874306a618745bea136cd30c592b1 / Actions https://github.com/peiyulin0520/VideoClip_2/actions/runs/43201177854 成功。公開 HTML/manifest/attribution 200，index-BQnZUr0n.js SHA-256 61fabaa80f502657e3996f7fc41b79bcaf68ad753fcce5058ca56362c405b818 與本機已驗證建置相同。新 .panel 整頁展開補充未發布；截圖未見新版捷徑，可能仍為舊頁籤。
-- **下一步**：PR #2 由使用者自行合併 → main Actions/Pages → iPhone Safari 真機確認整頁滑動、長設定與雙指編輯。
-- **等使用者**：PR #2 已完成驗收，由使用者自行 Merge。已提醒關閉舊頁籤後重新開啟目前網址以載入 PR #1 新介面；不清除網站資料。
+- **本次明確子任務**：主題對比與米色、預覽直接選取/遮擋素材暫時置頂、單片段跨類型限定軌道與時間移動、取消固定主軌；見 docs/plans/2026-11-12-flexible-layers-and-contrast.md。
+- **已驗證**：程式 3aadf4be1cfc78453d0db6421763e3d30b87b533 / Actions https://github.com/peiyulin0520/VideoClip_2/actions/runs/43228902863：262 單元、79 Chromium e2e 全過，lint/格式/TypeScript/build/Pages/39 字體檢查成功。包含六主題（含 active tab）、直接預覽與透明角落、長按遮擋選單/暫時置頂/輸出原層次、原生跨層/時間拖曳、異型拒絕、層間新建與留白插入。
+- **目前變更**：Editor 保留舊 IDs/時間/堆疊，啟用 flexibleLayers/freeMain，影像無固定底層；moveLayerItem 驗證後原子轉移單片，群組維持多格/框架。insertVisualClip 明確插入時切開並推後同軌，拖移不推其他片段。liftedId 僅 Player 預覽，完成/播放恢復、匯出不採用。米色與深底語意前景，選取分頁使用 fg/加粗。
+- **瀏覽器驗證**：80 張完整 CI 截圖已更新（layer-editing/ 新 12 張，含六主題），artifact 13949497199 / ZIP SHA-256 fc580e98aa69905be9dbd3cf9c5ee53f50e9fffa6537eceb52aaf0f54d4b15e1 已核對。人工檢視米色/圖層 icon、遮擋選單、暫時編輯、單片轉移與異型拒絕；繁中可讀、全自製素材。iPhone Safari 長按/雙指/拖移仍待真機。
+- **PR/發布**：PR #3 https://github.com/peiyulin0520/VideoClip_2/pull/3 已更新本次範圍，完成驗收並附截圖，待使用者自行 Merge；尚未發布。助手不代合併、不開 auto-merge、不推 main。
+- **下一步**：使用者自行 Merge PR #3 → main Actions/Pages 發布 → iPhone Safari 實測。
+- **等使用者**：點入 PR #3 看截圖並自行合併。最後純文件/截圖提交使用 [skip ci]，程式與測試和上述成功 CI 完全相同，不重跑同一輪瀏覽器測試。
 
 ## 日誌格式（新增一筆時照這個）
 ```
@@ -27,6 +27,8 @@
 ```
 
 ## 使用者已確認的偏好
+- 最新六點：主題深底要配淺字/icon，可參考米色；原影片可直接從預覽點選縮放，露出處可選底層，長按能選被蓋住的素材暫時置頂編輯、完成後恢復；單一片段可跨層/時間移動，影像、字卡、音效不能同軌混放；取消固定主軌與疊加差別。
+- 最新連續參考圖更正：預覽要正常大、比圖中稍小，往下依序看圖層、功能欄，再選功能往下看選項；圖層拖拉軸要更細。優先於上一版把預覽縮成 24dvh，播放列也不應卡住。
 - 圈圖補充：整個編輯頁可上下滑，預覽和時間軸不固定在大區塊；不僅限下方設定可滑動，時間軸依圖層數展開。功能設定也取消小捲動框，隨整頁展開。
 - 最新（附 16:21 錄影）：時間軸太窄、預覽太大且固定，應讓預覽隨頁面捲走，往下能清楚檢視所有圖層，工具欄不要佔住檢視區。這項偏好優先於前次增加預覽大小的需求。
 - 2026-11-12 最新發布規則：之後一律建立 PR，助手提供 PR 連結，由使用者自行按 Merge pull request；助手不代合併、不開 auto-merge、不直接推 main，文件也走 PR。
@@ -66,6 +68,42 @@
 - 2026-11-11 找到新字體來源 max32002/pop-gothic（大波浪圓體，含注音）→ 已加入手寫可愛包。問「能不能直接下載到我的 files 下載資料夾」→ 答：網頁在 iPhone 不能自動寫進「檔案」App 資料夾；官方字體存在瀏覽器裡，自己的字體用「匯入字體檔」從檔案 App 選
 
 ## 日誌（最新在最上面）
+- 2026-11-12 主題、遮擋預覽與單片跨層完整驗收，PR #3 交使用者合併
+  - 程式 3aadf4be1cfc78453d0db6421763e3d30b87b533 / run 43228902863：262 單元、79 e2e 全過。人工發現的 active tab 白字淺底已修正並在六主題對比驗收；沒有跳過測試或放寬原生拖曳/像素/復原斷言。
+  - 80 張 CI 截圖保存，artifact 13949497199，ZIP hash fc580e98aa69905be9dbd3cf9c5ee53f50e9fffa6537eceb52aaf0f54d4b15e1；新增 layer-editing/ 十二張含六主題、直接預覽、遮擋選單、暫時置頂、單片轉移、異型拒絕與底層以下新建。
+  - README、PLAN、HANDOFF、AGENTS 與使用說明同步。最後純文件/截圖提交 [skip ci] 不更動已驗程式/測試；PR #3 仍交使用者自行合併。Safari 尚待真機。
+
+- 2026-11-12 262/79 全過後，人工截圖補強選取分頁對比
+  - 2f0cb54 / run 43227481494：262 單元、79 e2e 全過，artifact 13949146109，共 80 張截圖，ZIP hash b3b06a45d5ea85ec1fa672a4eebf404ba7b8d9a7fff0a62c9cd2c969c2a4ebdf。
+  - 人工檢視米色、遮擋選單與暫時置頂，發現 active tab 仍白字搭淺背景，改為主題 fg 並加粗；六主題測試加入選取分頁對比斷言。這個具體視覺問題需新一輪驗收，先不將 PR 標 ready。
+
+- 2026-11-12 首輪 72/79 後修正留白插入與驗收定位
+  - 真實相容問題：啟用自由時間軸後，插入留白沿用找空位，沒有在游標切開來源。新增 insertVisualClip（兩個單元）保留前段、速度/來源位置，推後同軌後續、保留原有空隙，恢復原插入驗收。
+  - 三個新增原生拖曳測試誤匹配 pool video 的 data-item-id，明確限制 .clip；遮擋選單 radio 點選立即卸載，改 tap 並驗證實際置頂狀態與輸出，不等已卸載的 checked 屬性。
+  - 統一影像後底層本來就保持顯示；移除模板慢解碼應露出既有藍底，不是黑底。模板動態測試用真實 UI 明確隱藏底層以隔離動作，保留原色彩/滑入斷言。修正提示訊息在淺色主題的前景。
+  - 全部 79 情境仍保留，262 單元、lint/格式/TypeScript/build/Pages 與 39 字體檢查全過；待新 CI，PR #3 仍 draft。
+
+- 2026-11-12 主題對比與自由分型軌道初步實作
+  - PR #3 未合併，先轉 draft；在既有整頁工作區上擴充六點回饋。
+  - 新 layerEditing.ts/測試保護舊資料、單一片段原子轉移、分型/鎖定/衝突拒絕、群組與復原；Preview 的 liftedId 僅 Player scene，不寫 Project，匯出仍原層次。Timeline 改實際片段長按跨層，左側不再直接拖整軌。
+  - 米色及語意化深底/主色前景，所有影像不再有固定主軌限制；新增 14 單元共 260、lint/格式/TypeScript/build/Pages 全過，79 e2e 已列出、待 CI。文件與使用說明同步；Safari 未驗。
+  - 舊 unit 2 項預期「主軌不能移動」按明確新需求改為可移並保留完整復原檢查；沒有跳過測試。
+
+- 2026-11-12 正常預覽與細圖層完整驗收，PR #3 交使用者合併
+  - 程式 1c00aeb4f2005d601cf5ce925f910c2509da8477 / run 43214593485：246 單元、74 e2e 全過；片尾修剪/來源上限/單次復原、13 層上下滑、左右播放頭、雙指、匯出及新連續流程皆通過。
+  - 68 張完整 CI 截圖更新（artifact 13943396937，ZIP hash fdb869ae09710ec091b98939abec63f7c8407cf0946eb2b415e3ef4dc3afa5a3），人工檢視新增四張連續畫面，中文可讀、全為自製素材。Safari 真機仍待確認。
+  - README/PLAN/HANDOFF/AGENTS 與使用說明同步。最後紀錄/截圖提交使用 [skip ci]，只改文件及截圖，程式與測試和上述成功 CI 完全一致；不重跑相同瀏覽器測試。PR #3 提供使用者自行合併，未發布此變更。
+
+- 2026-11-12 修正細把手與相鄰片段的重疊命中
+  - run 43213276140：71/74 通過；全部既有工作區情境成功。兩個片尾修剪抓到 8px 把手中心恰在相鄰片段邊緣，下一段覆蓋導致取消選取；選取片段提高至 z-index 4，把手移回自身邊界內，保留延伸區。
+  - 新連續流程測試抓到觸控慣性仍在移動，分次取 scrollTop/座標差 6px；改同一 frame 原子取得座標，仍要求位移精確一致，沒有放寬斷言。
+  - styles.css、workspace.spec.ts 與交接紀錄同步；修正後 check 已通過；74 項新 CI 待完成。參考截圖先等匯入提示自然消失，PR #3 仍 draft，不合併。
+
+- 2026-11-12 依連續參考圖調整正常大預覽與細片段
+  - PR #2 已由使用者合併；功能分支快轉至 main daef8ca。使用者更正需要正常大預覽，依序滑到圖層、功能、選項。
+  - styles.css 移除播放列 sticky、預覽改 60dvh、細片段/把手保留觸控面積；Timeline 調整主軌和間距、自動捲動改依頁首。更新 workspace 斷言並新增連續流程回歸；預覽操作測試先回預覽再量位置。
+  - 本次 check 的 246 單元及 lint/格式/TypeScript/build/Pages 全過；74 情境待 CI 與截圖。Safari 未驗證；完成後另建 PR 交使用者合併。
+
 - 2026-11-12 設定區整頁捲動驗收完成，交 PR #2
   - 程式 8194f79 / run 43206542321：246 單元與 73 e2e 全過。新增真實觸控確認 .editor 上下滑動、設定面板沒有獨立 scrollTop、末端控制項可操作；原有縮放/圖層/匯出情境仍通過。
   - 匯入 64 張完整 CI 截圖，artifact 13938271777 已核對 ZIP hash；人工看過 workspace/compact-preview、all-layers-page、single-page-controls，中文可讀、預覽與時間軸會捲走。

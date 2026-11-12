@@ -6,6 +6,7 @@ import { importFiles } from '../../engine/importMedia';
 import { addOverlayClips } from '../../store/actions';
 import { relayout, totalDuration, formatTime } from '../../engine/timeline';
 import { getProject } from '../../storage/projects';
+import { editableProject } from '../../engine/layerEditing';
 import { startAutosave } from '../../store/autosave';
 import { useProjectStore } from '../../store/projectStore';
 import { toast, useUI } from '../../store/uiStore';
@@ -36,7 +37,7 @@ function EditorLoader({ projectId }: { projectId: string }) {
       if (!p) return setStatus('missing');
       const missing = await ensureUrls(p.id, p.assets);
       if (cancelled) return;
-      useProjectStore.getState().load(p);
+      useProjectStore.getState().load(editableProject(p));
       autosave = startAutosave();
       setStatus('ready');
       if (missing.length) toast(`找不到素材檔：${missing.join('、')}`);
@@ -93,8 +94,10 @@ function EditorBody() {
     });
   }, [player]);
 
+  const importTrack = useRef<string | undefined>(undefined);
   const importMode = useRef<'main' | 'overlay'>('main');
-  const pick = (mode: 'main' | 'overlay') => {
+  const pick = (mode: 'main' | 'overlay', trackId?: string) => {
+    importTrack.current = trackId;
     importMode.current = mode;
     fileInput.current?.click();
   };
@@ -116,14 +119,22 @@ function EditorBody() {
           useProjectStore.getState().apply((d) => void d.assets.push(...res.assets));
           addOverlayClips(res.assets, player?.time ?? 0);
         } else {
-          const startOfNew = totalDuration(useProjectStore.getState().project!);
-          // 匯入主軌素材後不自動選取（主軌是滿版的，選取框會像「要手動縮小」的框）
+          const current = useProjectStore.getState().project!;
+          const destination =
+            current.tracks.find((t) => t.id === importTrack.current) ??
+            current.tracks.find((t) => t.kind === 'main')!;
+          const startOfNew = Math.max(0, ...destination.items.map((it) => it.start + it.duration));
+          // 匯入後先不選取；使用者可直接在預覽或時間軸點選。
           useProjectStore.getState().apply((d) => {
             d.assets.push(...res.assets);
-            const tr = d.tracks.find((t) => t.kind === 'main')!;
+            const tr = d.tracks.find((t) => t.id === destination.id)!;
             // 比例設成「自動」、而且主軌還是空的：第一次匯入時照第一個素材的形狀決定專案比例
             const first = res.assets[0];
-            if (d.aspectAuto && tr.items.length === 0 && first)
+            if (
+              d.aspectAuto &&
+              !d.tracks.some((t) => t.items.some((it) => it.type === 'video' || it.type === 'image')) &&
+              first
+            )
               assignAspect(d, pickAspect(first.width, first.height), true);
             tr.items = d.freeMain
               ? [
@@ -252,7 +263,7 @@ function EditorBody() {
         </button>
       </div>
 
-      <Timeline pps={pps} setPps={setPps} onAdd={() => pick('main')} />
+      <Timeline pps={pps} setPps={setPps} onAdd={(trackId) => pick('main', trackId)} />
       <BottomBar onImportMain={() => pick('main')} onImportOverlay={() => pick('overlay')} />
 
       <input

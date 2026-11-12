@@ -5,6 +5,7 @@ export const THEMES = {
   light: '清爽白色',
   fresh: '清新薄荷',
   warm: '溫暖棕色',
+  beige: '米色紙感',
 };
 export type Theme = keyof typeof THEMES;
 const KEY = 'lm2-preferences';
@@ -21,7 +22,7 @@ export const usePreferences = create<{
   preview: number;
   set: (patch: Partial<{ theme: Theme; preview: number }>) => void;
 }>((set, get) => ({
-  theme: saved.theme && saved.theme in THEMES ? saved.theme : 'dark',
+  theme: saved.theme && saved.theme in THEMES ? saved.theme : 'beige',
   preview: [720, 1080, 1920].includes(saved.preview ?? 0) ? saved.preview! : 1080,
   set: (patch) => {
     set(patch);

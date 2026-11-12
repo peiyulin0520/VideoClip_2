@@ -172,7 +172,7 @@ export const exportFrame = (page: Page, t: number, pts: [number, number][]) =>
 /** 切到底部分頁 */
 export async function openTab(
   page: Page,
-  name: '剪輯' | '疊加' | '文字' | '圖層' | '版型' | '素材' | '音訊',
+  name: '剪輯' | '影像' | '文字' | '圖層' | '版型' | '素材' | '音訊',
 ) {
   const tab = page.getByRole('tab', { name });
   // 點「目前的分頁」會收合面板，所以已經在這個分頁且展開時就不用再點
@@ -186,7 +186,7 @@ export async function openTab(
 
 /** 疊加分頁 →「加入影片或照片」→ 選檔案 */
 export async function addOverlays(page: Page, files: string[]) {
-  await openTab(page, '疊加');
+  await openTab(page, '影像');
   const before = await page.getByTestId('clip').count();
   const [chooser] = await Promise.all([
     page.waitForEvent('filechooser'),
@@ -202,3 +202,31 @@ export const regionHash = (page: Page, r: [number, number, number, number]) =>
     (region) => (window as unknown as { __videoclip: Hook }).__videoclip.regionHash(...region),
     r,
   );
+
+/** Hold a real touch, then drag one timeline item; no store mutation. */
+export async function dragTimelineItem(
+  page: Page,
+  source: import('@playwright/test').Locator,
+  dx: number,
+  dy: number,
+  beforeRelease?: () => Promise<void>,
+) {
+  const box = (await source.boundingBox())!;
+  const x = box.x + Math.min(box.width / 2, 70),
+    y = box.y + box.height / 2;
+  const session = await page.context().newCDPSession(page);
+  try {
+    await session.send('Input.dispatchTouchEvent', { type: 'touchStart', touchPoints: [{ x, y, id: 1 }] });
+    await page.waitForTimeout(500); // The actual long-press threshold is 400ms.
+    await expect(source).toHaveClass(/dragging/);
+    for (let i = 1; i <= 10; i++)
+      await session.send('Input.dispatchTouchEvent', {
+        type: 'touchMove',
+        touchPoints: [{ x: x + (dx * i) / 10, y: y + (dy * i) / 10, id: 1 }],
+      });
+    await beforeRelease?.();
+    await session.send('Input.dispatchTouchEvent', { type: 'touchEnd', touchPoints: [] });
+  } finally {
+    await session.detach();
+  }
+}
