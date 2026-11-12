@@ -38,7 +38,7 @@ export function newId(prefix = ''): string {
 }
 
 export function createMainTrack(): Track {
-  return { id: newId('t_'), kind: 'main', name: '主軌', hidden: false, locked: false, items: [] };
+  return { id: newId('t_'), kind: 'main', name: '影像 1', hidden: false, locked: false, items: [] };
 }
 
 /** 改專案比例（直接改傳進來的物件，immer 草稿也可以）。auto=true 代表之後仍跟著第一個素材。 */
@@ -101,14 +101,18 @@ export function nextProjectName(existing: string[]): string {
 
 export const TEXT_DEFAULT_DURATION = 3;
 
-const TRACK_NAMES: Record<TrackKind, string> = { main: '主軌', overlay: '疊加', text: '文字', audio: '音軌' };
+const TRACK_NAMES: Record<TrackKind, string> = { main: '影像', overlay: '影像', text: '文字', audio: '音軌' };
 
 export function createTrack(kind: TrackKind, existing: Track[]): Track {
-  const n = existing.filter((t) => t.kind === kind).length + 1;
+  let n =
+    existing.filter((t) =>
+      kind === 'main' || kind === 'overlay' ? t.kind === 'main' || t.kind === 'overlay' : t.kind === kind,
+    ).length + 1;
+  while (existing.some((track) => track.name === `${TRACK_NAMES[kind]} ${n}`)) n++;
   return {
     id: newId('t_'),
     kind,
-    name: kind === 'main' ? TRACK_NAMES.main : `${TRACK_NAMES[kind]} ${n}`,
+    name: `${TRACK_NAMES[kind]} ${n}`,
     hidden: false,
     locked: false,
     items: [],

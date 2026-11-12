@@ -66,7 +66,7 @@ test('留白作為可排序修剪素材插在中間；自由主軌可拖出真�
   await openTab(page, '素材');
   await page.getByRole('button', { name: '留白色塊', exact: true }).tap();
   await page.getByRole('button', { name: '白色', exact: true }).tap();
-  await page.getByRole('button', { name: '插入主軌留白', exact: true }).tap();
+  await page.getByRole('button', { name: '插入留白片段', exact: true }).tap();
   await expect(clips(page)).toHaveCount(4);
   const p = await current(page),
     blank = p.tracks[0]!.items.find(
@@ -82,7 +82,7 @@ test('留白作為可排序修剪素材插在中間；自由主軌可拖出真�
     })
     .toBe(true);
   await page.screenshot({ path: `${shots}/blank-between-clips.png` });
-  await page.getByLabel('自由時間軸').check();
+  expect((await current(page)).freeMain).toBe(true);
   const clip = page.getByTestId('clip').filter({ hasText: '留白' });
   const box = (await clip.boundingBox())!;
   await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2);

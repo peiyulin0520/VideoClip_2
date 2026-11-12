@@ -8,23 +8,16 @@ import {
   useState,
   type PointerEvent as RPointerEvent,
 } from 'react';
-import {
-  isVideoItem,
-  itemEnd,
-  mainItems,
-  moveItem,
-  totalDuration,
-  trimEndFree,
-  trimStartFree,
-} from '../../engine/timeline';
+import { isVideoItem, itemEnd, totalDuration, trimEndFree, trimStartFree } from '../../engine/timeline';
 import type { Asset, Item, Track, VideoItem } from '../../model/types';
-import { patchTrack, placeItem, removeTrack, shiftTrackLayer, reorderTrack } from '../../store/actions';
-import { setMainItems, useProjectStore } from '../../store/projectStore';
+import { patchTrack, dropLayerItem, removeTrack, shiftTrackLayer } from '../../store/actions';
+import { useProjectStore } from '../../store/projectStore';
 import { toast, useUI } from '../../store/uiStore';
 import { setTimelineItems } from '../../engine/groupTiming';
+import { trackFamily, itemFamily, FAMILY_LABELS, type LayerDrop } from '../../engine/layerEditing';
+import { canPlace, findFreeStart } from '../../engine/timeline';
 import { Sheet } from '../../ui/Sheet';
 
-const MAIN_H = 48;
 const ROW_H = 44;
 const ROW_GAP = 2;
 const RULER_H = 24;
@@ -75,9 +68,17 @@ function Tiles({
   );
 }
 
-type Drag =
-  | { kind: 'reorder'; id: string; dx: number; target: number }
-  | { kind: 'move'; id: string; dx: number; snapX: number | null };
+type Drag = {
+  id: string;
+  dx: number;
+  dy: number;
+  snapX: number | null;
+  drop: LayerDrop;
+  targetId?: string;
+  insertTop?: number;
+  invalid: boolean;
+  label: string;
+};
 
 export function Timeline({
   pps,
@@ -86,7 +87,7 @@ export function Timeline({
 }: {
   pps: number;
   setPps: (v: number) => void;
-  onAdd: () => void;
+  onAdd: (trackId?: string) => void;
 }) {
   const project = useProjectStore((s) => s.project)!;
   const selectedId = useProjectStore((s) => s.selectedId);
@@ -97,61 +98,12 @@ export function Timeline({
   const [drag, setDrag] = useState<Drag | null>(null);
   const [menuTrackId, setMenuTrackId] = useState<string | null>(null);
 
-  const [layerDrag, setLayerDrag] = useState<{ id: string; over: string; dy: number } | null>(null);
-  const suppressTrackClick = useRef(false);
-  const dragTrack = (e: RPointerEvent<HTMLButtonElement>, track: Track) => {
-    e.stopPropagation();
-    if (track.kind === 'main') return;
-    e.preventDefault();
-    player?.pause();
-    const target = e.currentTarget,
-      y = e.clientY;
-    target.setPointerCapture(e.pointerId);
-    let over = track.id,
-      moved = false;
-    const move = (ev: PointerEvent) => {
-      if (Math.abs(ev.clientY - y) < 5 && !moved) return;
-      moved = true;
-      const el = scrollRef.current!;
-      const page = el.closest<HTMLElement>('.editor')!;
-      const box = page.getBoundingClientRect();
-      const controls = page.querySelector('.ed-top')!.getBoundingClientRect();
-      // Long layer lists scroll the page, not a second tiny vertical viewport.
-      if (ev.clientY < Math.max(box.top, controls.bottom) + 8) page.scrollTop -= 12;
-      if (ev.clientY > box.bottom - 8) page.scrollTop += 12;
-      const candidates = Array.from(el.querySelectorAll<HTMLElement>('[data-track-id]')).filter(
-        (row) => row.dataset.kind !== 'main',
-      );
-      const row = candidates.find((row) => {
-        const r = row.getBoundingClientRect();
-        return ev.clientY >= r.top && ev.clientY < r.bottom;
-      });
-      if (row) over = row.dataset.trackId!;
-      setLayerDrag({ id: track.id, over, dy: ev.clientY - y });
-    };
-    const finish = (ev: PointerEvent) => {
-      target.removeEventListener('pointermove', move);
-      target.removeEventListener('pointerup', finish);
-      target.removeEventListener('pointercancel', finish);
-      suppressTrackClick.current = moved;
-      setTimeout(() => {
-        suppressTrackClick.current = false;
-      }, 0);
-      if (moved && ev.type !== 'pointercancel') reorderTrack(track.id, over);
-      setLayerDrag(null);
-    };
-    target.addEventListener('pointermove', move);
-    target.addEventListener('pointerup', finish);
-    target.addEventListener('pointercancel', finish);
-  };
-
   const total = totalDuration(project);
-  const main = mainItems(project);
 
-  // 由上到下顯示（最上層的軌道在最上面），主軌在最底
+  // Track array is bottom-to-top; every media lane can occupy any stack position.
   const rows = useMemo(() => {
     const list = project.tracks.map((track, index) => ({ track, index })).reverse();
-    const heights = list.map((r) => (r.track.kind === 'main' ? MAIN_H : ROW_H));
+    const heights = list.map(() => ROW_H);
     return list.map((r, i) => ({
       ...r,
       h: heights[i]!,
@@ -194,7 +146,7 @@ export function Timeline({
 
   const onScroll = () => {
     const el = scrollRef.current!;
-    if (Math.abs(el.scrollLeft - lastSet.current) < 1.5) return;
+    if (drag || Math.abs(el.scrollLeft - lastSet.current) < 1.5) return;
     player?.seek(el.scrollLeft / pps);
   };
 
@@ -239,77 +191,134 @@ export function Timeline({
     };
   }, [pps, setPps]);
 
-  // ---- 物件：點選 / 長按拖曳（主軌＝排序，其他軌＝移動時間）----
+  // A held clip moves independently across compatible lanes and time positions.
   const startItemGesture = (e: RPointerEvent, item: Item, track: Track) => {
-    if (e.pointerType === 'mouse' && e.button !== 0) return;
+    if (drag || (e.pointerType === 'mouse' && e.button !== 0)) return;
     e.stopPropagation();
-    const startX = e.clientX;
-    const startY = e.clientY;
-    const isMain = track.kind === 'main' && !project.freeMain;
-    const startItems = track.items;
-    const idx = startItems.findIndex((x) => x.id === item.id);
+    const startX = e.clientX,
+      startY = e.clientY;
+    const startScroll = scrollRef.current!.scrollLeft;
+    const startPageScroll = scrollRef.current!.closest<HTMLElement>('.editor')!.scrollTop;
     let mode: 'pending' | 'drag' | 'cancelled' = 'pending';
+    let last: Drag | null = null;
     player?.pause();
-
     const blockScroll = (ev: TouchEvent) => ev.cancelable && ev.preventDefault();
-
-    // 主軌排序
-    const widths = startItems.map((x) => x.duration * pps);
-    const lefts = startItems.map((x) => x.start * pps);
-    const calcTarget = (dx: number) => {
-      const center = lefts[idx]! + widths[idx]! / 2 + dx;
-      let target = 0;
-      startItems.forEach((_, i) => {
-        if (i !== idx && lefts[i]! + widths[i]! / 2 < center) target++;
-      });
-      return target;
-    };
-
-    // 其他軌：移動時間，吸附到 0、播放頭、其他物件的邊緣
-    const snapStart = (dx: number): { dx: number; snapX: number | null } => {
-      if (!player) return { dx, snapX: null };
-      const want = Math.max(item.start + dx / pps, 0);
-      const cands = [0, player.time];
-      for (const tr of useProjectStore.getState().project!.tracks)
-        for (const o of tr.items) if (o.id !== item.id) cands.push(o.start, itemEnd(o));
-      const thr = 8 / pps;
-      let best: { d: number; at: number; edgeEnd: boolean } | null = null;
-      for (const c of cands) {
-        for (const [own, edgeEnd] of [[want, false] as const, [want + item.duration, true] as const]) {
-          const d = c - own;
-          if (Math.abs(d) <= thr && (!best || Math.abs(d) < Math.abs(best.d))) best = { d, at: c, edgeEnd };
+    const resolve = (ev: PointerEvent): Drag => {
+      const el = scrollRef.current!,
+        page = el.closest<HTMLElement>('.editor')!;
+      const bounds = page.getBoundingClientRect(),
+        header = page.querySelector('.ed-top')!.getBoundingClientRect();
+      if (ev.clientY < header.bottom + 12) page.scrollTop -= 12;
+      else if (ev.clientY > bounds.bottom - 12) page.scrollTop += 12;
+      const horizontal = el.getBoundingClientRect();
+      if (ev.clientX > horizontal.right - 12) el.scrollLeft += 8;
+      else if (ev.clientX < horizontal.left + 12) el.scrollLeft -= 8;
+      const dx = ev.clientX - startX + el.scrollLeft - startScroll;
+      let desired = Math.max(0, item.start + dx / pps),
+        snapX: number | null = null;
+      let distance = 8 / pps;
+      const points = [
+        0,
+        player?.time ?? 0,
+        ...project.tracks.flatMap((tr) =>
+          tr.items.filter((it) => it.id !== item.id).flatMap((it) => [it.start, itemEnd(it)]),
+        ),
+      ];
+      for (const point of points) {
+        for (const edge of [desired, desired + item.duration]) {
+          const offset = point - edge;
+          if (Math.abs(offset) < distance && desired + offset >= 0) {
+            desired += offset;
+            distance = Math.abs(offset);
+            snapX = point;
+          }
         }
       }
-      if (!best) return { dx: (want - item.start) * pps, snapX: null };
-      return { dx: (want + best.d - item.start) * pps, snapX: best.at };
+      let drop: LayerDrop = { trackId: track.id },
+        targetId: string | undefined = track.id;
+      let insertTop: number | undefined;
+      if (Math.abs(ev.clientY - startY) > 16) {
+        const candidates = rows.map((row) => ({
+          ...row,
+          rect: el.querySelector(`[data-track-id="${row.track.id}"]`)!.getBoundingClientRect(),
+        }));
+        const first = candidates[0]!,
+          last = candidates[candidates.length - 1]!;
+        const over = candidates.find(
+          (row) => ev.clientY >= row.rect.top - ROW_GAP && ev.clientY <= row.rect.bottom,
+        );
+        if (ev.clientY < first.rect.top || ev.clientY > last.rect.bottom) {
+          const above = ev.clientY < first.rect.top;
+          drop = { insertAt: above ? project.tracks.length : 0 };
+          insertTop = above ? RULER_H + 1 : contentH - 6;
+          targetId = undefined;
+        } else if (over) {
+          const above = ev.clientY < over.rect.top + 7,
+            below = ev.clientY > over.rect.bottom - 7;
+          if (above || below) {
+            drop = { insertAt: over.index + (above ? 1 : 0) };
+            insertTop = over.top + (above ? -1 : over.h + 1);
+            targetId = undefined;
+          } else {
+            drop = { trackId: over.track.id };
+            targetId = over.track.id;
+          }
+        }
+      }
+      const destination = targetId ? project.tracks.find((tr) => tr.id === targetId) : undefined;
+      if (destination === track && !track.template)
+        desired = findFreeStart(track.items, desired, item.duration, item.id);
+      const invalid =
+        !!destination &&
+        (destination.locked ||
+          itemFamily(item) !== trackFamily(destination) ||
+          (destination !== track &&
+            (destination.template ||
+              track.template ||
+              !canPlace(destination.items, desired, item.duration))));
+      return {
+        id: item.id,
+        dx: (desired - item.start) * pps,
+        dy: ev.clientY - startY + page.scrollTop - startPageScroll,
+        snapX,
+        drop,
+        targetId,
+        insertTop,
+        invalid,
+        label: invalid
+          ? '此處不能放置：請選同類型的空位，或拖到圖層之間'
+          : `${targetId ? '移入' : '新增'}${FAMILY_LABELS[itemFamily(item)]}層 · ${desired.toFixed(1)} 秒`,
+      };
     };
-
     const timer = setTimeout(() => {
       if (mode !== 'pending' || track.locked) return;
       mode = 'drag';
       window.addEventListener('touchmove', blockScroll, { passive: false });
-      setDrag(
-        isMain
-          ? { kind: 'reorder', id: item.id, dx: 0, target: idx }
-          : { kind: 'move', id: item.id, dx: 0, snapX: null },
-      );
+      useProjectStore.getState().select(item.id);
+      last = {
+        id: item.id,
+        dx: 0,
+        dy: 0,
+        snapX: null,
+        drop: { trackId: track.id },
+        targetId: track.id,
+        invalid: false,
+        label: '拖曳調整時間與圖層',
+      };
+      setDrag(last);
       navigator.vibrate?.(15);
     }, LONG_PRESS_MS);
-
     const move = (ev: PointerEvent) => {
-      const dx = ev.clientX - startX;
-      if (mode === 'pending' && Math.hypot(dx, ev.clientY - startY) > 8) {
+      if (ev.pointerId !== e.pointerId) return;
+      if (mode === 'pending' && Math.hypot(ev.clientX - startX, ev.clientY - startY) > 8) {
         mode = 'cancelled';
         clearTimeout(timer);
       }
       if (mode !== 'drag') return;
-      if (isMain) setDrag({ kind: 'reorder', id: item.id, dx, target: calcTarget(dx) });
-      else {
-        const s = snapStart(dx);
-        setDrag({ kind: 'move', id: item.id, dx: s.dx, snapX: s.snapX });
-      }
+      last = resolve(ev);
+      setDrag(last);
     };
-    const finish = (ev: PointerEvent, cancelled: boolean) => {
+    const finish = (_ev: PointerEvent, cancelled: boolean) => {
       clearTimeout(timer);
       window.removeEventListener('pointermove', move);
       window.removeEventListener('pointerup', up);
@@ -317,21 +326,25 @@ export function Timeline({
       window.removeEventListener('touchmove', blockScroll);
       if (mode === 'pending' && !cancelled) {
         useProjectStore.getState().select(item.id);
-        player?.seek(Math.max(item.start, Math.min(player.time, item.start + item.duration - 0.01)));
+        player?.seek(Math.max(item.start, Math.min(player.time, itemEnd(item) - 0.01)));
       } else if (mode === 'drag') {
-        const dx = ev.clientX - startX;
         setDrag(null);
-        if (cancelled) return;
-        if (isMain) {
-          const target = calcTarget(dx);
-          if (target !== idx) setMainItems(moveItem(startItems as VideoItem[], item.id, target));
-        } else {
-          placeItem(item.id, item.start + snapStart(dx).dx / pps);
+        if (!cancelled && last) {
+          if (last.invalid) return toast(last.label);
+          try {
+            dropLayerItem(item.id, item.start + last.dx / pps, last.drop);
+          } catch (error) {
+            toast((error as Error).message);
+          }
         }
       }
     };
-    const up = (ev: PointerEvent) => finish(ev, false);
-    const cancel = (ev: PointerEvent) => finish(ev, true);
+    const up = (ev: PointerEvent) => {
+        if (ev.pointerId === e.pointerId) finish(ev, false);
+      },
+      cancel = (ev: PointerEvent) => {
+        if (ev.pointerId === e.pointerId) finish(ev, true);
+      };
     window.addEventListener('pointermove', move);
     window.addEventListener('pointerup', up);
     window.addEventListener('pointercancel', cancel);
@@ -373,19 +386,6 @@ export function Timeline({
   const step = tickStep(pps);
   for (let t = 0; t <= total + 1e-6; t += step) ticks.push(t);
 
-  // 主軌排序的插入位置提示線
-  let insertX: number | null = null;
-  if (drag?.kind === 'reorder') {
-    const others = main.filter((x) => x.id !== drag.id);
-    const dur = main.find((x) => x.id === drag.id)?.duration ?? 0;
-    insertX =
-      half +
-      (drag.target >= others.length
-        ? total - dur
-        : others.slice(0, drag.target).reduce((s, x) => s + x.duration, 0)) *
-        pps;
-  }
-
   const menuTrack = project.tracks.find((t) => t.id === menuTrackId) ?? null;
   const menuIndex = menuTrack ? project.tracks.indexOf(menuTrack) : -1;
   const viewH = Math.max(contentH, 106);
@@ -415,7 +415,7 @@ export function Timeline({
           {rows.map(({ track, top, h }) => (
             <div
               key={track.id}
-              className={`track${track.hidden ? ' off' : ''}${layerDrag?.over === track.id ? ' layer-drop' : ''}`}
+              className={`track${track.hidden ? ' off' : ''}${drag?.targetId === track.id ? (drag.invalid ? ' drop-invalid' : ' layer-drop') : ''}`}
               data-testid="track"
               data-kind={track.kind}
               data-track-id={track.id}
@@ -426,17 +426,12 @@ export function Timeline({
                 className="track-chip"
                 aria-label={`${track.name} 軌道設定`}
                 data-testid="track-chip"
-                onPointerDown={(e) => dragTrack(e, track)}
-                title="上下拖曳調整圖層；點一下開啟設定"
+                title="點選開啟軌道設定"
                 onClick={() => {
-                  if (suppressTrackClick.current) {
-                    suppressTrackClick.current = false;
-                    return;
-                  }
                   setMenuTrackId(track.id);
                 }}
               >
-                {track.kind === 'main' ? (
+                {track.kind === 'main' || track.kind === 'overlay' ? (
                   <Film size={16} />
                 ) : track.kind === 'text' ? (
                   <Type size={16} />
@@ -452,7 +447,7 @@ export function Timeline({
                 ) : null}
               </button>
 
-              {track.kind === 'main' && (project.mainOffset ?? 0) > 0 && (
+              {!project.flexibleLayers && track.kind === 'main' && (project.mainOffset ?? 0) > 0 && (
                 <div
                   className="intro-gap"
                   data-testid="intro-gap"
@@ -484,7 +479,7 @@ export function Timeline({
                     style={{
                       left: half + it.start * pps,
                       width: Math.max(it.duration * pps, 4),
-                      transform: dragging ? `translateX(${dx}px)` : undefined,
+                      transform: dragging ? `translate(${dx}px, ${drag!.dy}px)` : undefined,
                     }}
                     onPointerDown={(e) => startItemGesture(e, it, track)}
                   >
@@ -525,14 +520,13 @@ export function Timeline({
                 );
               })}
 
-              {track.kind === 'main' && (
+              {trackFamily(track) === 'visual' && !track.template && (
                 <>
-                  {insertX !== null && <div className="insert-line" style={{ left: insertX }} />}
                   <button
                     className="add-clip"
                     aria-label="加入素材"
-                    style={{ left: half + total * pps + 8 }}
-                    onClick={onAdd}
+                    style={{ left: half + Math.max(0, ...track.items.map(itemEnd)) * pps + 8 }}
+                    onClick={() => onAdd(track.id)}
                     onPointerDown={(e) => e.stopPropagation()}
                   >
                     <Plus size={22} />
@@ -541,7 +535,20 @@ export function Timeline({
               )}
             </div>
           ))}
-          {drag?.kind === 'move' && drag.snapX !== null && (
+          {drag && (
+            <div
+              className={`item-drop-hint${drag.invalid ? ' invalid' : ''}`}
+              role="status"
+              data-testid="item-drop-hint"
+              data-valid={!drag.invalid}
+              style={{
+                top: drag.insertTop ?? rows.find((row) => row.track.id === drag.targetId)?.top ?? RULER_H,
+              }}
+            >
+              {drag.label}
+            </div>
+          )}
+          {drag && drag.snapX !== null && (
             <div className="snap-line" style={{ left: half + drag.snapX * pps }} />
           )}
         </div>
@@ -582,7 +589,7 @@ export function Timeline({
                 {menuTrack.muted ? '取消靜音' : '這條軌道靜音'}
               </button>
             )}
-            {menuTrack.kind !== 'main' && (
+            {menuTrack && (
               <>
                 <button
                   className="menu-item"
@@ -597,7 +604,7 @@ export function Timeline({
                 <button
                   className="menu-item"
                   onClick={() => {
-                    if (menuIndex <= 1) toast('不能放到主軌下面');
+                    if (menuIndex <= 0) toast('已經在最下層');
                     else shiftTrackLayer(menuTrack.id, -1);
                     setMenuTrackId(null);
                   }}

@@ -4,6 +4,7 @@
   --fg: #f4f4f4;
   --muted: #9a9a9a;
   --accent: #ff4d8d;
+  --accent-ink: #21171b;
   --safe-top: env(safe-area-inset-top, 0px);
   --safe-bottom: env(safe-area-inset-bottom, 0px);
 }
@@ -1386,7 +1387,8 @@ button {
 }
 :root[data-theme='light'],
 :root[data-theme='fresh'],
-:root[data-theme='warm'] {
+:root[data-theme='warm'],
+:root[data-theme='beige'] {
   color-scheme: light;
   --bg: #fafaf8;
   --fg: #252b2b;
@@ -1394,12 +1396,13 @@ button {
   --line: #d9dfdd;
   --muted: #626d68;
   --accent: #475c53;
+  --accent-ink: #ffffff;
   --control: #e9eeeb;
 }
 :root[data-theme='fresh'] {
   --bg: #f1f8f3;
   --panel: #fbfffc;
-  --accent: #3c886f;
+  --accent: #2f715a;
   --control: #e2f0e7;
 }
 :root[data-theme='warm'] {
@@ -1995,4 +1998,151 @@ progress {
 }
 .editor .clip .handle.right {
   right: 0;
+}
+
+:root[data-theme='beige'] {
+  --bg: #f5f3ec;
+  --panel: #fcfaf5;
+  --fg: #292923;
+  --muted: #686a60;
+  --line: #d8d3c6;
+  --accent: #a94f39;
+  --control: #eae6db;
+}
+/* Dark media surfaces keep their own foreground in every page theme. */
+.editor .timeline,
+.editor .track-chip,
+.editor .preview-expand,
+.editor .safe-toggle,
+.editor .ratio-btn,
+.editor .preview-layers {
+  color: #faf8f1;
+}
+.editor .track-chip {
+  background: #242521;
+}
+.editor .tick {
+  color: #c4c7be;
+}
+.editor .clip-label {
+  color: #fff;
+}
+.editor .clip.selected::before {
+  border-color: #fff;
+}
+:root[data-theme='beige'] .primary,
+:root[data-theme='beige'] .export-button {
+  color: #fff;
+  background: var(--accent);
+}
+.preview-picker {
+  position: absolute;
+  z-index: 25;
+  width: min(280px, calc(100% - 16px));
+  max-height: 260px;
+  overflow-y: auto;
+  background: var(--panel);
+  color: var(--fg);
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  padding: 8px;
+  box-shadow: 0 8px 28px #0006;
+}
+.preview-picker header,
+.preview-picker label,
+.preview-isolation {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.preview-picker header {
+  justify-content: space-between;
+}
+.preview-picker label {
+  min-height: 44px;
+  font-size: 13px;
+  cursor: pointer;
+}
+.preview-picker input {
+  flex: none;
+  width: 20px;
+  height: 20px;
+}
+.preview-isolation {
+  position: absolute;
+  z-index: 24;
+  left: 8px;
+  top: 8px;
+  max-width: calc(100% - 16px);
+  padding: 4px 8px;
+  color: #fff;
+  background: #252620ed;
+  border-radius: 10px;
+  font-size: 12px;
+}
+.preview-isolation span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.preview-isolation button {
+  min-width: 52px;
+  min-height: 44px;
+  background: #f6f1e7;
+  color: #292923;
+}
+
+.editor .track-chip {
+  touch-action: pan-y;
+}
+.editor .add-clip {
+  color: #fff;
+  background: #292b25;
+}
+:root[data-theme='mono'] .export-button {
+  color: #111;
+}
+.item-drop-hint {
+  position: absolute;
+  z-index: 12;
+  left: 50px;
+  width: calc(100vw - 70px);
+  min-height: 28px;
+  padding: 4px 8px;
+  background: #284a3e;
+  color: #fff;
+  border-top: 3px solid #94e0b6;
+  font-size: 11px;
+  pointer-events: none;
+  border-radius: 6px;
+}
+.item-drop-hint.invalid {
+  background: #6b2929;
+  border-color: #ffb8ae;
+}
+.track.drop-invalid {
+  box-shadow: inset 0 2px #ff9184;
+}
+
+:root[data-theme='mono'] {
+  --accent-ink: #111111;
+}
+:root[data-theme] .btn.primary,
+:root[data-theme] .chip.active,
+:root[data-theme] .export-button,
+:root[data-theme] .source-handle {
+  background: var(--accent);
+  color: var(--accent-ink);
+}
+:root:not([data-theme='dark']) .shape-cell,
+:root:not([data-theme='dark']) .deco-cell,
+:root:not([data-theme='dark']) .template-grid button,
+:root:not([data-theme='dark']) .font-select {
+  background: var(--control, #222);
+  color: var(--fg);
+}
+
+.editor .timeline .clip {
+  background: transparent;
+  color: #fff;
 }

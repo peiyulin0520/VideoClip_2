@@ -150,7 +150,7 @@ describe('iPhone 第二輪修剪與群組回歸', () => {
     expect(merged.tracks[1]!.items[2]!.transform.opacity).toBe(0);
     expect(p.tracks).toHaveLength(4);
   });
-  it('圖層拖放維持主軌在底，復原可還原原疊放順序', () => {
+  it('所有影像圖層均可上下移，復原可還原原疊放順序', () => {
     const p = createProject('layers');
     const a = createTrack('text', p.tracks),
       b = createTrack('overlay', p.tracks);
@@ -163,7 +163,13 @@ describe('iPhone 第二輪修剪與群組回歸', () => {
       a.id,
     ]);
     reorderTrack(a.id, p.tracks[0]!.id);
-    expect(useProjectStore.getState().project!.tracks[0]!.kind).toBe('main');
+    expect(useProjectStore.getState().project!.tracks[0]!.id).toBe(a.id);
+    useProjectStore.getState().undo();
+    expect(useProjectStore.getState().project!.tracks.map((t) => t.id)).toEqual([
+      p.tracks[0]!.id,
+      b.id,
+      a.id,
+    ]);
     useProjectStore.getState().undo();
     expect(useProjectStore.getState().project!.tracks.map((t) => t.id)).toEqual(p.tracks.map((t) => t.id));
   });

@@ -42,6 +42,7 @@ export function buildScene(
   canvasW: number,
   canvasH: number,
   provide: SourceProvider,
+  previewLiftedId?: string | null,
 ): SceneLayer[] {
   const ctx = geoCtx(project, canvasW, canvasH);
   const out: SceneLayer[] = [];
@@ -49,7 +50,7 @@ export function buildScene(
   const layers = visibleLayers(project, t);
   const templateActive = layers.some((l) => l.track.template);
   for (const { item, track } of layers) {
-    if (templateActive && track.kind === 'main') continue;
+    if (templateActive && track.kind === 'main' && !project.flexibleLayers) continue;
     const layout = track.layout ?? project.layout;
     const motion = layoutMotion(layout, t);
     if (track.template && layout && !artAdded.has(track.id)) {
@@ -91,6 +92,10 @@ export function buildScene(
       }
       out.push(layer);
     }
+  }
+  if (previewLiftedId) {
+    const i = out.findIndex((layer) => layer.id === previewLiftedId);
+    if (i >= 0) out.push(out.splice(i, 1)[0]!);
   }
   return out;
 }

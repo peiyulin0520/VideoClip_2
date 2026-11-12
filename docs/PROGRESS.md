@@ -7,13 +7,13 @@
 - **目標儲存庫**：`https://github.com/peiyulin0520/VideoClip_2`
 - **工作分支**：`codex/establish-little-moments`；main 原有初始 commit `2f8bdf9` 保留。最新本機程式 commit 見 `git log -1`；推送狀態見下方。
 - **來源**：`peiyulin0520/VideoClip` main `78b178343409c46c7ba353ef3a6db6f279a7bde6`（PR #3 已合併）。以下舊日誌屬來源 repo 的歷史，不代表 VideoClip_2 的部署/瀏覽器驗收。
-- **本次明確子任務**：依連續參考圖調整正常大預覽、播放列隨頁捲走、較細的時間軸片段，順序為預覽→完整圖層→功能→選項；見 docs/plans/2026-11-12-reference-page-flow.md。
-- **已驗證**：程式 1c00aeb4f2005d601cf5ce925f910c2509da8477 / Actions https://github.com/peiyulin0520/VideoClip_2/actions/runs/43214593485：246 單元、74 Chromium e2e 全過，lint/格式/TypeScript/build/Pages 與 39 字體檢查成功。首輪的片尾把手命中已修正且回歸通過。
-- **目前變更**：預覽 60dvh（280–600px）；播放列正常文流；軌道 44/48px、間距 2px、可見條 32/36px、把手 8px，保留點選/修剪觸控範圍。選取片段 z-index 4，左右把手置內側 0；頁首仍 sticky，設定沿同一頁展開。
-- **瀏覽器驗證**：68 張完整 CI 截圖已更新至 docs/screenshots；新增 workspace/reference-preview、reference-mid-scroll、reference-layers-tools、reference-function-options 四張連續流程。artifact 13943396937 / ZIP SHA-256 fdb869ae09710ec091b98939abec63f7c8407cf0946eb2b415e3ef4dc3afa5a3 已核對；人工檢視正常大預覽、細圖層、功能與末端選項。只在 Chromium 驗收，Safari 真機仍待確認。
-- **發布狀態**：PR #2 已由使用者於 2026-11-12 11:39:05 UTC 合併，origin/main daef8ca；目前功能分支已快轉至此基準。本次變更未發布。
-- **下一步**：PR #3 https://github.com/peiyulin0520/VideoClip_2/pull/3 交使用者自行 Merge → main Actions/Pages → iPhone Safari 真機確認。
-- **等使用者**：PR #3 已驗收並附四張連續畫面，待使用者自行 Merge；助手不合併、不開 auto-merge、不推 main。
+- **本次明確子任務**：主題對比與米色、預覽直接選取/遮擋素材暫時置頂、單片段跨類型限定軌道與時間移動、取消固定主軌；見 docs/plans/2026-11-12-flexible-layers-and-contrast.md。
+- **基線**：1c00aeb / run 43214593485 的 246 單元/74 e2e、68 截圖通過。本次 check 全過（260 單元、lint/格式/TypeScript/build/Pages 與 39 字體），79 瀏覽器情境待 CI；不可把基線截圖當成本次驗收。
+- **目前變更**：Editor 開啟保留舊 IDs/時間/堆疊，啟用 flexibleLayers/freeMain；main/overlay 影像介面相同。moveLayerItem 驗證類型/鎖定/衝突後原子移動單一物件或模板群組；Timeline 長按拖移中心合軌、層間新建。Preview 550ms 長按遮擋選單，liftedId 僅預覽，完成/播放復原且匯出不採用。米色與各主題深底前景修正。
+- **瀏覽器驗證**：本次尚待 CI；新增原生觸控拖移、六主題對比與預覽暫時置頂測試；舊「主軌不可選/移動」斷言依使用者新要求改為可選、可移，保留原有修剪/復原/匯出情境。Safari 尚待真機。
+- **PR/發布**：PR #3 https://github.com/peiyulin0520/VideoClip_2/pull/3 仍 OPEN，未由使用者合併；已轉回 draft 擴充本次需求。本次及之前 PR #3 工作均未發布，不建立重複 PR、不代合併、不開 auto-merge、不推 main。
+- **下一步**：check → 79 項 CI/截圖 → 更新 PR #3 並標可審核 → 使用者自行 Merge → main 發布 → iPhone Safari 真機確認。
+- **等使用者**：驗收後提供更新的 PR #3 連結，由使用者自行 Merge。
 
 ## 日誌格式（新增一筆時照這個）
 ```
@@ -27,6 +27,7 @@
 ```
 
 ## 使用者已確認的偏好
+- 最新六點：主題深底要配淺字/icon，可參考米色；原影片可直接從預覽點選縮放，露出處可選底層，長按能選被蓋住的素材暫時置頂編輯、完成後恢復；單一片段可跨層/時間移動，影像、字卡、音效不能同軌混放；取消固定主軌與疊加差別。
 - 最新連續參考圖更正：預覽要正常大、比圖中稍小，往下依序看圖層、功能欄，再選功能往下看選項；圖層拖拉軸要更細。優先於上一版把預覽縮成 24dvh，播放列也不應卡住。
 - 圈圖補充：整個編輯頁可上下滑，預覽和時間軸不固定在大區塊；不僅限下方設定可滑動，時間軸依圖層數展開。功能設定也取消小捲動框，隨整頁展開。
 - 最新（附 16:21 錄影）：時間軸太窄、預覽太大且固定，應讓預覽隨頁面捲走，往下能清楚檢視所有圖層，工具欄不要佔住檢視區。這項偏好優先於前次增加預覽大小的需求。
@@ -67,6 +68,12 @@
 - 2026-11-11 找到新字體來源 max32002/pop-gothic（大波浪圓體，含注音）→ 已加入手寫可愛包。問「能不能直接下載到我的 files 下載資料夾」→ 答：網頁在 iPhone 不能自動寫進「檔案」App 資料夾；官方字體存在瀏覽器裡，自己的字體用「匯入字體檔」從檔案 App 選
 
 ## 日誌（最新在最上面）
+- 2026-11-12 主題對比與自由分型軌道初步實作
+  - PR #3 未合併，先轉 draft；在既有整頁工作區上擴充六點回饋。
+  - 新 layerEditing.ts/測試保護舊資料、單一片段原子轉移、分型/鎖定/衝突拒絕、群組與復原；Preview 的 liftedId 僅 Player scene，不寫 Project，匯出仍原層次。Timeline 改實際片段長按跨層，左側不再直接拖整軌。
+  - 米色及語意化深底/主色前景，所有影像不再有固定主軌限制；新增 14 單元共 260、lint/格式/TypeScript/build/Pages 全過，79 e2e 已列出、待 CI。文件與使用說明同步；Safari 未驗。
+  - 舊 unit 2 項預期「主軌不能移動」按明確新需求改為可移並保留完整復原檢查；沒有跳過測試。
+
 - 2026-11-12 正常預覽與細圖層完整驗收，PR #3 交使用者合併
   - 程式 1c00aeb4f2005d601cf5ce925f910c2509da8477 / run 43214593485：246 單元、74 e2e 全過；片尾修剪/來源上限/單次復原、13 層上下滑、左右播放頭、雙指、匯出及新連續流程皆通過。
   - 68 張完整 CI 截圖更新（artifact 13943396937，ZIP hash fdb869ae09710ec091b98939abec63f7c8407cf0946eb2b415e3ef4dc3afa5a3），人工檢視新增四張連續畫面，中文可讀、全為自製素材。Safari 真機仍待確認。

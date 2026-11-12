@@ -10,6 +10,7 @@ type UI = {
   busy: string | null;
   setBusy: (text: string | null) => void;
   player: Player | null;
+  liftedId: string | null;
 };
 
 export const useUI = create<UI>((set, get) => ({
@@ -22,6 +23,7 @@ export const useUI = create<UI>((set, get) => ({
   busy: null,
   setBusy: (busy) => set({ busy }),
   player: null,
+  liftedId: null,
 }));
 
 export const toast = (text: string) => useUI.getState().toast(text);

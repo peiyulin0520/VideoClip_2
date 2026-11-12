@@ -330,6 +330,7 @@ docs/
 - 每次回報時誠實區分：✅ 已驗證（附截圖）／🟡 寫好但只在 Chromium 驗證／🔴 做不到。
 
 ## 7. 待真機驗證清單（Sonnet 無法在沙盒驗證，要請使用者在 iPhone 上試）
+- [ ] 最新分型軌道：Safari 原影片直接觸控選取/雙指、550ms 長按遮擋選單、暫時置頂完成與匯出、單片段長按跨層/時間、異型拒絕/層間新建、主題 icon 對比。
 - [ ] 參考圖補充：正常大預覽及播放列都會捲走、細圖層列仍能選取/修剪/排序，功能及末端選項依序滑動查看。
 - [ ] 新工作區：Safari 由預覽空白/未選取畫面及長字卡設定上下滑整頁、面板不另行捲動、13 層完整檢視、橫向捲播放頭與直向捲頁不干擾、編輯工具不遮層、選取框雙指手勢、放大返回位置。
 - [ ] 第二輪：左端修剪留白/完整來源還原、時間軸左側圖層直接拖曳、GIF 播放平順、裁切預覽/復原、透明填滿與獨立框線、多格編號/縮圖/整組隱藏刪除。
@@ -365,3 +366,6 @@ docs/
 2. Google Cloud OAuth Client ID / API key（P6 再做，Sonnet 會帶步驟；只有「存到 Google 雲端」需要，「存在手機檔案」不需要）。
 3. 字體清單已整理在 `fonts/manifest.json`。沒有下載網址的 6 款（佮逸體、LINE Seed TW、中規中矩體、星光小熊貓幼兒體、字言字型手繪體、致一宋體）請在 Phase 3 開始時上傳到 Sonnet 的對話（詳見 FONTS.md §4）。
 4. Sonnet 工作環境的網路需允許：`raw.githubusercontent.com`、`registry.npmjs.org`（已可用）；若要從 GitHub Release 下載字體還需 `github.com`、`objects.githubusercontent.com`；從 Drive 下載需 `drive.google.com`、`drive.usercontent.google.com`。
+
+
+最新互動規格補充：主題對比、米色與自由分型圖層見 docs/plans/2026-11-12-flexible-layers-and-contrast.md；取代舊的主軌固定底層/預覽不可直接選取限制。尚未完成的特效/轉場不因新增分型軌道而視為已實作。

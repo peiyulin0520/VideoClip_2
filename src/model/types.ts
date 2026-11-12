@@ -150,7 +150,7 @@ export type TextItem = ItemBase & { type: 'text'; card: TextCard };
 
 export type Item = VideoItem | TextItem;
 
-/** 軌道由下往上排列 = 圖層順序；index 0 一定是主軌 */
+/** 軌道由下往上排列；main 僅保留作為舊存檔/匯入相容錨點，層次不固定 */
 export type TrackKind = 'main' | 'overlay' | 'text' | 'audio';
 
 export type Track = {
@@ -178,6 +178,7 @@ export type Project = {
   fps: number;
   mainOffset?: number;
   freeMain?: boolean;
+  flexibleLayers?: boolean; // Main/overlay share editable image/video lanes.
   background?: string;
   layout?: {
     style: 'photobooth' | 'filmstrip' | 'polaroid';

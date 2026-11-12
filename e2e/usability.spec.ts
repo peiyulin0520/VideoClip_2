@@ -122,7 +122,8 @@ test('第一支影片延後，白底與開場文字正確合成，重新整理�
   await page.getByLabel('第一支影片開始秒數').fill('2.5');
   await page.getByRole('button', { name: '白底', exact: true }).tap();
   await page.getByRole('button', { name: '完成', exact: true }).tap();
-  await expect(page.getByTestId('intro-gap')).toBeVisible();
+  await expect(page.getByTestId('intro-gap')).toHaveCount(0);
+  expect((await project(page)).tracks[0]!.items[0]!.start).toBe(2.5);
   await expect
     .poll(async () => {
       const c = await samplePreview(page, 0.5, 0.5);

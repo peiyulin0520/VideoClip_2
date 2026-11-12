@@ -1,6 +1,9 @@
 # 交接手冊（HANDOFF）
 
 ## VideoClip_2 當前交接（優先於以下來源 repo 的歷史紀錄）
+- **最新任務**：docs/plans/2026-11-12-flexible-layers-and-contrast.md。PR #3 尚未合併，已轉 draft 擴充：米色/深底淺前景、原影片預覽點選、550ms 長按遮擋選單、暫時置頂編輯、單片段跨分型軌與時間移動。260 單元成功，79 e2e 待 CI。
+- editableProject 只在 Editor 載入啟用 flexibleLayers/freeMain，保留舊 IDs/時間/層次；main kind 只是相容匯入錨點，可位於任意層，UI 與 overlay 一律「影像」。moveLayerItem 先驗證後修改，跨層不移同軌其他物件；模板群組保持同步與框架。
+- useUI.liftedId 是短暫狀態，僅 Player 的 buildScene 最後參數使用，匯出不傳；禁止把它存進 Project 或實際 reorder tracks。選另一素材、播放/超出區間、完成/卸載均恢復。左側點選設定，單片段用 Timeline 長按拖曳，灰/紅提示不可混放/碰撞。
 - **最新更正優先**：docs/plans/2026-11-12-reference-page-flow.md。使用者要正常大預覽、細圖層，再一路往下到功能與選項。預覽改 60dvh/280–600px，播放列取消 sticky，只頁首 sticky；片段可見 32/36px，44/48px 觸控列、2px 間距、8px 可見把手。
 - PR #2 已由使用者合併（main daef8ca）；本次另建 PR。既有 246/73 是基線，程式 1c00aeb / run 43214593485 的 246 單元與 74 e2e 全過；68 張截圖（四張 reference-* 連續畫面）已更新，PR #3 待使用者自行合併。下方「精簡預覽」「PR #2 待合併」屬歷史，不能當成最新要求。
 - **目前任務**：docs/plans/2026-11-12-single-page-settings.md。PR #1 已由使用者合併且部署成功（main a1b455b / run 43201177854，公開 JS hash 相符）；下方「PR #1 未合併」是歷史。最新截圖未見導航，可能開舊頁籤。
@@ -112,6 +115,7 @@ IndexedDB `videoclip`（專案 JSON、`meta.appState`、`meta.installedFonts`、
 
 ## 4. 決策與原因
 | 決策 | 原因 |
+| 影像取消固定主軌，單片段分型跨軌，暫時置頂僅改預覽 | 使用者要求每一層影像一樣可編輯，移動單片而非整層；完成編輯後須回到原堆疊，不能影響匯出與儲存 |
 | 正常大預覽＋播放列正常文流，圖層可見較細但觸控維持 44px | 使用者連續參考圖要求預覽→全部圖層→功能→選項，上一版預覽太小且播放列仍卡住 |
 |---|---|
 | 純前端、無後端，資料在裝置 | 使用者要求「不同裝置互相看不到專案」「免登入」；也避免上傳影片的隱私問題 |

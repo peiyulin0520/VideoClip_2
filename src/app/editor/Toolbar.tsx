@@ -37,6 +37,7 @@ import {
   duplicateAny,
   editItem,
   patchTrack,
+  placeItem,
   removeAnyItem,
   shiftTrackLayer,
   splitAny,
@@ -59,7 +60,7 @@ type Panel = 'speed' | 'volume' | 'opening' | null;
 
 const TABS: { id: Tab; label: string }[] = [
   { id: 'edit', label: '剪輯' },
-  { id: 'overlay', label: '疊加' },
+  { id: 'overlay', label: '影像' },
   { id: 'text', label: '文字' },
   { id: 'layers', label: '圖層' },
   { id: 'layout', label: '版型' },
@@ -199,7 +200,13 @@ function EditTab({
   const move = (dir: -1 | 1) => {
     const s = need();
     if (!s) return;
-    if (!isMain || project.freeMain) return toast('請長按片段後左右拖曳，調整出現的時間');
+    if (!isMain || project.freeMain) {
+      const before = s.start;
+      placeItem(s.id, Math.max(0, s.start + dir));
+      if (findItem(useProjectStore.getState().project!, s.id)?.item.start === before)
+        toast('這個方向沒有足夠空位，可長按片段移到其他位置');
+      return;
+    }
     const idx = found!.index;
     if (idx + dir < 0 || idx + dir >= items.length) return toast(dir < 0 ? '已經是第一個' : '已經是最後一個');
     setMainItems(moveItem(items, s.id, idx + dir));
@@ -420,7 +427,7 @@ function OverlayTab({ onImportOverlay }: { onImportOverlay: () => void }) {
   return (
     <div className="panel">
       <p className="hint">
-        疊加的影片或照片會放在播放頭這一秒，同一秒可以疊很多個（每個放在自己的軌道）。加好後在預覽畫面上拖移、用兩指縮放旋轉，細節到「圖層」調整。
+        加入的影片或照片會放在播放頭這一秒，同一秒可以放在多條影像軌。長按單一片段可拖到其他影像軌的空位，或拖到圖層之間新增一層。加好後在預覽畫面上拖移、用兩指縮放旋轉，細節到「圖層」調整。
       </p>
       <button className="btn primary done" onClick={onImportOverlay}>
         ＋ 加入影片或照片（疊在目前這一秒）
@@ -476,7 +483,6 @@ function LayersTab() {
                 ? '圖形'
                 : `文字：${item.card.runs[0]?.text.slice(0, 8) ?? ''}`
               : (asset?.name ?? '素材');
-          const isMain = track.kind === 'main';
           return (
             <li
               key={item.id}
@@ -489,7 +495,7 @@ function LayersTab() {
                   {item.type === 'text' ? <Type size={16} /> : <Layers size={16} />}
                 </span>
                 <span className="layer-text">
-                  {isMain ? '主軌 · ' : `${track.name} · `}
+                  {`${track.name} · `}
                   {label}
                 </span>
               </button>
@@ -511,8 +517,8 @@ function LayersTab() {
                 className="icon-btn sm"
                 aria-label={`${track.name} 往上一層`}
                 onClick={() =>
-                  isMain || trackIndex >= project.tracks.length - 1
-                    ? toast(isMain ? '主軌固定在最底層' : '已經在最上層')
+                  trackIndex >= project.tracks.length - 1
+                    ? toast('已經在最上層')
                     : shiftTrackLayer(track.id, 1)
                 }
               >
@@ -521,11 +527,7 @@ function LayersTab() {
               <button
                 className="icon-btn sm"
                 aria-label={`${track.name} 往下一層`}
-                onClick={() =>
-                  isMain || trackIndex <= 1
-                    ? toast(isMain ? '主軌固定在最底層' : '不能放到主軌下面')
-                    : shiftTrackLayer(track.id, -1)
-                }
+                onClick={() => (trackIndex <= 0 ? toast('已經在最下層') : shiftTrackLayer(track.id, -1))}
               >
                 <ArrowDown size={18} />
               </button>
@@ -667,7 +669,7 @@ function LayersTab() {
               editItem(it.id, (x) => {
                 x.transform.x = 0.5;
                 x.transform.y = 0.5;
-                x.transform.scale = x.type === 'text' || found?.track.kind === 'main' ? 1 : 0.5;
+                x.transform.scale = x.type === 'text' || x.fit === 'cover' ? 1 : 0.5;
                 x.transform.rotation = 0;
               })
             }
