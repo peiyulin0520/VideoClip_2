@@ -51,6 +51,7 @@ import { TextPanel } from './TextPanel';
 import { AssetsPanel } from './AssetsPanel';
 import { AudioPanel } from './AudioPanel';
 import { BlankPanel } from './BlankPanel';
+import { TrimEditor } from './TrimEditor';
 import { CropEditor } from './CropEditor';
 
 export type Tab = 'edit' | 'overlay' | 'text' | 'layers' | 'layout' | 'assets' | 'audio';
@@ -163,6 +164,7 @@ function EditTab({
   const player = useUI((s) => s.player);
   const selected = found?.item;
   const [cropping, setCropping] = useState(false);
+  const [trimming, setTrimming] = useState(false);
   const isMain = found?.track.kind === 'main';
 
   const need = (): Item | undefined => {
@@ -371,6 +373,19 @@ function EditTab({
   return (
     <div className="toolbar" role="toolbar" aria-label="剪輯工具">
       <ToolButton icon={Plus} label="匯入" onClick={onImport} />
+      <ToolButton
+        icon={Scissors}
+        label="片段範圍"
+        onClick={() => {
+          if (!selected || selected.type === 'text' || selected.type === 'image')
+            return toast('請先選擇影片或音訊');
+          player?.pause();
+          setTrimming(true);
+        }}
+      />
+      {trimming && selected && selected.type !== 'text' && selected.type !== 'image' && (
+        <TrimEditor item={selected} onClose={() => setTrimming(false)} />
+      )}
       <ToolButton
         icon={Maximize}
         label="裁切"

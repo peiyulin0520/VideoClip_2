@@ -64,13 +64,19 @@ describe('多格影片版型', () => {
       6,
     );
     expect(plan.layout.duration).toBe(4);
-    expect(plan.tracks.map((t) => (t.items[0] as ReturnType<typeof createClip>).assetId)).toEqual([
+    expect(plan.tracks[0]!.items.map((it) => (it as ReturnType<typeof createClip>).assetId)).toEqual([
       'a',
       'b',
       'c',
       'd',
     ]);
-    expect(plan.tracks.map((t) => t.muted)).toEqual([false, true, true, true]);
+    expect(plan.tracks).toHaveLength(1);
+    expect(plan.tracks[0]!.items.map((it) => (it as ReturnType<typeof createClip>).audioEnabled)).toEqual([
+      true,
+      false,
+      false,
+      false,
+    ]);
     expect(plan.tracks.every((t) => t.items[0]!.start === 2 && t.items[0]!.duration === 4)).toBe(true);
     const slots = layoutSlots('polaroid');
     for (const s of slots) {

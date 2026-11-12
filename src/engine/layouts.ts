@@ -1,5 +1,5 @@
 import { createOverlayClip, createTrack } from '../model/defaults';
-import type { Project, Track, VideoItem } from '../model/types';
+import type { Project, VideoItem } from '../model/types';
 export type LayoutStyle = NonNullable<Project['layout']>['style'];
 export type LayoutMotion = NonNullable<Project['layout']>['motion'];
 export const LAYOUTS: { id: LayoutStyle; label: string; count: number }[] = [
@@ -7,6 +7,9 @@ export const LAYOUTS: { id: LayoutStyle; label: string; count: number }[] = [
   { id: 'filmstrip', label: '直式膠卷', count: 3 },
   { id: 'polaroid', label: '四格相紙', count: 4 },
 ];
+export function slotLabel(style: LayoutStyle, index: number) {
+  return style === 'polaroid' ? ['左上', '右上', '左下', '右下'][index]! : ['上方', '中間', '下方'][index]!;
+}
 export function layoutSlots(style: LayoutStyle): NonNullable<VideoItem['slot']>[] {
   if (style === 'polaroid')
     return [
@@ -44,6 +47,7 @@ export function collagePlan(
   motion: LayoutMotion,
   start: number,
   wanted: number,
+  sourceItems?: VideoItem[],
 ) {
   const slots = layoutSlots(style),
     assets = slots.map((_, i) => project.assets.find((a) => a.id === ids[i] && a.kind !== 'audio'));
@@ -51,26 +55,32 @@ export function collagePlan(
   const duration = Math.min(
     Math.max(0.2, wanted),
     60,
-    ...assets.filter((a) => a!.kind === 'video').map((a) => a!.duration),
+    ...assets.map(
+      (asset, i) => sourceItems?.[i]?.duration ?? (asset!.kind === 'video' ? asset!.duration : 60),
+    ),
   );
   if (!Number.isFinite(duration) || duration <= 0) throw Error('素材長度不正確');
-  const tracks: Track[] = assets.map((asset, i) => {
+  const track = createTrack('overlay', project.tracks);
+  track.name = LAYOUTS.find((x) => x.id === style)!.label;
+  track.template = true;
+  track.items = assets.map((asset, i) => {
     const slot = slots[i]!,
-      track = createTrack('overlay', project.tracks),
       item = createOverlayClip(asset!, start);
+    if (sourceItems?.[i]) Object.assign(item, structuredClone(sourceItems[i]), { id: item.id, start });
     Object.assign(item, {
       duration,
       fit: 'cover',
       slot,
+      // Only the first cell supplies sound by default; a group is one visible timeline layer.
+      audioEnabled: i === 0 && sourceItems?.[i]?.audioEnabled !== false,
       transform: { x: slot.x + slot.w / 2, y: slot.y + slot.h / 2, scale: 1, rotation: 0, opacity: 1 },
     });
-    track.name = `${LAYOUTS.find((x) => x.id === style)!.label} ${i + 1}`;
-    track.template = true;
-    track.muted = i > 0;
-    track.items = [item];
-    return track;
+    return item;
   });
-  return { tracks, layout: { style, motion, start, duration } };
+  const layout = { style, motion, start, duration };
+  track.layout = { ...layout };
+  const tracks = [track];
+  return { tracks, layout };
 }
 const artCache = new Map<string, HTMLCanvasElement>();
 export function layoutArt(style: LayoutStyle, w: number, h: number) {
@@ -99,4 +109,29 @@ export function layoutArt(style: LayoutStyle, w: number, h: number) {
   if (artCache.size >= 4) artCache.delete(artCache.keys().next().value!);
   artCache.set(key, canvas);
   return canvas;
+}
+
+/** Earlier versions used one track per slot. Preserve their media and settings in one group. */
+export function mergeLegacyTemplate(project: Project): Project {
+  const old = project.tracks.filter((t) => t.template);
+  if (old.length < 2 || old.some((t) => t.layout)) return project;
+  const group = {
+    ...old[0]!,
+    layout: project.layout ? { ...project.layout } : undefined,
+    name: project.layout ? LAYOUTS.find((l) => l.id === project.layout!.style)!.label : '多格版型',
+    hidden: old.every((t) => t.hidden),
+    locked: old.every((t) => t.locked),
+    muted: false,
+    items: old.flatMap((tr) =>
+      tr.items.map((it) => ({
+        ...it,
+        ...(it.type !== 'text' ? { audioEnabled: !tr.muted && it.audioEnabled !== false } : {}),
+        transform: { ...it.transform, opacity: tr.hidden ? 0 : it.transform.opacity },
+      })),
+    ),
+  };
+  const first = project.tracks.findIndex((t) => t.template);
+  const tracks = project.tracks.filter((t) => !t.template);
+  tracks.splice(first, 0, group);
+  return { ...project, tracks };
 }

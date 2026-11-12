@@ -10,6 +10,7 @@ export type GeoCtx = {
   assets: Asset[];
   textSize: TextSize;
   layoutMotion?: { x: number; y: number };
+  motions?: Record<string, { x: number; y: number }>;
 };
 
 // 平台按鈕安全區：直式畫面底部約 250/1920、右側約 150/1080（見 docs 的字卡規則）
@@ -40,6 +41,7 @@ export function itemBox(item: Item, ctx: GeoCtx): Box | null {
   if (item.type === 'audio') return null;
   const { canvasW: cw, canvasH: ch } = ctx;
   const { x, y, scale, rotation } = item.transform;
+  const motion = ctx.motions?.[item.id] ?? ctx.layoutMotion;
   let w: number;
   let h: number;
   if (item.type === 'text') {
@@ -53,8 +55,8 @@ export function itemBox(item: Item, ctx: GeoCtx): Box | null {
     ({ w, h } = fittedSize(src.w, src.h, cw * (item.slot?.w ?? 1), ch * (item.slot?.h ?? 1), item.fit));
   }
   return {
-    cx: (x + (item.type !== 'text' && item.slot ? (ctx.layoutMotion?.x ?? 0) : 0)) * cw,
-    cy: (y + (item.type !== 'text' && item.slot ? (ctx.layoutMotion?.y ?? 0) : 0)) * ch,
+    cx: (x + (item.type !== 'text' && item.slot ? (motion?.x ?? 0) : 0)) * cw,
+    cy: (y + (item.type !== 'text' && item.slot ? (motion?.y ?? 0) : 0)) * ch,
     w: w * scale,
     h: h * scale,
     rotation,
@@ -102,10 +104,11 @@ export function topHit(layers: Layer[], ctx: GeoCtx, px: number, py: number): La
     if (l.track.locked) continue;
     if (l.item.type !== 'text' && l.item.slot) {
       const source = l.item.slot;
+      const motion = ctx.motions?.[l.item.id] ?? ctx.layoutMotion;
       const s = {
         ...source,
-        x: source.x + (ctx.layoutMotion?.x ?? 0),
-        y: source.y + (ctx.layoutMotion?.y ?? 0),
+        x: source.x + (motion?.x ?? 0),
+        y: source.y + (motion?.y ?? 0),
       };
       if (
         px < s.x * ctx.canvasW ||

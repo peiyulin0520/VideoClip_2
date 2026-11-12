@@ -170,8 +170,8 @@ export class Player {
     if (!this.playing) return;
     const total = this.total();
     const t = this.tStart + (performance.now() - this.wallStart) / 1000;
-    const frameStep = 1 / (this.deps.getProject()?.fps ?? 30);
-    if (t < this.t + frameStep - 0.002 && t < total) {
+    const fps = this.deps.getProject()?.fps ?? 30;
+    if (Math.floor(t * fps) === Math.floor(this.t * fps) && t < total) {
       this.raf = requestAnimationFrame(this.tick);
       return;
     }
@@ -233,7 +233,7 @@ export class Player {
       if (!url) return null;
       if (item.type === 'image') {
         if (asset.mime === 'image/gif') {
-          const gif = this.gifs.get(asset.id);
+          const gif = this.gifs.get(item.id);
           if (gif) {
             const frame = gif.frame(sourceTimeAt(item, t));
             return {
@@ -244,13 +244,13 @@ export class Player {
               stamp: frame.stamp,
             };
           }
-          if (!this.gifLoading.has(asset.id)) {
-            this.gifLoading.add(asset.id);
+          if (!this.gifLoading.has(item.id)) {
+            this.gifLoading.add(item.id);
             void getMedia(p.id, asset.id, asset.mime)
               .then(AnimatedGif.load)
               .then((loaded) => {
                 if (this.destroyed) return loaded.destroy();
-                this.gifs.set(asset.id, loaded);
+                this.gifs.set(item.id, loaded);
                 this.scheduleRender();
               })
               .catch(() => this.scheduleRender());

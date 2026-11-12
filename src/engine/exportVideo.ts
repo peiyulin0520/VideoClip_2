@@ -100,7 +100,7 @@ export async function exportVideo(project: Project, options: ExportOptions): Pro
       if (item.type === 'image') {
         if (images.has(asset.id) || gifs.has(asset.id)) continue;
         const file = await getMedia(project.id, asset.id, asset.mime);
-        if (asset.mime === 'image/gif') gifs.set(asset.id, await AnimatedGif.load(file));
+        if (asset.mime === 'image/gif') gifs.set(item.id, await AnimatedGif.load(file));
         else {
           const img = new Image(),
             url = URL.createObjectURL(file);
@@ -147,7 +147,7 @@ export async function exportVideo(project: Project, options: ExportOptions): Pro
       for (const { item } of visibleLayers(project, t)) {
         if (item.type === 'text' || item.type === 'audio') continue;
         const asset = project.assets.find((a) => a.id === item.assetId)!;
-        const gif = gifs.get(asset.id),
+        const gif = gifs.get(item.id),
           img = images.get(asset.id);
         if (gif) {
           const value = gif.frame(sourceTimeAt(item, t));

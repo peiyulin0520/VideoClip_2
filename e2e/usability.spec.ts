@@ -197,7 +197,8 @@ test('四格相紙：每格素材、實際滑入與漂移畫面、移除版型',
   await page.getByLabel('版型動態效果').selectOption('slide');
   await page.getByRole('button', { name: '套用多格版型', exact: true }).tap();
   const p = await project(page);
-  expect(p.tracks.filter((t) => t.name.includes('四格相紙'))).toHaveLength(4);
+  expect(p.tracks.filter((t) => t.name.includes('四格相紙'))).toHaveLength(1);
+  expect(p.tracks.find((t) => t.name.includes('四格相紙'))!.items).toHaveLength(4);
   await expect.poll(async () => isRed(await samplePreview(page, 0.2, 0.2))).toBe(false);
   await seekTo(page, 1.2);
   await expect.poll(async () => isRed(await samplePreview(page, 0.2, 0.2))).toBe(true);

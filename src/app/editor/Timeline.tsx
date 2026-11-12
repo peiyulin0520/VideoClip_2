@@ -14,15 +14,14 @@ import {
   mainItems,
   moveItem,
   totalDuration,
-  trimEnd,
   trimEndFree,
-  trimStart,
   trimStartFree,
 } from '../../engine/timeline';
 import type { Asset, Item, Track, VideoItem } from '../../model/types';
-import { patchTrack, placeItem, removeTrack, shiftTrackLayer } from '../../store/actions';
-import { setMainItems, setTrackItems, useProjectStore } from '../../store/projectStore';
+import { patchTrack, placeItem, removeTrack, shiftTrackLayer, reorderTrack } from '../../store/actions';
+import { setMainItems, useProjectStore } from '../../store/projectStore';
 import { toast, useUI } from '../../store/uiStore';
+import { setTimelineItems } from '../../engine/groupTiming';
 import { Sheet } from '../../ui/Sheet';
 
 const MAIN_H = 64;
@@ -97,6 +96,47 @@ export function Timeline({
   const [half, setHalf] = useState(180);
   const [drag, setDrag] = useState<Drag | null>(null);
   const [menuTrackId, setMenuTrackId] = useState<string | null>(null);
+
+  const [layerDrag, setLayerDrag] = useState<{ id: string; over: string; dy: number } | null>(null);
+  const suppressTrackClick = useRef(false);
+  const dragTrack = (e: RPointerEvent<HTMLButtonElement>, track: Track) => {
+    e.stopPropagation();
+    if (track.kind === 'main') return;
+    e.preventDefault();
+    player?.pause();
+    const target = e.currentTarget,
+      y = e.clientY;
+    target.setPointerCapture(e.pointerId);
+    let over = track.id,
+      moved = false;
+    const move = (ev: PointerEvent) => {
+      if (Math.abs(ev.clientY - y) < 5 && !moved) return;
+      moved = true;
+      const row = document
+        .elementsFromPoint(ev.clientX, ev.clientY)
+        .find((el) => el.getAttribute('data-track-id'));
+      if (row && row.getAttribute('data-kind') !== 'main') over = row.getAttribute('data-track-id')!;
+      setLayerDrag({ id: track.id, over, dy: ev.clientY - y });
+      const el = scrollRef.current!;
+      const box = el.getBoundingClientRect();
+      if (ev.clientY < box.top + 32) el.scrollTop -= 18;
+      if (ev.clientY > box.bottom - 24) el.scrollTop += 18;
+    };
+    const finish = (ev: PointerEvent) => {
+      target.removeEventListener('pointermove', move);
+      target.removeEventListener('pointerup', finish);
+      target.removeEventListener('pointercancel', finish);
+      suppressTrackClick.current = moved;
+      setTimeout(() => {
+        suppressTrackClick.current = false;
+      }, 0);
+      if (moved && ev.type !== 'pointercancel') reorderTrack(track.id, over);
+      setLayerDrag(null);
+    };
+    target.addEventListener('pointermove', move);
+    target.addEventListener('pointerup', finish);
+    target.addEventListener('pointercancel', finish);
+  };
 
   const total = totalDuration(project);
   const main = mainItems(project);
@@ -310,24 +350,13 @@ export function Timeline({
     const trimKey = `gesture:trim:${item.id}:${e.timeStamp}:${e.pointerId}`;
     const target = e.currentTarget as HTMLElement;
     target.setPointerCapture(e.pointerId);
-    const isMain = track.kind === 'main' && !project.freeMain;
     const move = (ev: PointerEvent) => {
       const delta = (ev.clientX - startX) / pps;
-      let next: Item[];
-      if (isMain) {
-        const list = startItems as VideoItem[];
-        next =
-          side === 'start'
-            ? trimStart(list, item.id, delta)
-            : trimEnd(list, item.id, item.duration + delta, asset);
-        setMainItems(next as VideoItem[], { coalesce: trimKey });
-      } else {
-        next =
-          side === 'start'
-            ? trimStartFree(startItems, item.id, delta)
-            : trimEndFree(startItems, item.id, item.duration + delta, asset);
-        setTrackItems(track.id, next, { coalesce: trimKey });
-      }
+      const next =
+        side === 'start'
+          ? trimStartFree(startItems, item.id, delta)
+          : trimEndFree(startItems, item.id, item.duration + delta, asset);
+      useProjectStore.getState().apply((d) => setTimelineItems(d, track.id, next), { coalesce: trimKey });
       const cur = next.find((x) => x.id === item.id)!;
       player?.peek(side === 'start' ? cur.start : cur.start + cur.duration - 0.05);
     };
@@ -388,9 +417,10 @@ export function Timeline({
           {rows.map(({ track, top, h }) => (
             <div
               key={track.id}
-              className={`track${track.hidden ? ' off' : ''}`}
+              className={`track${track.hidden ? ' off' : ''}${layerDrag?.over === track.id ? ' layer-drop' : ''}`}
               data-testid="track"
               data-kind={track.kind}
+              data-track-id={track.id}
               data-bg="1"
               style={{ top, height: h }}
             >
@@ -398,8 +428,15 @@ export function Timeline({
                 className="track-chip"
                 aria-label={`${track.name} 軌道設定`}
                 data-testid="track-chip"
-                onPointerDown={(e) => e.stopPropagation()}
-                onClick={() => setMenuTrackId(track.id)}
+                onPointerDown={(e) => dragTrack(e, track)}
+                title="上下拖曳調整圖層；點一下開啟設定"
+                onClick={() => {
+                  if (suppressTrackClick.current) {
+                    suppressTrackClick.current = false;
+                    return;
+                  }
+                  setMenuTrackId(track.id);
+                }}
               >
                 {track.kind === 'main' ? (
                   <Film size={16} />
@@ -432,9 +469,10 @@ export function Timeline({
                   開場 {project.mainOffset}s
                 </div>
               )}
-              {track.items.map((it) => {
+              {(track.template ? track.items.slice(0, 1) : track.items).map((it) => {
                 const asset = isVideoItem(it) ? project.assets.find((a) => a.id === it.assetId) : undefined;
-                const selected = it.id === selectedId;
+                const selected =
+                  it.id === selectedId || !!(track.template && track.items.some((x) => x.id === selectedId));
                 const dragging = drag?.id === it.id;
                 const dx = dragging ? drag!.dx : 0;
                 return (
@@ -454,11 +492,13 @@ export function Timeline({
                   >
                     {isVideoItem(it) ? <Tiles item={it} asset={asset} pps={pps} h={h} /> : null}
                     <div className="clip-label">
-                      {it.type === 'text'
-                        ? it.card.runs[0]?.text === ''
-                          ? '圖形'
-                          : `Aa ${it.card.runs[0]?.text.replace(/\n/g, ' ') ?? ''}`
-                        : `${asset?.generated ? '留白' : it.type === 'audio' ? '♫ 音訊' : it.type === 'image' ? '照片' : '影片'} ${it.duration.toFixed(1)}s`}
+                      {track.template
+                        ? `${track.name} · ${track.items.length} 格`
+                        : it.type === 'text'
+                          ? it.card.runs[0]?.text === ''
+                            ? '圖形'
+                            : `Aa ${it.card.runs[0]?.text.replace(/\n/g, ' ') ?? ''}`
+                          : `${asset?.generated ? '留白' : it.type === 'audio' ? '♫ 音訊' : it.type === 'image' ? '照片' : '影片'} ${it.duration.toFixed(1)}s`}
                       {isVideoItem(it) && it.speed !== 1 && ` · ${it.speed}x`}
                       {isVideoItem(it) && it.type === 'video' && it.volume === 0 && ' · 靜音'}
                     </div>

@@ -1,6 +1,7 @@
 import { produce, type Draft } from 'immer';
 import { create } from 'zustand';
 import type { Item, Project, VideoItem } from '../model/types';
+import { mergeLegacyTemplate } from '../engine/layouts';
 import { relayout } from '../engine/timeline';
 
 const HISTORY_LIMIT = 100;
@@ -37,7 +38,15 @@ export const useProjectStore = create<State>((set, get) => ({
   lastEdit: null,
   revision: 0,
 
-  load: (p) => set({ project: p, past: [], future: [], selectedId: null, lastEdit: null, revision: 0 }),
+  load: (p) =>
+    set({
+      project: mergeLegacyTemplate(p),
+      past: [],
+      future: [],
+      selectedId: null,
+      lastEdit: null,
+      revision: 0,
+    }),
   close: () => set({ project: null, past: [], future: [], selectedId: null, lastEdit: null, revision: 0 }),
 
   apply: (recipe, opts = {}) => {

@@ -119,16 +119,20 @@ export function Preview({ projectId, width, height }: { projectId: string; width
   const timelineTime = player?.time ?? 0;
   const geo = useMemo(() => {
     void fontEpoch; // New font metrics invalidate selection geometry.
-    return { ...geoCtx(project, width, height), layoutMotion: layoutMotion(project.layout, timelineTime) };
+    return {
+      ...geoCtx(project, width, height, timelineTime),
+      layoutMotion: layoutMotion(project.layout, timelineTime),
+    };
   }, [project, width, height, fontEpoch, timelineTime]);
   const sel = findItem(project, selectedId);
+  const selectionMotion = sel ? (geo.motions?.[sel.item.id] ?? geo.layoutMotion) : geo.layoutMotion;
   const slot = sel?.item.type !== 'text' ? sel?.item.slot : undefined;
   const box =
     sel && selVisible
       ? slot
         ? {
-            cx: (slot.x + slot.w / 2 + geo.layoutMotion.x) * width,
-            cy: (slot.y + slot.h / 2 + geo.layoutMotion.y) * height,
+            cx: (slot.x + slot.w / 2 + selectionMotion.x) * width,
+            cy: (slot.y + slot.h / 2 + selectionMotion.y) * height,
             w: slot.w * width,
             h: slot.h * height,
             rotation: 0,

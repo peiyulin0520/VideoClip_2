@@ -5,6 +5,7 @@ import {
   createShapeItem,
   createTextItem,
   createTrack,
+  newId,
   pickAspect,
 } from '../model/defaults';
 import type { Aspect, Asset, Item, TextItem, Track, Transform, VideoItem } from '../model/types';
@@ -103,6 +104,11 @@ export function removeAnyItem(id: string): boolean {
   store().apply(
     (d) => {
       const tr = d.tracks[f.trackIndex]!;
+      if (tr.template) {
+        d.tracks = d.tracks.filter((t) => t.id !== tr.id);
+        if (!d.tracks.some((t) => t.template)) delete d.layout;
+        return;
+      }
       tr.items = (
         f.track.kind === 'main' && !p.freeMain
           ? relayout(removeItem(tr.items as VideoItem[], id), d.mainOffset ?? 0)
@@ -118,6 +124,33 @@ export function splitAny(id: string, t: number): string | null {
   const p = store().project;
   const f = p && findItem(p, id);
   if (!p || !f) return null;
+  if (f.track.template) {
+    const local = t - f.item.start;
+    if (local < 0.2 || f.item.duration - local < 0.2) return null;
+    let selected = '';
+    store().apply((d) => {
+      const tr = d.tracks[f.trackIndex]!;
+      const copy = structuredClone(p.tracks[f.trackIndex]!);
+      copy.id = newId('t_');
+      copy.items = copy.items.map((it) => ({
+        ...it,
+        id: newId('i_'),
+        start: t,
+        duration: it.duration - local,
+        ...(it.type !== 'text' ? { trimIn: it.trimIn + local * it.speed } : {}),
+      }));
+      for (const it of tr.items) it.duration = local;
+      const layout = tr.layout ?? d.layout;
+      if (layout) {
+        tr.layout = { ...layout, duration: local };
+        copy.layout = { ...layout, start: t, duration: copy.items[0]!.duration };
+      }
+      selected = copy.items[0]!.id;
+      d.tracks.splice(f.trackIndex + 1, 0, copy);
+    });
+    store().select(selected);
+    return selected;
+  }
   const out =
     f.track.kind === 'main' && !p.freeMain
       ? splitItem(f.track.items as VideoItem[], id, t)
@@ -139,6 +172,22 @@ export function duplicateAny(id: string): boolean {
   const p = store().project;
   const f = p && findItem(p, id);
   if (!p || !f) return false;
+  if (f.track.template) {
+    const copy = structuredClone(f.track);
+    const start = Math.max(...copy.items.map((it) => it.start + it.duration));
+    const delta = start - f.item.start;
+    copy.id = newId('t_');
+    copy.items = copy.items.map((it) => ({ ...it, id: newId('i_'), start: it.start + delta }));
+    const layout = copy.layout ?? p.layout;
+    if (layout) copy.layout = { ...layout, start };
+    store().apply(
+      (d) => {
+        d.tracks.splice(f.trackIndex + 1, 0, copy);
+      },
+      { select: copy.items[0]!.id },
+    );
+    return true;
+  }
   const r =
     f.track.kind === 'main' && !p.freeMain
       ? duplicateItem(f.track.items as VideoItem[], id)
@@ -175,7 +224,13 @@ export function removeTrack(trackId: string) {
   store().apply(
     (d) => {
       const i = d.tracks.findIndex((t) => t.id === trackId);
-      if (i > 0) d.tracks.splice(i, 1); // 主軌（0）不能刪
+      if (i > 0) {
+        const template = d.tracks[i]!.template;
+        if (template) {
+          d.tracks = d.tracks.filter((t) => t.id !== trackId);
+          if (!d.tracks.some((t) => t.template)) delete d.layout;
+        } else d.tracks.splice(i, 1);
+      } // 主軌（0）不能刪
     },
     { select: null },
   );
@@ -187,7 +242,18 @@ export function placeItem(id: string, start: number, opts?: Opts) {
   const f = p && findItem(p, id);
   if (!p || !f || (f.track.kind === 'main' && !p.freeMain)) return;
   const s = findFreeStart(f.track.items, start, f.item.duration, id);
-  editItem(id, (it) => void (it.start = s), opts);
+  store().apply((d) => {
+    const tr = d.tracks.find((t) => t.id === f.track.id)!;
+    if (tr.template) {
+      const delta = Math.max(0, start) - f.item.start;
+      for (const it of tr.items) it.start += delta;
+      if (tr.layout) tr.layout.start += delta;
+      if (d.layout) d.layout = { ...(tr.layout ?? d.layout), start: tr.items[0]!.start };
+    } else {
+      const it = tr.items.find((it) => it.id === id)!;
+      it.start = s;
+    }
+  }, opts);
 }
 
 export { isVideoItem, mainTrack, relayout };
@@ -228,4 +294,15 @@ export function setMainOffset(seconds: number) {
     },
     { coalesce: 'main-offset' },
   );
+}
+
+/** Drop a timeline layer directly onto another row (main remains the bottom layer). */
+export function reorderTrack(id: string, targetId: string) {
+  store().apply((d) => {
+    const from = d.tracks.findIndex((t) => t.id === id),
+      to = d.tracks.findIndex((t) => t.id === targetId);
+    if (from < 1 || to < 1 || from === to) return;
+    const [track] = d.tracks.splice(from, 1);
+    d.tracks.splice(to, 0, track!);
+  });
 }

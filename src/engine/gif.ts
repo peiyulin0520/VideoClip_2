@@ -9,6 +9,8 @@ export class AnimatedGif {
   private index = -1;
   private saved: ImageData | null = null;
   private ends: number[] = [];
+  private cache = new Map<number, HTMLCanvasElement>();
+  private readonly cacheFrames: boolean;
   private constructor(
     private frames: ParsedFrame[],
     width: number,
@@ -18,6 +20,7 @@ export class AnimatedGif {
     this.canvas.width = width;
     this.canvas.height = height;
     this.ctx = this.canvas.getContext('2d')!;
+    this.cacheFrames = width * height * frames.length <= 4_000_000;
     let time = 0;
     for (const frame of frames) {
       time += Math.max(20, frame.delay || 100) / 1000;
@@ -37,12 +40,17 @@ export class AnimatedGif {
     if (!frames.length) throw Error('GIF 沒有影格');
     return new AnimatedGif(frames, parsed.lsd.width, parsed.lsd.height);
   }
+  fork() {
+    return new AnimatedGif(this.frames, this.canvas.width, this.canvas.height);
+  }
   frame(time: number) {
     const local = ((time % this.duration) + this.duration) % this.duration;
     const target = Math.max(
       0,
       this.ends.findIndex((end) => end > local),
     );
+    const cached = this.cache.get(target);
+    if (cached) return { canvas: cached, stamp: target };
     if (target < this.index) {
       this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
       this.index = -1;
@@ -67,10 +75,20 @@ export class AnimatedGif {
       this.ctx.drawImage(this.patch, frame.dims.left, frame.dims.top);
       this.index = i;
     }
+    if (this.cacheFrames) {
+      const copy = document.createElement('canvas');
+      copy.width = this.canvas.width;
+      copy.height = this.canvas.height;
+      copy.getContext('2d')!.drawImage(this.canvas, 0, 0);
+      this.cache.set(target, copy);
+      return { canvas: copy, stamp: target };
+    }
     return { canvas: this.canvas, stamp: target };
   }
   destroy() {
     this.canvas.width = this.patch.width = 0;
+    for (const canvas of this.cache.values()) canvas.width = 0;
+    this.cache.clear();
     this.frames = [];
   }
 }

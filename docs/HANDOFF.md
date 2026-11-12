@@ -1,6 +1,11 @@
 # 交接手冊（HANDOFF）
 
 ## VideoClip_2 當前交接（優先於以下來源 repo 的歷史紀錄）
+- 本輪優先：docs/plans/2026-11-12-timeline-and-template-feedback.md，第二輪七點正在驗收；本機 244 單元/check、69 個 e2e 已列出，待 CI，不把下方先前 237/60 當新回饋已驗證。
+- 版型現在是一個 Track.template 含多個同時 Item；visibleLayers 對 template 回傳全部 active items。Track.layout 帶獨立框架/動態/時間，Project.layout 保留舊版及目前選擇相容；複製/分割整組，不能只複製一格。舊每格一軌且無 Track.layout 的版型 load 時 mergeLegacyTemplate，不變更 media IDs/原檔。時間軸只畫群組首個片段，畫面仍可選格子調位置。
+- 手勢修剪統一 trimStartFree/trimEndFree + setTimelineItems；主軌只在使用修剪後轉 freeMain，保持既有位置/前方空隙。完整來源選區 TrimEditor 可還原。groupTiming 統一同步群組時間與限制來源範圍；框架跟著整組滑入滑出、隱藏/刪除。
+- 小 GIF 暫存貼圖上限為來源尺寸，避免 120px 被擴成 1080px 每幀上傳；最多 4M 總像素的 GIF 重用合成影格，解碼狀態以 Item ID 分開，預覽量化時間以 floor(t*fps) 而非 t > last + step，避免 RAF phase 造成不均勻節奏。Safari pool opacity 0.01 與 1px video 避免完全不可見節流；真機效果仍待確認。
+- 字塊 box.opacity 現可為 0；stroke.opacity 選填預設 1，填色透明不再連帶使框線消失。裁切增加結果預覽與上一筆輪廓復原。
 - 最新子任務：docs/plans/2026-11-12-editor-completion.md，程式 8489d1c，工作分支 run 43148943226 與 main run 43149637879 已 237 單元/60 e2e 全過，53 張截圖；Pages 已發布且公開 JS hash 與驗證建置一致，詳見 PROGRESS。以下 227/50 是先前正式版。使用步驟見 docs/USAGE.md。
 - 新資料：DB v3 library（獨立 Blob/裁切設定）；GIPHY Key 僅 meta:giphyKey，絕不可加入 Project/原始碼/日誌/分享檔。Asset.kind 加 audio，VideoItem.type 加 audio，音軌共用 Item 時間/修剪但 buildScene 跳過；Project.freeMain 選填，main 操作須改用 free 函式以保留空隙。
 - 新檔案：engine/materials（色塊/匯入/音訊分離）、audio（預覽音量規則/AudioBus）、gif（時間驅動 GIF）、exportVideo/exportAudio/exportRealtime（完整輸出）、storage/library、store/preferences；UI Assets/Audio/Blank/Crop/Drawing/Export 各有 editor 元件。

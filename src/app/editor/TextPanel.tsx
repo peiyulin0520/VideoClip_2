@@ -282,15 +282,15 @@ export function TextPanel({
               <Swatches
                 colors={BOX_COLORS}
                 value={box.fill}
-                label="字塊顏色"
+                label="字塊填滿顏色"
                 onPick={(col) => edit((c) => void (c.box!.fill = col))}
               />
               <Slider
-                label="透明度"
+                label="填滿透明度"
                 value={Math.round(box.opacity * 100)}
-                min={10}
+                min={0}
                 max={100}
-                step={5}
+                step={1}
                 format={(v) => `${v}%`}
                 onChange={(v) => edit((c) => void (c.box!.opacity = v / 100), 'bop')}
               />
@@ -353,20 +353,42 @@ export function TextPanel({
                 onChange={(v) =>
                   edit((c) => {
                     const b2 = c.box!;
-                    b2.stroke = { color: b2.stroke?.color ?? '#ffffff', width: v };
+                    b2.stroke = { ...b2.stroke, color: b2.stroke?.color ?? '#ffffff', width: v };
                     if (v <= 0) delete b2.stroke;
                   }, 'bst')
                 }
               />
               {box.stroke && (
-                <Swatches
-                  colors={COLORS}
-                  value={box.stroke.color}
-                  label="字塊外框顏色"
-                  onPick={(col) =>
-                    edit((c) => void (c.box!.stroke = { color: col, width: c.box!.stroke?.width ?? 4 }))
-                  }
-                />
+                <>
+                  <Slider
+                    label="框線透明度"
+                    min={0}
+                    max={100}
+                    step={1}
+                    value={Math.round((box.stroke.opacity ?? 1) * 100)}
+                    format={(v) => `${v}%`}
+                    onChange={(v) =>
+                      edit((c) => {
+                        c.box!.stroke!.opacity = v / 100;
+                      }, 'bst-alpha')
+                    }
+                  />
+                  <Swatches
+                    colors={COLORS}
+                    value={box.stroke.color}
+                    label="字塊外框顏色"
+                    onPick={(col) =>
+                      edit(
+                        (c) =>
+                          void (c.box!.stroke = {
+                            ...c.box!.stroke,
+                            color: col,
+                            width: c.box!.stroke?.width ?? 4,
+                          }),
+                      )
+                    }
+                  />
+                </>
               )}
               <div className="panel-head">
                 <span>內距（字到色塊邊緣的距離）</span>

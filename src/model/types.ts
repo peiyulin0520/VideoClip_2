@@ -133,7 +133,7 @@ export type CardBox = {
   padding: { top: number; right: number; bottom: number; left: number }; // px（1080 基準）
   nudgeY: number; // 文字在字塊內的垂直微調 px
   radius?: number; // roundRect / speech-round 的圓角 px；pill 固定半圓
-  stroke?: Stroke; // 字塊外框（畫在圖形邊緣）
+  stroke?: Stroke & { opacity?: number }; // 字塊外框（畫在圖形邊緣）
   tailDir?: 'bottom-left' | 'bottom-right'; // 對話框尾巴方向（預設左下）
   softness?: number; // 0–1，輪廓轉角柔和程度
   depth?: number; // 0–1，凹槽深度；舊資料預設 1
@@ -161,6 +161,7 @@ export type Track = {
   locked: boolean;
   muted?: boolean;
   template?: boolean;
+  layout?: Project['layout']; // A grouped template carries its own frame and timing.
   items: Item[];
 };
 

@@ -14,7 +14,9 @@ export function CropEditor({ item, onClose }: { item: VideoItem; onClose: () => 
   const [crop, setCrop] = useState<Crop>(item.crop ?? { l: 0, t: 0, r: 0, b: 0 }),
     [points, setPoints] = useState<[number, number][]>(item.mask?.points ?? []);
   const [mode, setMode] = useState<'crop' | 'lasso'>('crop'),
-    [drawing, setDrawing] = useState(false);
+    [drawing, setDrawing] = useState(false),
+    [preview, setPreview] = useState(false),
+    [history, setHistory] = useState<[number, number][][]>([]);
   const source = urlFor(project.id, asset.id),
     ratio = asset.width / asset.height;
   const point = (e: PointerEvent<HTMLElement | SVGSVGElement>): [number, number] => {
@@ -55,60 +57,84 @@ export function CropEditor({ item, onClose }: { item: VideoItem; onClose: () => 
         style={{ aspectRatio: `${asset.width}/${asset.height}`, width: `min(100%,${52 * ratio}dvh)` }}
         data-testid="crop-stage"
       >
-        {item.type === 'image' ? (
-          <img src={source} alt="裁切素材" />
-        ) : (
-          <video
-            src={source}
-            playsInline
-            muted
-            onLoadedMetadata={(e) => {
-              e.currentTarget.currentTime = Math.min(
-                sourceTimeAt(item, useUI.getState().player?.time ?? item.start),
-                Math.max(0, asset.duration - 0.02),
+        <div
+          className="crop-media"
+          style={
+            preview
+              ? { clipPath: `inset(${crop.t * 100}% ${crop.r * 100}% ${crop.b * 100}% ${crop.l * 100}%)` }
+              : undefined
+          }
+        >
+          <div
+            className="crop-media"
+            style={
+              preview && points.length >= 3
+                ? { clipPath: `polygon(${points.map(([x, y]) => `${x * 100}% ${y * 100}%`).join(',')})` }
+                : undefined
+            }
+          >
+            {item.type === 'image' ? (
+              <img src={source} alt="裁切素材" />
+            ) : (
+              <video
+                src={source}
+                playsInline
+                muted
+                onLoadedMetadata={(e) => {
+                  e.currentTarget.currentTime = Math.min(
+                    sourceTimeAt(item, useUI.getState().player?.time ?? item.start),
+                    Math.max(0, asset.duration - 0.02),
+                  );
+                }}
+              />
+            )}
+          </div>
+        </div>
+        {!preview && (
+          <svg
+            viewBox="0 0 1 1"
+            preserveAspectRatio="none"
+            onPointerDown={(e) => {
+              if (mode !== 'lasso') return;
+              setHistory((h) => [...h, points]);
+              e.currentTarget.setPointerCapture(e.pointerId);
+              setPoints([point(e)]);
+              setDrawing(true);
+            }}
+            onPointerMove={(e) => {
+              if (!drawing) return;
+              const p = point(e);
+              setPoints((a) =>
+                a.length < 500 && Math.hypot(p[0] - a.at(-1)![0], p[1] - a.at(-1)![1]) > 0.003
+                  ? [...a, p]
+                  : a,
               );
             }}
-          />
-        )}
-        <svg
-          viewBox="0 0 1 1"
-          preserveAspectRatio="none"
-          onPointerDown={(e) => {
-            if (mode !== 'lasso') return;
-            e.currentTarget.setPointerCapture(e.pointerId);
-            setPoints([point(e)]);
-            setDrawing(true);
-          }}
-          onPointerMove={(e) => {
-            if (!drawing) return;
-            const p = point(e);
-            setPoints((a) =>
-              a.length < 500 && Math.hypot(p[0] - a.at(-1)![0], p[1] - a.at(-1)![1]) > 0.003 ? [...a, p] : a,
-            );
-          }}
-          onPointerUp={() => setDrawing(false)}
-          onPointerCancel={() => setDrawing(false)}
-        >
-          <path d={outside} fill="#000" fillOpacity=".55" fillRule="evenodd" />
-          <rect
-            x={crop.l}
-            y={crop.t}
-            width={1 - crop.l - crop.r}
-            height={1 - crop.t - crop.b}
-            stroke="#fff"
-            strokeWidth=".005"
-            fill="none"
-          />
-          {!!points.length && (
-            <polygon
-              points={points.map((p) => p.join(',')).join(' ')}
-              fill="#85ebd533"
-              stroke="#85ebd5"
-              strokeWidth=".007"
+            onPointerUp={() => setDrawing(false)}
+            onPointerCancel={() => setDrawing(false)}
+          >
+            <path d={outside} fill="#000" fillOpacity=".55" fillRule="evenodd" />
+            <rect
+              x={crop.l}
+              y={crop.t}
+              width={1 - crop.l - crop.r}
+              height={1 - crop.t - crop.b}
+              stroke="#fff"
+              strokeWidth=".005"
+              fill="none"
             />
-          )}
-        </svg>
-        {mode === 'crop' &&
+            {!!points.length && (
+              <polygon
+                points={points.map((p) => p.join(',')).join(' ')}
+                fill="#85ebd533"
+                stroke="#85ebd5"
+                strokeWidth=".007"
+              />
+            )}
+          </svg>
+        )}
+        {!preview &&
+          mode === 'crop' &&
           ['tl', 'tr', 'bl', 'br', 'l', 'r', 't', 'b'].map((corner) => (
             <button
               key={corner}
@@ -127,6 +153,26 @@ export function CropEditor({ item, onClose }: { item: VideoItem; onClose: () => 
               }}
             />
           ))}
+      </div>
+      <div className="chips">
+        <button
+          className={`chip${preview ? ' active' : ''}`}
+          aria-pressed={preview}
+          onClick={() => setPreview(!preview)}
+        >
+          {preview ? '繼續調整裁切' : '檢查裁切結果'}
+        </button>
+        <button
+          className="chip"
+          disabled={!history.length}
+          onClick={() => {
+            setPoints(history.at(-1)!);
+            setHistory(history.slice(0, -1));
+            setPreview(false);
+          }}
+        >
+          復原描邊
+        </button>
       </div>
       <p className="hint">
         {mode === 'lasso'
@@ -159,6 +205,7 @@ export function CropEditor({ item, onClose }: { item: VideoItem; onClose: () => 
           onClick={() => {
             setCrop({ l: 0, r: 0, t: 0, b: 0 });
             setPoints([]);
+            setPreview(false);
           }}
         >
           重設裁切

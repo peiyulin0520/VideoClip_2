@@ -54,6 +54,7 @@ export class Compositor {
   private objs = new Map<string, Obj>();
   private background = new Graphics();
   private backgroundColor = '';
+  private uploads = 0;
   private constructor(
     private app: Application,
     readonly width: number,
@@ -213,6 +214,7 @@ export class Compositor {
               o.frameCtx.restore();
             }
             o.textureSource?.update();
+            this.uploads++;
             o.hasFrame = true;
             o.lastSource = layer.source;
             o.frameKey = frameKey;
@@ -315,6 +317,15 @@ export class Compositor {
       ),
     });
     return pixels;
+  }
+
+  mediaStats() {
+    return {
+      uploads: this.uploads,
+      frames: [...this.objs]
+        .filter(([, o]) => o.frameCanvas)
+        .map(([id, o]) => ({ id, width: o.frameCanvas!.width, height: o.frameCanvas!.height })),
+    };
   }
 
   toCanvas(): HTMLCanvasElement {

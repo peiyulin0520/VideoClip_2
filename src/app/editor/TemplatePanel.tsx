@@ -1,21 +1,56 @@
 import { useRef, useState } from 'react';
-import { collagePlan, LAYOUTS, type LayoutStyle, type LayoutMotion } from '../../engine/layouts';
+import {
+  collagePlan,
+  LAYOUTS,
+  layoutSlots,
+  slotLabel,
+  type LayoutStyle,
+  type LayoutMotion,
+} from '../../engine/layouts';
 import { importFiles } from '../../engine/importMedia';
 import { ensureUrls } from '../../engine/assetUrls';
 import { useProjectStore } from '../../store/projectStore';
+import type { VideoItem } from '../../model/types';
 import { toast, useUI } from '../../store/uiStore';
 
 export function TemplatePanel() {
   const project = useProjectStore((s) => s.project)!;
-  const [style, setStyle] = useState<LayoutStyle>('photobooth'),
-    [motion, setMotion] = useState<LayoutMotion>('slide'),
+  const selectedId = useProjectStore((s) => s.selectedId);
+  const activeGroup =
+    project.tracks.find((t) => t.template && t.items.some((it) => it.id === selectedId)) ??
+    project.tracks.find((t) => t.template);
+  const [style, setStyle] = useState<LayoutStyle>(
+      activeGroup?.layout?.style ?? project.layout?.style ?? 'photobooth',
+    ),
+    [motion, setMotion] = useState<LayoutMotion>(
+      activeGroup?.layout?.motion ?? project.layout?.motion ?? 'slide',
+    ),
     [seconds, setSeconds] = useState(3),
-    [selected, setSelected] = useState<string[]>([]);
+    [selected, setSelected] = useState<string[]>(
+      project.tracks
+        .filter((t) => t.id === activeGroup?.id)
+        .flatMap((t) => t.items.flatMap((it) => (it.type !== 'text' ? [it.assetId] : []))),
+    ),
+    [focusSlot, setFocusSlot] = useState(0),
+    [sourceIds, setSourceIds] = useState<string[] | null>(null);
+  const media = project.assets.filter((a) => a.kind !== 'audio');
+  const existing = project.tracks
+    .filter((t) => t.kind !== 'main' && !t.template)
+    .flatMap((t) => t.items.filter((it): it is VideoItem => it.type !== 'text' && it.type !== 'audio'));
+  const sources = sourceIds
+    ?.map((id) => existing.find((it) => it.id === id))
+    .filter((it): it is VideoItem => !!it);
+  const assetLabel = (id: string) => {
+    const a = media.find((a) => a.id === id);
+    return a
+      ? `${a.attribution?.title || a.name} · ${a.kind === 'video' ? `${a.duration.toFixed(1)} 秒` : '照片／貼圖'}`
+      : '選擇素材';
+  };
   const input = useRef<HTMLInputElement>(null),
     count = LAYOUTS.find((x) => x.id === style)!.count;
   const ids = Array.from(
     { length: count },
-    (_, i) => selected[i] ?? project.assets[i % Math.max(project.assets.length, 1)]?.id ?? '',
+    (_, i) => sources?.[i]?.assetId ?? selected[i] ?? media[i % Math.max(media.length, 1)]?.id ?? '',
   );
   const onFiles = async (files: FileList | null) => {
     if (!files?.length) return;
@@ -27,6 +62,7 @@ export function TemplatePanel() {
       useProjectStore.getState().apply((d) => {
         d.assets.push(...result.assets);
       });
+      setSourceIds(null);
       setSelected(result.assets.map((a) => a.id));
       if (result.failed.length) toast('部分素材無法讀取，請確認格式');
     } catch {
@@ -38,11 +74,23 @@ export function TemplatePanel() {
   };
   const apply = () => {
     try {
-      const plan = collagePlan(project, ids, style, motion, useUI.getState().player?.time ?? 0, seconds);
+      if (sources && sources.length !== count) throw Error(`請選擇 ${count} 個現有片段`);
+      const plan = collagePlan(
+        project,
+        ids,
+        style,
+        motion,
+        useUI.getState().player?.time ?? 0,
+        seconds,
+        sources,
+      );
       useProjectStore.getState().apply(
         (d) => {
           const main = d.tracks.filter((t) => t.kind === 'main'),
-            others = d.tracks.filter((t) => t.kind !== 'main' && !t.template);
+            others = d.tracks
+              .filter((t) => t.kind !== 'main' && t.id !== activeGroup?.id)
+              .map((t) => ({ ...t, items: t.items.filter((it) => !sourceIds?.includes(it.id)) }))
+              .filter((t) => t.items.length);
           d.tracks = [...main, ...plan.tracks, ...others];
           d.layout = plan.layout;
         },
@@ -57,16 +105,87 @@ export function TemplatePanel() {
     <div className="panel scroll" aria-label="多格影片版型">
       <div className="template-grid">
         {LAYOUTS.map((l) => (
-          <button key={l.id} aria-pressed={style === l.id} onClick={() => setStyle(l.id)}>
+          <button
+            key={l.id}
+            aria-label={l.label}
+            className={style === l.id ? 'selected-template' : ''}
+            aria-pressed={style === l.id}
+            onClick={() => {
+              setStyle(l.id);
+              setFocusSlot(0);
+            }}
+          >
             <span className={`template-art ${l.id}`}>
               {Array.from({ length: l.count }, (_, i) => (
-                <i key={i} />
+                <i key={i}>{i + 1}</i>
               ))}
             </span>
             {l.label}
           </button>
         ))}
       </div>
+      <p className="template-choice" role="status">
+        目前選擇：{LAYOUTS.find((l) => l.id === style)!.label}{' '}
+        {project.layout?.style === style ? '（已套用）' : '（待套用）'}
+      </p>
+      <div className="slot-map" aria-label="版型格子位置對照">
+        {layoutSlots(style).map((slot, i) => {
+          const a = media.find((a) => a.id === ids[i]);
+          return (
+            <button
+              key={i}
+              className={focusSlot === i ? 'active' : ''}
+              aria-label={`選擇第 ${i + 1} 格 ${slotLabel(style, i)}`}
+              onClick={() => setFocusSlot(i)}
+              style={{
+                left: `${slot.x * 100}%`,
+                top: `${slot.y * 100}%`,
+                width: `${slot.w * 100}%`,
+                height: `${slot.h * 100}%`,
+              }}
+            >
+              {a?.thumbs[0] && <img src={a.thumbs[0]} alt="" />}
+              <strong>
+                {i + 1} · {slotLabel(style, i)}
+              </strong>
+            </button>
+          );
+        })}
+      </div>
+      <div className="chips">
+        <button className={`chip${sourceIds === null ? ' active' : ''}`} onClick={() => setSourceIds(null)}>
+          選素材套版
+        </button>
+        <button
+          className={`chip${sourceIds !== null ? ' active' : ''}`}
+          onClick={() => setSourceIds(existing.slice(0, count).map((it) => it.id))}
+        >
+          群組現有圖層
+        </button>
+      </div>
+      {sourceIds !== null && (
+        <div className="existing-clips">
+          <p className="hint">
+            勾選 {count} 個片段，依勾選順序對應格子。套用後合併為一個可拖移、修剪、隱藏或刪除的版型圖層。
+          </p>
+          {existing.map((it) => (
+            <label className="check-row" key={it.id}>
+              <input
+                type="checkbox"
+                aria-label={`群組片段 ${it.id}`}
+                checked={sourceIds.includes(it.id)}
+                onChange={(e) =>
+                  setSourceIds(
+                    e.target.checked ? [...sourceIds, it.id] : sourceIds.filter((id) => id !== it.id),
+                  )
+                }
+              />
+              {assetLabel(it.assetId)}
+            </label>
+          ))}
+          {!existing.length && <p className="hint">先在疊加加入影片或照片，再選擇要群組的片段。</p>}
+        </div>
+      )}
       <button className="btn" onClick={() => input.current?.click()}>
         ＋ 匯入版型用影片／照片
       </button>
@@ -80,12 +199,19 @@ export function TemplatePanel() {
         onChange={(e) => void onFiles(e.target.files)}
       />
       {ids.map((id, i) => (
-        <label className="number-control" key={i}>
-          第 {i + 1} 格
+        <label className={`slot-choice${focusSlot === i ? ' focused' : ''}`} key={i}>
+          <span>
+            第 {i + 1} 格 · {slotLabel(style, i)}
+          </span>
+          {media.find((a) => a.id === id)?.thumbs[0] && (
+            <img src={media.find((a) => a.id === id)!.thumbs[0]} alt={`第 ${i + 1} 格素材縮圖`} />
+          )}
           <select
             aria-label={`第 ${i + 1} 格素材`}
             value={id}
             onChange={(e) => {
+              setFocusSlot(i);
+              setSourceIds(null);
               const next = [...ids];
               next[i] = e.target.value;
               setSelected(next);
@@ -96,7 +222,7 @@ export function TemplatePanel() {
               .filter((a) => a.kind !== 'audio')
               .map((a) => (
                 <option key={a.id} value={a.id}>
-                  {a.name}
+                  {assetLabel(a.id)}
                 </option>
               ))}
           </select>
@@ -127,7 +253,7 @@ export function TemplatePanel() {
         />
       </label>
       <p className="hint">
-        放在目前播放頭位置，每格可選不同素材。長度以最短影片為上限；套用會替換前一組版型，文字保留，可復原。預設播放第一格的聲音，其餘格靜音。
+        放在目前播放頭位置，每格可選不同素材。長度以最短影片為上限；套用會替換前一組版型，文字保留，可復原。整組在時間軸是一個圖層，刪除或隱藏時框架一起處理。預設播放第一格的聲音。
       </p>
       {project.layout && (
         <button
@@ -135,8 +261,8 @@ export function TemplatePanel() {
           onClick={() =>
             useProjectStore.getState().apply(
               (d) => {
-                d.tracks = d.tracks.filter((t) => !t.template);
-                delete d.layout;
+                d.tracks = d.tracks.filter((t) => t.id !== activeGroup?.id);
+                if (!d.tracks.some((t) => t.template)) delete d.layout;
               },
               { select: null },
             )

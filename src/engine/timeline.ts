@@ -65,8 +65,8 @@ export function layersAt(p: Project, t: number, includeHidden: boolean): Layer[]
       if (hit) out.push({ item: hit.item, track, trackIndex });
       return;
     }
-    const item = track.items.find((x) => t >= x.start && t < x.start + x.duration);
-    if (item) out.push({ item, track, trackIndex });
+    const active = track.items.filter((x) => t >= x.start && t < x.start + x.duration);
+    for (const item of track.template ? active : active.slice(0, 1)) out.push({ item, track, trackIndex });
   });
   return out;
 }
@@ -277,11 +277,11 @@ export function trimStartFree(items: Item[], id: string, delta: number): Item[] 
     if (it.id !== id) return it;
     const { prevEnd } = neighbors(items, it);
     let lo = prevEnd - it.start; // 最多往前延伸到這裡（負值）
-    if (isVideoItem(it) && it.type === 'video') lo = Math.max(lo, -it.trimIn / it.speed);
+    if (isVideoItem(it) && it.type !== 'image') lo = Math.max(lo, -it.trimIn / it.speed);
     const hi = it.duration - MIN_CLIP_DURATION;
     const d = Math.min(Math.max(delta, lo), hi);
     const next = { ...it, start: it.start + d, duration: it.duration - d };
-    if (isVideoItem(it) && it.type === 'video') (next as VideoItem).trimIn = it.trimIn + d * it.speed;
+    if (isVideoItem(it) && it.type !== 'image') (next as VideoItem).trimIn = it.trimIn + d * it.speed;
     return next;
   });
 }

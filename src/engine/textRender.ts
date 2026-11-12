@@ -108,7 +108,11 @@ export function renderText(card: TextCard, scale: number, quality = 2): TextRend
     // 填色與外框分開畫：外框不跟著字塊透明度以外的東西變
     drawOps(ctx, boxOps, card.box.fill);
     if (card.box.stroke && card.box.stroke.width > 0) {
-      drawOps(ctx, [{ ...boxOps[0]!, type: 'stroke', width: boxStroke }], card.box.stroke.color);
+      drawOps(
+        ctx,
+        [{ ...boxOps[0]!, type: 'stroke', width: boxStroke, alpha: card.box.stroke.opacity ?? 1 }],
+        card.box.stroke.color,
+      );
     }
     ctx.restore();
   }
