@@ -29,7 +29,8 @@ test('十三層在整頁依序展開；手指捲動時預覽離開畫面，時�
   await layers(page);
   const preview = page.locator('.stage-wrap'),
     first = (await preview.boundingBox())!;
-  expect(first.height).toBeLessThan(page.viewportSize()!.height * 0.32);
+  expect(first.height).toBeGreaterThan(page.viewportSize()!.height * 0.5);
+  expect(first.height).toBeLessThan(page.viewportSize()!.height * 0.7);
   const dimensions = await page
     .getByTestId('timeline-scroll')
     .evaluate((el) => ({ inner: el.clientHeight, content: el.scrollHeight }));
@@ -43,7 +44,9 @@ test('十三層在整頁依序展開；手指捲動時預覽離開畫面，時�
   await row.evaluate((el) => el.scrollIntoView({ block: 'center' }));
   const rowBox = (await row.boundingBox())!,
     tools = (await page.locator('.bottombar').boundingBox())!;
-  expect(rowBox.y).toBeGreaterThanOrEqual((await page.locator('.playbar').boundingBox())!.y + 44);
+  expect(rowBox.y).toBeGreaterThanOrEqual(
+    (await page.locator('.ed-top').boundingBox())!.y + (await page.locator('.ed-top').boundingBox())!.height,
+  );
   expect(rowBox.y + rowBox.height).toBeLessThanOrEqual(page.viewportSize()!.height);
   expect(tools.y).toBeGreaterThanOrEqual(rowBox.y + rowBox.height);
   await page.screenshot({ path: `${shots}/all-layers-page.png` });
@@ -70,19 +73,21 @@ test('查看圖層、工具與回到預覽可直接切換，填文字不會被�
   ).toBe(true);
   await page.screenshot({ path: `${shots}/editing-tools.png` });
   const inputBox = (await input.boundingBox())!;
-  expect(inputBox.y).toBeGreaterThanOrEqual((await page.locator('.playbar').boundingBox())!.y + 44);
+  expect(inputBox.y).toBeGreaterThanOrEqual(
+    (await page.locator('.ed-top').boundingBox())!.y + (await page.locator('.ed-top').boundingBox())!.height,
+  );
   expect(inputBox.y + inputBox.height).toBeLessThanOrEqual(page.viewportSize()!.height);
   await page.getByRole('button', { name: '回到預覽', exact: true }).tap();
   await expect.poll(() => scrollTop(page)).toBe(0);
-  const compact = (await page.getByTestId('stage').boundingBox())!.height;
+  const normal = (await page.getByTestId('stage').boundingBox())!.height;
   await page.getByRole('button', { name: '放大預覽', exact: true }).tap();
   await expect
     .poll(async () => (await page.getByTestId('stage').boundingBox())!.height)
-    .toBeGreaterThan(compact * 2);
+    .toBeGreaterThan(page.viewportSize()!.height * 0.9);
   await page.getByRole('button', { name: '縮回預覽', exact: true }).tap();
   await expect
     .poll(async () => (await page.getByTestId('stage').boundingBox())!.height)
-    .toBeCloseTo(compact, 0);
+    .toBeCloseTo(normal, 0);
 });
 
 test('上下查看圖層與左右移動播放頭各自獨立，狹窄短螢幕仍可操作工具', async ({ page }) => {
@@ -137,4 +142,55 @@ test('功能設定也在整頁展開，從字塊設定滑動會帶動整頁而�
   await page.screenshot({ path: `${shots}/single-page-controls.png` });
   await page.getByRole('button', { name: '回到預覽', exact: true }).tap();
   await expect.poll(() => scrollTop(page)).toBe(0);
+});
+
+test('依參考順序：正常大預覽、細圖層、功能欄、再往下看選項；播放列也隨頁面捲走', async ({ page }) => {
+  test.setTimeout(60000);
+  await layers(page);
+  const preview = page.locator('.stage-wrap'),
+    playbar = page.locator('.playbar');
+  const initialPreview = (await preview.boundingBox())!,
+    initialPlaybar = (await playbar.boundingBox())!;
+  expect(initialPreview.height).toBeGreaterThan(350);
+  await page.screenshot({ path: `${shots}/reference-preview.png` });
+  await swipe(page, 20, initialPreview.y + initialPreview.height * 0.7, 0, -180);
+  await expect.poll(() => scrollTop(page)).toBeGreaterThan(100);
+  const offset = await scrollTop(page);
+  expect((await playbar.boundingBox())!.y).toBeCloseTo(initialPlaybar.y - offset, 0);
+  expect((await preview.boundingBox())!.y).toBeCloseTo(initialPreview.y - offset, 0);
+  await page.screenshot({ path: `${shots}/reference-mid-scroll.png` });
+  await page.getByTestId('track').last().scrollIntoViewIfNeeded();
+  const clip = page.getByTestId('track').nth(3).getByTestId('clip');
+  await clip.tap();
+  await expect(clip).toHaveAttribute('data-selected', 'true');
+  const hit = (await clip.boundingBox())!;
+  expect(hit.height).toBeGreaterThanOrEqual(44);
+  const visual = await clip.evaluate((el) => {
+    const s = getComputedStyle(el, '::before');
+    return el.clientHeight - parseFloat(s.top) - parseFloat(s.bottom);
+  });
+  expect(visual).toBeLessThanOrEqual(32);
+  expect((await page.getByTestId('trim-start').boundingBox())!.width).toBeLessThanOrEqual(8);
+  await page
+    .getByRole('tab', { name: '文字', exact: true })
+    .evaluate((el) => el.scrollIntoView({ block: 'start' }));
+  await page.getByRole('tab', { name: '文字', exact: true }).tap();
+  await expect
+    .poll(async () => await preview.evaluate((el) => el.getBoundingClientRect().bottom))
+    .toBeLessThan(0);
+  await expect
+    .poll(async () => await playbar.evaluate((el) => el.getBoundingClientRect().bottom))
+    .toBeLessThan(0);
+  await page.screenshot({ path: `${shots}/reference-layers-tools.png` });
+  await page.getByRole('button', { name: /新增文字/ }).tap();
+  await page.getByLabel('文字內容').fill('每個片刻都值得收藏');
+  await page.getByRole('tab', { name: '字塊', exact: true }).tap();
+  await page.getByRole('radio', { name: '方形', exact: true }).tap();
+  const last = page.getByRole('slider', { name: '內距 下', exact: true });
+  await last.scrollIntoViewIfNeeded();
+  await expect(last).toBeInViewport();
+  await expect
+    .poll(async () => await page.locator('.timeline').evaluate((el) => el.getBoundingClientRect().bottom))
+    .toBeLessThan(0);
+  await page.screenshot({ path: `${shots}/reference-function-options.png` });
 });

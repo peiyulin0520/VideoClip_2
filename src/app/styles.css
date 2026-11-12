@@ -1225,7 +1225,7 @@ button {
   height: 40px;
 }
 
-/* Touch editing: reserve room for the canvas; detailed controls scroll. */
+/* Editor controls expand into the same page as the preview and timeline. */
 .editor .timeline {
   min-height: 80px;
 }
@@ -1833,7 +1833,7 @@ progress {
   overflow-x: hidden;
   overflow-y: auto;
   overscroll-behavior-y: contain;
-  scroll-padding-top: calc(var(--safe-top) + 110px);
+  scroll-padding-top: calc(var(--safe-top) + 68px);
 }
 .editor .ed-top {
   position: sticky;
@@ -1845,8 +1845,8 @@ progress {
 }
 .editor > .stage-wrap:not(.expanded-preview) {
   flex: none;
-  height: clamp(140px, 24dvh, 240px);
-  min-height: 140px;
+  height: clamp(280px, 60dvh, 600px);
+  min-height: 280px;
   touch-action: pan-y;
 }
 .editor .stage {
@@ -1867,9 +1867,7 @@ progress {
   overflow: hidden;
 }
 .editor .playbar {
-  position: sticky;
-  top: calc(var(--safe-top) + 52px);
-  z-index: 20;
+  position: relative;
   flex: none;
   background: var(--panel);
   min-height: 48px;
@@ -1919,4 +1917,69 @@ progress {
 .editor .text-input.area {
   scroll-margin-top: 8px;
   scroll-margin-bottom: 16px;
+}
+
+/* Slim visible strips retain a 44px touch area for selection and gestures. */
+.editor .clip {
+  --clip-fill: #333;
+  background: transparent;
+  border: 0;
+}
+.editor .clip::before {
+  content: '';
+  position: absolute;
+  inset: 6px 0;
+  background: var(--clip-fill);
+  border: 2px solid transparent;
+  border-radius: 6px;
+  pointer-events: none;
+}
+.editor .clip.is-text {
+  --clip-fill: #3b3350;
+}
+.editor .clip.is-audio {
+  --clip-fill: #315b4f;
+}
+.editor .clip.is-audio::before {
+  border-color: #78ba9b;
+}
+.editor .clip.selected::before {
+  border-color: #fff;
+}
+.editor .clip .tiles {
+  inset: 8px 2px;
+  border-radius: 4px;
+}
+.editor .clip-label {
+  bottom: 9px;
+}
+.editor .clip.is-text .clip-label {
+  bottom: auto;
+}
+.editor .clip-audio {
+  bottom: 8px;
+  padding: 0 3px;
+  font-size: 9px;
+}
+.editor .clip:has(.clip-audio) .clip-label {
+  top: 7px;
+  bottom: auto;
+}
+.editor .clip .handle {
+  top: 6px;
+  bottom: 6px;
+  width: 8px;
+}
+.editor .clip .handle::after {
+  top: -6px;
+  bottom: -6px;
+  left: -18px;
+  right: -18px;
+}
+.editor .clip.short .handle::after {
+  left: -6px;
+  right: -6px;
+}
+.editor .add-clip {
+  top: 2px;
 }

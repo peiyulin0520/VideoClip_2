@@ -47,6 +47,7 @@ test('拖移疊加物件時參考線才出現，放開就消失；匯出的畫�
   await addOverlays(page, ['solid-green.webm']);
   await expect(page.getByTestId('safe-zone')).toHaveCount(0);
 
+  await page.getByRole('button', { name: '回到預覽', exact: true }).tap();
   const stage = (await page.getByTestId('stage').boundingBox())!;
   const cx = stage.x + stage.width * 0.5;
   const cy = stage.y + stage.height * 0.5;
@@ -76,6 +77,7 @@ test('主軌：匯入後不自動選取；預覽單點不選；從時間軸選�
   expect(await selectedItemId(page)).toBeNull();
 
   // 點預覽畫面（只有主軌）→ 不選取
+  await page.getByRole('button', { name: '回到預覽', exact: true }).tap();
   const stage = (await page.getByTestId('stage').boundingBox())!;
   await page.mouse.click(stage.x + stage.width * 0.5, stage.y + stage.height * 0.5);
   expect(await selectedItemId(page)).toBeNull();

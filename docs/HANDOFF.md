@@ -1,6 +1,8 @@
 # 交接手冊（HANDOFF）
 
 ## VideoClip_2 當前交接（優先於以下來源 repo 的歷史紀錄）
+- **最新更正優先**：docs/plans/2026-11-12-reference-page-flow.md。使用者要正常大預覽、細圖層，再一路往下到功能與選項。預覽改 60dvh/280–600px，播放列取消 sticky，只頁首 sticky；片段可見 32/36px，44/48px 觸控列、2px 間距、8px 可見把手。
+- PR #2 已由使用者合併（main daef8ca）；本次另建 PR。既有 246/73 是基線，本次 check 的 246 單元與全部建置檢查成功，74 e2e 待 CI。下方「精簡預覽」「PR #2 待合併」屬歷史，不能當成最新要求。
 - **目前任務**：docs/plans/2026-11-12-single-page-settings.md。PR #1 已由使用者合併且部署成功（main a1b455b / run 43201177854，公開 JS hash 相符）；下方「PR #1 未合併」是歷史。最新截圖未見導航，可能開舊頁籤。
 - 新補充：.editor .panel/.panel.tall max-height:none / overflow:visible，設定也隨整頁展開；取消內部 sticky-tabs。保留對話框、字體 picker 等真正彈出框捲動，時間軸仍按層展開。8194f79 / run 43206542321：246 單元與 73 e2e 全過；64 張截圖已更新（workspace/single-page-controls 新增）。PR #2 https://github.com/peiyulin0520/VideoClip_2/pull/2 待使用者自行合併，未開 auto-merge，Safari 真機仍待確認。
 - **工作區最新驗收**：c6f196c / run 43186969560 的 246 單元、72 e2e 全過，63 張截圖（workspace/ 4 張）。PR #1 https://github.com/peiyulin0520/VideoClip_2/pull/1 已涵蓋精簡預覽、完整圖層列表、整頁捲動及續用儲存競態修正；已由使用者自行合併並部署；PR #2 為本次待合併補充。以下「待 CI」是過程紀錄，最新快照見 PROGRESS。
@@ -110,6 +112,7 @@ IndexedDB `videoclip`（專案 JSON、`meta.appState`、`meta.installedFonts`、
 
 ## 4. 決策與原因
 | 決策 | 原因 |
+| 正常大預覽＋播放列正常文流，圖層可見較細但觸控維持 44px | 使用者連續參考圖要求預覽→全部圖層→功能→選項，上一版預覽太小且播放列仍卡住 |
 |---|---|
 | 純前端、無後端，資料在裝置 | 使用者要求「不同裝置互相看不到專案」「免登入」；也避免上傳影片的隱私問題 |
 | GitHub Pages ＋ HashRouter | 免費、使用者已公開 repo；子路徑 `/VideoClip/` 用 `#/` 路由才不會 404 |

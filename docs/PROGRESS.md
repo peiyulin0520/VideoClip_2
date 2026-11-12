@@ -7,13 +7,13 @@
 - **目標儲存庫**：`https://github.com/peiyulin0520/VideoClip_2`
 - **工作分支**：`codex/establish-little-moments`；main 原有初始 commit `2f8bdf9` 保留。最新本機程式 commit 見 `git log -1`；推送狀態見下方。
 - **來源**：`peiyulin0520/VideoClip` main `78b178343409c46c7ba353ef3a6db6f279a7bde6`（PR #3 已合併）。以下舊日誌屬來源 repo 的歷史，不代表 VideoClip_2 的部署/瀏覽器驗收。
-- **本次明確子任務**：整頁捲動補充，功能設定也自然展開，移除下方面板獨立小捲動框；見 docs/plans/2026-11-12-single-page-settings.md。預覽與圖層已由使用者合併 PR #1 發布，本次另走新 PR。
-- **已驗證**：程式 8194f7976414982e01902978fd56ba9c755a7d6c / Actions https://github.com/peiyulin0520/VideoClip_2/actions/runs/43206542321：246 單元、73 Chromium e2e（4.4 分鐘）、lint/格式/TypeScript/build/Pages 與 39 字體檢查全部成功。
-- **瀏覽器驗證**：Playwright 1.63 / Chromium 153、iPhone 13 尺寸與 320×568；64 張 CI 截圖已更新至 docs/screenshots，來源 run 43206542321 / artifact 13938271777，ZIP SHA-256 579dbd26e66d813c22553bac4a0b28c7e12cb1a16a409a9c087b0881ce7c4eef。人工檢視精簡預覽、13 層頁面及 single-page-controls；繁中可讀、自製素材，非 Safari 真機。
-- **階段**：PR #1 已由使用者合併發布；PR #2 https://github.com/peiyulin0520/VideoClip_2/pull/2 補齊設定區整頁展開，已驗收、待使用者自行 Merge；助手不代合併、未開 auto-merge。其餘動畫/轉場/備份等規劃未實作。
-- **發布狀態**：PR #1 由使用者於 2026-11-12 10:31:48 UTC 合併，main a1b455b2688874306a618745bea136cd30c592b1 / Actions https://github.com/peiyulin0520/VideoClip_2/actions/runs/43201177854 成功。公開 HTML/manifest/attribution 200，index-BQnZUr0n.js SHA-256 61fabaa80f502657e3996f7fc41b79bcaf68ad753fcce5058ca56362c405b818 與本機已驗證建置相同。新 .panel 整頁展開補充未發布；截圖未見新版捷徑，可能仍為舊頁籤。
-- **下一步**：PR #2 由使用者自行合併 → main Actions/Pages → iPhone Safari 真機確認整頁滑動、長設定與雙指編輯。
-- **等使用者**：PR #2 已完成驗收，由使用者自行 Merge。已提醒關閉舊頁籤後重新開啟目前網址以載入 PR #1 新介面；不清除網站資料。
+- **本次明確子任務**：依連續參考圖調整正常大預覽、播放列隨頁捲走、較細的時間軸片段，順序為預覽→完整圖層→功能→選項；見 docs/plans/2026-11-12-reference-page-flow.md。
+- **已驗證基線**：PR #2 最後提交 5f2d542 / Actions 43207709190：246 單元/73 Chromium e2e 全過；本次 check 成功（246 單元、lint/格式/TypeScript/build/Pages），74 個 CI 情境待驗收。
+- **目前變更**：預覽 60dvh（280–600px）；播放列正常文流；軌道 44/48px、間距 2px、可見條 32/36px、把手 8px，保留點選/修剪觸控範圍。頁首仍 sticky；設定沿同一頁展開。
+- **瀏覽器驗證**：既有 64 張截圖為上一版基線；本次將更新並新增連續參考流程截圖，不宣稱已驗收。Safari 仍待真機。
+- **發布狀態**：PR #2 已由使用者於 2026-11-12 11:39:05 UTC 合併，origin/main daef8ca；目前功能分支已快轉至此基準。本次變更未發布。
+- **下一步**：check → CI/截圖 → 新 PR → 使用者自行 Merge → main Actions/Pages → iPhone Safari 真機確認。
+- **等使用者**：完成驗收後提供新 PR 連結，自行合併；助手不合併、不開 auto-merge、不推 main。
 
 ## 日誌格式（新增一筆時照這個）
 ```
@@ -27,6 +27,7 @@
 ```
 
 ## 使用者已確認的偏好
+- 最新連續參考圖更正：預覽要正常大、比圖中稍小，往下依序看圖層、功能欄，再選功能往下看選項；圖層拖拉軸要更細。優先於上一版把預覽縮成 24dvh，播放列也不應卡住。
 - 圈圖補充：整個編輯頁可上下滑，預覽和時間軸不固定在大區塊；不僅限下方設定可滑動，時間軸依圖層數展開。功能設定也取消小捲動框，隨整頁展開。
 - 最新（附 16:21 錄影）：時間軸太窄、預覽太大且固定，應讓預覽隨頁面捲走，往下能清楚檢視所有圖層，工具欄不要佔住檢視區。這項偏好優先於前次增加預覽大小的需求。
 - 2026-11-12 最新發布規則：之後一律建立 PR，助手提供 PR 連結，由使用者自行按 Merge pull request；助手不代合併、不開 auto-merge、不直接推 main，文件也走 PR。
@@ -66,6 +67,11 @@
 - 2026-11-11 找到新字體來源 max32002/pop-gothic（大波浪圓體，含注音）→ 已加入手寫可愛包。問「能不能直接下載到我的 files 下載資料夾」→ 答：網頁在 iPhone 不能自動寫進「檔案」App 資料夾；官方字體存在瀏覽器裡，自己的字體用「匯入字體檔」從檔案 App 選
 
 ## 日誌（最新在最上面）
+- 2026-11-12 依連續參考圖調整正常大預覽與細片段
+  - PR #2 已由使用者合併；功能分支快轉至 main daef8ca。使用者更正需要正常大預覽，依序滑到圖層、功能、選項。
+  - styles.css 移除播放列 sticky、預覽改 60dvh、細片段/把手保留觸控面積；Timeline 調整主軌和間距、自動捲動改依頁首。更新 workspace 斷言並新增連續流程回歸；預覽操作測試先回預覽再量位置。
+  - 本次 check 的 246 單元及 lint/格式/TypeScript/build/Pages 全過；74 情境待 CI 與截圖。Safari 未驗證；完成後另建 PR 交使用者合併。
+
 - 2026-11-12 設定區整頁捲動驗收完成，交 PR #2
   - 程式 8194f79 / run 43206542321：246 單元與 73 e2e 全過。新增真實觸控確認 .editor 上下滑動、設定面板沒有獨立 scrollTop、末端控制項可操作；原有縮放/圖層/匯出情境仍通過。
   - 匯入 64 張完整 CI 截圖，artifact 13938271777 已核對 ZIP hash；人工看過 workspace/compact-preview、all-layers-page、single-page-controls，中文可讀、預覽與時間軸會捲走。

@@ -24,9 +24,9 @@ import { toast, useUI } from '../../store/uiStore';
 import { setTimelineItems } from '../../engine/groupTiming';
 import { Sheet } from '../../ui/Sheet';
 
-const MAIN_H = 64;
+const MAIN_H = 48;
 const ROW_H = 44;
-const ROW_GAP = 6;
+const ROW_GAP = 2;
 const RULER_H = 24;
 const LONG_PRESS_MS = 400;
 export const MIN_PPS = 20;
@@ -115,7 +115,7 @@ export function Timeline({
       const el = scrollRef.current!;
       const page = el.closest<HTMLElement>('.editor')!;
       const box = page.getBoundingClientRect();
-      const controls = page.querySelector('.playbar')!.getBoundingClientRect();
+      const controls = page.querySelector('.ed-top')!.getBoundingClientRect();
       // Long layer lists scroll the page, not a second tiny vertical viewport.
       if (ev.clientY < Math.max(box.top, controls.bottom) + 8) page.scrollTop -= 12;
       if (ev.clientY > box.bottom - 8) page.scrollTop += 12;
@@ -488,7 +488,7 @@ export function Timeline({
                     }}
                     onPointerDown={(e) => startItemGesture(e, it, track)}
                   >
-                    {isVideoItem(it) ? <Tiles item={it} asset={asset} pps={pps} h={h} /> : null}
+                    {isVideoItem(it) ? <Tiles item={it} asset={asset} pps={pps} h={h - 16} /> : null}
                     <div className="clip-label">
                       {track.template
                         ? `${track.name} · ${track.items.length} 格`
