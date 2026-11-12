@@ -3,12 +3,13 @@
 規則：每完成一個有意義的步驟，就在同一個 commit 裡 **覆寫「交接快照」** 並 **在「日誌」最上面新增一筆**（規則全文見 `AGENTS.md`「紀錄規則」，背景與架構見 `docs/HANDOFF.md`）。
 
 ## 交接快照（VideoClip_2 最新狀態）
-- **日期/分支**：2026-11-12 UTC（使用者 11/13 iPhone 回報）/ codex/establish-little-moments；PR #4 已由使用者合併，基線 main d12b39c。
-- **本次子任務**：docs/plans/2026-11-13-template-story-workspace.md：預設收合時間軸、移除頁尾保留空白、整組模板縮放與獨立來源/補色、多組精確靜音標記、特效頁籤與展開故事。
-- **已實作**：layout.transform 與 canonical cell geometry；cell.sourceEnd/offset/blanks/background、mediaSegments 跨預覽/混音/匯出；來源不足補色不凍結。故事二/三格展開、三字體輪換/暖閃；Project.effects 四種轉場。時間軸依專案 session 記住自行展開，預設收合；回頂在頁尾隱藏，不再縮短 main 留白。
-- **驗證**：基線本機 check 267 成功；首輪 277 單元、97/98 e2e；補正後本機 check/278 單元成功，98 e2e 待下一輪 CI，未宣稱瀏覽器完成。既有 107 圖為上版，不當新驗收。iPhone Safari 待真機。
-- **PR/發布**：本次另開新 PR draft，完成驗收後交使用者自行 Merge；不代合併、不推 main、不開 auto-merge。
-- **下一步**：本機 check → 功能分支推送/新 PR → CI → 修正與截圖檢視 → 完成驗收紀錄。現在無需使用者補充。
+- **日期/分支**：2026-11-12 UTC（使用者 11/13 iPhone 回報）/ codex/establish-little-moments；PR #4 已由使用者合併，基線 main d12b39c。本次 PR #5。
+- **任務**：docs/plans/2026-11-13-template-story-workspace.md 已完成：預設收合、無頁尾保留空白、整組模板/各格片段補時、多組精確靜音、特效頁籤與展開故事。
+- **驗證**：程式 4d706878f81bae6e311cb866fc62c91047f02b3a / [Actions 43284472645](https://github.com/peiyulin0520/VideoClip_2/actions/runs/43284472645)：278 單元、98 Chromium e2e 全過；lint/格式/TypeScript/build/Pages/39 字體檢查成功。
+- **程式**：layout.transform 保持整組框架/格子/文字與光效同步，不能在預覽單獨拉歪格子；cell/source timing 共用預覽與音訊/匯出。來源不足補色、指定色塊暫停來源，選段不重排其他格；重新套用保留匹配格設定及整組位置。系統字體跳過 ensureFont。四種獨立特效與二/三格故事（上下展開/依序加入/三字體切換/暖閃）可調。
+- **截圖**：118 張成功 CI 畫面已保存，最新 story-workspace/；artifact 13973383981，ZIP SHA-256 db4ab8d2c6dce9f972561963f4c36d482262643224c6ea4a7e4773a7f180b7a5 已核對。人工檢視收合/頁尾、整組縮放、明確多組靜音、故事階段與特效，繁中可讀、全自製素材。
+- **PR/發布**：[PR #5](https://github.com/peiyulin0520/VideoClip_2/pull/5) 完成驗收並交使用者自行 Merge；本次未發布、不代合併、不開 auto-merge、不推 main。
+- **下一步/等使用者**：自行 Merge PR #5 → main Actions/Pages → Safari 真機確認收合/雙指、格子選段/補色、密集標記與音訊/匯出。最後文件/截圖 [skip ci]，程式與測試和上述成功 CI 相同。
 
 ## 日誌格式（新增一筆時照這個）
 ```
@@ -68,6 +69,13 @@
 - 2026-11-11 找到新字體來源 max32002/pop-gothic（大波浪圓體，含注音）→ 已加入手寫可愛包。問「能不能直接下載到我的 files 下載資料夾」→ 答：網頁在 iPhone 不能自動寫進「檔案」App 資料夾；官方字體存在瀏覽器裡，自己的字體用「匯入字體檔」從檔案 App 選
 
 ## 日誌（最新在最上面）
+
+- 2026-11-12 整組模板與故事/特效完整驗收
+  - 程式 4d706878f81bae6e311cb866fc62c91047f02b3a / [Actions 43284472645](https://github.com/peiyulin0520/VideoClip_2/actions/runs/43284472645)：278 單元、98 Chromium e2e 全過；lint/格式/TypeScript/build/Pages/39 字體檢查成功。
+  - 涵蓋原 91 項及新 7 情境：預設收合/展開多層、頁尾零保留區、膠卷整組雙指與輸出/重開、各格來源/白底/插入色塊/重新套用、多組精確靜音、閃光/暖光及移除、故事單片到三格/換字體/暖光/二格、補色時音訊靜音及輸出後接續。
+  - 118 張成功 CI 截圖保存，artifact 13973383981 / ZIP hash db4ab8d2c6dce9f972561963f4c36d482262643224c6ea4a7e4773a7f180b7a5；人工檢視完成。使用者參考錄影未加入 repo，驗收全自製素材。
+  - README/AGENTS/HANDOFF/PLAN/EFFECTS/USAGE 與計畫同步；最後 [skip ci] 只改文件與截圖，程式/測試保持驗證版本。PR #5 交使用者自行 Merge，本次未發布；Safari 待真機。
+
 
 - 2026-11-12 首輪 277/97 of 98 後補正故事字體與重新套用保存
   - 程式 693515a / run 43282652239：277 單元、97/98 Chromium 通過。僅故事套用失敗：ensureFont 不接受 system ID，套用/重開跳過系統字體，實際自訂字體仍 await 載入。

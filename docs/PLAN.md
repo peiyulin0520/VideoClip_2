@@ -379,3 +379,6 @@ docs/
 
 
 2026-11-12 UTC：使用者 11/13 回報：時間軸預設收合與無頁尾保留區、整組模板縮放、每格獨立選段及黑白補時、明確多組音訊起迄、特效頁籤與展開故事，見 2026-11-13-template-story-workspace 計畫。Safari 真機待驗證整組雙指、格子選段、多組標記、音訊與匯出。
+
+
+2026-11-12 UTC 本次整組模板/故事驗收：程式 4d706878f81bae6e311cb866fc62c91047f02b3a / [Actions 43284472645](https://github.com/peiyulin0520/VideoClip_2/actions/runs/43284472645)：278 單元、98 Chromium e2e 全過；lint/格式/TypeScript/build/Pages/39 字體檢查成功。 118 張截圖；PR #5 交使用者自行 Merge。§7 仍需 Safari 真機驗證收合/捲動、整組雙指、格子精修、多組聲音與匯出。

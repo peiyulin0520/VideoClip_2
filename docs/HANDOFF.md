@@ -1,6 +1,8 @@
 # 交接手冊（HANDOFF）
 
 ## VideoClip_2 當前交接（優先於以下來源 repo 的歷史紀錄）
+- 本次最終：程式 4d706878f81bae6e311cb866fc62c91047f02b3a / [Actions 43284472645](https://github.com/peiyulin0520/VideoClip_2/actions/runs/43284472645)：278 單元、98 Chromium e2e 全過；lint/格式/TypeScript/build/Pages/39 字體檢查成功。 118 張成功截圖保存（artifact 13973383981 / hash db4ab8d2c6dce9f972561963f4c36d482262643224c6ea4a7e4773a7f180b7a5）。PR #5 待使用者自行 Merge，未部署；Safari 仍待真機。下列「待 CI」與 PR #4 待合併均是過程/歷史。
+
 - 首輪 693515a / run 43282652239：277 單元、97/98 e2e；故事失敗因 ensureFont('system') 回 false，系統字體必須跳過載入，載入的是實際字體。新增 carryTemplateEdits：重新套用匹配的格子保留原來源/色塊等設定與 group transform，不把已套用組移到播放頭；群組長度變更同步草稿 seconds。278/98 待下輪 CI，PR #5 仍 draft。
 
 - 最新子任務 docs/plans/2026-11-13-template-story-workspace.md，PR #4 已使用者合併（main d12b39c）；本次新 PR 待 check/CI。下列 PR #4 待合併與 267/91 是上版歷史。
