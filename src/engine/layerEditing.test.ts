@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { createClip, createProject, createTextItem, createTrack } from '../model/defaults';
 import type { Asset } from '../model/types';
-import { editableProject, moveLayerItem } from './layerEditing';
+import { editableProject, moveLayerItem, insertVisualClip } from './layerEditing';
 import { buildScene } from './scene';
 import { hitLayers } from './geometry';
 import { visibleLayers } from './timeline';
@@ -36,6 +36,34 @@ function fixture() {
 }
 
 describe('typed independent layer editing', () => {
+  it('inserts a blank at the playhead, splits source accurately and keeps later gaps', () => {
+    const { p, a, b } = fixture();
+    const original = { ...a, speed: 2, trimIn: 1, duration: 4 };
+    const later = { ...b, start: 8 };
+    const blank = { ...createClip({ ...p.assets[0]!, kind: 'image' }), duration: 3 };
+    const out = insertVisualClip([original, later], blank, 2);
+    expect(out.map((it) => [it.start, it.duration])).toEqual([
+      [0, 2],
+      [2, 3],
+      [5, 2],
+      [11, 2],
+    ]);
+    expect(out[2]!.trimIn).toBe(5);
+    expect(out[2]!.id).not.toBe(original.id);
+    expect(original.duration).toBe(4);
+    expect(later.start).toBe(8);
+  });
+  it('inserting inside a gap shifts later items without removing the gap', () => {
+    const { p, a, b } = fixture();
+    const blank = { ...createClip({ ...p.assets[0]!, kind: 'image' }), duration: 1 };
+    const out = insertVisualClip([a, { ...b, start: 7 }], blank, 4);
+    expect(out.map((it) => [it.start, it.duration])).toEqual([
+      [0, 2],
+      [4, 1],
+      [8, 2],
+    ]);
+  });
+
   it('opens legacy projects freely without changing timing, IDs or stack', () => {
     const { p } = fixture();
     p.tracks[0]!.name = '主軌';

@@ -87,7 +87,7 @@ test('時間軸可直接長按單一素材移到另一層，畫面與復原一�
     top = p.tracks[2]!,
     lower = p.tracks[1]!;
   await page.locator('.timeline').evaluate((el) => el.scrollIntoView({ block: 'start' }));
-  const clip = page.locator(`[data-item-id="${top.items[0]!.id}"]`),
+  const clip = page.locator(`.clip[data-item-id="${top.items[0]!.id}"]`),
     a = (await clip.boundingBox())!;
   const b = (await page.locator(`[data-track-id="${lower.id}"]`).boundingBox())!;
   await dragTimelineItem(page, clip, 0, b.y + b.height + 1 - a.y - a.height / 2);
@@ -208,12 +208,7 @@ test('版型格子位置與素材可辨識，套用後只有一個群組，刪�
   });
   await page.getByRole('button', { name: '刪除', exact: true }).tap();
   expect((await current(page)).layout).toBeUndefined();
-  await expect
-    .poll(async () => {
-      const c = await samplePreview(page, 0.05, 0.05);
-      return !!c && c.every((v, i) => i === 3 || v < 8);
-    })
-    .toBe(true);
+  await expect.poll(async () => isBlue(await samplePreview(page, 0.05, 0.05))).toBe(true);
   await page.evaluate(() => {
     for (const v of Array.from(document.querySelectorAll('.pool video')))
       Reflect.deleteProperty(v, 'readyState');

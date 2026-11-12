@@ -2146,3 +2146,8 @@ progress {
   background: transparent;
   color: #fff;
 }
+
+.toast,
+.busy {
+  color: #fff;
+}

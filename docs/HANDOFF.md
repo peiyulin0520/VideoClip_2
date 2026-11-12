@@ -135,6 +135,9 @@ IndexedDB `videoclip`（專案 JSON、`meta.appState`、`meta.installedFonts`、
 | 縮圖：Mediabunny `CanvasSink` 優先 → `<video>` → 預覽播放器拿到畫面後 `setAssetThumbs`（不進復原歷史，歷史快照一併更新） | iPhone 隱藏 `<video>` 常不觸發 `loadeddata` |
 
 ## 5. 踩過的坑（避免再踩）
+- 分型自由時間軸的「插入留白」須在游標切開並推後同軌，而非 findFreeStart；insertVisualClip 保留既有空隙/來源 trim/speed。整片拖曳則不推其他片段，兩種語意分開。
+- data-item-id 同時用於 pool video 和時間軸；原生拖曳測試必須限制 .clip。radio 選取會卸載 popover，改真實 tap 並斷言新的編輯模式與畫面，不對已卸載元素等 checked。
+- main/overlay 統一後模板不自動隱藏底層，動畫隔離測試須用 UI 主動隱藏；刪模板的慢解碼回歸看既有底層藍畫面，不期待黑底；仍不能保留刪掉的模板框架。
 - 細把手從 16px 改 8px 後，right:-4 的中心恰在相鄰片段邊界，下一片段會蓋住；選取片段需 z-index 4，且左右把手放回片段內側（0）。觸控延伸區仍保留。
 - 真實 touch swipe 有慣性；測 scrollTop 與元素位移應同一 evaluate/frame 取樣，不能分次 await 後將移動中的值相減。仍保留精確位移斷言。
 - Autosave 現改為立即寫入、寫入期間合併最後狀態，不能恢復 800ms debounce：收藏素材重用後立即重整會丟最後一筆。每個儲存迴圈要綁 projectId，避免舊頁 cleanup 時讀到新專案。

@@ -109,7 +109,8 @@ test('長按可選被遮住的影像，暫時置頂可編輯，完成與匯出�
   await expect(page.getByRole('dialog', { name: '選取被遮住的素材' })).toBeVisible();
   await expect(page.getByRole('radio', { name: /^暫時編輯 / })).toHaveCount(3);
   await page.screenshot({ path: `${shots}/covered-layer-picker.png` });
-  await page.getByRole('radio', { name: '暫時編輯 solid-red.webm', exact: true }).check();
+  await page.getByRole('radio', { name: '暫時編輯 solid-red.webm', exact: true }).tap();
+  await expect(page.getByTestId('preview-isolation')).toBeVisible();
   await expect.poll(async () => isRed(await samplePreview(page, 0.5, 0.5))).toBe(true);
   expect((await current(page)).tracks).toEqual(before.tracks);
   const frame = await exportFrame(page, 0.5, [[0.5, 0.5]]);
@@ -130,7 +131,7 @@ test('長按單一影像跨軌並改時間，同軌其他素材不動，一步�
   const before = await current(page),
     source = before.tracks[0]!,
     target = before.tracks[1]!;
-  const clip = page.locator(`[data-item-id="${source.items[0]!.id}"]`),
+  const clip = page.locator(`.clip[data-item-id="${source.items[0]!.id}"]`),
     a = (await clip.boundingBox())!;
   const b = (await page.locator(`[data-track-id="${target.id}"]`).boundingBox())!;
   await dragTimelineItem(page, clip, 4 * (60 / 1.5 / 1.5), b.y + b.height / 2 - a.y - a.height / 2);
@@ -155,7 +156,7 @@ test('不同類型禁止混放，字卡可拖到原底層以下建立字卡專�
   await timeline(page);
   const before = await current(page),
     id = before.tracks[0]!.items[0]!.id;
-  const source = page.locator(`[data-item-id="${id}"]`),
+  const source = page.locator(`.clip[data-item-id="${id}"]`),
     a = (await source.boundingBox())!;
   const audio = before.tracks.find((t) => t.kind === 'audio')!,
     b = (await page.locator(`[data-track-id="${audio.id}"]`).boundingBox())!;
@@ -166,7 +167,7 @@ test('不同類型禁止混放，字卡可拖到原底層以下建立字卡專�
   expect((await current(page)).tracks).toEqual(before.tracks);
   const text = before.tracks.find((t) => t.kind === 'text')!,
     textId = text.items[0]!.id;
-  const textClip = page.locator(`[data-item-id="${textId}"]`),
+  const textClip = page.locator(`.clip[data-item-id="${textId}"]`),
     c = (await textClip.boundingBox())!;
   const lowest = (await page.getByTestId('track').last().boundingBox())!;
   await dragTimelineItem(page, textClip, 0, lowest.y + lowest.height + 3 - c.y - c.height / 2);

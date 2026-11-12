@@ -1,6 +1,6 @@
-import { createMainTrack, createTrack } from '../model/defaults';
-import type { Item, Project, Track } from '../model/types';
-import { canPlace, findFreeStart, findItem } from './timeline';
+import { createMainTrack, createTrack, MIN_CLIP_DURATION, newId } from '../model/defaults';
+import type { Item, Project, Track, VideoItem } from '../model/types';
+import { canPlace, findFreeStart, findItem, sourceTimeAt } from './timeline';
 
 export type LayerFamily = 'visual' | 'text' | 'audio';
 export const trackFamily = (track: Track): LayerFamily =>
@@ -68,4 +68,34 @@ export function moveLayerItem(project: Project, id: string, desired: number, dro
   destination.items.sort((a, b) => a.start - b.start);
   project.freeMain = true;
   project.mainOffset = 0;
+}
+
+/** Explicit insertion pushes only the later part of this lane, preserving existing gaps. */
+export function insertVisualClip(items: VideoItem[], clip: VideoItem, desired: number): VideoItem[] {
+  let at = Math.max(0, desired);
+  const containing = items.find((it) => at > it.start && at < it.start + it.duration);
+  if (containing) {
+    const local = at - containing.start;
+    if (local < MIN_CLIP_DURATION) at = containing.start;
+    else if (containing.duration - local < MIN_CLIP_DURATION) at = containing.start + containing.duration;
+  }
+  const result: VideoItem[] = [];
+  for (const it of items) {
+    if (it.start >= at) result.push({ ...it, start: it.start + clip.duration });
+    else if (it.start + it.duration > at) {
+      const local = at - it.start;
+      result.push(
+        { ...it, duration: local },
+        {
+          ...it,
+          id: newId('i_'),
+          start: at + clip.duration,
+          duration: it.duration - local,
+          trimIn: it.type === 'image' ? 0 : sourceTimeAt(it, at),
+        },
+      );
+    } else result.push(it);
+  }
+  result.push({ ...clip, start: at });
+  return result.sort((a, b) => a.start - b.start);
 }
