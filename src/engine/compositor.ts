@@ -10,6 +10,7 @@ export type LayerSource =
 /** 一個要畫的圖層（由 scene.ts 依專案與時間算出）。座標都是合成器畫布的像素。 */
 export type SceneLayer = {
   id: string;
+  continuity?: string;
   kind: 'video' | 'image' | 'text';
   source: LayerSource;
   /** 來源目前能不能取到畫面（影片正在 seek / 還沒載入就是 false，保留上一格） */
@@ -43,6 +44,7 @@ type Obj = {
   textKey: string | undefined;
   hasFrame: boolean;
   lastSource: LayerSource | null;
+  continuity?: string;
   frameKey: string;
   mask: Graphics | null;
   outline: Graphics | null;
@@ -96,24 +98,24 @@ export class Compositor {
     }
     const stage = this.app.stage;
     const seen = new Set<string>();
-    let allReady = true;
+    const waiting = new Set(
+      layers.filter((layer) => !layer.ready && layer.continuity).map((layer) => layer.continuity),
+    );
 
     layers.forEach((layer, index) => {
       seen.add(layer.id);
-      if (!layer.ready) allReady = false;
       const o = this.ensure(layer);
+      o.continuity = layer.continuity;
       this.update(o, layer);
       if (stage.children[index + 1] !== o.container)
         stage.addChildAt(o.container, Math.min(index + 1, stage.children.length));
     });
 
-    // 還沒準備好的新圖層出現時，先留著舊圖層（例如換片時的上一個片段），避免閃黑
-    if (allReady) {
-      for (const [id, o] of this.objs) {
-        if (!seen.has(id)) {
-          this.destroyObj(o);
-          this.objs.delete(id);
-        }
+    // Keep only a previous clip on the SAME waiting track; deleted overlays and frames must disappear.
+    for (const [id, o] of this.objs) {
+      if (!seen.has(id) && !(o.continuity && waiting.has(o.continuity))) {
+        this.destroyObj(o);
+        this.objs.delete(id);
       }
     }
     this.app.renderer.render({ container: stage });

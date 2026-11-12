@@ -112,15 +112,20 @@ export function Timeline({
     const move = (ev: PointerEvent) => {
       if (Math.abs(ev.clientY - y) < 5 && !moved) return;
       moved = true;
-      const row = document
-        .elementsFromPoint(ev.clientX, ev.clientY)
-        .find((el) => el.getAttribute('data-track-id'));
-      if (row && row.getAttribute('data-kind') !== 'main') over = row.getAttribute('data-track-id')!;
-      setLayerDrag({ id: track.id, over, dy: ev.clientY - y });
       const el = scrollRef.current!;
       const box = el.getBoundingClientRect();
-      if (ev.clientY < box.top + 32) el.scrollTop -= 18;
-      if (ev.clientY > box.bottom - 24) el.scrollTop += 18;
+      // Scroll only at the actual viewport edge, not while crossing a visible row.
+      if (ev.clientY < box.top + 8) el.scrollTop -= 12;
+      if (ev.clientY > box.bottom - 8) el.scrollTop += 12;
+      const candidates = Array.from(el.querySelectorAll<HTMLElement>('[data-track-id]')).filter(
+        (row) => row.dataset.kind !== 'main',
+      );
+      const row = candidates.find((row) => {
+        const r = row.getBoundingClientRect();
+        return ev.clientY >= r.top && ev.clientY < r.bottom;
+      });
+      if (row) over = row.dataset.trackId!;
+      setLayerDrag({ id: track.id, over, dy: ev.clientY - y });
     };
     const finish = (ev: PointerEvent) => {
       target.removeEventListener('pointermove', move);
@@ -390,7 +395,7 @@ export function Timeline({
 
   const menuTrack = project.tracks.find((t) => t.id === menuTrackId) ?? null;
   const menuIndex = menuTrack ? project.tracks.indexOf(menuTrack) : -1;
-  const viewH = Math.min(Math.max(contentH, 80), 96);
+  const viewH = Math.min(Math.max(contentH, 80), 128);
 
   return (
     <div className="timeline" style={{ height: viewH }}>

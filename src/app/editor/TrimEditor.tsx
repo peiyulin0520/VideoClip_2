@@ -50,7 +50,7 @@ export function TrimEditor({ item, onClose }: { item: VideoItem; onClose: () => 
         playsInline
         muted
         onLoadedMetadata={(e) => {
-          e.currentTarget.currentTime = item.trimIn;
+          e.currentTarget.currentTime = Math.min(Math.max(item.trimIn, 0.001), asset.duration - 0.001);
         }}
       />
       <div ref={bar} className="source-range" data-testid="source-range">

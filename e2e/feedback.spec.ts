@@ -212,8 +212,24 @@ test('版型格子位置與素材可辨識，套用後只有一個群組，刪�
   await expect.poll(async () => isGreen(await samplePreview(page, 0.75, 0.2))).toBe(true);
   await page.screenshot({ path: `${shots}/numbered-template-group.png` });
   await openTab(page, '剪輯');
+  // Slow native decoding must not keep a deleted group's frame visible.
+  await page.evaluate(() => {
+    for (const v of Array.from(document.querySelectorAll('.pool video')))
+      Object.defineProperty(v, 'readyState', { configurable: true, get: () => 1 });
+  });
   await page.getByRole('button', { name: '刪除', exact: true }).tap();
   expect((await current(page)).layout).toBeUndefined();
+  await expect
+    .poll(async () => {
+      const c = await samplePreview(page, 0.05, 0.05);
+      return !!c && c.every((v, i) => i === 3 || v < 8);
+    })
+    .toBe(true);
+  await page.evaluate(() => {
+    for (const v of Array.from(document.querySelectorAll('.pool video')))
+      Reflect.deleteProperty(v, 'readyState');
+  });
+  await seekTo(page, 0.1);
   await expect.poll(async () => isBlue(await samplePreview(page, 0.05, 0.05))).toBe(true);
   await page.getByRole('button', { name: '復原', exact: true }).tap();
   expect((await current(page)).tracks.find((t) => t.template)!.items).toHaveLength(4);

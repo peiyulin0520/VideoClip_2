@@ -353,7 +353,12 @@ export function TextPanel({
                 onChange={(v) =>
                   edit((c) => {
                     const b2 = c.box!;
-                    b2.stroke = { ...b2.stroke, color: b2.stroke?.color ?? '#ffffff', width: v };
+                    b2.stroke = {
+                      ...b2.stroke,
+                      opacity: b2.stroke?.opacity ?? 1,
+                      color: b2.stroke?.color ?? '#ffffff',
+                      width: v,
+                    };
                     if (v <= 0) delete b2.stroke;
                   }, 'bst')
                 }

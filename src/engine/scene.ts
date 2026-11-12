@@ -107,6 +107,7 @@ function toLayer(
   if (!box) return null;
   const common = {
     id: item.id,
+    continuity: track.template ? undefined : track.id,
     box,
     opacity: item.transform.opacity,
     blend: item.blend ?? 'normal',
