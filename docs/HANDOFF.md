@@ -1,6 +1,9 @@
 # 交接手冊（HANDOFF）
 
 ## VideoClip_2 當前交接（優先於以下來源 repo 的歷史紀錄）
+- 最新工作區回饋：docs/plans/2026-11-12-scrollable-editor-workspace.md。Editor 垂直整頁捲動，Preview 預設 24dvh/140–240px，Timeline height 隨 contentH 展開全部層、tl-scroll 僅橫向。工具欄正常文流，頁首和播放條 sticky；預覽/圖層/工具捷徑以 scrollIntoView/scrollTo 操作。
+- Touch 未選取舞台可 pan-y，selbox touch-action:none 保留編輯；先點選後移動，避免滑頁誤動物件。Timeline 取消每次內容更新自動拉回選取列，圖層拖曳的邊緣捲動改用 .editor。
+- 本機 244/check 成功，72 e2e 待 CI；目前更新既有尚未合併的 PR #1（draft），不能直接發布或代使用者合併。
 - **最新發布規則（2026-11-12）**：使用者明確要求「之後要建立 PR，給我連結，讓我自己點入去按 Merge pull request」。助手完成修改、適當測試、推送功能分支與建立 PR，回覆必附 PR 網址；由使用者合併，助手不得代合併、開 auto-merge 或直接推 main，包含文件更新。舊 fast-forward 直接發布紀錄只是歷史，不能沿用。
 - 首輪本輪 run 43165347867 為 244/66 of 69，已修正真實 touch 拖圖層的過早自動捲動、框線新建預設值和舊測試標籤。compositor continuity 僅保留相同軌道換片的舊畫面；不能因另一軌解碼未完成，就留下已刪版型/貼圖（有慢解碼回歸）。後續成功 run 以 PROGRESS 為準。
 - 本輪優先：docs/plans/2026-11-12-timeline-and-template-feedback.md，第二輪七點正在驗收；工作分支 4a004e8 / run 43166533551 已 244 單元/69 e2e 全過，59 張截圖，main run 43167202348 的 244/69 與 Pages 發布成功，公開主程式 hash 與本機已驗證建置相符；下方 237/60 是前一正式版。

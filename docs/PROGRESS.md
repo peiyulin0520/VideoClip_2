@@ -7,13 +7,13 @@
 - **目標儲存庫**：`https://github.com/peiyulin0520/VideoClip_2`
 - **工作分支**：`codex/establish-little-moments`；main 原有初始 commit `2f8bdf9` 保留。最新本機程式 commit 見 `git log -1`；推送狀態見下方。
 - **來源**：`peiyulin0520/VideoClip` main `78b178343409c46c7ba353ef3a6db6f279a7bde6`（PR #3 已合併）。以下舊日誌屬來源 repo 的歷史，不代表 VideoClip_2 的部署/瀏覽器驗收。
-- **本次明確子任務**：記錄「所有後續變更建立 PR、提供連結、由使用者自行合併」的新規則，僅文件更新；前一輪功能狀態如下。第二輪 iPhone 實測七點：非破壞來源修剪/時間軸留白、GIF 播放、直接拖曳圖層、裁切預覽、填滿/框線透明度、可辨識格子素材、版型整組操作。見 docs/plans/2026-11-12-timeline-and-template-feedback.md，工作分支與 main（4a004e8）驗收成功並已正式發布；前一版 8489d1c 保留歷史紀錄。
-- **已驗證**：本輪工作分支 run 43166533551 與 main run 43167202348（4a004e8）均 244 單元/69 Chromium e2e 全過，含真實 touch 圖層拖曳、完整來源恢復、GIF 原尺寸、多格群組與影片實際解碼、獨立透明填滿框線、慢解碼刪組不留框、裁切透明預覽。lint/TypeScript/build/Pages/39 字型授權檢查全過。
+- **本次明確子任務**：手機圖層檢視/整頁捲動，見 docs/plans/2026-11-12-scrollable-editor-workspace.md。縮小預覽並隨頁捲走、時間軸展開全部列、工具不遮圖層、保留編輯手勢及捷徑。PR #1（尚未合併）已更新為本次範圍並暫設 draft，驗收後交使用者自行 Merge。
+- **已驗證**：本次本機 npm run check：244 單元、lint、TypeScript、build、Pages/39 字型授權檢查成功；瀏覽器共 72 情境（新 3）已列出，待 CI。前次程式 4a004e8 的 244/69 僅是基線，不代表本次版面已驗證。
 - **瀏覽器驗證**：Playwright 1.63 / Chromium 153、iPhone 13 尺寸；59 張本輪 CI 截圖在 docs/screenshots，來源工作分支 run 43166533551 / artifact 13920122834，feedback/ 有 6 張新驗收。人工檢視完整來源選區、透明框線、直接排序後的疊放、四格群組與透明裁切；繁中可讀，測試素材均自製。Safari 仍待真機。
 - **階段**：第二輪七點已實作並通過 Chromium，main 已部署並確認公開主程式相符。完整雲朵字/動畫轉場/調色/備份 Drive/IG 音源等其餘規劃仍未實作；手動描邊是固定來源範圍，非人物追蹤。
 - **發布狀態**：第二輪七點已正式發布：https://peiyulin0520.github.io/VideoClip_2/ 。程式 4a004e80d3654b5ea48ef57744484960e8d599a8；main Actions https://github.com/peiyulin0520/VideoClip_2/actions/runs/43167202348 成功（build job 131011729097 / deploy job 131013709565）。HTML/manifest/GIPHY attribution 均 HTTP 200；index-DcmSgmO1.js SHA-256 363202f6ee667285a7ceae4219cfdbb675a3d4445f8dfdddbc3118ea4325effa 與本機已驗證建置一致，包含新來源選區/框線/群組功能標記。後續 [skip ci] 僅記錄文件/截圖，不另改程式部署。
-- **下一步**：iPhone Safari 實測左/右修剪及還原、左側圖層拖曳、GIF/多影片流暢度、裁切手感、透明框線與舊版型群組；其餘功能待後續明確子任務。操作說明 docs/USAGE.md。
-- **等使用者**：本次流程文件 PR 建立後，提供網址由使用者自行合併。現有網站保持已發布程式 4a004e8；Safari 真機清單仍見 PLAN §7。
+- **下一步**：工作分支 72 Chromium 情境/新截圖 → 修正真實失敗 → PR #1 標為 ready 並提供連結，使用者自行合併。Safari 實測仍見 PLAN §7。
+- **等使用者**：本次 UI 更新驗收後，由使用者自行合併 PR #1：https://github.com/peiyulin0520/VideoClip_2/pull/1 。不代合併、不開 auto-merge、不推 main；正式網站目前仍是 4a004e8。
 
 ## 日誌格式（新增一筆時照這個）
 ```
@@ -27,6 +27,7 @@
 ```
 
 ## 使用者已確認的偏好
+- 最新（附 16:21 錄影）：時間軸太窄、預覽太大且固定，應讓預覽隨頁面捲走，往下能清楚檢視所有圖層，工具欄不要佔住檢視區。這項偏好優先於前次增加預覽大小的需求。
 - 2026-11-12 最新發布規則：之後一律建立 PR，助手提供 PR 連結，由使用者自行按 Merge pull request；助手不代合併、不開 auto-merge、不直接推 main，文件也走 PR。
 - 第二輪實測：左端修剪要留空白且可還原完整來源；圖層在時間軸左側直接拖曳；字塊填滿/框線各調色彩透明度；版型要明確格子位置/素材縮圖、選取回饋，整組移除不留框架。
 - 2026-11-12 新回饋：留白像素材可拖到任何段落；可以主軌插入、色塊圖層與自由時間軸。自己的貼圖/畫作可選擇收藏，GIPHY 不入共用素材庫。
@@ -64,6 +65,12 @@
 - 2026-11-11 找到新字體來源 max32002/pop-gothic（大波浪圓體，含注音）→ 已加入手寫可愛包。問「能不能直接下載到我的 files 下載資料夾」→ 答：網頁在 iPhone 不能自動寫進「檔案」App 資料夾；官方字體存在瀏覽器裡，自己的字體用「匯入字體檔」從檔案 App 選
 
 ## 日誌（最新在最上面）
+- 2026-11-12 手機工作區改為整頁捲動（待瀏覽器驗收）
+  - 檢視使用者 5.87 秒錄影，只在 /tmp 擷取分析。原因為 editor 固定 100dvh/overflow hidden、preview flex:1，timeline 限 128px，導致多圖層只能在小框裡上下捲。
+  - 改精簡預覽、整頁垂直捲動與完整時間軸列，工具接在列表後方；保留頁首/播放控制、放大預覽/返回位置；新增查看圖層、工具、回預覽捷徑。選取框內維持操作，框外可滑頁面。
+  - 新增 3 個 13 層與窄短螢幕/觸控捲動回歸，總 72 e2e；更新舊面板收合契約為預覽保持精簡，pinch helper 先把舞台帶到可視範圍。244 單元/check 成功，尚待 CI。
+  - PR #1 仍 open、未合併，已更新標題/範圍並改 draft，完成驗收後再 ready。沒有直接推 main，正式站維持既有版本。
+
 - 2026-11-12 發布改由使用者自行合併 PR
   - 使用者原話：「之後要建立PR，然後你要給我連結，讓我自己點入去按merge pull request」。此指示取代先前直接 fast-forward main 的流程。
   - 更新 AGENTS.md 規則 10、README 發布步驟、HANDOFF 和本快照。文件更新也推功能分支並建立 PR；助手不代合併、不開 auto-merge、不直接推 main。
