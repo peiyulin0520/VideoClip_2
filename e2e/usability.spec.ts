@@ -142,7 +142,7 @@ test('第一支影片延後，白底與開場文字正確合成，重新整理�
   expect((await project(page)).tracks[0]!.items[0]!.start).toBe(2.5);
 });
 
-test('多格影片不同色塊同時顯示；三種版型、動態滑入、移除都可操作', async ({ page }) => {
+async function importTemplateAssets(page: Page) {
   await createProjectWith(page, ['solid-red.webm']);
   await openTab(page, '版型');
   await page
@@ -154,6 +154,10 @@ test('多格影片不同色塊同時顯示；三種版型、動態滑入、移�
       fixture('photo.png'),
     ]);
   await expect(page.getByLabel('第 1 格素材').locator('option')).toHaveCount(6);
+}
+
+test('拍貼與膠卷：不同素材同時顯示，預覽和輸出單格一致', async ({ page }) => {
+  await importTemplateAssets(page);
   await page.getByLabel('版型動態效果').selectOption('none');
   await page.getByRole('button', { name: '套用多格版型', exact: true }).tap();
   await expect
@@ -176,6 +180,10 @@ test('多格影片不同色塊同時顯示；三種版型、動態滑入、移�
   await page.getByRole('button', { name: '直式膠卷', exact: true }).tap();
   await page.getByRole('button', { name: '套用多格版型', exact: true }).tap();
   await page.screenshot({ path: `${shot}/filmstrip.png` });
+});
+
+test('四格相紙：每格素材、實際滑入與漂移畫面、移除版型', async ({ page }) => {
+  await importTemplateAssets(page);
   await page.getByRole('button', { name: '四格相紙', exact: true }).tap();
   await page.getByLabel('第 4 格素材').selectOption({ index: 5 });
   await page.getByLabel('版型動態效果').selectOption('slide');
