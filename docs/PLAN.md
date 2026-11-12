@@ -328,12 +328,13 @@ docs/
 - 每次回報時誠實區分：✅ 已驗證（附截圖）／🟡 寫好但只在 Chromium 驗證／🔴 做不到。
 
 ## 7. 待真機驗證清單（Sonnet 無法在沙盒驗證，要請使用者在 iPhone 上試）
+- [ ] 本次完整流程：GIPHY Key 同瀏覽器保留與實際服務額度/CORS；原音與配樂的 Safari 使用者手勢解鎖；MP4 編碼可用性、相容即時錄製、iPhone 分享/儲存影片與長片記憶體；v2→v3 資料與同裝置字體/收藏保留；720/1080/1920 預覽與描邊觸控。
 - [ ] 本次 8 項修正：Safari 首次匯入立即出現預覽、兩指/全螢幕好操作、文字清晰、三/四格多影片解碼與聲音、開場留白。
 - [ ] VideoClip_2 新部署：主畫面名稱 Little Moments、所有字體/圖示路徑、與舊 VideoClip 資料互不覆蓋、PWA scope 與離線更新
 - [ ] iOS Safari：OPFS 寫入大檔、`storage.persist()`、加入主畫面後資料保留
 - [ ] WebCodecs H.264 編碼與 AAC 音訊編碼
 - [ ] HDR 素材顏色
-- [ ] 觸控手勢（右上角縮放鈕、雙指、時間軸捲動與拖曳不衝突）
+- [ ] 觸控手勢（框內雙指縮放/旋轉、時間軸捲動與拖曳不衝突；浮動圓鈕已依最新偏好移除）
 - [ ] 大型 CJK 字體在手機上的載入速度與記憶體
 - [ ] Google Drive 授權與上傳
 - [ ] （Phase 1）iPhone 匯入照片圖庫的 .mov（HEVC）與 .heic：能不能讀長度、縮圖、播放
@@ -344,7 +345,7 @@ docs/
 - [ ] （Phase 3B）首次使用精靈在 iPhone Safari 與「加入主畫面」後的流程；字體選單捲動是否順
 - [ ] （Phase 3B）從「檔案」App（含 iCloud、Google Drive）選字體檔匯入
 - [ ] （Phase 2）多個影片同時播放（主軌＋2–3 個疊加）：畫面與聲音是否順、會不會有影片黑掉（iOS 同時解碼數量限制）
-- [ ] （Phase 2）預覽上雙指縮放/旋轉選取的物件、右上角縮放鈕好不好按、拖移時吸附會不會太黏
+- [ ] （Phase 2）預覽上雙指縮放/旋轉選取的物件、拖移時吸附會不會太黏
 - [ ] （Phase 2）混合模式（色彩加深、濾色、覆蓋、加亮）與圓角、外框在 iPhone 上的顯示
 - [ ] （Phase 2）預覽畫面大小是否夠用（底部面板展開時）
 - [ ] （Phase 1）重新整理／關掉 Safari 再開，專案與素材還在（含加入主畫面後）
@@ -359,5 +360,3 @@ docs/
 2. Google Cloud OAuth Client ID / API key（P6 再做，Sonnet 會帶步驟；只有「存到 Google 雲端」需要，「存在手機檔案」不需要）。
 3. 字體清單已整理在 `fonts/manifest.json`。沒有下載網址的 6 款（佮逸體、LINE Seed TW、中規中矩體、星光小熊貓幼兒體、字言字型手繪體、致一宋體）請在 Phase 3 開始時上傳到 Sonnet 的對話（詳見 FONTS.md §4）。
 4. Sonnet 工作環境的網路需允許：`raw.githubusercontent.com`、`registry.npmjs.org`（已可用）；若要從 GitHub Release 下載字體還需 `github.com`、`objects.githubusercontent.com`；從 Drive 下載需 `drive.google.com`、`drive.usercontent.google.com`。
-
-本次真機待驗證：GIPHY Key 同瀏覽器保留與實際服務額度/CORS；原音與配樂的 Safari 使用者手勢解鎖；MP4 編碼可用性、相容即時錄製、iPhone 分享/儲存影片與長片記憶體；v2→v3 資料與同裝置字體/收藏保留；720/1080/1920 預覽與描邊觸控。

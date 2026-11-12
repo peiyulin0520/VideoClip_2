@@ -1,14 +1,14 @@
 # 交接手冊（HANDOFF）
 
 ## VideoClip_2 當前交接（優先於以下來源 repo 的歷史紀錄）
-- 最新子任務：docs/plans/2026-11-12-editor-completion.md，已寫本機 237 單元成功，首輪 57/60 e2e；3 項已修，待第二輪 CI。以下 227/50 是先前正式版。
+- 最新子任務：docs/plans/2026-11-12-editor-completion.md，程式 8489d1c，工作分支 run 43148943226 與 main run 43149637879 已 237 單元/60 e2e 全過，53 張截圖；Pages 已發布且公開 JS hash 與驗證建置一致，詳見 PROGRESS。以下 227/50 是先前正式版。使用步驟見 docs/USAGE.md。
 - 新資料：DB v3 library（獨立 Blob/裁切設定）；GIPHY Key 僅 meta:giphyKey，絕不可加入 Project/原始碼/日誌/分享檔。Asset.kind 加 audio，VideoItem.type 加 audio，音軌共用 Item 時間/修剪但 buildScene 跳過；Project.freeMain 選填，main 操作須改用 free 函式以保留空隙。
 - 新檔案：engine/materials（色塊/匯入/音訊分離）、audio（預覽音量規則/AudioBus）、gif（時間驅動 GIF）、exportVideo/exportAudio/exportRealtime（完整輸出）、storage/library、store/preferences；UI Assets/Audio/Blank/Crop/Drawing/Export 各有 editor 元件。
 - 遮罩 points 是未裁切來源的 0–1 座標，在 Compositor 裁切後的固定媒體暫存 canvas 以 destination-in 套用，與素材一起旋轉；mask/GIF stamp 要算入貼圖快取鍵。逐格輸出使用 CanvasSink 的 Canvas/OffscreenCanvas，不能誤當成 HTMLVideoElement 讀 dataset。
 - 預覽品質預設 1080，720/1920 可選；文字獨立高密度。AudioBus 的 AudioContext 必須由播放手勢 resume；音訊-only 素材的 priming 不能等永遠不會來的 video frame callback。
 - 逐格音訊用每 10 秒 chunk 混音避免整支音訊留在記憶體；相容匯出則先在按鈕手勢建立/解鎖 AudioContext，傳進獨立 Player。暫不把 MP4 視為所有瀏覽器都能輸出，格式在完成後明示。
 
-- 最新驗收：程式 c9709ed，工作分支 run 43130792200 與 main run 43131468570 均 227 單元/50 e2e 全過；Pages 已發布並核對公開主程式 SHA-256。45 張新截圖。Safari 真機限制見 PROGRESS 交接快照。
+- 前次驗收：程式 c9709ed，工作分支 run 43130792200 與 main run 43131468570 均 227 單元/50 e2e 全過；Pages 已發布並核對公開主程式 SHA-256。45 張新截圖。Safari 真機限制見 PROGRESS 交接快照。
 - 最新工作：iPhone 實測 8 項修正，規劃/驗收見 docs/plans/2026-11-11-mobile-editor-feedback.md。最新偏好取消浮動圓鈕，用框上兩指手勢，與來源的右上角按鈕規格不同。
 - 新資料欄位皆選填：Project.mainOffset/background/layout、Track.template、VideoItem.slot、Decoration.offset、CardBox.softness/depth。主軌 store 寫回時必須重新套用 offset；itemAt 在第一個 start 之前回 null，不能提前畫原片。
 - 多格共用 buildScene/Compositor：固定視窗遮罩獨立於素材旋轉，素材可在格內拖移縮放；第一格音軌、其他格靜音，文字保留在版型上層。預覽提高至 1920；文字的物理 canvas 尺寸與邏輯 w/h 分離，不能拿 canvas.width 當選取框尺寸。
@@ -60,10 +60,10 @@ src/
   store/
     projectStore.ts               目前專案＋復原/重做（immer，上限 100，coalesce 合併拖曳）＋ setMainItems/setTrackItems
     actions.ts                    編輯動作（任何軌道的物件：改、刪、分割、複製、加疊加/文字、軌道操作…）
-    autosave.ts                   變更後 800ms 存檔；離開/切背景立刻存
+    autosave.ts                   變更後 立即寫入並合併進行中修改；flush 等最新版本完成
     appStore.ts / uiStore.ts      精靈與備份設定／toast、busy、目前 player
   storage/
-    db.ts                         IndexedDB 'videoclip' v2：projects, blobs, meta, userFonts
+    db.ts                         IndexedDB 'little-moments-videoclip-2' v3：projects, blobs, meta, userFonts, library
     media.ts                      素材檔：OPFS（projects/<id>/media/<assetId>），不支援就退回 IndexedDB blobs
     projects.ts                   專案 CRUD；**寫入排隊、讀取等寫入完成**（修過首頁讀到舊資料的 bug）
     appState.ts                   appState（onboarded、備份模式、Drive 網址解析）
@@ -87,7 +87,7 @@ docs/      PLAN / TEXT_CARDS / EFFECTS / FONTS / PROGRESS / HANDOFF / font-cover
 
 ### 座標與單位
 - `transform.x/y`：物件中心，佔畫面寬/高的比例（0–1）；`scale`：乘上「填滿(cover)/完整(contain)」算出的基本大小；`rotation`：度，順時針。
-- 專案座標＝專案解析度（9:16 為 1080×1920）；預覽 canvas 長邊最多 1920。字卡字級以 1080 寬為基準，畫的時候乘 `canvasW/1080`。
+- 專案座標＝專案解析度（9:16 為 1080×1920）；預覽 canvas 長邊預設 1080，可選 720/1920。字卡字級以 1080 寬為基準，畫的時候乘 `canvasW/1080`。
 - 圖層順序＝`project.tracks` 陣列順序；`tracks[0]` 一定是主軌。同一條疊加/文字軌的物件不能重疊（`findFreeStart`）。
 
 ### 儲存位置

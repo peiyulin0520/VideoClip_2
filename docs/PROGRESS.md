@@ -7,12 +7,12 @@
 - **目標儲存庫**：`https://github.com/peiyulin0520/VideoClip_2`
 - **工作分支**：`codex/establish-little-moments`；main 原有初始 commit `2f8bdf9` 保留。最新本機程式 commit 見 `git log -1`；推送狀態見下方。
 - **來源**：`peiyulin0520/VideoClip` main `78b178343409c46c7ba353ef3a6db6f279a7bde6`（PR #3 已合併）。以下舊日誌屬來源 repo 的歷史，不代表 VideoClip_2 的部署/瀏覽器驗收。
-- **本次明確子任務**：新一批完整剪輯流程：自由色塊/間隔、GIPHY 裝置 Key、跨專案自己的素材/畫作、手動描邊與 crop、同裝置續用、主題/色輪/裝飾長度透明度、播放效能、原音/配樂、完整影片輸出。見 docs/plans/2026-11-12-editor-completion.md；目前開發中，舊正式站尚未更新。
-- **已驗證**：本次本機 237 單元、lint、TypeScript、build、Pages 檔案/39 字型授權檢查全過。瀏覽器共 60 個情境（新增 10 個，含完整影片/音訊解碼驗收），首輪 run 43146355291 為 235 單元/57 of 60 e2e 成功；已修正 3 項失敗，待第二輪 CI。上一正式版驗收 227/50 保留歷史紀錄，不能當成新功能已驗證。
-- **瀏覽器驗證**：Playwright 1.63 / Chromium 153、iPhone 13 畫面尺寸；45 張本次生成截圖已更新至 docs/screenshots（含 usability/ 7 張），來源工作分支 run 43130792200 / artifact 13904869854。已人工檢視四格相紙、字塊、全畫面預覽及白底開場，繁中可讀、選取框不跨格。iPhone Safari 仍需真機測試。
-- **階段**：本次已寫好自由色塊/時間軸、自己的素材庫與手繪、GIPHY、手動遮罩/crop、音訊/配樂、完整逐格及相容影片匯出、主題/色輪/裝飾；尚待新 CI/真機。完整雲朵字、動畫轉場、調色、備份/Drive、IG 音源等其餘規劃未實作。
-- **發布狀態**：本次 8 項編輯體驗更新已正式發布：https://peiyulin0520.github.io/VideoClip_2/ 。部署程式 c9709edbb07e8a2488ce10d31e049ccae7f094b5；Actions https://github.com/peiyulin0520/VideoClip_2/actions/runs/43131468570 成功。公開 HTML/manifest/JavaScript HTTP 200，index-D1Rss_6p.js 的 SHA-256 與本機驗證建置完全一致，並含新功能標記。後續 [skip ci] 提交只更新交接文件及驗收圖，不代表另一次程式部署。
-- **下一步**：新功能工作分支 CI 60 情境及截圖 → 修正實際失敗 → main 發布 → iPhone Safari 真機音訊/匯出/儲存與效能驗證。
+- **本次明確子任務**：新一批完整剪輯流程：自由色塊/間隔、GIPHY 裝置 Key、跨專案自己的素材/畫作、手動描邊與 crop、同裝置續用、主題/色輪/裝飾長度透明度、播放效能、原音/配樂、完整影片輸出。見 docs/plans/2026-11-12-editor-completion.md；功能分支與 main 驗收成功，正式站已更新。
+- **已驗證**：本次本機 237 單元、lint、TypeScript、build、Pages 檔案/39 字型授權檢查全過。工作分支 run 43148943226 與 main run 43149637879（8489d1c）均 237 單元/60 e2e 全過；含完整影片/音訊解碼、即時匯出、素材跨專案保存、透明 GIF、手動 crop、Key 隔離。首輪 3 項失敗已修正並回歸通過。上一正式版驗收 227/50 保留歷史紀錄，不能當成新功能已驗證。
+- **瀏覽器驗證**：Playwright 1.63 / Chromium 153、iPhone 13 畫面尺寸；53 張本次 CI 截圖在 docs/screenshots，來源 run 43148943226 / artifact 13912744109。人工檢視留白插片、手繪、透明套索、GIPHY Key 遮蔽、匯出完成與暖棕主題；繁中可讀。匯出 screenshot 原生播放器仍可有載入圖示，真正影格/字幕/聲音由獨立解碼驗收通過。iPhone Safari 仍需真機測試。
+- **階段**：本次已寫好自由色塊/時間軸、自己的素材庫與手繪、GIPHY、手動遮罩/crop、音訊/配樂、完整逐格及相容影片匯出、主題/色輪/裝飾；已通過 Chromium CI；尚待 Safari 真機。完整雲朵字、動畫轉場、調色、備份/Drive、IG 音源等其餘規劃未實作。
+- **發布狀態**：本次完整剪輯流程已正式發布：https://peiyulin0520.github.io/VideoClip_2/ 。部署程式 8489d1ceeb813b0c7a43fb88fc3e343ab7f392e6；Actions https://github.com/peiyulin0520/VideoClip_2/actions/runs/43149637879 成功（build job 130955507372 / deploy job 130957335517）。公開 HTML、manifest、GIPHY 官方 attribution HTTP 200；index-BbReBVjd.js SHA-256 9fa195df435e72b1e61ce9a415a0ef9cb88fe53822a0f815400eb64664bb5707 與本機驗證建置一致，並含新功能標記。後續 [skip ci] 只更新文件與驗收圖，不另改已部署程式。
+- **下一步**：iPhone Safari 真機音訊/匯出/儲存與效能驗證；其餘模板、動畫/轉場/調色、專案備份等待後續明確子任務。使用步驟見 docs/USAGE.md。
 - **等使用者**：目前不需再做帳號授權；程式及 Pages 設定已可存取。發布後再請使用者進行 PLAN §7 的 iPhone Safari 實測。
 
 ## 日誌格式（新增一筆時照這個）
@@ -62,6 +62,12 @@
 - 2026-11-11 找到新字體來源 max32002/pop-gothic（大波浪圓體，含注音）→ 已加入手寫可愛包。問「能不能直接下載到我的 files 下載資料夾」→ 答：網頁在 iPhone 不能自動寫進「檔案」App 資料夾；官方字體存在瀏覽器裡，自己的字體用「匯入字體檔」從檔案 App 選
 
 ## 日誌（最新在最上面）
+- 2026-11-12 完整剪輯流程 60 情境驗收成功
+  - 程式 commit 8489d1ceeb813b0c7a43fb88fc3e343ab7f392e6，工作分支 run 43148943226：237 單元、60 Chromium e2e 全過（3.6 分鐘），Pages 路徑/PWA/39 字型授權檢查通過。首輪 3 個失敗全部回歸通過。
+  - 53 張 CI 截圖更新至 docs/screenshots（含 completion/ 新增 8 張）；來源 artifact 13912744109，測試素材均為自製、GIPHY 為 mock，無實際 Key/第三方創作者素材。
+  - 新增 docs/USAGE.md，說明留白/自由間隔、畫作收藏、GIPHY 本機 Key、crop、音軌與匯出的位置。輸出預設直式專案可用 1080×1920，選單顯示真實寬高；測試用小檔案尺寸以節省 CI。
+  - 已 fast-forward main，run 43149637879 的 237/60 與 Pages 部署成功；公開 HTML/manifest/attribution 200，主 JS SHA-256 與本機 build 相同。Safari、HEVC/HDR、長片記憶體與裝置分享仍未真機驗證。
+
 - 2026-11-12 首輪影片/音訊驗收通過，修正續存與彈出面板/相容格式
   - run 43146355291：235 單元、57/60 e2e 成功。真正匯出的文字/原音、延後配樂、透明 GIF 與下載通過；預覽音量分析證實原音開關有作用；GIPHY Key 隔離/重開、自己的畫作、自由間隔與既有 50 情境全過。
   - 收藏重用後立刻重整仍在 800ms debounce 視窗會丟專案最後一筆；Autosave 改立即寫入、執行中的修改合併最新 immutable snapshot，綁定 projectId 避免切專案的舊迴圈寫到新專案。新增 2 個回歸單元（總 237），素材加入完成前等待 flush。
