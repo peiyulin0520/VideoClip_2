@@ -6,7 +6,7 @@
 
 已具備多專案、多素材拼接、修剪/分割/變速、多軌疊加、拖移縮放旋轉、字卡排版/描邊/陰影、13 種裝飾、33 種圖形、字體下載/快取/本機匯入、首次使用精靈與 PWA。
 
-仍在規劃中：Fluent Emoji 內建貼圖、雲朵字與完整字卡模板、動畫/轉場/調色、進階動態遮罩追蹤、專案備份/Google Drive、IG 音樂推薦。本次新增完整逐格影片與音訊混音、相容即時匯出；格式依瀏覽器編碼能力明示 MP4 或 WebM。新功能 237 單元/60 Chromium e2e 通過並已發布，細節見 PROGRESS。Google Drive 選項目前只是規劃入口。
+仍在規劃中：Fluent Emoji 內建貼圖、雲朵字與完整字卡模板、動畫/轉場/調色、進階動態遮罩追蹤、專案備份/Google Drive、IG 音樂推薦。本次新增完整逐格影片與音訊混音、相容即時匯出；格式依瀏覽器編碼能力明示 MP4 或 WebM。新功能及第二輪回饋 244 單元/69 Chromium e2e 通過並已發布，細節見 PROGRESS。Google Drive 選項目前只是規劃入口。
 
 原 Sites 的 Little Moments 是另一個版本；這個建立工作不修改原 Sites。兩套模型不同，目前沒有自動轉換專案或素材庫 ZIP，請保留舊資料與原始影片。
 
@@ -20,7 +20,7 @@ npm run check
 npm run e2e -- --trace off
 ```
 
-`check` 包含 lint、237 個單元測試、TypeScript、正式建置及 GitHub Pages 路徑/PWA/字體檔案檢查。60 個瀏覽器測試（含完整影片/音訊解碼、收藏、GIF、手動遮罩、Key 與主題）交由 GitHub Actions 的 Chromium 153 執行，CI 保存截圖 artifact；最新成功狀態見 PROGRESS.md。本次已更新 53 張 CI 畫面（docs/screenshots）中文可讀；iPhone Safari 仍待真機驗證。
+`check` 包含 lint、244 個單元測試、TypeScript、正式建置及 GitHub Pages 路徑/PWA/字體檔案檢查。69 個瀏覽器測試（含完整影片/音訊解碼、收藏、GIF、手動遮罩、Key 與主題）交由 GitHub Actions 的 Chromium 153 執行，CI 保存截圖 artifact；最新成功狀態見 PROGRESS.md。本次已更新 59 張 CI 畫面（docs/screenshots）中文可讀；iPhone Safari 仍待真機驗證。
 
 ## GitHub Pages
 
@@ -58,3 +58,9 @@ npm run e2e -- --trace off
 GIPHY Key 只儲存在使用者自己的瀏覽器，網站沒有共用 Key；不要把實際 Key 提交到公開 repo。GIPHY 搜尋不進跨專案收藏，已放進專案的 GIF 保留在該專案。自己的素材收藏獨立於專案，刪收藏不刪已使用的素材。字體/專案/收藏與 Key 均不會自動跨手機/瀏覽器同步；不清除網站資料時可重開使用，瀏覽器儲存本身仍非永久備份。
 
 GIF 解碼器 gifuct-js 2.1.2 為 MIT，授權位於 public/licenses。輸出含字幕/文字/色塊/GIF/裁切/音軌；手動遮罩為靜態來源座標，尚無人物自動追蹤。相容匯出需保持頁面開啟。iPhone Safari、長片記憶體與真實 MP4/分享能力仍需真機確認。
+
+## 第二輪手機操作修正
+
+來源影片可用完整來源選區還原，左端修剪會留空白並固定片尾；左側軌道 icon 可直接拖曳疊放順序。字塊填滿與框線顏色/透明度獨立。版型提供位置編號和素材縮圖，支援將現有疊加片段合成單軌多格群組；整組移動/修剪/複製/分割/隱藏/刪除，框架一起處理。裁切新增透明結果預覽與上一筆描邊復原。降低小 GIF 的紋理上傳量並重用影格，Safari 真機流暢度仍待確認。
+
+最新驗收、發布與限制以 [PROGRESS](docs/PROGRESS.md) 為準，操作步驟見 [USAGE](docs/USAGE.md)。
