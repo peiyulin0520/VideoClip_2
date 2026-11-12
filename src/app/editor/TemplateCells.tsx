@@ -1,3 +1,4 @@
+import { MIN_CLIP_DURATION } from '../../model/defaults';
 import { useRef, useState } from 'react';
 import type { Track, VideoItem } from '../../model/types';
 import { useProjectStore } from '../../store/projectStore';
@@ -198,6 +199,7 @@ function Cell({
           />
           <SourceRanges
             duration={asset.duration}
+            minimum={Math.min(asset.duration, MIN_CLIP_DURATION * item.speed)}
             ranges={[[item.trimIn, selectedEnd]]}
             thumbs={asset.thumbs}
             onChange={(ranges) =>

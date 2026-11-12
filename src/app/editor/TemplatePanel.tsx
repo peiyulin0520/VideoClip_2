@@ -3,6 +3,7 @@ import { ensureFont } from '../../fonts/fontStore';
 import { useRef, useState } from 'react';
 import {
   collagePlan,
+  carryTemplateEdits,
   LAYOUTS,
   layoutSlots,
   slotLabel,
@@ -27,7 +28,7 @@ export function TemplatePanel() {
     [motion, setMotion] = useState<LayoutMotion>(
       activeGroup?.layout?.motion ?? project.layout?.motion ?? 'none',
     ),
-    [seconds, setSeconds] = useState(activeGroup?.layout?.duration ?? 3),
+    [lengthDraft, setLengthDraft] = useState<{ key: string; baseline: number; value: number } | null>(null),
     [selected, setSelected] = useState<string[]>(
       project.tracks
         .filter((t) => t.id === activeGroup?.id)
@@ -36,6 +37,11 @@ export function TemplatePanel() {
     [focusSlot, setFocusSlot] = useState(0),
     [sourceIds, setSourceIds] = useState<string[] | null>(null);
   const [storyCount, setStoryCount] = useState(Math.min(3, activeGroup?.layout?.count ?? 3));
+  const referenceLength = activeGroup?.layout?.duration ?? 3;
+  const seconds =
+    lengthDraft?.key === (activeGroup?.id ?? 'new') && lengthDraft.baseline === referenceLength
+      ? lengthDraft.value
+      : referenceLength;
   const media = project.assets.filter((a) => a.kind !== 'audio');
   const existing = project.tracks
     .filter((t) => !t.template)
@@ -83,14 +89,15 @@ export function TemplatePanel() {
         ids,
         style,
         motion,
-        useUI.getState().player?.time ?? 0,
+        activeGroup && !sourceIds ? activeGroup.items[0]!.start : (useUI.getState().player?.time ?? 0),
         seconds,
         sources,
       );
+      if (activeGroup && !sourceIds) carryTemplateEdits(plan.tracks[0]!, activeGroup);
       if (plan.layout.story) {
         useUI.getState().setBusy('正在準備故事模板字體…');
-        for (const id of plan.layout.story.fontIds)
-          if (!(await ensureFont(id))) throw Error('故事字體載入失敗，請確認網路後再套用');
+        for (const id of plan.tracks[0]!.layout?.story?.fontIds ?? [])
+          if (id !== 'system' && !(await ensureFont(id))) throw Error('故事字體載入失敗，請確認網路後再套用');
       }
       useProjectStore.getState().apply(
         (d) => {
@@ -160,7 +167,7 @@ export function TemplatePanel() {
             <button
               key={i}
               className={focusSlot === i ? 'active' : ''}
-              aria-label={`選擇第 ${i + 1} 格 ${slotLabel(style, i)}`}
+              aria-label={`選擇第 ${i + 1} 格 ${slotLabel(style, i, count)}`}
               onClick={() => setFocusSlot(i)}
               style={{
                 left: `${slot.x * 100}%`,
@@ -171,7 +178,7 @@ export function TemplatePanel() {
             >
               {a?.thumbs[0] && <img src={a.thumbs[0]} alt="" />}
               <strong>
-                {i + 1} · {slotLabel(style, i)}
+                {i + 1} · {slotLabel(style, i, count)}
               </strong>
             </button>
           );
@@ -226,7 +233,7 @@ export function TemplatePanel() {
       {ids.map((id, i) => (
         <label className={`slot-choice${focusSlot === i ? ' focused' : ''}`} key={i}>
           <span>
-            第 {i + 1} 格 · {slotLabel(style, i)}
+            第 {i + 1} 格 · {slotLabel(style, i, count)}
           </span>
           {media.find((a) => a.id === id)?.thumbs[0] && (
             <img src={media.find((a) => a.id === id)!.thumbs[0]} alt={`第 ${i + 1} 格素材縮圖`} />
@@ -274,7 +281,13 @@ export function TemplatePanel() {
           max={60}
           step={0.1}
           value={seconds}
-          onChange={(e) => setSeconds(Number(e.target.value))}
+          onChange={(e) =>
+            setLengthDraft({
+              key: activeGroup?.id ?? 'new',
+              baseline: referenceLength,
+              value: Number(e.target.value),
+            })
+          }
         />
       </label>
       <p className="hint">

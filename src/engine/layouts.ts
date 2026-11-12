@@ -8,7 +8,8 @@ export const LAYOUTS: { id: LayoutStyle; label: string; count: number }[] = [
   { id: 'polaroid', label: '四格相紙', count: 4 },
   { id: 'story', label: '展開故事', count: 3 },
 ];
-export function slotLabel(style: LayoutStyle, index: number) {
+export function slotLabel(style: LayoutStyle, index: number, count = 3) {
+  if (style === 'story' && count === 2) return ['上方', '下方'][index]!;
   return style === 'polaroid' ? ['左上', '右上', '左下', '右下'][index]! : ['上方', '中間', '下方'][index]!;
 }
 export function layoutSlots(style: LayoutStyle, count = 3): NonNullable<VideoItem['slot']>[] {
@@ -165,4 +166,27 @@ export function mergeLegacyTemplate(project: Project): Project {
   const tracks = project.tracks.filter((t) => !t.template);
   tracks.splice(first, 0, group);
   return { ...project, tracks };
+}
+
+/** Reapplying a layout must retain the source cuts/gaps already edited in matching cells. */
+export function carryTemplateEdits(
+  next: import('../model/types').Track,
+  previous: import('../model/types').Track,
+) {
+  if (next.layout && previous.layout?.transform)
+    next.layout.transform = structuredClone(previous.layout.transform);
+  if (next.layout?.story && previous.layout?.story)
+    next.layout.story = structuredClone(previous.layout.story);
+  next.items = next.items.map((item, i) => {
+    const old = previous.items[i];
+    if (item.type === 'text' || !old || old.type === 'text' || old.assetId !== item.assetId) return item;
+    return {
+      ...structuredClone(old),
+      id: item.id,
+      start: item.start,
+      duration: item.duration,
+      slot: item.slot,
+      transform: item.transform,
+    };
+  });
 }

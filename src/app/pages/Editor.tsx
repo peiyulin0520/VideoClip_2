@@ -39,7 +39,7 @@ function EditorLoader({ projectId }: { projectId: string }) {
       const missing = await ensureUrls(p.id, p.assets);
       if (cancelled) return;
       for (const id of new Set(p.tracks.flatMap((tr) => tr.layout?.story?.fontIds ?? [])))
-        await ensureFont(id);
+        if (id !== 'system') await ensureFont(id);
       useProjectStore.getState().load(editableProject(p));
       autosave = startAutosave();
       setStatus('ready');

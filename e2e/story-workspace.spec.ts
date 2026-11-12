@@ -142,6 +142,14 @@ test('每格來源可獨立選段，共同長度不變，短素材補白且可�
   await second.getByRole('button', { name: '移除此色塊', exact: true }).tap();
   g = (await current(page)).tracks.find((t) => t.template)!;
   expect((g.items[1] as VideoItem).cell!.blanks).toEqual([]);
+  await page.getByRole('button', { name: '套用多格版型', exact: true }).tap();
+  await expect
+    .poll(async () => ((await current(page)).tracks.find((t) => t.template)!.items[0] as VideoItem).trimIn)
+    .toBeCloseTo(0.05);
+  expect((await current(page)).tracks.find((t) => t.template)!.items.map((i) => i.duration)).toEqual([
+    4, 4, 4,
+  ]);
+  expect((await current(page)).tracks.find((t) => t.template)!.items[0]!.start).toBe(0);
 });
 
 test('音訊可直接標記多組精確靜音起迄，顯示對應畫面並可移除其中一組', async ({ page }) => {

@@ -6,7 +6,7 @@
 - **日期/分支**：2026-11-12 UTC（使用者 11/13 iPhone 回報）/ codex/establish-little-moments；PR #4 已由使用者合併，基線 main d12b39c。
 - **本次子任務**：docs/plans/2026-11-13-template-story-workspace.md：預設收合時間軸、移除頁尾保留空白、整組模板縮放與獨立來源/補色、多組精確靜音標記、特效頁籤與展開故事。
 - **已實作**：layout.transform 與 canonical cell geometry；cell.sourceEnd/offset/blanks/background、mediaSegments 跨預覽/混音/匯出；來源不足補色不凍結。故事二/三格展開、三字體輪換/暖閃；Project.effects 四種轉場。時間軸依專案 session 記住自行展開，預設收合；回頂在頁尾隱藏，不再縮短 main 留白。
-- **驗證**：基線本機 check 267 成功；本次 277 單元、98 e2e 待完整 check 與 CI，未宣稱瀏覽器完成。既有 107 圖為上版，不當新驗收。iPhone Safari 待真機。
+- **驗證**：基線本機 check 267 成功；首輪 277 單元、97/98 e2e；補正後本機 check/278 單元成功，98 e2e 待下一輪 CI，未宣稱瀏覽器完成。既有 107 圖為上版，不當新驗收。iPhone Safari 待真機。
 - **PR/發布**：本次另開新 PR draft，完成驗收後交使用者自行 Merge；不代合併、不推 main、不開 auto-merge。
 - **下一步**：本機 check → 功能分支推送/新 PR → CI → 修正與截圖檢視 → 完成驗收紀錄。現在無需使用者補充。
 
@@ -68,6 +68,13 @@
 - 2026-11-11 找到新字體來源 max32002/pop-gothic（大波浪圓體，含注音）→ 已加入手寫可愛包。問「能不能直接下載到我的 files 下載資料夾」→ 答：網頁在 iPhone 不能自動寫進「檔案」App 資料夾；官方字體存在瀏覽器裡，自己的字體用「匯入字體檔」從檔案 App 選
 
 ## 日誌（最新在最上面）
+
+- 2026-11-12 首輪 277/97 of 98 後補正故事字體與重新套用保存
+  - 程式 693515a / run 43282652239：277 單元、97/98 Chromium 通過。僅故事套用失敗：ensureFont 不接受 system ID，套用/重開跳過系統字體，實際自訂字體仍 await 載入。
+  - 同步補正重新套用：匹配格子保留來源裁切、色塊、音量/遮罩等設定，整組位置保留、既有模板不移到當前播放頭；共同長度 UI 跟隨已調整的群組長度。新增一個單元及原 e2e 內的重新套用驗收，總 278/98。
+  - 二格故事正確標上下；版型內來源最短長度與放大選段保持一致。失敗 artifact 13972798601（0092e66fe19e0c5cfd800bd5ac2fdb658a63da5203042ed7391cb742bdda414c）僅臨時檢查，不作最終截圖。
+  - 下一步：本機 check、更新 PR #5、下一輪完整瀏覽器驗收。Safari 仍待真機。
+
 
 - 2026-11-12 收合工作區與整組故事模板（功能分支，commit 見 git log）
   - 實作與檔案：見快照及本次計畫；新增 templateTiming/templateGeometry/sceneEffects、TemplateCells/EffectsPanel、來源精確靜音操作；更新場景、音訊輸出、群組動作與 UI。

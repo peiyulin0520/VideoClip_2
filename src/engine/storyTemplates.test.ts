@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import type { Asset, VideoItem } from '../model/types';
 import { createProject } from '../model/defaults';
-import { collagePlan } from './layouts';
+import { collagePlan, carryTemplateEdits } from './layouts';
 import { cellMediaTime, mediaSegments, sliceCell } from './templateTiming';
 import { cellViewport, groupFrame } from './templateGeometry';
 import { audibleClips } from './audio';
@@ -141,6 +141,27 @@ describe('group template geometry and source timing', () => {
       [0, 2],
       [2.4, 4],
     ]);
+  });
+  it('reapplying a template keeps edited cuts, gaps and whole-frame placement without mutating the old group', () => {
+    const p = group(),
+      old = p.tracks[1]!,
+      first = old.items[0] as VideoItem;
+    first.trimIn = 0.2;
+    first.cell!.sourceEnd = 0.8;
+    first.cell!.blanks = [[0.3, 0.6]];
+    old.layout!.transform = { x: 0.4, y: 0.6, scale: 0.7 };
+    const plan = collagePlan(p, ['a', 'b', 'c'], 'filmstrip', 'none', 0, 6);
+    carryTemplateEdits(plan.tracks[0]!, old);
+    const next = plan.tracks[0]!.items[0] as VideoItem;
+    expect(next).toMatchObject({
+      start: 0,
+      duration: 6,
+      trimIn: 0.2,
+      cell: { sourceEnd: 0.8, blanks: [[0.3, 0.6]] },
+    });
+    expect(next.id).not.toBe(first.id);
+    expect(first.duration).toBe(4);
+    expect(plan.tracks[0]!.layout!.transform).toEqual(old.layout!.transform);
   });
   it('independent effects extend duration without moving or changing media', () => {
     const p = group();

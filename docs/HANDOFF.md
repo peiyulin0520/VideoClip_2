@@ -1,6 +1,8 @@
 # 交接手冊（HANDOFF）
 
 ## VideoClip_2 當前交接（優先於以下來源 repo 的歷史紀錄）
+- 首輪 693515a / run 43282652239：277 單元、97/98 e2e；故事失敗因 ensureFont('system') 回 false，系統字體必須跳過載入，載入的是實際字體。新增 carryTemplateEdits：重新套用匹配的格子保留原來源/色塊等設定與 group transform，不把已套用組移到播放頭；群組長度變更同步草稿 seconds。278/98 待下輪 CI，PR #5 仍 draft。
+
 - 最新子任務 docs/plans/2026-11-13-template-story-workspace.md，PR #4 已使用者合併（main d12b39c）；本次新 PR 待 check/CI。下列 PR #4 待合併與 267/91 是上版歷史。
 - Template geometry 由 templateContexts/cellViewport/groupFrame 統一；itemBox 在模板內用 canonical 格位，Preview 手勢與 setTransform 轉到 layout.transform，來源 item.transform 不再被單格手勢改歪。文字/光效及整組暫時置頂也跟群組。每格選取仍以 Item ID 供剪輯使用。
 - 新 cell.sourceEnd 是來源秒數、offset/blanks 是群組內秒數；空白暫停來源消耗。mediaSegments、cellMediaTime、sourceTimeAt 與 audibleClips/AudioRenderer 共用。AudioRenderer 每段用自己的 sourceStart 對應時間，不可回到整個 item 的線性公式；來源選段不能重排整組。群組左裁/分割用 sliceCell 重設 offset/blank 對齊。
