@@ -1,7 +1,9 @@
 # 交接手冊（HANDOFF）
 
 ## VideoClip_2 當前交接（優先於以下來源 repo 的歷史紀錄）
-- **工作區最新驗收**：c6f196c / run 43186969560 的 246 單元、72 e2e 全過，63 張截圖（workspace/ 4 張）。PR #1 https://github.com/peiyulin0520/VideoClip_2/pull/1 已涵蓋精簡預覽、完整圖層列表、整頁捲動及續用儲存競態修正；由使用者自行合併，未部署。以下「待 CI」是過程紀錄，最新快照見 PROGRESS。
+- **目前任務**：docs/plans/2026-11-12-single-page-settings.md。PR #1 已由使用者合併且部署成功（main a1b455b / run 43201177854，公開 JS hash 相符）；下方「PR #1 未合併」是歷史。最新截圖未見導航，可能開舊頁籤。
+- 新補充：.editor .panel/.panel.tall max-height:none / overflow:visible，設定也隨整頁展開；取消內部 sticky-tabs。保留對話框、字體 picker 等真正彈出框捲動，時間軸仍按層展開。8194f79 / run 43206542321：246 單元與 73 e2e 全過；64 張截圖已更新（workspace/single-page-controls 新增）。PR #2 https://github.com/peiyulin0520/VideoClip_2/pull/2 待使用者自行合併，未開 auto-merge，Safari 真機仍待確認。
+- **工作區最新驗收**：c6f196c / run 43186969560 的 246 單元、72 e2e 全過，63 張截圖（workspace/ 4 張）。PR #1 https://github.com/peiyulin0520/VideoClip_2/pull/1 已涵蓋精簡預覽、完整圖層列表、整頁捲動及續用儲存競態修正；已由使用者自行合併並部署；PR #2 為本次待合併補充。以下「待 CI」是過程紀錄，最新快照見 PROGRESS。
 - 工作區第二輪 run 43186048643 的三項新驗收全過，僅舊續用重開測試抓到競態。appStore.init 現共用 initializing Promise；update 序列化、等 saveAppState 完成才 set，避免畫面已完成但 IDB 尚未持久化與重複初始化蓋狀態。新增 2 單元，總 246；歡迎頁 e2e 等完成畫面再做後續操作，不用 sleep。
 - 工作區首輪 run 43185102894 為 244/71 of 72，原有 69 全過。最後工具輸入框 bottom 比 viewport 多 1.36px，已補 editor 底部 16px/safe area 與 scroll padding；測試仍要求輸入框完全可視，不放寬像素斷言。下一個成功 run 及 PR 狀態見 PROGRESS。
 - 最新工作區回饋：docs/plans/2026-11-12-scrollable-editor-workspace.md。Editor 垂直整頁捲動，Preview 預設 24dvh/140–240px，Timeline height 隨 contentH 展開全部層、tl-scroll 僅橫向。工具欄正常文流，頁首和播放條 sticky；預覽/圖層/工具捷徑以 scrollIntoView/scrollTo 操作。

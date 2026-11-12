@@ -108,3 +108,33 @@ test('上下查看圖層與左右移動播放頭各自獨立，狹窄短螢幕�
   await expect(page.getByRole('tab', { name: '剪輯', exact: true })).toBeInViewport();
   await page.screenshot({ path: `${shots}/narrow-screen-tools.png` });
 });
+
+test('功能設定也在整頁展開，從字塊設定滑動會帶動整頁而非小面板', async ({ page }) => {
+  await createProjectWith(page, ['solid-blue.webm']);
+  await openTab(page, '文字');
+  await page.getByRole('button', { name: /新增文字/ }).tap();
+  await page.getByRole('tab', { name: '字塊', exact: true }).tap();
+  await page.getByRole('radio', { name: '方形', exact: true }).tap();
+  const panel = page.locator('.bottombar > .panel');
+  const sizes = await panel.evaluate((el) => ({
+    height: el.clientHeight,
+    content: el.scrollHeight,
+    overflow: getComputedStyle(el).overflowY,
+  }));
+  expect(sizes.height).toBeGreaterThan(600);
+  expect(sizes.content - sizes.height).toBeLessThanOrEqual(1);
+  expect(sizes.overflow).toBe('visible');
+  const radio = page.getByRole('radio', { name: '方形', exact: true });
+  await radio.evaluate((el) => el.scrollIntoView({ block: 'center' }));
+  const box = (await radio.boundingBox())!,
+    before = await scrollTop(page);
+  await swipe(page, box.x + box.width / 2, box.y + box.height / 2, 0, -100);
+  await expect.poll(() => scrollTop(page)).toBeGreaterThan(before + 25);
+  expect(await panel.evaluate((el) => el.scrollTop)).toBe(0);
+  const final = page.getByRole('slider', { name: '內距 下', exact: true });
+  await final.scrollIntoViewIfNeeded();
+  await expect(final).toBeInViewport();
+  await page.screenshot({ path: `${shots}/single-page-controls.png` });
+  await page.getByRole('button', { name: '回到預覽', exact: true }).tap();
+  await expect.poll(() => scrollTop(page)).toBe(0);
+});

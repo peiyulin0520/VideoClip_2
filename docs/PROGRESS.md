@@ -7,13 +7,13 @@
 - **目標儲存庫**：`https://github.com/peiyulin0520/VideoClip_2`
 - **工作分支**：`codex/establish-little-moments`；main 原有初始 commit `2f8bdf9` 保留。最新本機程式 commit 見 `git log -1`；推送狀態見下方。
 - **來源**：`peiyulin0520/VideoClip` main `78b178343409c46c7ba353ef3a6db6f279a7bde6`（PR #3 已合併）。以下舊日誌屬來源 repo 的歷史，不代表 VideoClip_2 的部署/瀏覽器驗收。
-- **本次明確子任務**：手機圖層檢視/整頁捲動，見 docs/plans/2026-11-12-scrollable-editor-workspace.md。縮小預覽並隨頁捲走、時間軸展開全部列、工具不遮圖層、保留編輯手勢及捷徑。PR #1 尚未合併，已更新為本次範圍與驗收結果，交使用者自行 Merge。
-- **已驗證**：本次程式 c6f196cc9f7c5b0ee7be2f078da627daf58e50ab / 工作分支 run 43186969560（build job 131076433714）246 單元、72 Chromium e2e 全過；含 13 層觸控捲頁、原有 69 情境、窄螢幕、工具跳轉、填字完整可視、放大預覽與重開設定。lint/TypeScript/build/Pages/39 字型檢查通過。
-- **瀏覽器驗證**：Playwright 1.63 / Chromium 153、iPhone 13 尺寸與 320×568 窄螢幕；63 張本次 CI 截圖在 docs/screenshots，來源 run 43186969560 / artifact 13929546315，workspace/ 新 4 張。人工檢視精簡預覽、完整圖層頁面、文字工具與窄螢幕操作；繁中可讀、均為自製素材，非 Safari 真機。
-- **階段**：工作區與續用設定競態修正已完成驗收，透過 PR #1 交使用者自行合併，尚未部署。本次不推 main、不代合併。先前發布的第二輪七點保留；動畫/轉場/調色/備份等其餘規劃未實作。
-- **發布狀態**：第二輪七點已正式發布：https://peiyulin0520.github.io/VideoClip_2/ 。程式 4a004e80d3654b5ea48ef57744484960e8d599a8；main Actions https://github.com/peiyulin0520/VideoClip_2/actions/runs/43167202348 成功（build job 131011729097 / deploy job 131013709565）。HTML/manifest/GIPHY attribution 均 HTTP 200；index-DcmSgmO1.js SHA-256 363202f6ee667285a7ceae4219cfdbb675a3d4445f8dfdddbc3118ea4325effa 與本機已驗證建置一致，包含新來源選區/框線/群組功能標記。後續 [skip ci] 僅記錄文件/截圖，不另改程式部署。
-- **下一步**：使用者自行合併 PR #1 → main Actions 驗收/Pages 發布 → Safari 真機確認捲動與選取手勢。PR：https://github.com/peiyulin0520/VideoClip_2/pull/1 。
-- **等使用者**：本次 UI 更新驗收後，由使用者自行合併 PR #1：https://github.com/peiyulin0520/VideoClip_2/pull/1 。不代合併、不開 auto-merge、不推 main；正式網站目前仍是 4a004e8。
+- **本次明確子任務**：整頁捲動補充，功能設定也自然展開，移除下方面板獨立小捲動框；見 docs/plans/2026-11-12-single-page-settings.md。預覽與圖層已由使用者合併 PR #1 發布，本次另走新 PR。
+- **已驗證**：程式 8194f7976414982e01902978fd56ba9c755a7d6c / Actions https://github.com/peiyulin0520/VideoClip_2/actions/runs/43206542321：246 單元、73 Chromium e2e（4.4 分鐘）、lint/格式/TypeScript/build/Pages 與 39 字體檢查全部成功。
+- **瀏覽器驗證**：Playwright 1.63 / Chromium 153、iPhone 13 尺寸與 320×568；64 張 CI 截圖已更新至 docs/screenshots，來源 run 43206542321 / artifact 13938271777，ZIP SHA-256 579dbd26e66d813c22553bac4a0b28c7e12cb1a16a409a9c087b0881ce7c4eef。人工檢視精簡預覽、13 層頁面及 single-page-controls；繁中可讀、自製素材，非 Safari 真機。
+- **階段**：PR #1 已由使用者合併發布；PR #2 https://github.com/peiyulin0520/VideoClip_2/pull/2 補齊設定區整頁展開，已驗收、待使用者自行 Merge；助手不代合併、未開 auto-merge。其餘動畫/轉場/備份等規劃未實作。
+- **發布狀態**：PR #1 由使用者於 2026-11-12 10:31:48 UTC 合併，main a1b455b2688874306a618745bea136cd30c592b1 / Actions https://github.com/peiyulin0520/VideoClip_2/actions/runs/43201177854 成功。公開 HTML/manifest/attribution 200，index-BQnZUr0n.js SHA-256 61fabaa80f502657e3996f7fc41b79bcaf68ad753fcce5058ca56362c405b818 與本機已驗證建置相同。新 .panel 整頁展開補充未發布；截圖未見新版捷徑，可能仍為舊頁籤。
+- **下一步**：PR #2 由使用者自行合併 → main Actions/Pages → iPhone Safari 真機確認整頁滑動、長設定與雙指編輯。
+- **等使用者**：PR #2 已完成驗收，由使用者自行 Merge。已提醒關閉舊頁籤後重新開啟目前網址以載入 PR #1 新介面；不清除網站資料。
 
 ## 日誌格式（新增一筆時照這個）
 ```
@@ -27,6 +27,7 @@
 ```
 
 ## 使用者已確認的偏好
+- 圈圖補充：整個編輯頁可上下滑，預覽和時間軸不固定在大區塊；不僅限下方設定可滑動，時間軸依圖層數展開。功能設定也取消小捲動框，隨整頁展開。
 - 最新（附 16:21 錄影）：時間軸太窄、預覽太大且固定，應讓預覽隨頁面捲走，往下能清楚檢視所有圖層，工具欄不要佔住檢視區。這項偏好優先於前次增加預覽大小的需求。
 - 2026-11-12 最新發布規則：之後一律建立 PR，助手提供 PR 連結，由使用者自行按 Merge pull request；助手不代合併、不開 auto-merge、不直接推 main，文件也走 PR。
 - 第二輪實測：左端修剪要留空白且可還原完整來源；圖層在時間軸左側直接拖曳；字塊填滿/框線各調色彩透明度；版型要明確格子位置/素材縮圖、選取回饋，整組移除不留框架。
@@ -65,6 +66,16 @@
 - 2026-11-11 找到新字體來源 max32002/pop-gothic（大波浪圓體，含注音）→ 已加入手寫可愛包。問「能不能直接下載到我的 files 下載資料夾」→ 答：網頁在 iPhone 不能自動寫進「檔案」App 資料夾；官方字體存在瀏覽器裡，自己的字體用「匯入字體檔」從檔案 App 選
 
 ## 日誌（最新在最上面）
+- 2026-11-12 設定區整頁捲動驗收完成，交 PR #2
+  - 程式 8194f79 / run 43206542321：246 單元與 73 e2e 全過。新增真實觸控確認 .editor 上下滑動、設定面板沒有獨立 scrollTop、末端控制項可操作；原有縮放/圖層/匯出情境仍通過。
+  - 匯入 64 張完整 CI 截圖，artifact 13938271777 已核對 ZIP hash；人工看過 workspace/compact-preview、all-layers-page、single-page-controls，中文可讀、預覽與時間軸會捲走。
+  - 同步 README、PLAN、HANDOFF、AGENTS 與使用說明。PR #2 已建立，交使用者自行合併；功能分支不發布，iPhone Safari 尚待真機。
+
+- 2026-11-12 核對 PR #1 已上線，補齊設定區整頁捲動
+  - PR #1 已由使用者合併，main a1b455b / run 43201177854 成功；公開 JS hash 與驗證建置相符。使用者截圖缺少新版導航，已提醒關閉舊頁籤再開啟，沒有要求清除資料。
+  - 移除 footer .panel/.panel.tall 高度上限和獨立垂直捲動，字卡設定分頁改正常文流；編輯器為同一垂直捲動區，時間軸仍只橫向控制時間。
+  - 新增長字塊設定的真實觸控回歸（總 73 e2e）；預覽座標測試先用「回到預覽」再量位置，符合較長設定頁面的操作。246/check 成功，待 CI 與新 PR。
+
 - 2026-11-12 可捲動工作區完整驗收，PR #1 交使用者合併
   - 程式 c6f196cc9f7c5b0ee7be2f078da627daf58e50ab / run 43186969560：246 單元、72 e2e 全過（3.1 分鐘）。前兩輪找到的文字框底部裁切與續用儲存競態均回歸通過，沒有放寬可視斷言或跳過測試。
   - 更新 63 張截圖（artifact 13929546315），workspace/ 4 張：精簡預覽、全層捲頁、編輯文字工具、窄螢幕工具。使用者原始錄影未加入 repo。
