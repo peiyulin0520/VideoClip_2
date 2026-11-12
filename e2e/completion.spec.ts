@@ -334,6 +334,7 @@ test('相容即時匯出可以產生可播放的完整影片', async ({ page }) 
 test('主題與預覽偏好重開保留；同裝置續用不走還原流程', async ({ page }) => {
   await page.goto('./#/settings');
   await page.getByRole('button', { name: '同一台裝置，繼續使用', exact: true }).tap();
+  await expect(page.getByTestId('welcome')).toHaveCount(0);
   await page.getByLabel('網頁風格').selectOption('warm');
   await page.getByLabel('預覽品質').selectOption('720');
   await page.reload();

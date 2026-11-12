@@ -5,6 +5,7 @@ export const fixture = (name: string) => path.resolve(process.cwd(), 'tests/fixt
 
 /** Real Chromium touch input: exercise Pointer Events/capture rather than mutating state. */
 export async function pinchSelection(page: Page, factor = 1.7) {
+  await page.getByTestId('stage').evaluate((el) => el.scrollIntoView({ block: 'center' }));
   const box = (await page.getByTestId('selbox').boundingBox())!;
   const cx = box.x + box.width / 2,
     cy = box.y + box.height / 2,

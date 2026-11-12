@@ -43,6 +43,16 @@ export function Preview({ projectId, width, height }: { projectId: string; width
   const stageRef = useRef<HTMLDivElement>(null);
   const [cssW, setCssW] = useState(1);
   const [expanded, setExpanded] = useState(false);
+  const pageScroll = useRef(0);
+  const toggleExpanded = () => {
+    const page = stageRef.current?.closest<HTMLElement>('.editor');
+    if (!expanded) pageScroll.current = page?.scrollTop ?? 0;
+    setExpanded(!expanded);
+    if (expanded && page)
+      requestAnimationFrame(() => {
+        page.scrollTop = pageScroll.current;
+      });
+  };
   const [safe, setSafe] = useState(readSafe);
   const [dragging, setDragging] = useState(false); // 拖移/縮放中：安全區參考線暫時出現
   const [guides, setGuides] = useState<{ x: number | null; y: number | null }>({ x: null, y: null });
@@ -215,7 +225,10 @@ export function Preview({ projectId, width, height }: { projectId: string; width
       gesture.current = null;
       return;
     }
-    if (hit.item.id !== st.selectedId) st.select(hit.item.id);
+    if (hit.item.id !== st.selectedId) {
+      st.select(hit.item.id);
+      if (e.pointerType === 'touch' && !expanded) return; // First tap selects; a swipe on unselected canvas scrolls.
+    }
     startMove(hit.item.id, pt);
   };
 
@@ -331,11 +344,22 @@ export function Preview({ projectId, width, height }: { projectId: string; width
         className="preview-expand"
         aria-label={expanded ? '縮回預覽' : '放大預覽'}
         aria-pressed={expanded}
-        onClick={() => setExpanded(!expanded)}
+        onClick={toggleExpanded}
       >
         {expanded ? <Minimize size={18} /> : <Expand size={18} />}
         <span>{expanded ? '返回編輯' : '放大預覽'}</span>
       </button>
+      {!expanded && (
+        <button
+          className="preview-layers"
+          aria-label="查看全部圖層"
+          onClick={(e) =>
+            e.currentTarget.closest('.editor')!.querySelector('.timeline')!.scrollIntoView({ block: 'start' })
+          }
+        >
+          查看圖層 ↓
+        </button>
+      )}
       <button
         className={`safe-toggle${safe ? ' on' : ''}`}
         aria-label="安全區參考線"

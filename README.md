@@ -20,7 +20,7 @@ npm run check
 npm run e2e -- --trace off
 ```
 
-`check` 包含 lint、244 個單元測試、TypeScript、正式建置及 GitHub Pages 路徑/PWA/字體檔案檢查。69 個瀏覽器測試（含完整影片/音訊解碼、收藏、GIF、手動遮罩、Key 與主題）交由 GitHub Actions 的 Chromium 153 執行，CI 保存截圖 artifact；最新成功狀態見 PROGRESS.md。本次已更新 59 張 CI 畫面（docs/screenshots）中文可讀；iPhone Safari 仍待真機驗證。
+`check` 包含 lint、246 個單元測試、TypeScript、正式建置及 GitHub Pages 路徑/PWA/字體檔案檢查。72 個瀏覽器測試（含完整影片/音訊解碼、收藏、GIF、手動遮罩、Key 與主題）交由 GitHub Actions 的 Chromium 153 執行，CI 保存截圖 artifact；最新成功狀態見 PROGRESS.md。本次已更新 63 張 CI 畫面（docs/screenshots）中文可讀；iPhone Safari 仍待真機驗證。
 
 ## GitHub Pages
 
@@ -30,7 +30,7 @@ npm run e2e -- --trace off
 
 - Settings → Pages → Build and deployment → Source 選 **GitHub Actions**。
 - `.github/workflows/deploy.yml`：所有分支執行檢查＋Chromium e2e；只有 `main` 成功後部署 `dist/`。
-- 專案建立分支：`codex/establish-little-moments`，不自動開 PR。取得寫入授權後，先推送並確認 CI，再以一般 fast-forward 更新新 repo 的 main；若 main 有新提交，先整合，不能 force push。
+- 修改流程：功能分支完成修改與適當測試 → 推送 → 建立指向 `main` 的 PR → 提供 PR 連結 → **使用者自行按 Merge pull request**。助手不合併、不開 auto-merge、不直接推送 main，文件更新也一樣。合併後 GitHub Actions 驗收並發布 Pages。分支落後時先整合 main，不 force push。
 - 發布後可直接使用，不需要 Codex 或 ChatGPT 持續運作。網址公開，但使用者的影片不會跟著上傳。
 
 ## 資料與授權
@@ -64,3 +64,7 @@ GIF 解碼器 gifuct-js 2.1.2 為 MIT，授權位於 public/licenses。輸出含
 來源影片可用完整來源選區還原，左端修剪會留空白並固定片尾；左側軌道 icon 可直接拖曳疊放順序。字塊填滿與框線顏色/透明度獨立。版型提供位置編號和素材縮圖，支援將現有疊加片段合成單軌多格群組；整組移動/修剪/複製/分割/隱藏/刪除，框架一起處理。裁切新增透明結果預覽與上一筆描邊復原。降低小 GIF 的紋理上傳量並重用影格，Safari 真機流暢度仍待確認。
 
 最新驗收、發布與限制以 [PROGRESS](docs/PROGRESS.md) 為準，操作步驟見 [USAGE](docs/USAGE.md)。
+
+## 工作區捲動調整（PR #1，待使用者合併）
+
+預覽改為精簡尺寸並隨整頁捲動，時間軸按圖層數完整展開，工具欄接在列表下方。左右控制時間、上下查看圖層；可用「查看圖層」「編輯工具」「回到預覽」跳轉，仍可放大預覽與調整選取框。另修復續用設定的非同步儲存競態。246 單元/72 Chromium e2e 成功，截圖在 docs/screenshots/workspace；Safari 仍需真機確認。新工作區要使用者合併 [PR #1](https://github.com/peiyulin0520/VideoClip_2/pull/1) 後才會部署到公開站。

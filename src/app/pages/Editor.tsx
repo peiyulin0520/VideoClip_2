@@ -1,4 +1,4 @@
-import { ChevronLeft, Pause, Play, Redo2, Undo2, ZoomIn, ZoomOut } from 'lucide-react';
+import { ArrowUp, PanelBottom, ChevronLeft, Pause, Play, Redo2, Undo2, ZoomIn, ZoomOut } from 'lucide-react';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { ensureUrls, releaseProjectUrls } from '../../engine/assetUrls';
@@ -215,6 +215,27 @@ function EditorBody() {
           {formatTime(time)} / {formatTime(total)}
         </span>
         <span className="spacer" />
+        <button
+          className="icon-btn"
+          aria-label="回到預覽"
+          title="回到預覽"
+          onClick={(e) => e.currentTarget.closest('.editor')!.scrollTo({ top: 0 })}
+        >
+          <ArrowUp size={20} />
+        </button>
+        <button
+          className="icon-btn"
+          aria-label="編輯工具"
+          title="編輯工具"
+          onClick={(e) =>
+            e.currentTarget
+              .closest('.editor')!
+              .querySelector('.bottombar')!
+              .scrollIntoView({ block: 'start' })
+          }
+        >
+          <PanelBottom size={20} />
+        </button>
         <button
           className="icon-btn"
           aria-label="縮小時間軸"

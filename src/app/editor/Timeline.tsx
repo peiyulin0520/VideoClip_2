@@ -113,10 +113,12 @@ export function Timeline({
       if (Math.abs(ev.clientY - y) < 5 && !moved) return;
       moved = true;
       const el = scrollRef.current!;
-      const box = el.getBoundingClientRect();
-      // Scroll only at the actual viewport edge, not while crossing a visible row.
-      if (ev.clientY < box.top + 8) el.scrollTop -= 12;
-      if (ev.clientY > box.bottom - 8) el.scrollTop += 12;
+      const page = el.closest<HTMLElement>('.editor')!;
+      const box = page.getBoundingClientRect();
+      const controls = page.querySelector('.playbar')!.getBoundingClientRect();
+      // Long layer lists scroll the page, not a second tiny vertical viewport.
+      if (ev.clientY < Math.max(box.top, controls.bottom) + 8) page.scrollTop -= 12;
+      if (ev.clientY > box.bottom - 8) page.scrollTop += 12;
       const candidates = Array.from(el.querySelectorAll<HTMLElement>('[data-track-id]')).filter(
         (row) => row.dataset.kind !== 'main',
       );
@@ -188,16 +190,7 @@ export function Timeline({
     return player.subscribe((t) => syncScroll(t));
   }, [player, syncScroll]);
 
-  // 選取的物件在看不到的那一列時，上下捲到看得到（只動垂直，水平要跟著播放頭）
-  useEffect(() => {
-    const el = scrollRef.current;
-    if (!el || !selectedId) return;
-    const row = rows.find((r) => r.track.items.some((x) => x.id === selectedId));
-    if (!row) return;
-    if (row.top < el.scrollTop) el.scrollTop = row.top - RULER_H;
-    else if (row.top + row.h > el.scrollTop + el.clientHeight)
-      el.scrollTop = row.top + row.h - el.clientHeight + 8;
-  }, [selectedId, rows]);
+  // All rows participate in the editor page flow; selecting/editing must not scroll fields away.
 
   const onScroll = () => {
     const el = scrollRef.current!;
@@ -395,7 +388,7 @@ export function Timeline({
 
   const menuTrack = project.tracks.find((t) => t.id === menuTrackId) ?? null;
   const menuIndex = menuTrack ? project.tracks.indexOf(menuTrack) : -1;
-  const viewH = Math.min(Math.max(contentH, 80), 128);
+  const viewH = Math.max(contentH, 106);
 
   return (
     <div className="timeline" style={{ height: viewH }}>

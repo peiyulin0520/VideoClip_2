@@ -286,14 +286,17 @@ test('文字：新增、改內容與顏色、在預覽上可拖移，也能分�
   await expect(clips(page)).toHaveCount(3);
 });
 
-test('底部分頁：點目前的分頁會收合面板，預覽畫面變大；再點展開', async ({ page }) => {
+test('底部分頁：可收合面板、減少頁面內容高度，預覽維持精簡尺寸', async ({ page }) => {
   await createProjectWith(page, ['solid-red.webm']);
   await openTab(page, '文字');
   const stage = page.getByTestId('stage');
   const h1 = (await stage.boundingBox())!.height;
+  const contentHeight = () => page.locator('.editor').evaluate((el) => el.scrollHeight);
+  const expandedHeight = await contentHeight();
   await page.getByRole('tab', { name: '文字' }).tap(); // 再點一次：收合
   await expect(page.getByRole('button', { name: /新增文字/ })).toHaveCount(0);
-  await expect.poll(async () => (await stage.boundingBox())!.height).toBeGreaterThan(h1 + 20);
+  expect((await stage.boundingBox())!.height).toBeCloseTo(h1, 0);
+  expect(await contentHeight()).toBeLessThanOrEqual(expandedHeight);
   await page.getByRole('tab', { name: '文字' }).tap(); // 展開
   await expect(page.getByRole('button', { name: /新增文字/ })).toBeVisible();
 });

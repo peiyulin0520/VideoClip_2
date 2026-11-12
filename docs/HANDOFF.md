@@ -1,6 +1,13 @@
 # 交接手冊（HANDOFF）
 
 ## VideoClip_2 當前交接（優先於以下來源 repo 的歷史紀錄）
+- **工作區最新驗收**：c6f196c / run 43186969560 的 246 單元、72 e2e 全過，63 張截圖（workspace/ 4 張）。PR #1 https://github.com/peiyulin0520/VideoClip_2/pull/1 已涵蓋精簡預覽、完整圖層列表、整頁捲動及續用儲存競態修正；由使用者自行合併，未部署。以下「待 CI」是過程紀錄，最新快照見 PROGRESS。
+- 工作區第二輪 run 43186048643 的三項新驗收全過，僅舊續用重開測試抓到競態。appStore.init 現共用 initializing Promise；update 序列化、等 saveAppState 完成才 set，避免畫面已完成但 IDB 尚未持久化與重複初始化蓋狀態。新增 2 單元，總 246；歡迎頁 e2e 等完成畫面再做後續操作，不用 sleep。
+- 工作區首輪 run 43185102894 為 244/71 of 72，原有 69 全過。最後工具輸入框 bottom 比 viewport 多 1.36px，已補 editor 底部 16px/safe area 與 scroll padding；測試仍要求輸入框完全可視，不放寬像素斷言。下一個成功 run 及 PR 狀態見 PROGRESS。
+- 最新工作區回饋：docs/plans/2026-11-12-scrollable-editor-workspace.md。Editor 垂直整頁捲動，Preview 預設 24dvh/140–240px，Timeline height 隨 contentH 展開全部層、tl-scroll 僅橫向。工具欄正常文流，頁首和播放條 sticky；預覽/圖層/工具捷徑以 scrollIntoView/scrollTo 操作。
+- Touch 未選取舞台可 pan-y，selbox touch-action:none 保留編輯；先點選後移動，避免滑頁誤動物件。Timeline 取消每次內容更新自動拉回選取列，圖層拖曳的邊緣捲動改用 .editor。
+- 本機 244/check 成功，72 e2e 待 CI；目前更新既有尚未合併的 PR #1（draft），不能直接發布或代使用者合併。
+- **最新發布規則（2026-11-12）**：使用者明確要求「之後要建立 PR，給我連結，讓我自己點入去按 Merge pull request」。助手完成修改、適當測試、推送功能分支與建立 PR，回覆必附 PR 網址；由使用者合併，助手不得代合併、開 auto-merge 或直接推 main，包含文件更新。舊 fast-forward 直接發布紀錄只是歷史，不能沿用。
 - 首輪本輪 run 43165347867 為 244/66 of 69，已修正真實 touch 拖圖層的過早自動捲動、框線新建預設值和舊測試標籤。compositor continuity 僅保留相同軌道換片的舊畫面；不能因另一軌解碼未完成，就留下已刪版型/貼圖（有慢解碼回歸）。後續成功 run 以 PROGRESS 為準。
 - 本輪優先：docs/plans/2026-11-12-timeline-and-template-feedback.md，第二輪七點正在驗收；工作分支 4a004e8 / run 43166533551 已 244 單元/69 e2e 全過，59 張截圖，main run 43167202348 的 244/69 與 Pages 發布成功，公開主程式 hash 與本機已驗證建置相符；下方 237/60 是前一正式版。
 - 版型現在是一個 Track.template 含多個同時 Item；visibleLayers 對 template 回傳全部 active items。Track.layout 帶獨立框架/動態/時間，Project.layout 保留舊版及目前選擇相容；複製/分割整組，不能只複製一格。舊每格一軌且無 Track.layout 的版型 load 時 mergeLegacyTemplate，不變更 media IDs/原檔。時間軸只畫群組首個片段，畫面仍可選格子調位置。
