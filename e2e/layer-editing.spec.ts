@@ -48,18 +48,25 @@ test('六種主題的深色媒體按鈕與文字都清楚，米色可從設定�
           });
         return rgb[0]! * 0.2126 + rgb[1]! * 0.7152 + rgb[2]! * 0.0722;
       };
-      return ['.track-chip', '.ratio-btn', '.preview-expand', '.export-button', '.clip-label'].map(
-        (selector) => {
-          const s = getComputedStyle(document.querySelector(selector)!);
-          const background =
-            selector === '.clip-label'
-              ? getComputedStyle(document.querySelector('.clip')!, '::before').backgroundColor
+      return [
+        '.track-chip',
+        '.ratio-btn',
+        '.preview-expand',
+        '.export-button',
+        '.clip-label',
+        '.tab.active',
+      ].map((selector) => {
+        const s = getComputedStyle(document.querySelector(selector)!);
+        const background =
+          selector === '.clip-label'
+            ? getComputedStyle(document.querySelector('.clip')!, '::before').backgroundColor
+            : selector === '.tab.active'
+              ? getComputedStyle(document.querySelector('.tabs')!).backgroundColor
               : s.backgroundColor;
-          const a = luminance(s.color),
-            b = luminance(background);
-          return { selector, ratio: (Math.max(a, b) + 0.05) / (Math.min(a, b) + 0.05) };
-        },
-      );
+        const a = luminance(s.color),
+          b = luminance(background);
+        return { selector, ratio: (Math.max(a, b) + 0.05) / (Math.min(a, b) + 0.05) };
+      });
     });
     for (const entry of contrast)
       expect(entry.ratio, `${theme} ${entry.selector}`).toBeGreaterThanOrEqual(4.5);
