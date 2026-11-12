@@ -19,27 +19,43 @@ function skipFlag(): boolean {
   }
 }
 
+let initializing: Promise<void> | null = null;
+let updates: Promise<void> = Promise.resolve();
+
 export const useApp = create<Store>((set, get) => ({
   loaded: false,
   state: DEFAULT_APP_STATE,
   init: async () => {
     if (get().loaded) return;
-    let st = await loadAppState();
-    if (!st) {
-      // 這台裝置已經有專案（精靈上線前就在用）：視為不是第一次，不跳精靈
-      const db = await getDB();
-      const hasData =
-        (await listProjects()).length > 0 ||
-        (await db.count('userFonts')) > 0 ||
-        (await db.count('library')) > 0;
-      st = { ...DEFAULT_APP_STATE, onboarded: hasData || skipFlag() };
-      if (st.onboarded && !skipFlag()) await saveAppState(st);
+    if (initializing) return initializing;
+    initializing = (async () => {
+      let st = await loadAppState();
+      if (!st) {
+        // 這台裝置已經有專案（精靈上線前就在用）：視為不是第一次，不跳精靈
+        const db = await getDB();
+        const hasData =
+          (await listProjects()).length > 0 ||
+          (await db.count('userFonts')) > 0 ||
+          (await db.count('library')) > 0;
+        st = { ...DEFAULT_APP_STATE, onboarded: hasData || skipFlag() };
+        if (st.onboarded && !skipFlag()) await saveAppState(st);
+      }
+      set({ loaded: true, state: st });
+    })();
+    try {
+      await initializing;
+    } finally {
+      initializing = null;
     }
-    set({ loaded: true, state: st });
   },
-  update: async (patch) => {
-    const next = { ...get().state, ...patch };
-    set({ state: next });
-    await saveAppState(next);
+  update: (patch) => {
+    const pending = updates.then(async () => {
+      await get().init();
+      const next = { ...get().state, ...patch };
+      await saveAppState(next);
+      set({ state: next }); // A completed screen must also be durable before reload/navigation.
+    });
+    updates = pending.catch(() => {});
+    return pending;
   },
 }));
