@@ -306,6 +306,44 @@ test('膠卷關鍵幀只縮放整組，框架與三格同步且重開保存', as
     .toBe(2);
 });
 
+test('膠卷多組來源的中間未選時段保留白色補時與框架，之後接回影片', async ({ page }) => {
+  await createProjectWith(page, ['solid-blue.webm']);
+  await openTab(page, '版型');
+  await page.getByRole('button', { name: '直式膠卷', exact: true }).tap();
+  await page
+    .getByTestId('template-files')
+    .setInputFiles(['tone-video.webm', 'solid-green.webm', 'solid-blue.webm'].map(fixture));
+  await expect(page.locator('.busy')).toHaveCount(0);
+  await page.getByRole('button', { name: '套用多格版型', exact: true }).tap();
+  const cell = page.locator('.template-cell').first();
+  await cell.getByRole('button', { name: '補白', exact: true }).tap();
+  await cell.getByRole('button', { name: '放大選取第 1 格片段', exact: true }).tap();
+  await shortFirstRange(page, 0.2);
+  await sourcePoint(page, 0.5);
+  await page.getByRole('button', { name: '在白線位置新增一組起迄標記', exact: true }).tap();
+  await page.getByRole('button', { name: '套用片段範圍', exact: true }).tap();
+  const group = (await current(page)).tracks.find((t) => t.template)!;
+  expect(group.items.every((it) => it.duration === 3)).toBe(true);
+  await seekTo(page, 1);
+  await expect
+    .poll(async () => {
+      const c = await samplePreview(page, 0.5, 0.18);
+      return !!c && c[0] > 245 && c[1] > 245 && c[2] > 245;
+    })
+    .toBe(true);
+  const frame = await exportFrame(page, 1, [
+    [0.5, 0.18],
+    [0.5, 0.48],
+  ]);
+  expect(frame.samples[0]![0]).toBeGreaterThan(245);
+  expect(frame.samples[0]![1]).toBeGreaterThan(245);
+  expect(frame.samples[1]![1]).toBeGreaterThan(200);
+  await page.getByTestId('stage').scrollIntoViewIfNeeded();
+  await shot(page, 'template-multiple-ranges-white-gap');
+  await seekTo(page, 1.7);
+  await expect.poll(async () => isRed(await samplePreview(page, 0.5, 0.18))).toBe(true);
+});
+
 test('A B 示意動畫真的更新，疊化推移四宮格轉場包含兩段來源並可移除', async ({ page }) => {
   test.setTimeout(90000);
   await createProjectWith(page, ['solid-red.webm', 'solid-green.webm']);
@@ -356,6 +394,31 @@ test('A B 示意動畫真的更新，疊化推移四宮格轉場包含兩段來�
   expect(isRed(frame.samples[1] as [number, number, number, number])).toBe(true);
   await page.getByTestId('stage').scrollIntoViewIfNeeded();
   await shot(page, 'grid-a-b');
+});
+
+test('A B 轉場不會顯示來源中未選的灰區畫面', async ({ page }) => {
+  await createProjectWith(page, ['solid-red.webm', 'solid-green.webm']);
+  await clips(page).first().tap();
+  await page.getByRole('button', { name: '片段範圍', exact: true }).tap();
+  await shortFirstRange(page, 0.2);
+  await sourcePoint(page, 0.9);
+  await page.getByRole('button', { name: '在白線位置新增一組起迄標記', exact: true }).tap();
+  const second = page.getByRole('button', { name: '第2段起點標記', exact: true });
+  for (let i = 0; i < 5; i++) await second.press('ArrowRight');
+  await page.getByRole('button', { name: '套用片段範圍', exact: true }).tap();
+  await openTab(page, '特效');
+  await page.getByRole('button', { name: '疊化', exact: true }).tap();
+  await seekTo(page, 3.75);
+  await expect
+    .poll(async () => {
+      const c = await samplePreview(page, 0.5, 0.5);
+      return !!c && c[0] < 20 && c[1] > 10 && c[1] < 80;
+    })
+    .toBe(true);
+  const frame = await exportFrame(page, 3.75, [[0.5, 0.5]]);
+  expect(frame.samples[0]![0]).toBeLessThan(20);
+  expect(frame.samples[0]![1]).toBeGreaterThan(10);
+  expect(frame.samples[0]![1]).toBeLessThan(80);
 });
 
 test('轉場各分類選項都可實際套用及匯出，不只靜態縮圖', async ({ page }) => {

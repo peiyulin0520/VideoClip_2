@@ -1,3 +1,4 @@
+import { cellMediaTime } from './templateTiming';
 import { filmBorderCanvas } from './transitionArt';
 import type { Project } from '../model/types';
 import type { SceneLayer } from './compositor';
@@ -44,7 +45,17 @@ export function renderLayers(project: Project, t: number): Layer[] {
     out = visibleLayers(project, t);
   for (const { from, to } of active) {
     for (const f of [from, to])
-      if (!out.some((l) => l.item.id === f.item.id))
+      if (
+        !(
+          f.item.type !== 'text' &&
+          f.item.sourceRanges &&
+          cellMediaTime(
+            f.item,
+            Math.max(f.item.start, Math.min(t, f.item.start + f.item.duration - 0.001)),
+          ) === null
+        ) &&
+        !out.some((l) => l.item.id === f.item.id)
+      )
         out.push({ item: f.item, track: f.track, trackIndex: f.trackIndex });
   }
   return out.sort((a, b) => a.trackIndex - b.trackIndex || a.item.start - b.item.start);
@@ -82,7 +93,17 @@ export function applyTransitions(
   for (const { transition: tr, from, to, p } of activeTransitions(project, t)) {
     const a = out.find((l) => l.id === from.item.id),
       b = out.find((l) => l.id === to.item.id);
-    if (!a || !b) continue;
+    if (!a || !b) {
+      // A deselected source stays absent even when borrowing edge frames for the join.
+      out = out.map((layer) =>
+        layer.id === b?.id
+          ? { ...layer, opacity: layer.opacity * p }
+          : layer.id === a?.id
+            ? { ...layer, opacity: layer.opacity * (1 - p) }
+            : layer,
+      );
+      continue;
+    }
     let aa = { ...a, box: { ...a.box } },
       bb = { ...b, box: { ...b.box } };
     const extra: SceneLayer[] = [];

@@ -62,6 +62,23 @@ function scene(id: string): SceneLayer {
   };
 }
 describe('multiple source selections keep timeline and original source intact', () => {
+  it('a template cell in a deselected interval keeps its frame/background but contributes no sound', () => {
+    const p = project(),
+      plan = collagePlan(p, ['a', 'b', 'a'], 'filmstrip', 'none', 0, 3);
+    p.tracks.push(...plan.tracks);
+    p.layout = plan.layout;
+    const cell = p.tracks[1]!.items[0] as VideoItem;
+    cell.sourceRanges = [
+      [0, 0.5],
+      [2, 3],
+    ];
+    cell.cell!.background = '#ffffff';
+    expect(cellMediaTime(cell, 1)).toBeNull();
+    expect(visibleLayers(p, 1).some((l) => l.item.id === cell.id)).toBe(true);
+    expect(audibleClips(p, 1).some((l) => l.item.id === cell.id)).toBe(false);
+    expect(cell.cell!.background).toBe('#ffffff');
+  });
+
   it('adds a second explicit pair without changing the existing pair', () => {
     const original: [number, number][] = [[0, 0.5]];
     expect(addSourceSelection(original, 1, 3)).toEqual([
@@ -252,6 +269,24 @@ describe('linear keyframes', () => {
   });
 });
 describe('actual A/B transitions and video effects', () => {
+  it('borrowing transition frames never reveals a deselected source interval', () => {
+    const p = project();
+    p.transitions = [{ id: 'tr', preset: 'crossfade', fromId: 'a', toId: 'b', duration: 1 }];
+    (p.tracks[0]!.items[0] as VideoItem).sourceRanges = [
+      [0, 0.5],
+      [3.9, 4],
+    ];
+    expect(renderLayers(p, 3.75).map((l) => l.item.id)).toEqual(['b']);
+    expect(applyTransitions([scene('b')], p, 3.75, 160, 96)[0]!.opacity).toBe(0.25);
+    (p.tracks[0]!.items[1] as VideoItem).sourceRanges = [
+      [0, 0.1],
+      [1, 4],
+    ];
+    expect(renderLayers(p, 4.25).map((l) => l.item.id)).toEqual(['a']);
+    expect(applyTransitions([scene('a')], p, 4.25, 160, 96)[0]!.opacity).toBe(0.25);
+    expect(audibleClips(p, 4.25)).toEqual([]);
+  });
+
   it('decodes both sides of the join and exposes only real adjacent pairs', () => {
     const p = project();
     p.transitions = [{ id: 'tr', preset: 'crossfade', fromId: 'a', toId: 'b', duration: 1 }];

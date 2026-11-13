@@ -50,7 +50,8 @@ export type Layer = { item: Item; track: Track; trackIndex: number };
  */
 export function visibleLayers(p: Project, t: number): Layer[] {
   return layersAt(p, t, false).filter(
-    ({ item }) => item.type === 'text' || !item.sourceRanges || cellMediaTime(item, t) !== null,
+    ({ item, track }) =>
+      track.template || item.type === 'text' || !item.sourceRanges || cellMediaTime(item, t) !== null,
   );
 }
 
