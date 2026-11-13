@@ -44,7 +44,7 @@ test('全介面文字同為14px、僅註解11px；框內距縮小且窄螢幕按
   test.setTimeout(60000);
   await createProjectWith(page, ['tone-video.webm']);
   await openTab(page, '文字');
-  await page.getByRole('button', { name: '新增文字', exact: true }).tap();
+  await page.getByRole('button', { name: /新增文字/ }).tap();
   await expect(page.getByRole('textbox', { name: '文字內容', exact: true })).toBeVisible();
   const id = await selectedItemId(page);
   const before = (await current(page)).tracks.flatMap((t) => t.items).find((it) => it.id === id) as TextItem;
