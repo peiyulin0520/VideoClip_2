@@ -1,6 +1,7 @@
 # 交接手冊（HANDOFF）
 
 ## VideoClip_2 當前交接（優先於以下來源 repo 的歷史紀錄）
+- 最新使用者更正：只有.timeline圖層拖拉軸恢復小字11px，群組計數/原音9px；局部覆寫--ui-font-size，其他頁面/功能/頁籤/播放列仍14px。維持負字距/緊行高/44px觸控。既有uniform-type驗收實際收合與展開分類並留圖，完整CI待本次push。
 - 最新全頁主題對比/小字字距最終：[Actions 43420368856](https://github.com/peiyulin0520/VideoClip_2/actions/runs/43420368856)：版本 8fd2969c77b84352a3cd16c7b4f025ae22177792 的313單元、127 Chromium e2e全過；lint/格式/TypeScript/build/Pages/39字體檢查成功。artifact 14033892743，ZIP SHA-256 f9664009e966a03e9b5ce3199610be1a54cb79a4532e0440f944f241e4906127 已核對；158張成功畫面，其中readability/新增6張。PR #9由使用者自行Merge；最後文件/截圖不改成功版本產品/測試。以下待CI是過程紀錄，Safari仍待真機。
 
 - 最新全頁對比/字距：PR #9仍未合併。radio-card/pack-row不能固定深底卻沿用主題fg，文字表面需control/fg/muted成組；暖色/米色muted在control上原不足4.5，另用ui-link/success/warning/danger文字色，不把按鈕填色accent直接拿來當小字。FontSelect未載入fallback範例不再opacity.45，selected深底的warn另外配淺色。全介面字距/詞距-0.02em、行高1.25，註解-0.01em/1.3，小列按實際高度1或1.1。測試ui-contrast以文字可見範圍中心合成祖先RGBA背景，放在縮圖上方的絕對定位秒數不能錯算成縮圖深底，檢查純色UI文字；不拿素材示意圖或真正disabled當一般操作文字。預期313/127待CI，158張畫面。六主題以html[data-theme]實際確認，並涵蓋改名/畫面比例/匯出/片段範圍/裁切/聲音選段/畫畫/自訂色popup；不開始下載或匯出，只審核操作文字。

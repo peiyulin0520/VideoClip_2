@@ -3149,3 +3149,11 @@ button:focus-visible {
 :root[data-theme] .font-row.active .font-tags .warn {
   color: #ffd17a;
 }
+
+/* Timeline labels retain the smaller pre-uniform scale; toolbars remain 14px. */
+:root[data-theme] #root .editor .timeline {
+  --ui-font-size: 11px;
+}
+:root[data-theme] #root .editor .timeline :is(.family-toggle small, .clip-audio) {
+  --ui-font-size: 9px;
+}

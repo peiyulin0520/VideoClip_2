@@ -139,3 +139,6 @@ GIF 解碼器 gifuct-js 2.1.2 為 MIT，授權位於 public/licenses。輸出含
 首次備份/字體包及文字表面以主題底色和主字/說明色成組設定；六主題逐頁與popup審核。14px操作字距/詞距-0.02em、行高1.25；11px註解字距-0.01em/行高1.3，固定小列更緊。不改專案素材字體或渲染。
 
 [Actions 43420368856](https://github.com/peiyulin0520/VideoClip_2/actions/runs/43420368856)：版本 8fd2969c77b84352a3cd16c7b4f025ae22177792 的313單元、127 Chromium e2e全過；lint/格式/TypeScript/build/Pages/39字體檢查成功。 [驗收畫面](docs/screenshots/readability/)；PR #9由使用者自行Merge，Safari待真機。
+
+
+2026-11-13 最新更正：預覽下方的圖層時間軸保留較小字級，刻度、分類與片段名稱11px，群組數及原音9px；其他頁籤、功能、播放列與彈窗仍14px，註解11px。保留收緊字距及44px觸控範圍。

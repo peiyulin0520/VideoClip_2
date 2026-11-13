@@ -20,7 +20,13 @@ async function assertUiType(page: Page) {
         const range = document.createRange();
         range.selectNodeContents(node);
         if (!range.getBoundingClientRect().width || getComputedStyle(el).visibility === 'hidden') continue;
-        const expected = el.closest(notes) ? 11 : 14;
+        const expected = el.closest('.timeline')
+          ? el.closest('.family-toggle small,.clip-audio')
+            ? 9
+            : 11
+          : el.closest(notes)
+            ? 11
+            : 14;
         const size = parseFloat(getComputedStyle(el).fontSize);
         checked++;
         const style = getComputedStyle(el);
@@ -45,14 +51,22 @@ async function shot(page: Page, name: string) {
   await expect(page.locator('.toast')).toHaveCount(0);
   await page.screenshot({ path: `docs/screenshots/uniform-type/${name}.png` });
 }
-test('全介面文字同為14px、僅註解11px；框內距縮小且窄螢幕按鈕與時間仍可讀', async ({ page }) => {
+test('操作介面14px、註解11px、時間軸維持較小字；框內距與窄螢幕仍可讀', async ({ page }) => {
   test.setTimeout(60000);
-  await createProjectWith(page, ['tone-video.webm']);
+  await createProjectWith(page, ['tone-video.webm'], false);
   await openTab(page, '文字');
   await page.getByRole('button', { name: /新增文字/ }).tap();
   await expect(page.getByRole('textbox', { name: '文字內容', exact: true })).toBeVisible();
   const id = await selectedItemId(page);
   const before = (await current(page)).tracks.flatMap((t) => t.items).find((it) => it.id === id) as TextItem;
+  await page.getByRole('button', { name: /^展開時間軸/ }).tap();
+  await assertUiType(page);
+  await page.getByRole('button', { name: '展開影像群組', exact: true }).tap();
+  await page.getByRole('button', { name: '展開文字群組', exact: true }).tap();
+  await assertUiType(page);
+  await page.locator('.timeline').scrollIntoViewIfNeeded();
+  await shot(page, 'small-timeline-labels');
+  await page.getByRole('button', { name: /^收合時間軸/ }).tap();
   await assertUiType(page);
   const padding = await page.getByRole('textbox', { name: '文字內容', exact: true }).evaluate((el) => {
     const s = getComputedStyle(el);
