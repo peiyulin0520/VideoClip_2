@@ -177,7 +177,6 @@ export function SourceRanges({
           >
             <span aria-hidden="true">▼</span>
             <small>
-              {markerLabel}
               {index + 1}
               {side ? '迄' : '起'}
             </small>

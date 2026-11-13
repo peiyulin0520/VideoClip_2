@@ -437,6 +437,8 @@ test('A B 示意動畫真的更新，疊化推移四宮格在交接前後套用�
   expect(frame.samples[1]![0]).toBeLessThan(20);
   expect(frame.samples[1]![1]).toBeLessThan(20);
   await page.getByTestId('stage').scrollIntoViewIfNeeded();
+  await seekTo(page, 4.15);
+  await expect.poll(async () => isGreen(await samplePreview(page, 0.25, 0.25))).toBe(true);
   await shot(page, 'grid-a-b');
 });
 

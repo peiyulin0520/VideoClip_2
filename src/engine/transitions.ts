@@ -221,6 +221,19 @@ export function transitionSingle(
   h: number,
   id: string,
 ) {
+  if (role === 'exit' && preset.startsWith('wipe-')) {
+    const horizontal = preset.endsWith('left') || preset.endsWith('right');
+    return [
+      clipped(
+        layer,
+        layer.id,
+        preset.endsWith('right') ? w * progress : 0,
+        preset.endsWith('down') ? h * progress : 0,
+        horizontal ? w * (1 - progress) : w,
+        horizontal ? h : h * (1 - progress),
+      ),
+    ];
+  }
   const blank = { ...layer, id: `${layer.id}-empty`, opacity: 0 };
   const p = role === 'enter' ? progress : 1 - progress;
   const result = transitionPair([blank, layer], blank, layer, preset, p, w, h, id).filter(
@@ -237,15 +250,6 @@ export function transitionSingle(
         horizontal ? -2 * (l.box.cx - layer.box.cx) : 0,
         horizontal ? 0 : -2 * (l.box.cy - layer.box.cy),
       );
-    if (preset.startsWith('wipe-') && out.viewport)
-      out = {
-        ...out,
-        viewport: {
-          ...out.viewport,
-          x: horizontal ? w - out.viewport.x - out.viewport.w : out.viewport.x,
-          y: horizontal ? out.viewport.y : h - out.viewport.y - out.viewport.h,
-        },
-      };
     if (preset === 'page-turn') out = { ...out, box: { ...out.box, cx: out.box.w / 2 } };
     if (preset === 'zoom-in' || preset === 'zoom-out') {
       const scale = preset === 'zoom-in' ? 1 + 0.5 * progress : 1 - 0.5 * progress;

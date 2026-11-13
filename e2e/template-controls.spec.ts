@@ -156,8 +156,11 @@ test('版型進階設定預設收合、只有一條來源軸，預覽與popup皆
   await page.getByRole('button', { name: '播放版型結果', exact: true }).tap();
   await expect(page.getByRole('button', { name: '暫停版型結果', exact: true })).toBeVisible();
   await page.getByRole('button', { name: '暫停版型結果', exact: true }).tap();
+  await page.getByLabel('版型動態效果', { exact: true }).selectOption('slide');
+  expect((await current(page)).tracks.find((t) => t.template)?.layout?.motion).toBe('slide');
   await page.getByText('進出場動畫', { exact: true }).tap();
   await page.getByRole('button', { name: '進場：由右滑入', exact: true }).tap();
+  expect((await current(page)).tracks.find((t) => t.template)?.layout?.motion).toBe('none');
   expect((await current(page)).tracks.find((t) => t.template)?.layout?.animations?.enter?.preset).toBe(
     'slide-left',
   );

@@ -272,7 +272,10 @@ export function TemplatePanel() {
               }
               return draft;
             }}
-            onChange={(animations: ClipAnimations) => patchAppearance({ animations })}
+            onChange={(animations: ClipAnimations) => {
+              setMotion('none');
+              patchAppearance({ animations, motion: 'none' });
+            }}
           />
         </details>
       </section>
@@ -388,7 +391,11 @@ export function TemplatePanel() {
         <select
           aria-label="版型動態效果"
           value={motion}
-          onChange={(e) => setMotion(e.target.value as LayoutMotion)}
+          onChange={(e) => {
+            const motion = e.target.value as LayoutMotion;
+            setMotion(motion);
+            patchAppearance({ motion, animations: undefined });
+          }}
         >
           <option value="none">固定顯示</option>
           <option value="slide">由右滑入、向左滑出</option>

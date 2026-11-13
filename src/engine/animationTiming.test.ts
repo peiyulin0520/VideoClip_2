@@ -89,6 +89,13 @@ describe('effect windows use native clip time', () => {
       h: 100,
     });
   });
+  it('outgoing wipes intersect the original viewport instead of reflecting it onto a different part of a template', () => {
+    const cropped = { ...layer, viewport: { x: 0, y: 0, w: 20, h: 100 } };
+    const result = transitionSingle(cropped, 'wipe-right', 0.5, 'exit', 100, 100, 'tr')[0]!;
+    expect(result.viewport!.x).toBe(50);
+    expect(result.viewport!.w).toBeLessThan(0.01);
+    expect(cropped.viewport.w).toBe(20);
+  });
   it('A tail and B head share a three-second window but retain twenty seconds and advancing sound/picture', () => {
     const { p, a, b } = fixture();
     const tr = { id: 'tr', preset: 'crossfade' as const, fromId: 'A', toId: 'B', duration: 3 };
