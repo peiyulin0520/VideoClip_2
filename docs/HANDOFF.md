@@ -1,6 +1,7 @@
 # 交接手冊（HANDOFF）
 
 ## VideoClip_2 當前交接（優先於以下來源 repo 的歷史紀錄）
+- 九點第二輪 50092e1 / Actions43459368644：321單元、133/134瀏覽器；原127回歸全過，新增情境只剩整組zoom測試錯將50%淡入要求純紅。依既有zoom含淡入定義，改驗藍底不動、正確新位置紅色優勢與混色差值；產品不再修改。第三輪完整CI待驗。
 - 整組zoom/spin/page-turn以SceneLayer.animationTransform同步變換整組座標與容器（含viewport mask），避免每一格各自縮放/轉動；其他動畫共用transitionPair，膠片外框只加整組一次。新增瀏覽器像素對照整組縮放位置。
 - 九點首輪 e16e7fc / Actions43456433286：321單元、120/134瀏覽器（新增7全過）。7個匯出測試舊getByLabel非exact也匹配新播放label，改控制label為匯出結果；相紙改方形，舊取樣點調整到實際新格內；最底回頂擋工具，升到最後工具列上方且不加空白；安全區底色加深過淺色對比；放大舞台同步量測並等實際resize。第二輪完整驗收待push。
 - 追加三點同任務：layout.size有獨立長寬，layoutDefaultSize長型1080×1920/相紙1080平方；groupFrame/cellViewport不直接伸成畫布。scene框架畫布依自身比例且紋理上限跟輸出，避免巨大自訂框爆記憶體。預覽540預設（preferences previewModeVersion2遷移），頂部quality sheet可調且重建保留秒數/播放；隱藏示意卡不渲染，副預覽只可見30fps。stage父容器量測等比fit，外圍斜紋/邊線/範圍label僅UI，不匯出。321單元已過，134瀏覽器待CI；Safari待真機。

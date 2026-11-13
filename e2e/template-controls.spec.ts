@@ -169,7 +169,11 @@ test('版型進階設定預設收合、只有一條來源軸，預覽與popup皆
     [0.5, 0.32],
   ]);
   expect(isBlue(zoom.samples[0]!)).toBe(true);
-  expect(isRed(zoom.samples[1]!)).toBe(true);
+  // Zoom also fades in: the moved cell must be red-dominant, not yet opaque red.
+  const [r, g, b] = zoom.samples[1]!;
+  expect(r!).toBeGreaterThan(120);
+  expect(r! - g!).toBeGreaterThan(70);
+  expect(r! - b!).toBeGreaterThan(70);
 });
 
 test('兩個銜接選項優先顯示自訂片段名稱，特效主類無重複外框', async ({ page }) => {
