@@ -3,12 +3,13 @@
 規則：每完成一個有意義的步驟，就在同一個 commit 裡 **覆寫「交接快照」** 並 **在「日誌」最上面新增一筆**（規則全文見 `AGENTS.md`「紀錄規則」，背景與架構見 `docs/HANDOFF.md`）。
 
 ## 交接快照（VideoClip_2 最新狀態）
-- **日期/分支**：2026-11-13 / codex/establish-little-moments；PR #5 已由使用者合併，main 8c10a55。
-- **任務**：修正合併後 Actions #41 的四格相紙漂移驗收失敗；另建 PR 由使用者自行合併。
-- **診斷**：[Actions 43341355922](https://github.com/peiyulin0520/VideoClip_2/actions/runs/43341355922) 的 check/278 單元成功，e2e 97/98，部署未開始。失敗在 usability.spec.ts 舊漂移斷言：重新套用現在保留原起點，3 秒模板在 2.7 秒的左上紅格已上移離開取樣點；先前成功可能讀到尚未重畫的上一幀。
-- **修正**：僅改驗收測試，明確移動至相對原起點的 0/1.5/2.7 秒，用黑/紅/藍三種正向像素斷言及單格匯出確認漂移；連續重新套用三次仍保持原起點/長度，不加重試、不放寬逾時、不跳過測試。產品程式保持 PR #5 相同。
-- **驗證/下一步**：基線與修正 check 均成功（278 單元、lint/格式/TypeScript/build/Pages/39 字體）；完整 98 e2e 待 CI 驗收，成功後整理 PR/截圖。既有 118 張是 #40 成功畫面，尚未以本次失敗畫面替換。
-- **發布**：不推 main、不代合併、不開 auto-merge。main Pages 仍為上一個發布成功版本，待使用者合併修復 PR 後 Actions 發布。iPhone Safari 待真機。
+- **日期/分支**：2026-11-13 / codex/establish-little-moments；PR #5 已使用者合併，main 8c10a55。
+- **完成**：main Actions #41 被舊四格漂移測試擋住，已修正測試並建立 [PR #6](https://github.com/peiyulin0520/VideoClip_2/pull/6)。產品程式/設定與 main 完全相同。
+- **原因**：重新套用保留原起點是使用者要求，舊測試仍按移到播放頭的假設判斷 2.7 秒紅格；3 秒版型該時上格已漂離。舊畫面尚未重畫也可能假成功。
+- **修正**：顯式定位相對原起點的 0/1.5/2.7 秒，黑/紅/藍正向斷言並比對匯出；連續三次重新套用保持原起點與長度。不加 retry/timeout/skip。
+- **驗證**：[Actions #42](https://github.com/peiyulin0520/VideoClip_2/actions/runs/43342981901) 成功，程式/測試 6b031d249513f765babc00b53973d58faeee2eb6：278 單元、98 Chromium e2e 全過，lint/格式/TypeScript/build/Pages/39 字體檢查成功。 基線/修正本機 check 均成功；最後文件/截圖提交不改 e2e 或 src。
+- **證據**：成功 CI artifact 14000233770，ZIP SHA-256 3ae5ee1f98eda79c73178a33746af026a977408b4f3ac2c3f41e47e143845845 已核對；CI 產生 119 張圖，本次只新增 usability/polaroid-drift.png，保留既有成功截圖，總 119 張。失敗 artifact 僅在 workspace 診斷，不加入 repo。
+- **發布/下一步**：PR #6 由使用者自行 Merge，再由 main Actions 發布；本次未推 main、未代合併、未開 auto-merge。#41 未進部署，公開頁仍是上一成功發布版。Safari 待真機。
 
 ## 日誌格式（新增一筆時照這個）
 ```
@@ -68,6 +69,12 @@
 - 2026-11-11 找到新字體來源 max32002/pop-gothic（大波浪圓體，含注音）→ 已加入手寫可愛包。問「能不能直接下載到我的 files 下載資料夾」→ 答：網頁在 iPhone 不能自動寫進「檔案」App 資料夾；官方字體存在瀏覽器裡，自己的字體用「匯入字體檔」從檔案 App 選
 
 ## 日誌（最新在最上面）
+
+- 2026-11-13 漂移驗收修復完成
+  - [Actions #42](https://github.com/peiyulin0520/VideoClip_2/actions/runs/43342981901) 成功，程式/測試 6b031d249513f765babc00b53973d58faeee2eb6：278 單元、98 Chromium e2e 全過，lint/格式/TypeScript/build/Pages/39 字體檢查成功。
+  - 原有 98 項完整跑完，四格漂移額外連續三次重套，每次三個時間點都比對預覽及單格輸出。產品程式不改，PR #6 交使用者自行 Merge。
+  - 成功 artifact 14000233770 / ZIP SHA-256 3ae5ee1f98eda79c73178a33746af026a977408b4f3ac2c3f41e47e143845845，119 張圖，新增 polaroid-drift.png；來源皆自製。最後文件/截圖 [skip ci]，測試與程式保持上述驗證版本；Safari 待真機。
+
 
 - 2026-11-13 修正 main #41 的過時漂移驗收
   - 使用者回報 PR #5 合併後 CI 失敗；讀取 job 131610187477 確認 278 單元/97 of 98 e2e，並以 artifact 13999483508（ZIP SHA-256 02b6ec06888d9f26b4cb914484467bdafa01921924a3fc6efadb4c7c619df623）確認時間 2.7 秒、模板長 3 秒。
