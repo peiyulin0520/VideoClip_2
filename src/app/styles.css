@@ -3051,3 +3051,101 @@ button:focus-visible {
   background: var(--control, var(--panel));
   color: var(--fg);
 }
+
+/* Every text surface owns a matching foreground/background in all six themes. */
+:root {
+  --control: #262626;
+  --ui-link: #ff8eb5;
+  --success-fg: #9de9b9;
+  --warning-fg: #ffd17a;
+  --danger-fg: #ffb4b4;
+  --danger-bg: #3a2020;
+  --ui-letter-spacing: -0.02em;
+  --ui-word-spacing: -0.02em;
+  --ui-line-height: 1.25;
+}
+:root[data-theme='mono'] {
+  --ui-link: #eeeeee;
+}
+:root:is([data-theme='light'], [data-theme='fresh'], [data-theme='warm'], [data-theme='beige']) {
+  --ui-link: #354c42;
+  --success-fg: #246148;
+  --warning-fg: #805019;
+  --danger-fg: #9e2c2c;
+  --danger-bg: #f7e5e2;
+}
+:root[data-theme='warm'] {
+  --muted: #69503d;
+  --ui-link: #744b2e;
+}
+:root[data-theme='beige'] {
+  --muted: #5d6055;
+  --ui-link: #923e2b;
+}
+:root[data-theme]
+  :is(.radio-card, .pack-row, .install-box, .font-row.import, .saved-material, .audio-source) {
+  background: var(--control);
+  color: var(--fg);
+}
+:root[data-theme] .ok {
+  color: var(--success-fg);
+}
+:root[data-theme] .warn {
+  color: var(--warning-fg);
+}
+:root[data-theme] :is(.btn, .menu-item).danger {
+  color: var(--danger-fg);
+}
+:root[data-theme] .btn.danger {
+  background: var(--danger-bg);
+}
+:root[data-theme] :is(#root, .sheet) a:not([class]),
+:root[data-theme]
+  :is(.tool.active, .icon-btn.sm.on, .template-choice, .effect-selected, .source-marker span) {
+  color: var(--ui-link);
+}
+:root[data-theme] :is(.fab, .empty-import) {
+  color: var(--accent-ink);
+}
+:root[data-theme] :is(#root, .sheet) :is(input, textarea)::placeholder {
+  color: var(--muted);
+  opacity: 1;
+}
+
+/* Tracking and leading scale with the smaller UI type, including explanatory notes. */
+:root[data-theme] :is(#root, .sheet),
+:root[data-theme] :is(#root, .sheet) :where(*) {
+  letter-spacing: var(--ui-letter-spacing) !important;
+  word-spacing: var(--ui-word-spacing) !important;
+  line-height: var(--ui-line-height) !important;
+  font-kerning: normal;
+}
+:root[data-theme] :is(#root, .sheet) :is(.hint, .sheet-msg, .empty-note, .note, [role='note']),
+:root[data-theme] :is(#root, .sheet) :is(.hint, .sheet-msg, .empty-note, .note, [role='note']) :where(*) {
+  letter-spacing: -0.01em !important;
+  line-height: 1.3 !important;
+}
+:root[data-theme] #root :is(.family-toggle, .family-toggle small, .playbar .time, .playbar .time span) {
+  line-height: 1.1 !important;
+}
+:root[data-theme] #root :is(.clip-label, .clip-audio, .template-art i) {
+  line-height: 1 !important;
+}
+.welcome-body {
+  gap: 8px;
+  padding: calc(var(--safe-top) + 16px) 16px calc(var(--safe-bottom) + 16px);
+}
+.radio-cards {
+  gap: 8px;
+}
+.pack-row {
+  gap: 8px;
+  padding: 6px 8px;
+}
+
+:root[data-theme] .font-tags .ok {
+  color: var(--success-fg);
+}
+:root[data-theme] .font-row.active .font-tags .warn {
+  color: #ffd17a;
+}

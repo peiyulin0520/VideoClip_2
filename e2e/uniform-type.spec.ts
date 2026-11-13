@@ -23,6 +23,11 @@ async function assertUiType(page: Page) {
         const expected = el.closest(notes) ? 11 : 14;
         const size = parseFloat(getComputedStyle(el).fontSize);
         checked++;
+        const style = getComputedStyle(el);
+        if (!(parseFloat(style.letterSpacing) < 0))
+          bad.push(`Tracking: ${node.textContent.trim().slice(0, 20)}`);
+        if (parseFloat(style.lineHeight) / size > 1.35)
+          bad.push(`Leading: ${node.textContent.trim().slice(0, 20)}`);
         if (size !== expected)
           bad.push(`${el.tagName}.${el.className}: ${node.textContent.trim().slice(0, 35)} (${size})`);
       }
