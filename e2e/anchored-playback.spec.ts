@@ -13,6 +13,9 @@ import {
 import type { Project } from '../src/model/types';
 test.beforeEach(({ page }) => {
   page.on('pageerror', (error) => console.error('Preview page error:', error.stack));
+  page.on('console', (message) => {
+    if (message.type() === 'error') console.error('Preview console:', message.text());
+  });
 });
 const current = (page: Page): Promise<Project> =>
   page.evaluate(() =>
@@ -31,7 +34,21 @@ async function shot(page: Page, name: string) {
 
 test('匯入新影片後完成預覽準備，操作與返回首頁不會呼叫已銷毀播放器', async ({ page }) => {
   await createProjectWith(page, ['solid-red.webm']);
-  await addOverlays(page, ['solid-green.webm']);
+  try {
+    await addOverlays(page, ['solid-green.webm']);
+  } catch (error) {
+    console.error(
+      'Import lifecycle state:',
+      JSON.stringify(
+        await page.evaluate(() => ({
+          project: (window as unknown as { __videoclip?: { project: () => unknown } }).__videoclip?.project(),
+          body: document.body.innerText.slice(0, 4000),
+          url: location.href,
+        })),
+      ),
+    );
+    throw error;
+  }
   await ready(page);
   expect((await current(page)).tracks.flatMap((t) => t.items)).toHaveLength(2);
   await expect.poll(async () => isGreen(await samplePreview(page, 0.5, 0.5))).toBe(true);
