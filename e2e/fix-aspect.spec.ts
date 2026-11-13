@@ -1,3 +1,4 @@
+import { expandAllGroups } from './helpers';
 import { expect, test, type Page } from '@playwright/test';
 import { clips, createProjectWith, fixture } from './helpers';
 
@@ -30,6 +31,7 @@ async function newEmptyProject(page: Page, chip?: RegExp) {
   if (chip) await page.getByRole('radio', { name: chip }).tap();
   await page.getByRole('button', { name: '建立空白專案' }).tap();
   await expect(page).toHaveURL(/#\/p\//);
+  await expandAllGroups(page);
   // 預覽引擎建好、除錯掛鉤才會出現
   await expect
     .poll(() => page.evaluate(() => !!(window as unknown as { __videoclip?: unknown }).__videoclip))
@@ -79,6 +81,7 @@ test('新專案面板：預設選「自動」，手動選 1:1 後匯入橫式仍
   await expect(page.getByRole('radio', { name: /1:1/ })).toHaveAttribute('aria-checked', 'true');
   await page.getByTestId('new-project-files').setInputFiles(fixture('clip-c.webm'));
   await expect(page).toHaveURL(/#\/p\//);
+  await expandAllGroups(page);
   await expect(clips(page)).toHaveCount(1, { timeout: 20_000 });
   const p = await info(page);
   expect(p.aspect).toBe('1:1');

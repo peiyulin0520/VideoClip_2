@@ -1,3 +1,4 @@
+import { expandAllGroups } from './helpers';
 import { expect, test } from '@playwright/test';
 import { clips, createProjectWith, fixture, project } from './helpers';
 
@@ -43,6 +44,7 @@ test('模擬 iPhone：解碼器不能用、<video> 不觸發 loadeddata → 先�
   await page.getByRole('button', { name: '新增專案' }).tap();
   await page.getByTestId('new-project-files').setInputFiles(fixture('clip-a.webm'));
   await expect(page).toHaveURL(/#\/p\//, { timeout: 30_000 });
+  await expandAllGroups(page);
   await expect(clips(page)).toHaveCount(1, { timeout: 20_000 });
   // 補縮圖：播放器第一次畫出這支影片後，素材會有縮圖，時間軸不再顯示檔名
   await expect
@@ -55,6 +57,7 @@ test('模擬 iPhone：解碼器不能用、<video> 不觸發 loadeddata → 先�
   // 補上的縮圖有存起來：等自動儲存後重新整理仍然在
   await page.waitForTimeout(1200);
   await page.reload();
+  await expandAllGroups(page);
   await expect(clips(page)).toHaveCount(1, { timeout: 20_000 });
   expect((await thumbsOf(page)).assets[0]!.thumbs.length).toBeGreaterThan(0);
 });

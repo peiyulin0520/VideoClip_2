@@ -43,8 +43,22 @@ export async function createProjectWith(page: Page, files: string[], expandTimel
   await page.getByRole('button', { name: '新增專案' }).tap();
   await page.getByTestId('new-project-files').setInputFiles(files.map(fixture));
   await expect(page).toHaveURL(/#\/p\//);
-  await expect(page.getByTestId('clip')).toHaveCount(files.length, { timeout: 20_000 });
-  if (expandTimeline) await page.getByRole('button', { name: /^展開時間軸/ }).tap();
+  await expect
+    .poll(
+      () =>
+        page.evaluate(() => {
+          const hook = (
+            window as unknown as { __videoclip?: { project: () => { tracks: { items: unknown[] }[] } } }
+          ).__videoclip;
+          return hook?.project().tracks.reduce((n, track) => n + track.items.length, 0) ?? 0;
+        }),
+      { timeout: 20_000 },
+    )
+    .toBe(files.length);
+  if (expandTimeline) {
+    await page.getByRole('button', { name: /^展開時間軸/ }).tap();
+    await expandAllGroups(page);
+  }
 }
 
 export const clips = (page: Page) => page.getByTestId('clip');
@@ -188,14 +202,19 @@ export async function openTab(
 /** 疊加分頁 →「加入影片或照片」→ 選檔案 */
 export async function addOverlays(page: Page, files: string[]) {
   await openTab(page, '影像');
-  const before = await page.getByTestId('clip').count();
+  const before = (await project(page)).tracks.reduce((n, track) => n + track.items.length, 0);
   const [chooser] = await Promise.all([
     page.waitForEvent('filechooser'),
     page.getByRole('button', { name: /加入影片或照片/ }).tap(),
   ]);
   await chooser.setFiles(files.map(fixture));
   // 匯入是非同步的（讀檔、縮圖），等到時間軸上多出這幾個物件
-  await expect(page.getByTestId('clip')).toHaveCount(before + files.length, { timeout: 20_000 });
+  await expect
+    .poll(async () => (await project(page)).tracks.reduce((n, track) => n + track.items.length, 0), {
+      timeout: 20_000,
+    })
+    .toBe(before + files.length);
+  if (await page.locator('#editor-timeline').isVisible()) await expandAllGroups(page);
 }
 
 export const regionHash = (page: Page, r: [number, number, number, number]) =>
@@ -241,4 +260,20 @@ export async function markMuteInterval(page: Page, from: number, to: number, dur
   await strip.tap({ position: { x: (x * to) / duration, y: 20 } });
   await page.getByRole('button', { name: '標記靜音終點並新增', exact: true }).tap();
   await page.getByRole('button', { name: '調整保留聲音標記', exact: true }).tap();
+}
+
+/** Legacy scenarios explicitly open the groups they edit; the product still starts folded. */
+export async function expandAllGroups(page: Page) {
+  if (!page.url().includes('#/p/')) return;
+  await expect(page.locator('.timeline')).toBeAttached({ timeout: 20_000 });
+  const toggle = page.getByRole('button', { name: /^展開時間軸/ });
+  if (await toggle.count()) await toggle.tap();
+  const groups = page.locator('.timeline').getByRole('button', { name: /^展開.*群組$/ });
+  while (await groups.count()) await groups.first().tap();
+}
+export async function setCropOffset(page: Page, value = 0) {
+  await page.getByRole('slider', { name: '瞄準偏移', exact: true }).evaluate((el, v) => {
+    Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value')!.set!.call(el, String(v));
+    el.dispatchEvent(new Event('input', { bubbles: true }));
+  }, value);
 }

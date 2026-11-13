@@ -1,3 +1,4 @@
+import { expandAllGroups } from './helpers';
 import { expect, test, type Page } from '@playwright/test';
 import {
   clips,
@@ -40,6 +41,7 @@ test('在空白編輯器匯入第一支影片，不重整就有首格；沒有 l
   await page.getByRole('button', { name: '新增專案' }).tap();
   await page.getByRole('button', { name: '建立空白專案' }).tap();
   await page.getByTestId('file-input').setInputFiles(fixture('solid-red.webm'));
+  await expandAllGroups(page);
   await expect(clips(page)).toHaveCount(1);
   await expect.poll(async () => isRed(await samplePreview(page, 0.5, 0.5))).toBe(true);
   await expect(page.getByTestId('preview-canvas')).toHaveAttribute('height', '1080');
@@ -148,6 +150,7 @@ test('第一支影片延後，白底與開場文字正確合成，重新整理�
   await expect.poll(async () => isRed(await samplePreview(page, 0.1, 0.1))).toBe(true);
   await page.waitForTimeout(1200);
   await page.reload();
+  await expandAllGroups(page);
   await project(page);
   expect((await project(page)).tracks[0]!.items[0]!.start).toBe(2.5);
 });

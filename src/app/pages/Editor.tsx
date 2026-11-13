@@ -269,6 +269,7 @@ function EditorBody() {
           onClick={(e) => e.currentTarget.closest('.editor')!.scrollTo({ top: 0 })}
         >
           <ArrowUp size={20} />
+          <span>預覽</span>
         </button>
         <button
           className="icon-btn"
@@ -282,6 +283,7 @@ function EditorBody() {
           }
         >
           <PanelBottom size={20} />
+          <span>工具</span>
         </button>
         <button
           className="icon-btn"
@@ -289,6 +291,7 @@ function EditorBody() {
           onClick={() => setPps(Math.max(pps / 1.5, MIN_PPS))}
         >
           <ZoomOut size={22} />
+          <span>縮小</span>
         </button>
         <button
           className="icon-btn"
@@ -296,6 +299,7 @@ function EditorBody() {
           onClick={() => setPps(Math.min(pps * 1.5, MAX_PPS))}
         >
           <ZoomIn size={22} />
+          <span>放大</span>
         </button>
       </div>
 
@@ -318,7 +322,12 @@ function EditorBody() {
         {timelineOpen ? '收合時間軸' : '展開時間軸'} · {project.tracks.length} 個圖層
       </button>
       <div id="editor-timeline" hidden={!timelineOpen}>
-        <Timeline pps={pps} setPps={setPps} onAdd={(trackId) => pick('main', trackId)} />
+        <Timeline
+          key={timelineOpen ? 'expanded' : 'collapsed'}
+          pps={pps}
+          setPps={setPps}
+          onAdd={(trackId) => pick('main', trackId)}
+        />
       </div>
       <BottomBar onImportMain={() => pick('main')} onImportOverlay={() => pick('overlay')} />
 

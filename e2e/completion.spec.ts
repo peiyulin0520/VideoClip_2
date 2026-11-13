@@ -1,3 +1,5 @@
+import { setCropOffset } from './helpers';
+import { expandAllGroups } from './helpers';
 import { expect, test, type Page } from '@playwright/test';
 import type { Project } from '../src/model/types';
 import {
@@ -109,6 +111,7 @@ test('自己貼圖的收藏跨專案保留，移除收藏不刪已加入的素�
   await page.getByTestId('sticker-files').setInputFiles(fixture('photo.png'));
   await expect(page.getByRole('button', { name: '使用素材 photo.png', exact: true })).toBeVisible();
   await page.reload();
+  await expandAllGroups(page);
   await openTab(page, '素材');
   await expect(page.getByRole('button', { name: '使用素材 photo.png', exact: true })).toBeVisible();
   await createProjectWith(page, ['solid-red.webm']);
@@ -118,6 +121,7 @@ test('自己貼圖的收藏跨專案保留，移除收藏不刪已加入的素�
   await page.getByRole('button', { name: '刪除收藏 photo.png', exact: true }).tap();
   await expect(page.getByRole('button', { name: '使用素材 photo.png', exact: true })).toHaveCount(0);
   await page.reload();
+  await expandAllGroups(page);
   await expect(clips(page)).toHaveCount(2);
   await page.screenshot({ path: `${shots}/saved-material-in-project.png` });
 });
@@ -146,6 +150,7 @@ test('畫筆、橡皮擦、粗細透明度與收藏畫作可用', async ({ page 
   await page.getByRole('button', { name: '加入畫作', exact: true }).tap();
   await expect(page.getByRole('button', { name: '使用素材 我的線條.png', exact: true })).toBeVisible();
   await page.reload();
+  await expandAllGroups(page);
   await openTab(page, '素材');
   await expect(page.getByRole('button', { name: '使用素材 我的線條.png', exact: true })).toBeVisible();
 });
@@ -192,6 +197,7 @@ test('GIPHY Key 僅本裝置保留，搜尋動態透明貼圖，不進共用收�
   await expect.poll(async () => isGreen(await samplePreview(page, 0.5, 0.5))).toBe(true);
   await expect.poll(async () => isBlue(await samplePreview(page, 0.3, 0.39))).toBe(true);
   await page.reload();
+  await expandAllGroups(page);
   await openTab(page, '素材');
   await page.getByRole('button', { name: 'GIPHY 貼圖', exact: true }).tap();
   await expect(page.getByLabel('GIPHY API Key')).toHaveCount(0);
@@ -217,6 +223,7 @@ test('手動描邊與拖曳四邊裁切真的在畫面留下透明區域', async
   await openTab(page, '剪輯');
   await page.getByRole('button', { name: '裁切', exact: true }).tap();
   await page.getByRole('button', { name: '自由描邊保留區域', exact: true }).tap();
+  await setCropOffset(page);
   const box = (await page.getByTestId('crop-stage').boundingBox())!;
   await page.mouse.move(box.x + box.width * 0.05, box.y + box.height * 0.05);
   await page.mouse.down();
@@ -339,6 +346,7 @@ test('主題與預覽偏好重開保留；同裝置續用不走還原流程', as
   await page.getByRole('radio', { name: '溫暖棕色', exact: true }).tap();
   await page.getByLabel('預覽品質').selectOption('720');
   await page.reload();
+  await expandAllGroups(page);
   await expect(page.locator('html')).toHaveAttribute('data-theme', 'warm');
   await expect(page.getByLabel('預覽品質')).toHaveValue('720');
   await expect(page.getByTestId('welcome')).toHaveCount(0);

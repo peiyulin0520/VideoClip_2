@@ -108,7 +108,9 @@ test('交接圓底加號定位正確，已用特效在上方且亮框，單一�
   await expect(joins).toHaveCount(2);
   const joinBox = (await joins.first().boundingBox())!,
     clipBox = (await clips(page).first().boundingBox())!;
-  expect(joinBox.y + joinBox.height).toBeLessThanOrEqual(clipBox.y + 0.5);
+  expect(joinBox.y).toBeGreaterThan(clipBox.y + clipBox.height / 2);
+  expect(joinBox.height).toBeGreaterThanOrEqual(44);
+  expect((await joins.first().locator('svg').boundingBox())!.width).toBeLessThanOrEqual(20);
   await joins.nth(1).tap();
   await expect(page.locator('.bottombar').getByRole('tab', { name: '特效', exact: true })).toHaveAttribute(
     'aria-selected',
@@ -194,10 +196,20 @@ test('鉛筆最大粗細單獨可見，感壓筆有粗細變化且可復原及�
   const alpha = () =>
     canvas.evaluate((el) => {
       const c = el as HTMLCanvasElement;
-      return c.getContext('2d')!.getImageData(Math.round(c.width * 0.5), Math.round(c.height * 0.2), 1, 1)
-        .data[3]!;
+      const data = c
+        .getContext('2d')!
+        .getImageData(Math.round(c.width * 0.5) - 8, Math.round(c.height * 0.2) - 8, 16, 16).data;
+      const values = Array.from(data).filter((_, i) => i % 4 === 3);
+      return {
+        mean: values.reduce((a, b) => a + b, 0) / values.length,
+        holes: values.filter((v) => v === 0).length / values.length,
+        max: Math.max(...values),
+      };
     });
-  expect(await alpha()).toBeGreaterThan(45);
+  const graphite = await alpha();
+  expect(graphite.mean).toBeGreaterThan(20);
+  expect(graphite.holes).toBeGreaterThan(0.2);
+  expect(graphite.max).toBeLessThan(130);
   await page.getByRole('button', { name: '感壓筆', exact: true }).tap();
   await canvas.scrollIntoViewIfNeeded();
   const b = (await canvas.boundingBox())!;
@@ -235,11 +247,18 @@ test('鉛筆最大粗細單獨可見，感壓筆有粗細變化且可復原及�
   expect(widths[1]!).toBeGreaterThan(widths[0]! * 2);
   await shot(page, 'visible-pencil-and-pressure-brush');
   await page.getByRole('button', { name: '復原筆畫', exact: true }).tap();
-  expect(await alpha()).toBeGreaterThan(45);
+  expect((await alpha()).mean).toBeCloseTo(graphite.mean, 1);
   await page.getByRole('button', { name: '加入畫作', exact: true }).tap();
   await expect(clips(page)).toHaveCount(2);
-  await expect.poll(async () => (await samplePreview(page, 0.5, 0.2))?.[0] ?? 0).toBeGreaterThan(30);
-  const frame = await exportFrame(page, 0, [[0.5, 0.2]]);
-  expect(frame.samples[0]![0]).toBeGreaterThan(30);
+  const probes: [number, number][] = [0.47, 0.485, 0.5, 0.515, 0.53].map((x) => [x, 0.2]);
+  await expect
+    .poll(async () =>
+      Math.max(
+        ...(await Promise.all(probes.map(async ([x, y]) => (await samplePreview(page, x, y))?.[0] ?? 0))),
+      ),
+    )
+    .toBeGreaterThan(20);
+  const frame = await exportFrame(page, 0, probes);
+  expect(Math.max(...frame.samples.map((c) => c[0]!))).toBeGreaterThan(20);
   expect((await current(page)).assets.some((a) => a.name.endsWith('.png'))).toBe(true);
 });

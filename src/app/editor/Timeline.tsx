@@ -104,7 +104,26 @@ export function Timeline({
   const [menuTrackId, setMenuTrackId] = useState<string | null>(null);
 
   const [batch, setBatch] = useState<string[]>([]);
-  const [collapsed, setCollapsed] = useState<LaneCategory[]>([]);
+  const [collapsed, setCollapsed] = useState<LaneCategory[]>(['visual', 'text', 'sticker', 'audio']);
+  useEffect(
+    () =>
+      useProjectStore.subscribe((next, previous) => {
+        const current = next.project;
+        if (!current) return;
+        const added = current.tracks.filter(
+          (track) => track.items.length && !previous.project?.tracks.some((before) => before.id === track.id),
+        );
+        const selected =
+          next.selectedId !== previous.selectedId
+            ? current.tracks.find((track) => track.items.some((item) => item.id === next.selectedId))
+            : undefined;
+        const categories = new Set(
+          [...added, ...(selected ? [selected] : [])].map((track) => laneCategory(track, current)),
+        );
+        if (categories.size) setCollapsed((before) => before.filter((category) => !categories.has(category)));
+      }),
+    [],
+  );
   const total = totalDuration(project);
 
   // Track array is bottom-to-top; every media lane can occupy any stack position.
@@ -123,12 +142,11 @@ export function Timeline({
         top += ROW_H + ROW_GAP;
       }
       if (!collapsed.includes(category)) {
-        if (transitionPairs(project).some((pair) => pair.track.id === track.id)) top += ROW_H;
         rows.push({ track, index, top, h: ROW_H });
         top += ROW_H + ROW_GAP;
       }
     }
-    return { rows, groups, contentH: top + 12 };
+    return { rows, groups, contentH: top + 24 };
   }, [project, collapsed]);
   const { rows, groups, contentH } = rowLayout;
 
@@ -540,7 +558,7 @@ export function Timeline({
                       key={pair.from.id}
                       className="transition-join"
                       aria-label={`新增轉場 ${pair.from.name ?? project.assets.find((a) => a.id === ('assetId' in pair.from ? pair.from.assetId : ''))?.name ?? 'A'} 到 ${pair.to.name ?? project.assets.find((a) => a.id === ('assetId' in pair.to ? pair.to.assetId : ''))?.name ?? 'B'}`}
-                      style={{ left: half + pair.to.start * pps, top: -ROW_H / 2 }}
+                      style={{ left: half + pair.to.start * pps, top: h + 1 }}
                       onPointerDown={(e) => e.stopPropagation()}
                       onClick={(e) => {
                         e.stopPropagation();

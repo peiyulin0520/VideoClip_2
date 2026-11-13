@@ -8,6 +8,7 @@ import { urlFor } from '../../engine/assetUrls';
 import { sourceTimeAt } from '../../engine/timeline';
 import { Sheet } from '../../ui/Sheet';
 import { Slider } from '../../ui/Slider';
+import { cropPointer } from '../../engine/cropPointer';
 
 export function CropEditor({ item, onClose }: { item: VideoItem; onClose: () => void }) {
   const project = useProjectStore((s) => s.project)!,
@@ -19,6 +20,10 @@ export function CropEditor({ item, onClose }: { item: VideoItem; onClose: () => 
     [preview, setPreview] = useState(false);
   const [strokes, setStrokes] = useState<MaskStroke[]>(item.mask?.strokes ?? []);
   const [brushSize, setBrushSize] = useState(8);
+  const [offset, setOffset] = useState(56);
+  const [aim, setAim] = useState<(ReturnType<typeof cropPointer> & { width: number; height: number }) | null>(
+    null,
+  );
   const [snapshots, setSnapshots] = useState<{ points: [number, number][]; strokes: MaskStroke[] }[]>([]);
   const maskUrl = useMemo(() => {
     if (points.length < 3 && !strokes.length) return undefined;
@@ -30,13 +35,15 @@ export function CropEditor({ item, onClose }: { item: VideoItem; onClose: () => 
   }, [points, strokes, asset.width, asset.height]);
   const source = urlFor(project.id, asset.id),
     ratio = asset.width / asset.height;
-  const point = (e: PointerEvent<HTMLElement | SVGSVGElement>): [number, number] => {
+  const pointer = (e: PointerEvent<HTMLElement | SVGSVGElement>) => {
     const box = e.currentTarget.closest('.crop-stage')!.getBoundingClientRect();
-    return [
-      Math.max(0, Math.min(1, (e.clientX - box.left) / box.width)),
-      Math.max(0, Math.min(1, (e.clientY - box.top) / box.height)),
-    ];
+    return {
+      ...cropPointer(e.clientX, e.clientY, box, mode === 'crop' ? 0 : offset),
+      width: box.width,
+      height: box.height,
+    };
   };
+  const point = (e: PointerEvent<HTMLElement | SVGSVGElement>): [number, number] => pointer(e).target;
   const change = (side: keyof Crop, value: number) =>
     setCrop((c) => ({
       ...c,
@@ -56,10 +63,24 @@ export function CropEditor({ item, onClose }: { item: VideoItem; onClose: () => 
   return (
     <Sheet open title="裁切／手動去背" onClose={onClose}>
       <div className="chips">
-        <button className={`chip${mode === 'crop' ? ' active' : ''}`} onClick={() => setMode('crop')}>
+        <button
+          className={`chip${mode === 'crop' ? ' active' : ''}`}
+          onClick={() => {
+            setMode('crop');
+            setPreview(false);
+            setAim(null);
+          }}
+        >
           四邊與角落裁切
         </button>
-        <button className={`chip${mode === 'lasso' ? ' active' : ''}`} onClick={() => setMode('lasso')}>
+        <button
+          className={`chip${mode === 'lasso' ? ' active' : ''}`}
+          onClick={() => {
+            setMode('lasso');
+            setPreview(false);
+            setAim(null);
+          }}
+        >
           自由描邊保留區域
         </button>
         {(['keep', 'erase'] as const).map((tool) => (
@@ -86,8 +107,20 @@ export function CropEditor({ item, onClose }: { item: VideoItem; onClose: () => 
           onChange={setBrushSize}
         />
       )}
+      {mode !== 'crop' && (
+        <Slider
+          label="瞄準偏移"
+          value={offset}
+          min={0}
+          max={120}
+          step={2}
+          format={(v) => `${v} px`}
+          onChange={setOffset}
+        />
+      )}
       <div
         className="crop-stage"
+        onContextMenu={(event) => event.preventDefault()}
         style={{ aspectRatio: `${asset.width}/${asset.height}`, width: `min(100%,${52 * ratio}dvh)` }}
         data-testid="crop-stage"
       >
@@ -131,10 +164,12 @@ export function CropEditor({ item, onClose }: { item: VideoItem; onClose: () => 
         </div>
         {!preview && (
           <svg
+            data-testid="crop-surface"
             viewBox="0 0 1 1"
             preserveAspectRatio="none"
             onPointerDown={(e) => {
               if (mode === 'crop') return;
+              setAim(pointer(e));
               setSnapshots((h) => [...h, { points, strokes }]);
               if (mode === 'keep' || mode === 'erase') {
                 const first = point(e);
@@ -150,7 +185,9 @@ export function CropEditor({ item, onClose }: { item: VideoItem; onClose: () => 
             }}
             onPointerMove={(e) => {
               if (!drawing) return;
-              const p = point(e);
+              const next = pointer(e);
+              setAim(next);
+              const p = next.target;
               if (mode === 'keep' || mode === 'erase') {
                 setStrokes((s) =>
                   s.map((v, i) => (i === s.length - 1 ? { ...v, points: [...v.points, p] } : v)),
@@ -163,8 +200,14 @@ export function CropEditor({ item, onClose }: { item: VideoItem; onClose: () => 
                   : a,
               );
             }}
-            onPointerUp={() => setDrawing(false)}
-            onPointerCancel={() => setDrawing(false)}
+            onPointerUp={() => {
+              setDrawing(false);
+              setAim(null);
+            }}
+            onPointerCancel={() => {
+              setDrawing(false);
+              setAim(null);
+            }}
           >
             <path d={outside} fill="#000" fillOpacity=".55" fillRule="evenodd" />
             <rect
@@ -183,6 +226,53 @@ export function CropEditor({ item, onClose }: { item: VideoItem; onClose: () => 
                 stroke="#85ebd5"
                 strokeWidth=".007"
               />
+            )}
+            {aim && mode !== 'crop' && (
+              <g
+                data-testid="crop-offset-guide"
+                data-target-x={aim.target[0]}
+                data-target-y={aim.target[1]}
+                pointerEvents="none"
+              >
+                <line
+                  x1={aim.contact[0]}
+                  y1={aim.contact[1]}
+                  x2={aim.target[0]}
+                  y2={aim.target[1]}
+                  stroke="#ffffff"
+                  strokeWidth="1"
+                  vectorEffect="non-scaling-stroke"
+                  strokeDasharray="3 3"
+                />
+                <ellipse
+                  data-testid="crop-contact-circle"
+                  cx={aim.contact[0]}
+                  cy={aim.contact[1]}
+                  rx={11 / aim.width}
+                  ry={11 / aim.height}
+                  fill="#1118"
+                  stroke="#fff"
+                  strokeWidth="2"
+                  vectorEffect="non-scaling-stroke"
+                />
+                <ellipse
+                  data-testid="crop-target-circle"
+                  cx={aim.target[0]}
+                  cy={aim.target[1]}
+                  rx={mode === 'lasso' ? 6 / aim.width : brushSize / 200}
+                  ry={mode === 'lasso' ? 6 / aim.height : (brushSize * ratio) / 200}
+                  fill="none"
+                  stroke={mode === 'erase' ? '#ffb3b3' : '#85ebd5'}
+                  strokeWidth="2"
+                  vectorEffect="non-scaling-stroke"
+                />
+                <path
+                  d={`M${aim.target[0] - 4 / aim.width} ${aim.target[1]}h${8 / aim.width} M${aim.target[0]} ${aim.target[1] - 4 / aim.height}v${8 / aim.height}`}
+                  stroke="#fff"
+                  strokeWidth="1"
+                  vectorEffect="non-scaling-stroke"
+                />
+              </g>
             )}
           </svg>
         )}
@@ -231,9 +321,9 @@ export function CropEditor({ item, onClose }: { item: VideoItem; onClose: () => 
       </div>
       <p className="hint">
         {mode === 'keep' || mode === 'erase'
-          ? '保留筆刷補回缺角；橡皮擦移除多餘區域。筆畫會隨素材縮放，復原可退回上一筆。'
+          ? '按住下方控制圈，移動上方瞄準圈來保留或擦除；可調粗細與偏移距離，復原可退回上一筆。'
           : mode === 'lasso'
-            ? '直接沿著想保留的部位畫一圈，框外會透明。這是手動遮罩，會隨素材移動縮放。'
+            ? '按住下方控制圈，用上方瞄準圈沿想保留的部位畫一圈。框外會透明，偏移距離可調。'
             : '拖曳四邊或角落，決定要保留的範圍。'}
       </p>
       {mode === 'crop' &&

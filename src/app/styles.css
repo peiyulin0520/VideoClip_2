@@ -2783,3 +2783,150 @@ button:focus-visible {
     text-align: center;
   }
 }
+
+/* Compact editor controls share the function-tab type scale; touch targets remain 44px. */
+:root {
+  --editor-control-font: 14px;
+}
+:root[data-theme] :is(.bottombar, .sheet) {
+  font-size: var(--editor-control-font);
+}
+:root[data-theme] :is(.bottombar, .sheet) :where(*) {
+  font-size: var(--editor-control-font) !important;
+}
+:root[data-theme] :is(.bottombar, .sheet) :is(.hint, .sheet-msg, small, .audio-source-name) {
+  font-size: 11px !important;
+}
+:root[data-theme] .bottombar .tab {
+  font-size: var(--editor-control-font);
+}
+:root[data-theme] .sheet {
+  padding: 10px 12px calc(10px + var(--safe-bottom));
+  max-width: 620px;
+  margin-inline: auto;
+}
+.sheet-heading {
+  margin-bottom: 8px;
+  gap: 6px;
+}
+:root[data-theme] :is(.bottombar, .sheet) :is(.btn, .chip, .menu-item) {
+  padding-inline: 10px;
+}
+:root[data-theme] :is(.bottombar, .sheet) .chips {
+  gap: 4px;
+  margin-block: 6px;
+}
+:root[data-theme] :is(.bottombar, .sheet) .slider-row {
+  gap: 6px;
+  margin-block: 2px;
+  min-height: 44px;
+}
+:root[data-theme] :is(.bottombar, .sheet) .slider-label {
+  min-width: 66px;
+}
+:root[data-theme] :is(.bottombar, .sheet) .color-custom-button {
+  padding: 4px 8px;
+  gap: 8px;
+}
+:root[data-theme] :is(.bottombar, .sheet) .color-sample {
+  width: 26px;
+  height: 26px;
+}
+.effect-grid {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 6px;
+}
+.effect-card {
+  padding: 4px;
+  gap: 4px;
+  border-radius: 8px;
+}
+.effect-card.active {
+  padding: 2px;
+}
+.effect-card canvas {
+  max-height: 72px;
+}
+.effect-card strong {
+  font-weight: 500;
+  line-height: 1.35;
+}
+.used-effects {
+  margin: 8px 0;
+  padding: 6px;
+}
+.used-effects .effect-row {
+  gap: 4px;
+  padding-block: 2px;
+}
+.audio-range-preview .range-preview {
+  height: 100px;
+  max-height: 100px;
+}
+.sheet .range-preview {
+  max-height: 160px;
+}
+.template-grid {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 6px;
+}
+.template-grid button {
+  gap: 4px;
+  padding: 4px;
+}
+.template-grid .template-art {
+  height: 46px;
+  max-width: 64px;
+}
+.template-assignment {
+  display: grid;
+  grid-template-columns: minmax(80px, 33%) minmax(0, 1fr);
+  gap: 10px;
+  align-items: start;
+  margin-block: 10px;
+}
+.template-assignment .slot-map {
+  width: 100%;
+  max-width: 120px;
+  height: auto;
+  aspect-ratio: 9 / 16;
+  margin: 0;
+  justify-self: start;
+}
+.template-source-choices {
+  min-width: 0;
+  display: grid;
+  gap: 4px;
+}
+.template-source-choices .slot-choice {
+  margin: 0;
+  padding: 4px;
+  gap: 2px;
+  grid-template-columns: minmax(0, 1fr);
+  border-width: 1px;
+}
+.template-source-choices .slot-choice select {
+  min-height: 44px;
+  max-width: 100%;
+}
+.editor .playbar .icon-btn {
+  flex-direction: column;
+  gap: 0;
+  padding: 2px;
+}
+.editor .playbar .icon-btn svg {
+  width: 17px;
+  height: 17px;
+}
+.editor .playbar .icon-btn span {
+  font-size: 11px;
+  line-height: 14px;
+}
+.transition-join svg {
+  width: 18px;
+  height: 18px;
+  padding: 1px;
+}
+.transition-join {
+  padding: 13px;
+}

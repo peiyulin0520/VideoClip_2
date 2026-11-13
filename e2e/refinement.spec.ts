@@ -1,3 +1,5 @@
+import { setCropOffset } from './helpers';
+import { expandAllGroups } from './helpers';
 import { markMuteInterval } from './helpers';
 import { expect, test, type Page } from '@playwright/test';
 import type { Project, VideoItem } from '../src/model/types';
@@ -44,6 +46,7 @@ test('裁切後保留筆刷補缺角，橡皮擦去多餘區域，重開與輸�
   await openTab(page, '剪輯');
   await page.getByRole('button', { name: '裁切', exact: true }).tap();
   await page.getByRole('button', { name: '自由描邊保留區域', exact: true }).tap();
+  await setCropOffset(page);
   await stroke(page, 'crop-stage', [
     [0.05, 0.05],
     [0.48, 0.05],
@@ -77,6 +80,7 @@ test('裁切後保留筆刷補缺角，橡皮擦去多餘區域，重開與輸�
   expect(isRed(frame.samples[1]! as [number, number, number, number])).toBe(true);
   await page.getByRole('link', { name: '回首頁', exact: true }).tap();
   await page.goBack();
+  await expandAllGroups(page);
   await expect(clips(page)).toHaveCount(2);
   await expect.poll(async () => isRed(await samplePreview(page, 0.4, 0.5))).toBe(true);
   await capture(page, { path: `${shots}/crop-refined-result.png` });
@@ -127,12 +131,12 @@ test('透明字塊、次級選單與深底前景可讀，裝飾距離使用像�
   await capture(page, { path: `${shots}/font-selected-contrast.png` });
 });
 
-test('毛筆與鉛筆畫出不同筆觸並可儲存為素材', async ({ page }) => {
+test('感壓筆與素描鉛筆畫出不同筆觸並可儲存為素材', async ({ page }) => {
   await createProjectWith(page, ['solid-blue.webm']);
   await openTab(page, '素材');
   await page.getByRole('button', { name: '＋ 畫畫', exact: true }).tap();
   await slider(page, '筆刷粗細', 45);
-  await page.getByRole('button', { name: '毛筆', exact: true }).tap();
+  await page.getByRole('button', { name: '感壓筆', exact: true }).tap();
   await stroke(page, 'drawing-canvas', [
     [0.1, 0.2],
     [0.3, 0.35],
@@ -202,6 +206,7 @@ test('音訊來源有縮圖，多組倒三角排除中間聲音但影片不縮�
   await page.getByRole('button', { name: '取消', exact: true }).tap();
   await page.getByRole('link', { name: '回首頁', exact: true }).tap();
   await page.goBack();
+  await expandAllGroups(page);
   await expect(clips(page)).toHaveCount(1);
   expect(((await current(page)).tracks[0]!.items[0] as VideoItem).audioRanges).toHaveLength(3);
 });

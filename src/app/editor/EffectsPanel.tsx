@@ -308,7 +308,6 @@ export function EffectsPanel() {
                   </span>
                 )}
               </strong>
-              {'description' in e && <small>{String(e.description)}</small>}
             </button>
           );
         })}

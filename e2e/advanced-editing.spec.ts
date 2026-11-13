@@ -1,3 +1,4 @@
+import { expandAllGroups } from './helpers';
 import { test, expect, type Page, type Locator } from '@playwright/test';
 import type { Project, VideoItem } from '../src/model/types';
 import { TRANSITIONS, VIDEO_EFFECTS } from '../src/engine/effectCatalog';
@@ -195,6 +196,7 @@ test('素材可命名，長按左側進多選，批次排序顯示合併刪除�
     )
     .toEqual({ tracks: 3, names: 1 });
   await page.reload();
+  await expandAllGroups(page);
   expect((await current(page)).tracks).toHaveLength(3);
   await expect(clips(page).filter({ hasText: '我的晚餐' })).toHaveCount(1);
 });
@@ -317,6 +319,7 @@ test('膠卷關鍵幀只縮放整組，框架與三格同步且重開保存', as
     )
     .toBe(2);
   await page.reload();
+  await expandAllGroups(page);
   await expect
     .poll(async () => (await current(page)).tracks.find((t) => t.template)?.layout?.keyframes?.length)
     .toBe(2);
@@ -517,6 +520,7 @@ test('主題以有字圓圈顯示，GIPHY Key 在首頁設定管理且貼圖無�
     route.fulfill({ path: fixture('animated-sticker.gif'), contentType: 'image/gif' }),
   );
   await page.goto(editor);
+  await expandAllGroups(page);
   await openTab(page, '素材');
   await page.getByRole('button', { name: 'GIPHY 貼圖', exact: true }).tap();
   await expect(page.getByLabel('GIPHY API Key')).toHaveCount(0);
@@ -535,6 +539,7 @@ test('主題以有字圓圈顯示，GIPHY Key 在首頁設定管理且貼圖無�
   await page.getByRole('link', { name: '設定', exact: true }).tap();
   await page.getByRole('button', { name: '移除 Key', exact: true }).tap();
   await page.goto(editor);
+  await expandAllGroups(page);
   await openTab(page, '素材');
   await page.getByRole('button', { name: 'GIPHY 貼圖', exact: true }).tap();
   await expect(page.getByLabel('GIPHY API Key')).toBeVisible();
