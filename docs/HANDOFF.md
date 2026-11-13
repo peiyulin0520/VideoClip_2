@@ -1,6 +1,8 @@
 # 交接手冊（HANDOFF）
 
 ## VideoClip_2 當前交接（優先於以下來源 repo 的歷史紀錄）
+- 最新全介面等字級/框內距最終：[Actions 43415119800](https://github.com/peiyulin0520/VideoClip_2/actions/runs/43415119800)：版本 d2e6e912e29b2b2608590eb828f09a6d1e6e6deb 的313單元、121 Chromium e2e全過；lint/格式/TypeScript/build/Pages/39字體檢查成功。artifact 14031444059，ZIP SHA-256 5103eef54febd04d95d5f0855bdfafd9502f4cf35cf186000317ea73181471cc 已核對；152張成功畫面，其中uniform-type/新增4張。PR #9由使用者自行Merge；最後文件/截圖不改成功版本產品/測試。以下待CI是過程紀錄，Safari仍待真機。
+
 - 首頁 banner/tip 原固定深底在米色主題會深字配深底；人工看圖發現，改 control（fallback panel）/fg 同主題色，padding6px。radio-card 也降內距14→6px，不動44px觸控或專案文字框。
 
 - 字級首輪 bba8e13 / Actions43412939957：313單元、原120瀏覽器情境全過；新情境未開始字級斷言，卡在初始新增按鈕名稱。初始按鈕是「＋ 新增文字（放在目前這一秒）」；只有選中既有字卡後的＋新增才有 aria-label「新增文字」。沿用既有測試 /新增文字/，不改產品或放寬字級/幾何斷言。
