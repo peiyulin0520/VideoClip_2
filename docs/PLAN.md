@@ -330,6 +330,7 @@ docs/
 - 每次回報時誠實區分：✅ 已驗證（附截圖）／🟡 寫好但只在 Chromium 驗證／🔴 做不到。
 
 ## 7. 待真機驗證清單（Sonnet 無法在沙盒驗證，要請使用者在 iPhone 上試）
+- [ ] 最新 11 點：Safari 小音訊畫面/白線同步/暫停後精準標記，定格直接記錄/預覽拖移、交接 + 與混搭、播放不出白框、鉛筆及硬體感壓/一般手指速度筆觸；長片效能待真機。
 - [ ] PR #7 九點：Safari 多組倒三角與白線新增/取消/局部復原、長按多選與分類收合、菱形定位/整組縮放、25 A/B/12 影片效果的即時效能與長片聲畫輸出、GIPHY 本機 Key 與主題圓圈。
 - [ ] 最新分型軌道：Safari 原影片直接觸控選取/雙指、550ms 長按遮擋選單、暫時置頂完成與匯出、單片段長按跨層/時間、異型拒絕/層間新建、主題 icon 對比。
 - [ ] 參考圖補充：正常大預覽及播放列都會捲走、細圖層列仍能選取/修剪/排序，功能及末端選項依序滑動查看。
@@ -389,3 +390,6 @@ docs/
 
 
 2026-11-13 九點最終驗收：[Actions 43366595525](https://github.com/peiyulin0520/VideoClip_2/actions/runs/43366595525)：版本 c74dec591b3a9bcf88e425b49dbcfdac494d43d5 的 299 單元、110 Chromium e2e 全過，lint/格式/TypeScript/build/Pages/39 字體檢查成功。 artifact 14010687940，ZIP SHA-256 9cbea2ce6c63b1e2e65c118e40d579994e1a297331a42f66cc55ef01fa0da9cb 已核對；135 張成功畫面保存。 PR #7 交使用者自行 Merge；§7 真機項目仍待 Safari。
+
+
+2026-11-13 最新 11 點驗收：[Actions 43386450346](https://github.com/peiyulin0520/VideoClip_2/actions/runs/43386450346)：版本 8b61548265b98396fa70d5af4b5e884ff04448b5 的 306 單元、114 Chromium e2e 全數通過；lint/格式/TypeScript/build/Pages/39 字體檢查成功。 artifact 14019456046，ZIP SHA-256 1cd711f8bc09875f2b5299ce722fa440cfb287bba022a05c4e7e42e0941c861b 已核對；140 張成功畫面，其中 playback-refinement/ 新增 5 張。 PR #8 由使用者自行 Merge，§7 真機項目保留。

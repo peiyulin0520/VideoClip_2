@@ -231,6 +231,7 @@ test('長按拖曳片段可以重新排序', async ({ page }) => {
   await createProjectWith(page, ['clip-a.webm', 'clip-b.webm', 'clip-c.webm']);
   const ids = await clipIds(page);
   // 把第 1 個（2 秒）拖到最後面
+  await clips(page).first().scrollIntoViewIfNeeded();
   const first = (await clips(page).nth(0).boundingBox())!;
   const x = first.x + first.width / 2;
   const y = first.y + first.height / 2;

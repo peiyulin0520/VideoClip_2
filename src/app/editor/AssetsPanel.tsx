@@ -311,9 +311,6 @@ export function AssetsPanel() {
                 <button aria-label={`加入貼圖 ${entry.title}`} onClick={() => void addGiphy(entry)}>
                   <img src={entry.preview} alt={entry.title} loading="lazy" referrerPolicy="no-referrer" />
                 </button>
-                <a href={entry.url} target="_blank" rel="noreferrer">
-                  GIPHY 原圖
-                </a>
               </div>
             ))}
           </div>

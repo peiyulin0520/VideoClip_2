@@ -231,3 +231,14 @@ export async function dragTimelineItem(
     await session.detach();
   }
 }
+
+/** Mark the exact interval through the same explicit controls used on a phone. */
+export async function markMuteInterval(page: Page, from: number, to: number, duration = 3) {
+  const strip = page.locator('.sheet .source-thumbs');
+  const x = (await strip.boundingBox())!.width;
+  await strip.tap({ position: { x: (x * from) / duration, y: 20 } });
+  await page.getByRole('button', { name: '標記靜音起點', exact: true }).tap();
+  await strip.tap({ position: { x: (x * to) / duration, y: 20 } });
+  await page.getByRole('button', { name: '標記靜音終點並新增', exact: true }).tap();
+  await page.getByRole('button', { name: '調整保留聲音標記', exact: true }).tap();
+}

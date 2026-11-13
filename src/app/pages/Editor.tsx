@@ -41,6 +41,7 @@ function EditorLoader({ projectId }: { projectId: string }) {
       if (cancelled) return;
       for (const id of new Set(p.tracks.flatMap((tr) => tr.layout?.story?.fontIds ?? [])))
         if (id !== 'system') await ensureFont(id);
+      useUI.setState({ effectsJoin: null });
       useProjectStore.getState().load(editableProject(p));
       autosave = startAutosave();
       setStatus('ready');
@@ -212,7 +213,6 @@ function EditorBody() {
         <button className="ratio-btn" aria-label="畫面比例" onClick={() => setRatioOpen(true)}>
           {project.aspect}
         </button>
-        <KeyframeControl />
         <button
           className="icon-btn"
           aria-label="復原"
@@ -261,6 +261,7 @@ function EditorBody() {
           {formatTime(time)} / {formatTime(total)}
         </span>
         <span className="spacer" />
+        <KeyframeControl />
         <button
           className="icon-btn"
           aria-label="回到預覽"

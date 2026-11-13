@@ -2,6 +2,7 @@ import { itemCategory, laneCategory } from './batchLayers';
 import { createMainTrack, createTrack, MIN_CLIP_DURATION, newId } from '../model/defaults';
 import type { Item, Project, Track, VideoItem } from '../model/types';
 import { canPlace, findFreeStart, findItem, sourceTimeAt } from './timeline';
+import { withoutDuplicateEffects } from './effectDuplicates';
 
 export type LayerFamily = 'visual' | 'text' | 'audio';
 export const trackFamily = (track: Track): LayerFamily =>
@@ -36,7 +37,7 @@ export function editableProject(project: Project): Project {
     name: /^(主軌|疊加(?: \d+)?)$/.test(track.name) ? `影像 ${i + 1}` : track.name,
   }));
   if (!tracks.some((t) => t.kind === 'main')) tracks.unshift(createMainTrack());
-  return { ...project, tracks, flexibleLayers: true, freeMain: true, mainOffset: 0 };
+  return withoutDuplicateEffects({ ...project, tracks, flexibleLayers: true, freeMain: true, mainOffset: 0 });
 }
 
 export type LayerDrop = { trackId: string } | { insertAt: number };

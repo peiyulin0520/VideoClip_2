@@ -4,8 +4,9 @@ import { useUI } from '../../store/uiStore';
 import { Sheet } from '../../ui/Sheet';
 import { ColorPicker } from '../../ui/ColorPicker';
 import { Slider } from '../../ui/Slider';
+import { dynamicWidths, type BrushPoint } from '../../engine/brushDynamics';
 
-type Stroke = { points: [number, number][]; brush: string; color: string; size: number; opacity: number };
+type Stroke = { points: BrushPoint[]; brush: string; color: string; size: number; opacity: number };
 export function DrawingEditor({
   onClose,
   onSave,
@@ -41,7 +42,18 @@ export function DrawingEditor({
       ctx.lineWidth = s.size * k;
       ctx.lineCap = ctx.lineJoin = 'round';
       if (s.brush === 'dots') ctx.setLineDash([0.1, s.size * k * 1.8]);
-      if (s.brush === 'ink' && s.points.length > 1) {
+      if (s.brush === 'pressure' && s.points.length > 1) {
+        const widths = dynamicWidths(s.points, s.size * k);
+        for (let i = 1; i < s.points.length; i++) {
+          const a = s.points[i - 1]!,
+            b = s.points[i]!;
+          ctx.lineWidth = (widths[i - 1]! + widths[i]!) / 2;
+          ctx.beginPath();
+          ctx.moveTo(a[0] * w, a[1] * h);
+          ctx.lineTo(b[0] * w, b[1] * h);
+          ctx.stroke();
+        }
+      } else if (s.brush === 'ink' && s.points.length > 1) {
         for (let i = 1; i < s.points.length; i++) {
           const a = s.points[i - 1]!,
             b = s.points[i]!;
@@ -54,6 +66,13 @@ export function DrawingEditor({
           ctx.stroke();
         }
       } else if (s.brush === 'pencil' && s.points.length > 1) {
+        // A visible graphite core; sparse fixed-size grains alone disappeared at large brush sizes.
+        ctx.globalAlpha = s.opacity * 0.32;
+        ctx.lineWidth = s.size * k * 0.7;
+        ctx.beginPath();
+        s.points.forEach(([x, y], i) => (i ? ctx.lineTo(x * w, y * h) : ctx.moveTo(x * w, y * h)));
+        ctx.stroke();
+        ctx.globalAlpha = s.opacity * 0.6;
         const random = (seed: number) => {
           const v = Math.sin(seed * 127.1 + 311.7) * 43758.5453;
           return v - Math.floor(v);
@@ -64,7 +83,7 @@ export function DrawingEditor({
           const distance = Math.hypot((b[0] - a[0]) * w, (b[1] - a[1]) * h),
             steps = Math.max(1, Math.ceil(distance));
           for (let j = 0; j <= steps; j++)
-            for (let grain = 0; grain < 5; grain++) {
+            for (let grain = 0; grain < Math.max(5, Math.ceil(s.size * k * 0.4)); grain++) {
               const seed = i * 100003 + j * 31 + grain,
                 angle = random(seed) * Math.PI * 2,
                 radius = Math.sqrt(random(seed + 7)) * s.size * k * 0.5;
@@ -85,11 +104,13 @@ export function DrawingEditor({
       ctx.restore();
     }
   };
-  const point = (e: PointerEvent<HTMLCanvasElement>): [number, number] => {
+  const point = (e: PointerEvent<HTMLCanvasElement>): BrushPoint => {
     const b = e.currentTarget.getBoundingClientRect();
     return [
       Math.max(0, Math.min(1, (e.clientX - b.left) / b.width)),
       Math.max(0, Math.min(1, (e.clientY - b.top) / b.height)),
+      e.pressure,
+      e.timeStamp,
     ];
   };
   return (
@@ -135,9 +156,15 @@ export function DrawingEditor({
           ['dots', '點點筆'],
           ['ink', '毛筆'],
           ['pencil', '鉛筆'],
+          ['pressure', '感壓筆'],
           ['eraser', '橡皮擦'],
         ].map(([id, label]) => (
-          <button className={`chip${brush === id ? ' active' : ''}`} key={id} onClick={() => setBrush(id!)}>
+          <button
+            className={`chip${brush === id ? ' active' : ''}`}
+            aria-pressed={brush === id}
+            key={id}
+            onClick={() => setBrush(id!)}
+          >
             {label}
           </button>
         ))}

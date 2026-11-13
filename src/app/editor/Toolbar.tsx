@@ -1,3 +1,4 @@
+import { KeyframeControl } from './KeyframeControl';
 import { evaluatedItem } from '../../engine/keyframes';
 import { Sheet } from '../../ui/Sheet';
 import { EffectsPanel } from './EffectsPanel';
@@ -24,7 +25,7 @@ import {
   Volume2,
   type LucideIcon,
 } from 'lucide-react';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { BLEND_LABELS } from '../../engine/geometry';
 import {
   findItem,
@@ -110,6 +111,17 @@ export function BottomBar({
   const [tab, setTab] = useState<Tab>('edit');
   const [panel, setPanel] = useState<Panel>(null);
   const [collapsed, setCollapsed] = useState(false);
+  const join = useUI((s) => s.effectsJoin);
+  useEffect(() => {
+    if (!join) return;
+    const frame = requestAnimationFrame(() => {
+      setTab('effects');
+      setCollapsed(false);
+      setPanel(null);
+      requestAnimationFrame(() => document.querySelector('.bottombar')?.scrollIntoView({ block: 'start' }));
+    });
+    return () => cancelAnimationFrame(frame);
+  }, [join]);
 
   const found = findItem(project, selectedId);
   const items = mainItems(project);
@@ -145,6 +157,9 @@ export function BottomBar({
       )}
       {!collapsed && tab === 'overlay' && <OverlayTab onImportOverlay={onImportOverlay} />}
       {!collapsed && tab === 'text' && <TextTab found={found} />}
+      {!collapsed && tab === 'layers' && found && found.item.type !== 'audio' && (
+        <KeyframeControl detailsOnly />
+      )}
       {!collapsed && tab === 'layers' && <LayersTab />}
       {!collapsed && tab === 'layout' && <TemplatePanel />}
       {!collapsed && tab === 'effects' && <EffectsPanel />}

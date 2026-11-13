@@ -1,4 +1,5 @@
 import { evaluatedItem } from '../../engine/keyframes';
+import { activeTransitions } from '../../engine/transitions';
 import { groupFrame, groupTransform } from '../../engine/templateGeometry';
 import { Expand, Minimize, ShieldCheck } from 'lucide-react';
 import { useEffect, useMemo, useRef, useState, type PointerEvent as RPointerEvent } from 'react';
@@ -163,7 +164,13 @@ export function Preview({ projectId, width, height }: { projectId: string; width
         (player.isPlaying || t < lifted.item.start || t >= lifted.item.start + lifted.item.duration)
       )
         useUI.setState({ liftedId: null });
-      setSelVisible(!!f && t >= f.item.start && t < f.item.start + f.item.duration);
+      setSelVisible(
+        !!f &&
+          !player.isPlaying &&
+          !activeTransitions(p!, t).length &&
+          t >= f.item.start &&
+          t < f.item.start + f.item.duration,
+      );
     };
     check(player.time);
     return player.subscribe(check);

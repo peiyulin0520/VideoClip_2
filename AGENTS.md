@@ -31,6 +31,8 @@
 9. 尾端圈圈（字卡裝飾）照 `docs/TEXT_CARDS.md §3.1` 的路徑做；使用者的參考圖只是**示意圖**，形狀神韻對即可，不必疊圖到逐像素重合。
 10. **之後所有變更都要建立 PR，提供可點擊的 PR 連結，由使用者自行按 Merge pull request。**先在功能分支完成修改與適當測試，再推送並開 PR 指向 `main`；不要替使用者合併、啟用 auto-merge，或直接推送 `main`（包含文件更新）。VideoClip_2 目前功能分支為 `codex/establish-little-moments`。使用者合併到 `main` 後，GitHub Actions 才發布 Pages；這是 2026-11-12 最新明確指示，優先於舊日誌的直接發布流程。
 
+11. **選項層級與按鈕回饋**：不同層級的主類/次類需用區塊、色彩或底線清楚區分，沿用 option-primary/option-secondary；選取型按鈕保留可見 active/aria-pressed。可操作的新增按鈕使用清楚的主題色，不能看起來像停用。這是 2026-11-13 使用者對之後所有同類介面的要求。
+
 ## 紀錄規則（每次都做）
 **每完成一個有意義的步驟（不是只有每個 Phase 結束），在同一個 commit 裡更新：**
 - `docs/PROGRESS.md`
@@ -52,4 +54,4 @@ Vite 8 · React 18 · TypeScript 5.9（別升 7：typescript-eslint 不支援）
 - 這個儲存庫來源是 VideoClip `78b178343409c46c7ba353ef3a6db6f279a7bde6`（main 已包含 PR #3），對外名稱 **Little Moments**。舊分支／PR 記錄只屬於來源 repo；本 repo 後續依最新指示建立 PR，由使用者自行合併。
 - 網址路徑 `/VideoClip_2/`；IndexedDB、OPFS、字體快取、localStorage 均使用獨立命名，避免同一個 github.io 網域的 `/VideoClip/` 被改動。不要刪除或自動搬移舊資料。
 - 現有 Sites 的 Little Moments 是另一套資料模型；未實作轉換，不能把 JSON 或素材庫 ZIP 當成這個版本可還原的檔案。
-- `npm run check` 仍須完成。此 Codex managed 環境缺少 Sites 指定的 `cua_repl.js`；Sites skill 明定不可另開 preview server／改用其他瀏覽器路徑，因此本機只列出 e2e。瀏覽器驗收已改由 GitHub Actions 執行：最新 299 單元/110 e2e 結果、run 及 135 張可讀繁中截圖來源見 PROGRESS.md。不要把來源 repo 或先前缺字的截圖當成最終驗收。
+- `npm run check` 仍須完成。此 Codex managed 環境缺少 Sites 指定的 `cua_repl.js`；Sites skill 明定不可另開 preview server／改用其他瀏覽器路徑，因此本機只列出 e2e。瀏覽器驗收已改由 GitHub Actions 執行：最新 306 單元/114 e2e 結果、run 及 140 張可讀繁中截圖來源見 PROGRESS.md。不要把來源 repo 或先前缺字的截圖當成最終驗收。

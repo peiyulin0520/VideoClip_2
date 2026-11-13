@@ -1,3 +1,4 @@
+import { markMuteInterval } from './helpers';
 import { expect, test, type Page } from '@playwright/test';
 import type { Project, VideoItem } from '../src/model/types';
 import {
@@ -166,12 +167,12 @@ test('音訊來源有縮圖，多組倒三角排除中間聲音但影片不縮�
   await expect(video).toBeVisible();
   const strip = page.locator('.source-thumbs');
   await strip.tap({ position: { x: (await strip.boundingBox())!.width * 0.5, y: 30 } });
-  await page.getByRole('button', { name: '將目前前後 0.25 秒靜音', exact: true }).tap();
+  await markMuteInterval(page, 1.25, 1.75);
   await expect(page.locator('.source-marker')).toHaveCount(4);
-  await expect.poll(() => video.evaluate((el) => (el as HTMLVideoElement).currentTime)).toBeCloseTo(1.5, 1);
+  await expect.poll(() => video.evaluate((el) => (el as HTMLVideoElement).currentTime)).toBeCloseTo(1.75, 1);
   const box = (await strip.boundingBox())!;
   await strip.tap({ position: { x: box.width * 0.8, y: 30 } });
-  await page.getByRole('button', { name: '將目前前後 0.25 秒靜音', exact: true }).tap();
+  await markMuteInterval(page, 2.15, 2.65);
   await expect(page.locator('.source-marker')).toHaveCount(6);
   await capture(page, { path: `${shots}/multi-audio-markers.png` });
   await page.getByRole('button', { name: '套用聲音選段', exact: true }).tap();
@@ -183,7 +184,13 @@ test('音訊來源有縮圖，多組倒三角排除中間聲音但影片不縮�
   await page.getByRole('button', { name: '聲音片段範圍', exact: true }).tap();
   await page.getByRole('button', { name: '移除第1段聲音', exact: true }).tap();
   await expect(page.locator('.source-marker')).toHaveCount(4);
-  await page.getByRole('button', { name: '還原完整聲音', exact: true }).tap();
+  await page.getByRole('button', { name: /調整靜音標記/ }).tap();
+  while (await page.getByRole('button', { name: /移除第 .* 組靜音/ }).count())
+    await page
+      .getByRole('button', { name: /移除第 .* 組靜音/ })
+      .first()
+      .tap();
+  await page.getByRole('button', { name: '調整保留聲音標記', exact: true }).tap();
   await expect(page.locator('.source-marker')).toHaveCount(2);
   const marker = page.getByRole('button', { name: '來源起點標記', exact: true });
   await marker.focus();
@@ -309,7 +316,7 @@ test('匯出保留兩側聲音與中間靜音，畫面長度不變', async ({ pa
   await page.getByRole('button', { name: '聲音片段範圍', exact: true }).tap();
   const strip = page.locator('.source-thumbs');
   await strip.tap({ position: { x: (await strip.boundingBox())!.width / 2, y: 30 } });
-  await page.getByRole('button', { name: '將目前前後 0.25 秒靜音', exact: true }).tap();
+  await markMuteInterval(page, 1.25, 1.75);
   await page.getByRole('button', { name: '套用聲音選段', exact: true }).tap();
   await page.getByRole('button', { name: '匯出影片', exact: true }).tap();
   await page.getByLabel('匯出解析度').selectOption('360');
