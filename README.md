@@ -20,7 +20,7 @@ npm run check
 npm run e2e -- --trace off
 ```
 
-`check` 包含 lint、299 個單元測試、TypeScript、正式建置及 GitHub Pages 路徑/PWA/字體檔案檢查。110 個瀏覽器測試（含完整影片/音訊解碼、收藏、GIF、手動遮罩、Key 與主題）交由 GitHub Actions 的 Chromium 153 執行，CI 保存截圖 artifact；最新成功狀態見 PROGRESS.md。本次已更新 135 張 CI 畫面（docs/screenshots）中文可讀；iPhone Safari 仍待真機驗證。
+`check` 包含 lint、306 個單元測試、TypeScript、正式建置及 GitHub Pages 路徑/PWA/字體檔案檢查。114 個瀏覽器測試（含完整影片/音訊解碼、收藏、GIF、手動遮罩、Key 與主題）交由 GitHub Actions 的 Chromium 153 執行，CI 保存截圖 artifact；最新成功狀態見 PROGRESS.md。本次已更新 140 張 CI 畫面（docs/screenshots）中文可讀；iPhone Safari 仍待真機驗證。
 
 ## GitHub Pages
 
@@ -113,3 +113,9 @@ GIF 解碼器 gifuct-js 2.1.2 為 MIT，授權位於 public/licenses。輸出含
 25 種 A/B 轉場、12 種影片特效，加上既有四種閃光/疊色效果；選項有實際 A/B 動畫示意。GIPHY 無棋盤、已設定 Key 後直接搜尋，變更移到首頁設定；主題改為底色/字色圓圈。用法見 [USAGE](docs/USAGE.md)，[本次畫面](docs/screenshots/advanced-editing/)。
 
 [Actions 43366595525](https://github.com/peiyulin0520/VideoClip_2/actions/runs/43366595525)：版本 c74dec591b3a9bcf88e425b49dbcfdac494d43d5 的 299 單元、110 Chromium e2e 全過，lint/格式/TypeScript/build/Pages/39 字體檢查成功。 [PR #7](https://github.com/peiyulin0520/VideoClip_2/pull/7) 由使用者自行 Merge 後 main Actions 發布；Safari 真機仍待確認。
+
+## 音訊試播、直接定格與轉場操作（PR #8）
+
+音訊小畫面在時間軸旁，同步白線並可暫停標記。定格改在播放列按一下記錄，細調另開；播放與轉場不顯示編輯白框。交接獨立列的圓底＋可進正確 A/B，已用效果與移除在上、選項亮框、同種每交接一次並支援混搭。鉛筆增加可見石墨筆觸，新增硬體壓力/手指速度筆；主次分類、按鈕配色與 GIPHY 純貼圖一併調整。
+
+[Actions 43386450346](https://github.com/peiyulin0520/VideoClip_2/actions/runs/43386450346)：版本 8b61548265b98396fa70d5af4b5e884ff04448b5 的 306 單元、114 Chromium e2e 全數通過；lint/格式/TypeScript/build/Pages/39 字體檢查成功。 [PR #8](https://github.com/peiyulin0520/VideoClip_2/pull/8) 由使用者自行 Merge；[本次截圖](docs/screenshots/playback-refinement/)。Safari 待真機。用法見 docs/USAGE.md。

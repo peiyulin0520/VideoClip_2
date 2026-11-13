@@ -15,3 +15,6 @@
 11. GIPHY 結果只顯示貼圖，移除每項「GIPHY 原圖」連結；上方 Powered by GIPHY 整體來源標示保留。
 
 驗收計畫：306 單元、114 e2e；新增 4 情境涵蓋小預覽/同步暫停/手動選段、直接定格/細調/播放無白框、交接 +/正確 pair/防重複/混搭/亮框/分層與新增文字、獨立大鉛筆/實際壓力筆粗細/復原/PNG 輸出。舊測試保留聲畫與持久化斷言，使用已改版的手動標記/定格操作。Safari 指壓感測、音訊解鎖、效能待真機，不能用 Chromium 結果代稱已確認。
+
+
+最終：[Actions 43386450346](https://github.com/peiyulin0520/VideoClip_2/actions/runs/43386450346)：版本 8b61548265b98396fa70d5af4b5e884ff04448b5 的 306 單元、114 Chromium e2e 全數通過；lint/格式/TypeScript/build/Pages/39 字體檢查成功。 artifact 14019456046，ZIP SHA-256 1cd711f8bc09875f2b5299ce722fa440cfb287bba022a05c4e7e42e0941c861b 已核對；140 張成功畫面，其中 playback-refinement/ 新增 5 張。 PR #8 交使用者自行 Merge；Safari 待真機。
