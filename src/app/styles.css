@@ -3321,3 +3321,19 @@ html {
   background: var(--accent);
   color: var(--accent-ink);
 }
+/* Keep both tabs and the final tool row clear; apply the bottom safe area once. */
+.editor {
+  padding-bottom: 0;
+}
+.editor .bottombar {
+  padding-bottom: var(--safe-bottom);
+}
+.editor .bottombar .toolbar {
+  padding-bottom: 6px;
+}
+.editor .panel {
+  padding-bottom: 8px;
+}
+.back-to-preview {
+  bottom: calc(124px + var(--safe-bottom) + var(--visible-bottom-inset, 0px));
+}

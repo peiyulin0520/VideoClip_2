@@ -233,6 +233,26 @@ test('不同iPhone尺寸保留比例與時間軸小字，最底仍可回頂且�
     const b = (await back.boundingBox())!;
     expect(b.y + b.height).toBeLessThanOrEqual(height!);
     expect(b.width).toBeGreaterThanOrEqual(44);
+    const blocked = await page.locator('.bottombar .tab, .bottombar .toolbar button').evaluateAll((els) =>
+      els
+        .filter((el) => {
+          const b = el.getBoundingClientRect(),
+            x = b.x + b.width / 2,
+            y = b.y + b.height / 2;
+          return (
+            b.width &&
+            b.height &&
+            x > 0 &&
+            x < innerWidth &&
+            y > 0 &&
+            y < innerHeight &&
+            !el.contains(document.elementFromPoint(x, y))
+          );
+        })
+        .map((el) => el.textContent),
+    );
+    expect(blocked).toEqual([]);
+
     const gap = await page.evaluate(
       () =>
         document.querySelector('.editor')!.getBoundingClientRect().bottom -
@@ -248,6 +268,17 @@ test('不同iPhone尺寸保留比例與時間軸小字，最底仍可回頂且�
   await page.locator('.editor').evaluate((el) => {
     el.scrollTop = el.scrollHeight;
   });
+  await page.locator('.editor').evaluate((el) => {
+    (el as HTMLElement).style.setProperty('--safe-bottom', '34px');
+    el.scrollTop = el.scrollHeight;
+  });
+  const bottomPadding = await page.evaluate(() => {
+    const editor = document.querySelector('.editor')!,
+      bar = document.querySelector('.bottombar')!,
+      toolbar = document.querySelector('.bottombar .toolbar')!;
+    return [editor, bar, toolbar].map((el) => parseFloat(getComputedStyle(el).paddingBottom));
+  });
+  expect(bottomPadding).toEqual([0, 34, 6]);
   await shot(page, 'iphone-large-bottom-return');
 });
 
