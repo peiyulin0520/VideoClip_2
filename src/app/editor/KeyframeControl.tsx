@@ -35,17 +35,18 @@ export function KeyframeControl() {
     }
   };
   return (
-    <>
+    <div className="freeze-controls">
       <button
-        className="icon-btn"
-        aria-label="新增或更新關鍵幀"
-        title="關鍵幀"
+        className={`chip freeze-button${found?.target.keyframes?.some((k) => Math.abs(k.time - (time - found.start)) < 0.02) ? ' active' : ''}`}
+        aria-label="定格"
+        aria-pressed={!!found?.target.keyframes?.some((k) => Math.abs(k.time - (time - found.start)) < 0.02)}
+        title="在目前秒數標記定格"
         onClick={() => {
           if (!id || !found || found.item.type === 'audio') return toast('請先選取影像、文字或貼紙');
           player?.pause();
           try {
             useProjectStore.getState().apply((d) => addKeyframe(d, id, player?.time ?? 0));
-            setOpen(true);
+            toast(`已標記 ${((player?.time ?? 0) - found.start).toFixed(2)} 秒定格`);
           } catch (e) {
             toast((e as Error).message);
           }
@@ -59,20 +60,33 @@ export function KeyframeControl() {
               : 'none'
           }
         />
+        <span>定格</span>
+      </button>
+      <button
+        className="chip freeze-details-button"
+        aria-label="定格細部調整"
+        onClick={() => {
+          if (!id || !found || found.item.type === 'audio') return toast('請先選取影像、文字或貼紙');
+          player?.pause();
+          setOpen(true);
+        }}
+      >
+        細調
       </button>
       {open && found && values && id && (
-        <Sheet open title="線性關鍵幀" onClose={() => setOpen(false)}>
+        <Sheet open title="定格細部調整" onClose={() => setOpen(false)}>
           <p>
             {found.item.name ?? found.track.name} · 目前 {time.toFixed(2)} 秒
           </p>
           <p className="hint">
-            先在起點新增菱形，再移到後面調位置、大小或色彩，會建立下一個菱形；兩點之間線性漸變，最後一點之後保持設定。
+            按「定格」記錄目前素材與秒數，再移到後面拖移預覽或雙指縮放。兩點之間會漸變；這裡可選擇菱形、移除或微調位置、大小與色彩。
           </p>
           <div className="chips">
             {(found.target.keyframes ?? []).map((k, i) => (
               <span key={k.time} className="keyframe-entry">
                 <button
-                  className="chip"
+                  className={`chip${Math.abs(k.time - (time - found.start)) < 0.02 ? ' active' : ''}`}
+                  aria-pressed={Math.abs(k.time - (time - found.start)) < 0.02}
                   onClick={() =>
                     player?.seek(Math.min(found.start + found.duration - 0.001, found.start + k.time))
                   }
@@ -81,7 +95,7 @@ export function KeyframeControl() {
                 </button>
                 <button
                   className="chip"
-                  aria-label={`移除第${i + 1}個關鍵幀`}
+                  aria-label={`移除第${i + 1}個定格`}
                   onClick={() =>
                     useProjectStore.getState().apply((d) => {
                       const f = animationTarget(d, id);
@@ -98,18 +112,14 @@ export function KeyframeControl() {
             className="btn"
             onClick={() => useProjectStore.getState().apply((d) => addKeyframe(d, id, time))}
           >
-            新增目前關鍵幀
+            新增目前定格
           </button>
           {(
             [
               ['x', '水平位置', -100, 200, 100],
               ['y', '垂直位置', -100, 200, 100],
-              ['scale', '關鍵幀大小', 5, 500, 100],
-              ...(!found.track.template ? ([['rotation', '關鍵幀旋轉', -180, 180, 1]] as const) : []),
-              ['opacity', '關鍵幀透明度', 0, 100, 100],
-              ['brightness', '關鍵幀亮度', 0, 200, 100],
-              ['saturation', '關鍵幀飽和度', 0, 200, 100],
-              ['temperature', '關鍵幀色溫', -100, 100, 100],
+              ['scale', '定格大小', 5, 500, 100],
+              ['brightness', '定格亮度', 0, 200, 100],
             ] as const
           ).map(([key, label, min, max, factor]) => (
             <Slider
@@ -119,16 +129,16 @@ export function KeyframeControl() {
               max={max}
               step={1}
               value={Math.round(values[key] * factor)}
-              format={(v) => `${v}${key === 'rotation' ? '°' : '%'}`}
+              format={(v) => `${v}%`}
               onChange={(v) => edit({ [key]: v / factor })}
             />
           ))}
-          <ColorPicker label="關鍵幀色彩" value={values.tint} onChange={(tint) => edit({ tint })} />
+          <ColorPicker label="定格色彩" value={values.tint} onChange={(tint) => edit({ tint })} />
           <button className="btn primary done" onClick={() => setOpen(false)}>
-            完成關鍵幀
+            完成定格
           </button>
         </Sheet>
       )}
-    </>
+    </div>
   );
 }

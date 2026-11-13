@@ -24,7 +24,7 @@ import {
   Volume2,
   type LucideIcon,
 } from 'lucide-react';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { BLEND_LABELS } from '../../engine/geometry';
 import {
   findItem,
@@ -110,6 +110,17 @@ export function BottomBar({
   const [tab, setTab] = useState<Tab>('edit');
   const [panel, setPanel] = useState<Panel>(null);
   const [collapsed, setCollapsed] = useState(false);
+  const join = useUI((s) => s.effectsJoin);
+  useEffect(() => {
+    if (!join) return;
+    const frame = requestAnimationFrame(() => {
+      setTab('effects');
+      setCollapsed(false);
+      setPanel(null);
+      requestAnimationFrame(() => document.querySelector('.bottombar')?.scrollIntoView({ block: 'start' }));
+    });
+    return () => cancelAnimationFrame(frame);
+  }, [join]);
 
   const found = findItem(project, selectedId);
   const items = mainItems(project);

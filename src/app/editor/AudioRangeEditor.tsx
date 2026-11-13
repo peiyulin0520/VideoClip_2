@@ -102,63 +102,83 @@ export function AudioRangeEditor({
       }
     >
       <p className="audio-source-name">{asset.name}</p>
-      {asset.kind === 'video' ? (
-        <video
-          {...props}
-          ref={(el) => {
-            media.current = el;
-          }}
-          playsInline
-          className="range-preview"
-          aria-label="音訊對應影片"
-        />
-      ) : (
-        <>
-          <audio
-            {...props}
-            ref={(el) => {
-              media.current = el;
+      <div className="audio-range-workspace">
+        <div className="audio-range-preview">
+          {asset.kind === 'video' ? (
+            <video
+              {...props}
+              ref={(el) => {
+                media.current = el;
+              }}
+              playsInline
+              className="range-preview"
+              aria-label="音訊對應影片"
+            />
+          ) : (
+            <>
+              <audio
+                {...props}
+                ref={(el) => {
+                  media.current = el;
+                }}
+              />
+              <canvas
+                ref={sceneCanvas}
+                className="range-preview"
+                width={360}
+                height={Math.round((360 * project.height) / project.width)}
+                aria-label="配樂對應專案畫面"
+              />
+            </>
+          )}
+        </div>
+        <div className="audio-range-timeline">
+          <button
+            className={`btn${playing ? ' active' : ''}`}
+            aria-pressed={playing}
+            aria-label={playing ? '暫停選段試聽' : '播放選段試聽'}
+            onClick={() => {
+              if (playing) {
+                media.current?.pause();
+                setPlaying(false);
+              } else {
+                useUI.getState().player?.pause();
+                if (media.current) {
+                  media.current.muted = !ranges.some(([a, b]) => cursor >= a && cursor < b);
+                  void media.current
+                    .play()
+                    .then(() => setPlaying(true))
+                    .catch(() => toast('此音訊暫時無法試聽，請重新點選播放或使用相容的音檔。'));
+                }
+              }
             }}
-          />
-          <canvas
-            ref={sceneCanvas}
-            className="range-preview"
-            width={360}
-            height={Math.round((360 * project.height) / project.width)}
-            aria-label="配樂對應專案畫面"
-          />
-          <div className="audio-preview-icon">
-            ♫<p>背景音樂：{asset.name}</p>
-          </div>
-        </>
-      )}
-      <button
-        className="btn"
-        aria-label={playing ? '暫停選段試聽' : '播放選段試聽'}
-        onClick={() => {
-          if (playing) {
-            media.current?.pause();
-            setPlaying(false);
-          } else {
-            useUI.getState().player?.pause();
-            if (media.current) {
-              media.current.muted = !ranges.some(([a, b]) => cursor >= a && cursor < b);
-              void media.current
-                .play()
-                .then(() => setPlaying(true))
-                .catch(() => toast('此音訊暫時無法試聽，請重新點選播放或使用相容的音檔。'));
+          >
+            {playing ? '⏸ 暫停試聽' : '▶ 播放試聽'}
+          </button>
+          <p className="source-now">
+            目前：{cursor.toFixed(2)} 秒 {markStart !== null && `· 靜音起點 ${markStart.toFixed(2)} 秒`}
+          </p>
+          <SourceRanges
+            onEditStart={history.begin}
+            onEditEnd={history.end}
+            markerRanges={markerMode === 'mute' ? muted : undefined}
+            markerLabel={markerMode === 'mute' ? '靜音' : undefined}
+            onMarkerChange={
+              markerMode === 'mute' ? (r) => setRanges(inverseRanges(r, asset.duration)) : undefined
             }
-          }
-        }}
-      >
-        {playing ? '暫停試聽' : '播放試聽（含畫面）'}
-      </button>
-      <p className="source-now">
-        目前：{cursor.toFixed(2)} 秒 {markStart !== null && `· 靜音起點 ${markStart.toFixed(2)} 秒`}
-      </p>
-      <div className="chips" aria-label="多組聲音起迄標記">
+            duration={asset.duration}
+            ranges={ranges}
+            thumbs={asset.thumbs}
+            cursor={cursor}
+            onChange={setRanges}
+            onSeek={seek}
+          />
+        </div>
+      </div>
+      <div className="chips option-secondary" aria-label="多組聲音起迄標記">
         <button
-          className="chip"
+          className={`chip${markStart !== null ? ' active' : ''}`}
+          aria-pressed={markStart !== null}
           onClick={() => {
             media.current?.pause();
             setPlaying(false);
@@ -186,7 +206,7 @@ export function AudioRangeEditor({
           </button>
         )}
       </div>
-      <div className="chips">
+      <div className="chips option-primary">
         <button
           className={`chip${markerMode === 'keep' ? ' active' : ''}`}
           onClick={() => setMarkerMode('keep')}
@@ -209,39 +229,9 @@ export function AudioRangeEditor({
           setMarkerMode('keep');
         }}
       />
-      <SourceRanges
-        onEditStart={history.begin}
-        onEditEnd={history.end}
-        markerRanges={markerMode === 'mute' ? muted : undefined}
-        markerLabel={markerMode === 'mute' ? '靜音' : undefined}
-        onMarkerChange={
-          markerMode === 'mute' ? (r) => setRanges(inverseRanges(r, asset.duration)) : undefined
-        }
-        duration={asset.duration}
-        ranges={ranges}
-        thumbs={asset.thumbs}
-        cursor={cursor}
-        onChange={setRanges}
-        onSeek={seek}
-      />
       <p className="hint">
         拖曳秒數上方的小倒三角調整各段起點與終點。原色是保留的聲音，反灰處靜音；畫面與時間位置保持連續。點縮圖定位，再加入靜音區段；拖動兩旁倒三角可改變靜音長度。
       </p>
-      <div className="chips">
-        <button
-          className="chip"
-          onClick={() =>
-            setRanges((r) =>
-              excludeAudio(r, Math.max(0, cursor - 0.25), Math.min(asset.duration, cursor + 0.25)),
-            )
-          }
-        >
-          將目前前後 0.25 秒靜音
-        </button>
-        <button className="chip" onClick={() => setRanges([[0, asset.duration]])}>
-          還原完整聲音
-        </button>
-      </div>
       {markerMode === 'mute' && (
         <div className="muted-intervals">
           {muted.map(([a, b], i) => (
@@ -267,7 +257,7 @@ export function AudioRangeEditor({
             </button>
           </p>
         ))}
-        {!ranges.length && <p>目前全部靜音；可還原完整聲音再調整。</p>}
+        {!ranges.length && <p>目前全部靜音；將白線移到起點，再新增保留聲音標記。</p>}
       </div>
       <div className="sheet-row">
         <button className="btn" onClick={onClose}>

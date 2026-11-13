@@ -20,6 +20,7 @@ import { setTimelineItems } from '../../engine/groupTiming';
 import { trackFamily, itemFamily, FAMILY_LABELS, type LayerDrop } from '../../engine/layerEditing';
 import { canPlace, findFreeStart } from '../../engine/timeline';
 import { Sheet } from '../../ui/Sheet';
+import { transitionPairs } from '../../engine/transitions';
 
 const ROW_H = 44;
 const ROW_GAP = 2;
@@ -531,6 +532,27 @@ export function Timeline({
                     開場 {project.mainOffset}s
                   </div>
                 )}
+                {transitionPairs(project)
+                  .filter((pair) => pair.track.id === track.id)
+                  .map((pair) => (
+                    <button
+                      key={pair.from.id}
+                      className="transition-join"
+                      aria-label={`新增轉場 ${pair.from.name ?? project.assets.find((a) => a.id === ('assetId' in pair.from ? pair.from.assetId : ''))?.name ?? 'A'} 到 ${pair.to.name ?? project.assets.find((a) => a.id === ('assetId' in pair.to ? pair.to.assetId : ''))?.name ?? 'B'}`}
+                      style={{ left: half + pair.to.start * pps, top: h / 2 }}
+                      onPointerDown={(e) => e.stopPropagation()}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        player?.pause();
+                        player?.seek(pair.to.start);
+                        useUI.setState({
+                          effectsJoin: { fromId: pair.from.id, toId: pair.to.id, request: performance.now() },
+                        });
+                      }}
+                    >
+                      <Plus size={14} />
+                    </button>
+                  ))}
                 {(track.template ? track.items.slice(0, 1) : track.items).map((it) => {
                   const asset = isVideoItem(it) ? project.assets.find((a) => a.id === it.assetId) : undefined;
                   const selected =
@@ -571,7 +593,7 @@ export function Timeline({
                         <button
                           key={frame.time}
                           className="timeline-keyframe"
-                          aria-label={`第${i + 1}個關鍵幀 ${frame.time.toFixed(2)}秒`}
+                          aria-label={`第${i + 1}個定格 ${frame.time.toFixed(2)}秒`}
                           style={{ left: Math.min(it.duration * pps - 4, frame.time * pps) }}
                           onPointerDown={(e) => e.stopPropagation()}
                           onClick={(e) => {

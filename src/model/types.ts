@@ -261,6 +261,8 @@ export type Project = {
     duration: number;
     strength: number;
     targetId?: string;
+    transitionFromId?: string;
+    transitionToId?: string;
   }[];
   transitions?: { id: string; preset: TransitionPreset; fromId: string; toId: string; duration: number }[];
   assets: Asset[];

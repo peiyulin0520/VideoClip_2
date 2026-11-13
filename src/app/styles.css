@@ -2595,3 +2595,145 @@ progress {
   -webkit-touch-callout: none;
   user-select: none;
 }
+
+/* Shared hierarchy: top-level tools and their subordinate choices stay visibly distinct. */
+.option-primary {
+  padding: 8px;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  background: var(--control);
+}
+:root[data-theme] .option-secondary {
+  padding: 8px 0 12px;
+  border-bottom: 1px solid var(--line);
+}
+:root[data-theme] .option-secondary .chip.active {
+  color: var(--fg);
+  background: color-mix(in srgb, var(--accent) 23%, var(--panel));
+  box-shadow: inset 0 -4px var(--accent);
+}
+:root[data-theme] .chip.sm.add {
+  color: var(--accent-ink);
+  background: var(--accent);
+  border: 1px solid var(--accent);
+  font-weight: 700;
+}
+button:not(:disabled):active {
+  filter: brightness(0.8);
+  box-shadow: inset 0 0 0 2px var(--accent);
+}
+button:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+.audio-range-workspace {
+  display: grid;
+  grid-template-columns: minmax(64px, 23%) minmax(0, 1fr);
+  gap: 12px;
+  align-items: center;
+  margin: 12px 0;
+}
+.audio-range-preview .range-preview {
+  width: 100%;
+  height: 140px;
+  max-height: 140px;
+  object-fit: contain;
+  margin: 0;
+  background: #080808;
+  border-radius: 8px;
+}
+.audio-range-timeline {
+  min-width: 0;
+}
+.audio-range-timeline .source-now {
+  font-size: 12px;
+  margin: 6px 0;
+}
+.audio-range-timeline .marker-range {
+  margin-top: 62px;
+}
+.audio-range-timeline .marker-range:has(.crowded) {
+  margin-top: 100px;
+}
+:root[data-theme] .audio-range-timeline .btn.active {
+  background: var(--accent);
+  color: var(--accent-ink);
+}
+.editor .playbar {
+  flex-wrap: wrap;
+}
+.freeze-controls {
+  flex-basis: 100%;
+  order: 10;
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  padding-top: 5px;
+  border-top: 1px solid var(--line);
+}
+.freeze-button {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+.transition-join {
+  position: absolute;
+  z-index: 12;
+  width: 44px;
+  height: 44px;
+  transform: translate(-50%, -50%);
+  padding: 10px;
+  display: grid;
+  place-items: center;
+  background: transparent;
+  color: var(--fg);
+}
+.transition-join svg {
+  width: 24px;
+  height: 24px;
+  padding: 3px;
+  border-radius: 50%;
+  background: var(--panel);
+  border: 1px solid var(--accent);
+}
+.used-effects {
+  margin: 12px 0;
+  padding: 10px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: var(--control);
+}
+.used-effects h3 {
+  font-size: 14px;
+  margin: 0 0 6px;
+}
+.used-effects .effect-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 0;
+}
+.effect-name {
+  flex: 1;
+  text-align: left;
+  background: transparent;
+  color: var(--fg);
+  font-weight: 700;
+}
+.effect-details {
+  width: 100%;
+}
+.effect-details summary {
+  min-height: 44px;
+  padding: 12px 0;
+}
+.effect-card.active {
+  border: 3px solid var(--accent);
+  padding: 4px;
+  box-shadow: 0 0 0 1px var(--accent);
+}
+.effect-selected {
+  color: var(--accent);
+  font-size: 12px;
+}
