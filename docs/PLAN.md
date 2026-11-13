@@ -408,3 +408,6 @@ docs/
 
 
 2026-11-13 最新更正：預覽下方的圖層時間軸保留較小字級，刻度、分類與片段名稱11px，群組數及原音9px；其他頁籤、功能、播放列與彈窗仍14px，註解11px。保留收緊字距及44px觸控範圍。
+
+
+2026-11-13 最新例外：圖層時間軸刻度/分類/標籤11px，計數/原音9px，其他操作介面維持14px。[Actions 43422783991](https://github.com/peiyulin0520/VideoClip_2/actions/runs/43422783991)：版本 fc9d5bb813573aeba69889efe37b1ee98e5786f3 的313單元、127 Chromium e2e全過；lint/格式/TypeScript/build/Pages/39字體檢查成功。artifact 14036880124，ZIP SHA-256 6c1ef4fe7a5b5f2dc4ff8b93335c0138ca2b3a7e3c82b8d16897e19bf15423bb 已核對；159張成功畫面，新增uniform-type/small-timeline-labels.png。Safari待真機。

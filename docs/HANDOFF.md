@@ -1,6 +1,8 @@
 # 交接手冊（HANDOFF）
 
 ## VideoClip_2 當前交接（優先於以下來源 repo 的歷史紀錄）
+- 最新時間軸小字最終：[Actions 43422783991](https://github.com/peiyulin0520/VideoClip_2/actions/runs/43422783991)：版本 fc9d5bb813573aeba69889efe37b1ee98e5786f3 的313單元、127 Chromium e2e全過；lint/格式/TypeScript/build/Pages/39字體檢查成功。artifact 14036880124，ZIP SHA-256 6c1ef4fe7a5b5f2dc4ff8b93335c0138ca2b3a7e3c82b8d16897e19bf15423bb 已核對；159張成功畫面，新增uniform-type/small-timeline-labels.png。時間軸11px/9px，其餘介面14px。最後文件/截圖不改驗收版本，以下待CI皆歷史；Safari待真機。
+
 - 最新使用者更正：只有.timeline圖層拖拉軸恢復小字11px，群組計數/原音9px；局部覆寫--ui-font-size，其他頁面/功能/頁籤/播放列仍14px。維持負字距/緊行高/44px觸控。既有uniform-type驗收實際收合與展開分類並留圖，完整CI待本次push。
 - 最新全頁主題對比/小字字距最終：[Actions 43420368856](https://github.com/peiyulin0520/VideoClip_2/actions/runs/43420368856)：版本 8fd2969c77b84352a3cd16c7b4f025ae22177792 的313單元、127 Chromium e2e全過；lint/格式/TypeScript/build/Pages/39字體檢查成功。artifact 14033892743，ZIP SHA-256 f9664009e966a03e9b5ce3199610be1a54cb79a4532e0440f944f241e4906127 已核對；158張成功畫面，其中readability/新增6張。PR #9由使用者自行Merge；最後文件/截圖不改成功版本產品/測試。以下待CI是過程紀錄，Safari仍待真機。
 

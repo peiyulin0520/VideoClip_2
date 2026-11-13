@@ -4,10 +4,10 @@
 
 ## 交接快照（VideoClip_2 最新狀態）
 - **日期/分支**：2026-11-13 / codex/establish-little-moments，基線main ccc85d8；[PR #9](https://github.com/peiyulin0520/VideoClip_2/pull/9)由使用者自行Merge。
-- **最新更正**：使用者要求預覽下方圖層拖拉軸維持之前較小字級，不必和頁籤/功能列相同。時間軸刻度、分類、片段標籤11px，群組數/原音9px；只限.timeline，其他頁面/播放列/頁籤/功能14px，註解11px；沿用負字距、緊行高與44px觸控。
-- **實作/驗證中**：CSS局部變數覆寫；既有字級e2e增加分類收合/展開及小時間軸截圖，維持全頁/彈窗字級、內距及320px播放列驗收。本機完整check成功（313單元、lint/格式/TypeScript/build/Pages/39字體）；127 e2e完整CI待本次提交後驗證。
-- **上一版證據**：[Actions 43420368856](https://github.com/peiyulin0520/VideoClip_2/actions/runs/43420368856) 313單元/127 Chromium e2e全過，版本8fd2969；158張截圖，六主題可讀性修正保留。
-- **下一步**：check、功能分支push、Actions及新截圖、更新PR #9；使用者自行Merge發布，Safari仍待真機。
+- **最新完成**：預覽下方.timeline圖層拖拉軸恢復較小字：刻度、分類、片段名稱11px，群組數/原音9px。其他頁面、播放列、頁籤與功能仍14px，註解11px。透過時間軸局部--ui-font-size覆寫，保留負字距、緊行高、44px觸控和縮小內距，不改專案文字或匯出。
+- **驗證**：[Actions 43422783991](https://github.com/peiyulin0520/VideoClip_2/actions/runs/43422783991)：版本 fc9d5bb813573aeba69889efe37b1ee98e5786f3 的313單元、127 Chromium e2e全過；lint/格式/TypeScript/build/Pages/39字體檢查成功。本機完整check同樣成功。既有字級測試遍歷分類摘要/展開時間軸、其他介面與彈窗；320px播放列、字框內距、專案文字樣式與六主題對比全部通過。
+- **證據**：artifact 14036880124，ZIP SHA-256 6c1ef4fe7a5b5f2dc4ff8b93335c0138ca2b3a7e3c82b8d16897e19bf15423bb 已核對；159張成功畫面，新增uniform-type/small-timeline-labels.png。新時間軸畫面已人工檢視，只用自製素材。
+- **下一步/發布**：最後文件/截圖不改成功版本src/e2e，使用者自行Merge後main Actions發布；Safari小字可讀性/觸控仍待真機。
 
 ## 日誌格式（新增一筆時照這個）
 ```
@@ -77,6 +77,10 @@
 - 2026-11-11 找到新字體來源 max32002/pop-gothic（大波浪圓體，含注音）→ 已加入手寫可愛包。問「能不能直接下載到我的 files 下載資料夾」→ 答：網頁在 iPhone 不能自動寫進「檔案」App 資料夾；官方字體存在瀏覽器裡，自己的字體用「匯入字體檔」從檔案 App 選
 
 ## 日誌（最新在最上面）
+- 2026-11-13 時間軸小字最終驗收（PR #9）
+  - [Actions 43422783991](https://github.com/peiyulin0520/VideoClip_2/actions/runs/43422783991)：版本 fc9d5bb813573aeba69889efe37b1ee98e5786f3 的313單元、127 Chromium e2e全過；lint/格式/TypeScript/build/Pages/39字體檢查成功。
+  - artifact 14036880124，ZIP SHA-256 6c1ef4fe7a5b5f2dc4ff8b93335c0138ca2b3a7e3c82b8d16897e19bf15423bb 已核對；159張成功畫面，新增uniform-type/small-timeline-labels.png。時間軸11px/9px，外部介面14px/註解11px；分類摘要、展開與窄螢幕均通過。最後只存文件/截圖，Safari待真機。
+
 - 2026-11-13 時間軸恢復小字（PR #9）：分類/刻度/標籤11px，計數/原音9px；其他介面14px維持，既有字級e2e補實際分類展開/收合及小時間軸畫面。本機完整check/313單元成功，127 e2e完整CI待驗，Safari待真機。
 - 2026-11-13 全頁主題可讀性與收緊字距最終驗收（PR #9）
   - [Actions 43420368856](https://github.com/peiyulin0520/VideoClip_2/actions/runs/43420368856)：版本 8fd2969c77b84352a3cd16c7b4f025ae22177792 的313單元、127 Chromium e2e全過；lint/格式/TypeScript/build/Pages/39字體檢查成功。
