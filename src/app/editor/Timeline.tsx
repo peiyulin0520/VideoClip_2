@@ -164,7 +164,9 @@ export function Timeline({
 
   const onScroll = () => {
     const el = scrollRef.current!;
-    if (drag || Math.abs(el.scrollLeft - lastSet.current) < 1.5) return;
+    const programmatic = Math.abs(el.scrollLeft - lastSet.current) < 1.5;
+    lastSet.current = -100;
+    if (drag || programmatic) return;
     player?.seek(el.scrollLeft / pps);
   };
 

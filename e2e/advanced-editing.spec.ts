@@ -234,6 +234,14 @@ test('兩個菱形之間位置大小與亮度線性變化，預覽單格及完�
   const it = (await current(page)).tracks[0]!.items[0]!;
   expect(it.keyframes).toHaveLength(2);
   await expect(page.locator('.timeline-keyframe')).toHaveCount(2);
+  await page.locator('.timeline-keyframe').first().tap();
+  await expect(page.getByTestId('time')).toHaveText(/^0:00\.0 /);
+  await page.locator('.timeline-keyframe').nth(1).tap();
+  await expect(page.getByTestId('time')).toHaveText(/^0:02\.0 /);
+  await seekTo(page, 3);
+  await expect(page.getByTestId('time')).toHaveText(/^0:03\.0 /);
+  await seekTo(page, 2);
+  await expect(page.getByTestId('time')).toHaveText(/^0:02\.0 /);
   await seekTo(page, 1);
   await expect
     .poll(async () => {
@@ -322,7 +330,10 @@ test('膠卷多組來源的中間未選時段保留白色補時與框架，之�
   await sourcePoint(page, 0.5);
   await page.getByRole('button', { name: '在白線位置新增一組起迄標記', exact: true }).tap();
   await page.getByRole('button', { name: '套用片段範圍', exact: true }).tap();
+  await cell.getByRole('button', { name: '第2段終點標記', exact: true }).press('ArrowRight');
   const group = (await current(page)).tracks.find((t) => t.template)!;
+  expect((group.items[0] as VideoItem).sourceRanges?.[1]?.[1]).toBeCloseTo(2.05, 2);
+  expect((group.items[0] as VideoItem).cell?.sourceEnd).toBeCloseTo(2.05, 2);
   expect(group.items.every((it) => it.duration === 3)).toBe(true);
   await seekTo(page, 1);
   await expect
