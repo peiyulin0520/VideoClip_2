@@ -8,6 +8,14 @@ export const THEMES = {
   beige: '米色紙感',
 };
 export type Theme = keyof typeof THEMES;
+export const THEME_SWATCHES: Record<Theme, [string, string]> = {
+  dark: ['#19191f', '#ffffff'],
+  mono: ['#111111', '#ffffff'],
+  light: ['#fafaf8', '#252b2b'],
+  fresh: ['#e2f0e7', '#2f715a'],
+  warm: ['#e9d9c4', '#4d382a'],
+  beige: ['#eae6db', '#292923'],
+};
 const KEY = 'lm2-preferences';
 function initial(): { theme?: Theme; preview?: number } {
   try {

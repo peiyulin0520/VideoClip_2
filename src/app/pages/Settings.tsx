@@ -1,3 +1,4 @@
+import { GiphyKeyForm } from '../../ui/GiphyKeyForm';
 import { ChevronLeft, Download, Plus, Trash2 } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
@@ -8,7 +9,7 @@ import { storageEstimate } from '../../storage/media';
 import { useApp } from '../../store/appStore';
 import { toast, useUI } from '../../store/uiStore';
 import { percent, usePackInstall } from '../fonts/usePackInstall';
-import { THEMES, usePreferences, type Theme } from '../../store/preferences';
+import { THEMES, THEME_SWATCHES, usePreferences, type Theme } from '../../store/preferences';
 
 const MODES: { mode: BackupMode; label: string }[] = [
   { mode: 'files', label: '存在手機檔案（匯出 .zip）' },
@@ -59,20 +60,26 @@ export function Settings() {
 
       <section aria-label="介面外觀">
         <h2>介面外觀與預覽</h2>
-        <label className="field">
-          網頁風格
-          <select
-            aria-label="網頁風格"
-            value={prefs.theme}
-            onChange={(e) => prefs.set({ theme: e.target.value as Theme })}
-          >
-            {Object.entries(THEMES).map(([id, name]) => (
-              <option key={id} value={id}>
-                {name}
-              </option>
-            ))}
-          </select>
-        </label>
+        <div role="radiogroup" aria-label="網頁風格" className="theme-swatches">
+          {(Object.entries(THEMES) as [Theme, string][]).map(([id, name]) => (
+            <button
+              key={id}
+              role="radio"
+              aria-checked={prefs.theme === id}
+              aria-label={name}
+              className="theme-choice"
+              onClick={() => prefs.set({ theme: id })}
+            >
+              <span
+                className="theme-circle"
+                style={{ background: THEME_SWATCHES[id][0], color: THEME_SWATCHES[id][1] }}
+              >
+                字
+              </span>
+              <small>{name}</small>
+            </button>
+          ))}
+        </div>
         <label className="field">
           預覽品質
           <select
@@ -86,6 +93,10 @@ export function Settings() {
           </select>
         </label>
         <p className="hint">只影響編輯時的預覽，最終匯出可另外選擇解析度。</p>
+      </section>
+      <section aria-label="GIPHY 貼圖設定">
+        <h2>GIPHY 貼圖</h2>
+        <GiphyKeyForm settings />
       </section>
       <section aria-label="字體">
         <h2>字體</h2>

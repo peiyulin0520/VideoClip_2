@@ -1,3 +1,4 @@
+import { cellMediaTime } from './templateTiming';
 import type { Asset, Project, Track, VideoItem } from '../model/types';
 import { Compositor, type SceneLayer } from './compositor';
 import { toLocal } from './geometry';
@@ -244,17 +245,24 @@ export class Player {
   }
 
   private syncVideo(el: HTMLVideoElement, item: VideoItem, asset: Asset, track: Track, t: number) {
-    el.dataset.previewIntent = this.playing ? 'play' : 'pause';
+    const active = this.playing && t >= item.start && t < item.start + item.duration;
+    el.dataset.previewIntent = active ? 'play' : 'pause';
     const s = sourceTimeAt(item, t);
     const gain =
-      track.muted || item.audioEnabled === false || !audioRetained(item, s) || !asset.hasAudio
+      t < item.start ||
+      t >= item.start + item.duration ||
+      (item.sourceRanges && cellMediaTime(item, t) === null) ||
+      track.muted ||
+      item.audioEnabled === false ||
+      !audioRetained(item, s) ||
+      !asset.hasAudio
         ? 0
         : item.volume;
     this.bus.set(el, gain);
     el.muted = !!el.dataset.priming || gain === 0;
     el.preservesPitch = false;
     el.playbackRate = item.speed;
-    if (this.playing) {
+    if (active) {
       if (Math.abs(el.currentTime - s) > DRIFT && el.readyState >= 1) el.currentTime = s;
       if (el.paused) void el.play().catch(() => {});
     } else {

@@ -28,6 +28,7 @@ export function solidCanvas(color: string) {
   return c;
 }
 export function effectLayer(effect: Effect, t: number, w: number, h: number): SceneLayer | null {
+  if (!['flash', 'light-leak', 'fade-black', 'fade-white'].includes(effect.preset)) return null;
   const p = (t - effect.start) / effect.duration;
   if (p < 0 || p >= 1) return null;
   const warm = effect.preset === 'light-leak',

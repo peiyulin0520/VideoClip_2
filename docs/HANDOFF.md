@@ -1,6 +1,22 @@
 # 交接手冊（HANDOFF）
 
 ## VideoClip_2 當前交接（優先於以下來源 repo 的歷史紀錄）
+- 最新九點最終：[Actions 43366595525](https://github.com/peiyulin0520/VideoClip_2/actions/runs/43366595525)：版本 c74dec591b3a9bcf88e425b49dbcfdac494d43d5 的 299 單元、110 Chromium e2e 全過，lint/格式/TypeScript/build/Pages/39 字體檢查成功。 artifact 14010687940，ZIP SHA-256 9cbea2ce6c63b1e2e65c118e40d579994e1a297331a42f66cc55ef01fa0da9cb 已核對；135 張成功畫面保存。 PR #7 待使用者自行 Merge，未部署。下列首輪 106/108、待 CI 與 PR #6 待合併屬過程/歷史。最後文件/截圖提交保持驗證過的程式與測試；Safari 待真機。
+
+- ce35e66 / Actions 43365555969 是 299/109 of 110：模板內嵌選段軸與 popup 同時存在同名「來源終點標記」，新 e2e shortFirstRange 必須限定 .sheet；這是 strict locator 問題，全部補色/來源像素斷言保留，產品不變。菱形手動往返及其餘 109 已成功。
+
+- 多組 popup/版型內嵌 SourceRanges 共用 item.sourceRanges，sourceEnd 取最後終點；調整不改共同 duration。Timeline onScroll 的 lastSet 必須一次消耗，否則菱形程式 seek 後手動回同秒數會被舊值攔截。兩項既有 e2e 已強化，299/110 待本輪。
+
+- c9719aa / run 43362965472 的 297/108 已全過；補兩個已發現組合問題後再驗收：模板灰區保留補色/框架，A/B 借用來源先檢查來源選段，缺單方則對透明背景淡入/出，不能洩出未選畫面。各有單元與實際像素 e2e，總 299/110。
+
+- 多組來源和模板結合：visibleLayers 必須保留 track.template 的灰區格子，由 buildScene 畫補黑/補白並跳過媒體，避免 cell 背景/整組框架消失。聲音仍依 cellMediaTime 為 null 靜音。新增交叉回歸，總 298/109 待完整 CI。
+
+- 第二輪 f2abcca / run 43361792188：297/107 of 108，批次操作/即時復原都過，唯硬重整未等 IDB 寫入 undo。重開驗收應先確認 savedProject 已有三層與名稱，再 reload 讀回模型及 DOM；不可用 in-memory Project 當作持久化完成。GIPHY 截圖捲到結果。產品程式不改，待第三輪。
+
+- 九點首輪 45cba26 / run 43360577038 為 296/106 of 108（原有 98 全過），兩處新測試需等待 debug/player 重開、精確定位多則 toast。新增歸位走目前關鍵幀與依時間 coalesce，297/check 成功。下一輪 PR #7 待 CI；效果表實際 25 A/B、12 影片特效及原 4 轉場。
+
+- 最新九點 docs/plans/2026-11-13-advanced-editing.md：main b9a5e94（PR #6 使用者已合併），main Actions 43345475628 成功。新 sourceRanges 用來源秒數保留中間空白，mediaSegments 與聲音/匯出共享；popup history 草稿局部，取消不寫專案。關鍵幀 local 秒數/完整 AnimatedValues，layout.keyframes 對整組，幾何/來源/輸出共用；修剪分割取樣邊界避免曲線跳變。A/B renderLayers 額外解碼兩方，播放器借用區間需 pause 並靜音，不能提前播放原音。特效選項共用一個 compositor 畫可見卡片，避免逐格 WebGL context 數量耗盡。batch 同類判定含貼紙 origin，分類收合不能改 z-order。296 單元已成功，108 e2e 待 CI；本次新 PR 待驗收。下列 PR #6 待合併是歷史。
+
 - 最終修復驗收：[Actions #42](https://github.com/peiyulin0520/VideoClip_2/actions/runs/43342981901) 成功，程式/測試 6b031d249513f765babc00b53973d58faeee2eb6：278 單元、98 Chromium e2e 全過，lint/格式/TypeScript/build/Pages/39 字體檢查成功。 PR #6 待使用者自行 Merge，119 張成功畫面（新 usability/polaroid-drift.png）；本次最後文件提交不改驗證過的測試與產品。下列待 CI 為過程紀錄。
 
 - 2026-11-13 優先：PR #5 已使用者合併，main 8c10a55 的 Actions #41（43341355922）check 成功，四格漂移 e2e 失敗導致部署跳過。產品重新套用保持原起點是正確需求；3 秒漂移在 2.7 秒上排已離開舊取樣點。舊 e2e 未明確 seek，讀舊紅幀時可能假成功。改以 0/1.5/2.7 秒黑/紅/藍正向像素與匯出逐一驗證，重套三次保持起點/長度。僅測試修改，待新 PR 完整 CI；不能為測試改回跳時間的產品行為。下列 PR #5 待合併為歷史。

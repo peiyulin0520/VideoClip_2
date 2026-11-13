@@ -1,3 +1,6 @@
+import { renderLayers, applyTransitions } from './transitions';
+import { applyVideoEffects, videoEffectOverlay } from './videoEffects';
+import { animationValues, evaluatedItem } from './keyframes';
 import { groupFrame, templateContexts } from './templateGeometry';
 import { cellMediaTime } from './templateTiming';
 import { effectLayer, solidCanvas } from './sceneEffects';
@@ -7,7 +10,6 @@ import type { SceneLayer } from './compositor';
 import { fittedSize, itemBox, type GeoCtx } from './geometry';
 import { renderText, measureTextItem, uiScale } from './textRender';
 import { layoutArt, layoutMotion } from './layouts';
-import { visibleLayers } from './timeline';
 
 /** 預覽/匯出各自提供「這個影片/照片物件現在的畫面」 */
 export type SourceProvider = (
@@ -26,6 +28,7 @@ export function geoCtx(project: Project, canvasW: number, canvasH: number, t?: n
   return {
     canvasW,
     canvasH,
+    time: t,
     assets: project.assets,
     textSize: measureTextItem,
     templates: templateContexts(project, canvasW, canvasH, t ?? 0),
@@ -50,9 +53,9 @@ export function buildScene(
   previewLiftedId?: string | null,
 ): SceneLayer[] {
   const ctx = geoCtx(project, canvasW, canvasH, t);
-  const out: SceneLayer[] = [];
+  let out: SceneLayer[] = [];
   const artAdded = new Set<string>();
-  const layers = visibleLayers(project, t);
+  const layers = renderLayers(project, t);
   const templateActive = layers.some((l) => l.track.template);
   for (const { item, track } of layers) {
     if (templateActive && track.kind === 'main' && !project.flexibleLayers) continue;
@@ -70,7 +73,8 @@ export function buildScene(
         frameW: canvasW,
         frameH: canvasH,
         box: groupFrame(track, canvasW, canvasH, t),
-        opacity: 1,
+        opacity: animationValues(layout, t - layout.start).opacity,
+        adjustment: animationValues(layout, t - layout.start),
         blend: 'normal',
         cornerRadius: 0,
       });
@@ -95,7 +99,8 @@ export function buildScene(
           h: viewport.h * canvasH,
           rotation: 0,
         },
-        opacity: 1,
+        opacity: animationValues(layout ?? {}, t - (layout?.start ?? 0)).opacity,
+        adjustment: animationValues(layout ?? {}, t - (layout?.start ?? 0)),
         blend: 'normal',
         cornerRadius: 0,
       });
@@ -127,7 +132,8 @@ export function buildScene(
           srcH: value.h,
           textKey: value.key,
           box: { cx: frame.cx, cy: frame.cy, w: value.w * s, h: value.h * s, rotation: 0 },
-          opacity: 1,
+          opacity: animationValues(layout, t - layout.start).opacity,
+          adjustment: animationValues(layout, t - layout.start),
           blend: 'normal',
           cornerRadius: 0,
         });
@@ -159,8 +165,9 @@ export function buildScene(
       }
     }
   }
+  out = applyVideoEffects(applyTransitions(out, project, t, canvasW, canvasH), project, t, canvasW, canvasH);
   for (const effect of project.effects ?? []) {
-    const layer = effectLayer(effect, t, canvasW, canvasH);
+    const layer = effectLayer(effect, t, canvasW, canvasH) ?? videoEffectOverlay(effect, t, canvasW, canvasH);
     if (layer) out.push(layer);
   }
   if (previewLiftedId) {
@@ -186,6 +193,15 @@ function toLayer(
   provide: SourceProvider,
 ): SceneLayer | null {
   if (item.type === 'audio') return null;
+  item = evaluatedItem(item, ctx.time ?? item.start);
+  if (track.template && track.layout) {
+    const values = animationValues(track.layout, (ctx.time ?? item.start) - track.layout.start);
+    item = {
+      ...item,
+      transform: { ...item.transform, opacity: values.opacity * item.transform.opacity },
+      adjustment: values,
+    };
+  }
   const box = itemBox(item, ctx);
   if (!box) return null;
   const common = {
@@ -193,6 +209,7 @@ function toLayer(
     continuity: track.template ? undefined : track.id,
     box,
     opacity: item.transform.opacity,
+    adjustment: item.adjustment,
     blend: item.blend ?? 'normal',
     cornerRadius: item.cornerRadius ?? 0,
     outline: item.outline,
@@ -225,7 +242,7 @@ function toLayer(
   const k = Math.min(1, src.srcW / base.w, src.srcH / base.h); // Never expand a small GIF to a full-resolution media texture.
   return {
     ...common,
-    kind: item.type,
+    kind: item.type === 'video' ? 'video' : 'image',
     source: src.source,
     ready: src.ready,
     srcW: src.srcW,

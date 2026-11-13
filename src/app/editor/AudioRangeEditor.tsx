@@ -1,3 +1,6 @@
+import { Undo2 } from 'lucide-react';
+import { useDraftHistory } from '../../ui/useDraftHistory';
+import { SelectionAddButton } from '../../ui/SelectionAddButton';
 import { useEffect, useRef, useState } from 'react';
 import type { Asset, VideoItem } from '../../model/types';
 import { Sheet } from '../../ui/Sheet';
@@ -18,9 +21,11 @@ export function AudioRangeEditor({
   onClose: () => void;
 }) {
   const project = useProjectStore((s) => s.project)!;
-  const [ranges, setRanges] = useState<[number, number][]>(
+  const history = useDraftHistory<[number, number][]>(
     item.audioRanges ?? [[item.trimIn, Math.min(asset.duration, item.trimIn + item.duration * item.speed)]],
   );
+  const ranges = history.value,
+    setRanges = history.set;
   const [cursor, setCursor] = useState(item.trimIn),
     [playing, setPlaying] = useState(false);
   const [markStart, setMarkStart] = useState<number | null>(null),
@@ -81,7 +86,21 @@ export function AudioRangeEditor({
     onLoadedMetadata: () => seek(cursor),
   };
   return (
-    <Sheet open title="選擇保留的聲音片段" onClose={onClose}>
+    <Sheet
+      open
+      title="選擇保留的聲音片段"
+      onClose={onClose}
+      titleAction={
+        <button
+          className="icon-btn"
+          aria-label="復原上一步選段"
+          disabled={!history.canUndo}
+          onClick={history.undo}
+        >
+          <Undo2 />
+        </button>
+      }
+    >
       <p className="audio-source-name">{asset.name}</p>
       {asset.kind === 'video' ? (
         <video
@@ -181,7 +200,18 @@ export function AudioRangeEditor({
           調整靜音標記（{muted.length} 組）
         </button>
       </div>
+      <SelectionAddButton
+        ranges={ranges}
+        cursor={cursor}
+        duration={asset.duration}
+        onChange={(r) => {
+          setRanges(r);
+          setMarkerMode('keep');
+        }}
+      />
       <SourceRanges
+        onEditStart={history.begin}
+        onEditEnd={history.end}
         markerRanges={markerMode === 'mute' ? muted : undefined}
         markerLabel={markerMode === 'mute' ? '靜音' : undefined}
         onMarkerChange={

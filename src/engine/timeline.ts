@@ -1,3 +1,4 @@
+import { trimKeyframes } from './keyframes';
 import { cellMediaTime } from './templateTiming';
 import { MAX_SPEED, MIN_CLIP_DURATION, MIN_SPEED, newId } from '../model/defaults';
 import type { Asset, Item, Project, Track, VideoItem } from '../model/types';
@@ -48,7 +49,10 @@ export type Layer = { item: Item; track: Track; trackIndex: number };
  * 主軌用 itemAt（t 超過結尾時仍顯示最後一個片段）；其他軌道只在 [start, end) 內顯示。
  */
 export function visibleLayers(p: Project, t: number): Layer[] {
-  return layersAt(p, t, false);
+  return layersAt(p, t, false).filter(
+    ({ item, track }) =>
+      track.template || item.type === 'text' || !item.sourceRanges || cellMediaTime(item, t) !== null,
+  );
 }
 
 /** 同上，但可以選擇連隱藏軌道的物件也列出來（圖層面板要能把隱藏的軌道再打開） */
@@ -109,10 +113,11 @@ export function splitItem(items: VideoItem[], id: string, t: number): VideoItem[
   const it = items[i]!;
   const local = t - it.start;
   if (local < MIN_CLIP_DURATION || it.duration - local < MIN_CLIP_DURATION) return null;
-  const a: VideoItem = { ...it, duration: local };
+  const a: VideoItem = { ...it, duration: local, keyframes: trimKeyframes(it, 0, local) };
   const b: VideoItem = {
     ...it,
     id: newId('i_'),
+    keyframes: trimKeyframes(it, local, it.duration),
     duration: it.duration - local,
     trimIn: it.trimIn + local * it.speed,
   };
@@ -241,16 +246,23 @@ export function splitFree(items: Item[], id: string, t: number): Item[] | null {
   const it = items[i]!;
   const local = t - it.start;
   if (local < MIN_CLIP_DURATION || it.duration - local < MIN_CLIP_DURATION) return null;
-  const a: Item = { ...it, duration: local };
+  const a: Item = { ...it, duration: local, keyframes: trimKeyframes(it, 0, local) };
   const b: Item = isVideoItem(it)
     ? {
         ...it,
         id: newId('i_'),
+        keyframes: trimKeyframes(it, local, it.duration),
         start: t,
         duration: it.duration - local,
         trimIn: it.trimIn + local * it.speed,
       }
-    : { ...it, id: newId('i_'), start: t, duration: it.duration - local };
+    : {
+        ...it,
+        id: newId('i_'),
+        start: t,
+        duration: it.duration - local,
+        keyframes: trimKeyframes(it, local, it.duration),
+      };
   return [...items.slice(0, i), a, b, ...items.slice(i + 1)];
 }
 
@@ -282,7 +294,12 @@ export function trimStartFree(items: Item[], id: string, delta: number): Item[] 
     if (isVideoItem(it) && it.type !== 'image') lo = Math.max(lo, -it.trimIn / it.speed);
     const hi = it.duration - MIN_CLIP_DURATION;
     const d = Math.min(Math.max(delta, lo), hi);
-    const next = { ...it, start: it.start + d, duration: it.duration - d };
+    const next = {
+      ...it,
+      start: it.start + d,
+      duration: it.duration - d,
+      keyframes: trimKeyframes(it, d, it.duration),
+    };
     if (isVideoItem(it) && it.type !== 'image') (next as VideoItem).trimIn = it.trimIn + d * it.speed;
     return next;
   });

@@ -194,7 +194,8 @@ test('GIPHY Key 僅本裝置保留，搜尋動態透明貼圖，不進共用收�
   await page.reload();
   await openTab(page, '素材');
   await page.getByRole('button', { name: 'GIPHY 貼圖', exact: true }).tap();
-  await expect(page.getByLabel('GIPHY API Key')).toHaveValue('device-test-key');
+  await expect(page.getByLabel('GIPHY API Key')).toHaveCount(0);
+  await expect(page.getByRole('button', { name: '儲存 Key', exact: true })).toHaveCount(0);
   await page.getByRole('button', { name: '搜尋貼圖', exact: true }).tap();
   expect(requests).toBe(2);
   await page.screenshot({ path: `${shots}/giphy.png` });
@@ -335,7 +336,7 @@ test('主題與預覽偏好重開保留；同裝置續用不走還原流程', as
   await page.goto('./#/settings');
   await page.getByRole('button', { name: '同一台裝置，繼續使用', exact: true }).tap();
   await expect(page.getByTestId('welcome')).toHaveCount(0);
-  await page.getByLabel('網頁風格').selectOption('warm');
+  await page.getByRole('radio', { name: '溫暖棕色', exact: true }).tap();
   await page.getByLabel('預覽品質').selectOption('720');
   await page.reload();
   await expect(page.locator('html')).toHaveAttribute('data-theme', 'warm');

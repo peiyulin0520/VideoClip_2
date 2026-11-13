@@ -1,3 +1,4 @@
+import { renderLayers } from './transitions';
 import { cellMediaTime } from './templateTiming';
 import {
   ALL_FORMATS,
@@ -18,7 +19,7 @@ import { ensureFont } from '../fonts/fontStore';
 import { getMedia } from '../storage/media';
 import { Compositor } from './compositor';
 import { buildScene, type SourceProvider } from './scene';
-import { sourceTimeAt, totalDuration, visibleLayers } from './timeline';
+import { sourceTimeAt, totalDuration } from './timeline';
 import { AnimatedGif } from './gif';
 import { AudioRenderer, audioEntries } from './exportAudio';
 
@@ -146,7 +147,7 @@ export async function exportVideo(project: Project, options: ExportOptions): Pro
       signal.throwIfAborted();
       const t = frame / options.fps;
       prepared.clear();
-      for (const { item } of visibleLayers(project, t)) {
+      for (const { item } of renderLayers(project, t)) {
         if (item.type === 'text' || item.type === 'audio' || (item.cell && cellMediaTime(item, t) === null))
           continue;
         const asset = project.assets.find((a) => a.id === item.assetId)!;

@@ -200,7 +200,7 @@ function Cell({
           <SourceRanges
             duration={asset.duration}
             minimum={Math.min(asset.duration, MIN_CLIP_DURATION * item.speed)}
-            ranges={[[item.trimIn, selectedEnd]]}
+            ranges={item.sourceRanges ?? [[item.trimIn, selectedEnd]]}
             thumbs={asset.thumbs}
             onChange={(ranges) =>
               editItem(
@@ -208,7 +208,8 @@ function Cell({
                 (it) => {
                   if (it.type !== 'text') {
                     it.trimIn = ranges[0]![0];
-                    it.cell = { ...cell, sourceEnd: ranges[0]![1] };
+                    it.sourceRanges = ranges.length > 1 ? ranges : undefined;
+                    it.cell = { ...cell, sourceEnd: ranges.at(-1)![1] };
                   }
                 },
                 { coalesce: `cell-source:${item.id}` },

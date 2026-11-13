@@ -1,3 +1,4 @@
+import { getProject } from '../storage/projects';
 import { useProjectStore } from '../store/projectStore';
 import { urlFor } from './assetUrls';
 import { ensureFont } from '../fonts/fontStore';
@@ -19,6 +20,7 @@ export function installDebugHook(player: Player) {
   if (!on) return;
   const hook = {
     project: () => JSON.parse(JSON.stringify(useProjectStore.getState().project)),
+    savedProject: () => getProject(useProjectStore.getState().project!.id),
     time: () => player.time,
     selected: () => useProjectStore.getState().selectedId,
     audioEnergy: () => player.audioEnergy(),

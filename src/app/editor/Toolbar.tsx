@@ -1,3 +1,5 @@
+import { evaluatedItem } from '../../engine/keyframes';
+import { Sheet } from '../../ui/Sheet';
 import { EffectsPanel } from './EffectsPanel';
 import { groupTransform } from '../../engine/templateGeometry';
 import {
@@ -15,6 +17,7 @@ import {
   Maximize,
   Minimize,
   Plus,
+  Pencil,
   Scissors,
   Trash2,
   Type,
@@ -171,6 +174,8 @@ function EditTab({
   const selected = found?.item;
   const [cropping, setCropping] = useState(false);
   const [trimming, setTrimming] = useState(false);
+  const [naming, setNaming] = useState(false);
+  const [nameDraft, setNameDraft] = useState('');
   const isMain = found?.track.kind === 'main';
 
   const need = (): Item | undefined => {
@@ -386,6 +391,51 @@ function EditTab({
     <div className="toolbar" role="toolbar" aria-label="剪輯工具">
       <ToolButton icon={Plus} label="匯入" onClick={onImport} />
       <ToolButton
+        icon={Pencil}
+        label="命名"
+        onClick={() => {
+          if (!selected) return toast('請先選取素材');
+          setNameDraft(
+            selected.name ??
+              (selected.type === 'text'
+                ? (selected.card.runs[0]?.text ?? '')
+                : (project.assets.find((a) => a.id === selected.assetId)?.name ?? '')),
+          );
+          setNaming(true);
+        }}
+      />
+      {naming && selected && (
+        <Sheet open title="素材命名" onClose={() => setNaming(false)}>
+          <label className="field">
+            素材名稱
+            <input
+              autoFocus
+              aria-label="素材名稱"
+              value={nameDraft}
+              onChange={(e) => setNameDraft(e.target.value)}
+            />
+          </label>
+          <div className="sheet-row">
+            <button className="btn" onClick={() => setNaming(false)}>
+              取消
+            </button>
+            <button
+              className="btn primary"
+              disabled={!nameDraft.trim()}
+              onClick={() => {
+                editItem(selected.id, (it) => {
+                  it.name = nameDraft.trim();
+                });
+                setNaming(false);
+              }}
+            >
+              儲存名稱
+            </button>
+          </div>
+        </Sheet>
+      )}
+
+      <ToolButton
         icon={Scissors}
         label="片段範圍"
         onClick={() => {
@@ -487,7 +537,7 @@ function LayersTab() {
               ? item.card.runs[0]?.text === ''
                 ? '圖形'
                 : `文字：${item.card.runs[0]?.text.slice(0, 8) ?? ''}`
-              : (asset?.name ?? '素材');
+              : (item.name ?? asset?.name ?? '素材');
           return (
             <li
               key={item.id}
@@ -551,8 +601,8 @@ function LayersTab() {
             label="圖層大小"
             value={Math.round(
               (findItem(project, it.id)?.track.template
-                ? groupTransform(findItem(project, it.id)!.track).scale
-                : it.transform.scale) * 100,
+                ? groupTransform(findItem(project, it.id)!.track, player?.time).scale
+                : evaluatedItem(it, player?.time ?? it.start).transform.scale) * 100,
             )}
             min={5}
             max={500}
@@ -563,14 +613,12 @@ function LayersTab() {
           {!found?.track.template && (
             <Slider
               label="圖層旋轉"
-              value={it.transform.rotation}
+              value={evaluatedItem(it, player?.time ?? it.start).transform.rotation}
               min={-180}
               max={180}
               step={1}
               format={(v) => `${Math.round(v)}°`}
-              onChange={(v) =>
-                editItem(it.id, (x) => void (x.transform.rotation = v), { coalesce: `rot:${it.id}` })
-              }
+              onChange={(v) => setTransform(it.id, { rotation: v }, `rot:${it.id}`)}
             />
           )}
           <button className="btn" onClick={() => removeAnyItem(it.id)}>
@@ -578,14 +626,12 @@ function LayersTab() {
           </button>
           <Slider
             label="透明度"
-            value={Math.round(it.transform.opacity * 100)}
+            value={Math.round(evaluatedItem(it, player?.time ?? it.start).transform.opacity * 100)}
             min={0}
             max={100}
             step={1}
             format={(v) => `${v}%`}
-            onChange={(v) =>
-              editItem(it.id, (x) => void (x.transform.opacity = v / 100), { coalesce: `op:${it.id}` })
-            }
+            onChange={(v) => setTransform(it.id, { opacity: v / 100 }, `op:${it.id}`)}
           />
           <div className="slider-label">與下方畫面如何疊色</div>
           <div className="chips">
@@ -686,12 +732,16 @@ function LayersTab() {
           <button
             className="btn"
             onClick={() =>
-              editItem(it.id, (x) => {
-                x.transform.x = 0.5;
-                x.transform.y = 0.5;
-                x.transform.scale = x.type === 'text' || x.fit === 'cover' ? 1 : 0.5;
-                x.transform.rotation = 0;
-              })
+              setTransform(
+                it.id,
+                {
+                  x: 0.5,
+                  y: 0.5,
+                  scale: found?.track.template || it.type === 'text' || it.fit === 'cover' ? 1 : 0.5,
+                  rotation: 0,
+                },
+                `reset:${it.id}`,
+              )
             }
           >
             位置、大小、旋轉歸位

@@ -53,7 +53,8 @@ test('左端修剪固定片尾並留下空白，完整來源隨時可以還原',
   await page.getByRole('button', { name: '片段範圍', exact: true }).tap();
   await expect(page.getByTestId('source-range-values')).toContainText('原始素材 3.0 秒');
   await page.screenshot({ path: `${shots}/complete-source-range.png` });
-  await page.getByRole('button', { name: '還原完整素材', exact: true }).tap();
+  await page.getByRole('button', { name: '來源起點標記', exact: true }).focus();
+  await page.getByRole('button', { name: '來源起點標記', exact: true }).press('Home');
   await page.getByRole('button', { name: '套用片段範圍', exact: true }).tap();
   expect((await current(page)).tracks[0]!.items[0]).toMatchObject({ start: 0, trimIn: 0 });
   expect((await current(page)).tracks[0]!.items[0]!.duration).toBeCloseTo(3, 1);

@@ -1,3 +1,6 @@
+import { laneCategory } from '../engine/batchLayers';
+import { editAnimatedValues, trimKeyframes } from '../engine/keyframes';
+import { useUI } from './uiStore';
 import { sliceCell } from '../engine/templateTiming';
 import type { Draft } from 'immer';
 import {
@@ -12,6 +15,7 @@ import {
 } from '../model/defaults';
 import type { Aspect, Asset, Item, TextItem, Track, Transform, VideoItem } from '../model/types';
 import {
+  canPlace,
   duplicateFree,
   duplicateItem,
   findItem,
@@ -47,17 +51,16 @@ export function editItem(id: string, recipe: (it: Draft<Item>) => void, opts?: O
 }
 
 export function setTransform(id: string, patch: Partial<Transform>, coalesce = `tf:${id}`) {
+  const player = useUI.getState().player;
+  player?.pause();
+  const time = player?.time;
   store().apply(
     (d) => {
       const f = findItem(d, id);
       if (!f) return;
-      if (f.track.template && f.track.layout) {
-        const tf = f.track.layout.transform ?? { x: 0.5, y: 0.5, scale: 1 };
-        f.track.layout.transform = { x: patch.x ?? tf.x, y: patch.y ?? tf.y, scale: patch.scale ?? tf.scale };
-        if (patch.opacity !== undefined) for (const it of f.track.items) it.transform.opacity = patch.opacity;
-      } else Object.assign(f.item.transform, patch);
+      editAnimatedValues(d, id, time ?? f.item.start, patch);
     },
-    { coalesce },
+    { coalesce: `${coalesce}:${time ?? 0}` },
   );
 }
 
@@ -68,7 +71,15 @@ export function addOverlayClips(assets: Asset[], t: number): string | null {
   store().apply((d) => {
     for (const asset of assets) {
       const clip = createOverlayClip(asset, t);
-      let ti = firstFreeTrack(d as never, 'overlay', clip.start, clip.duration);
+      const category = asset.origin ? 'sticker' : 'visual';
+      let ti = d.tracks.findIndex(
+        (track) =>
+          track.kind === 'overlay' &&
+          !track.locked &&
+          !track.template &&
+          laneCategory(track, d) === category &&
+          canPlace(track.items, clip.start, clip.duration),
+      );
       if (ti < 0) {
         d.tracks.push(createTrack('overlay', d.tracks as Track[]));
         ti = d.tracks.length - 1;
@@ -111,6 +122,9 @@ export function removeAnyItem(id: string): boolean {
   if (!p || !f) return false;
   store().apply(
     (d) => {
+      d.transitions = d.transitions?.filter(
+        (transition) => transition.fromId !== id && transition.toId !== id,
+      );
       const tr = d.tracks[f.trackIndex]!;
       if (tr.template) {
         d.tracks = d.tracks.filter((t) => t.id !== tr.id);
@@ -149,8 +163,13 @@ export function splitAny(id: string, t: number): string | null {
       for (const it of tr.items) it.duration = local;
       const layout = tr.layout ?? d.layout;
       if (layout) {
-        tr.layout = { ...layout, duration: local };
-        copy.layout = { ...layout, start: t, duration: copy.items[0]!.duration };
+        tr.layout = { ...layout, duration: local, keyframes: trimKeyframes(layout, 0, local) };
+        copy.layout = {
+          ...layout,
+          start: t,
+          duration: copy.items[0]!.duration,
+          keyframes: trimKeyframes(layout, local, f.item.duration),
+        };
       }
       selected = copy.items[0]!.id;
       d.tracks.splice(f.trackIndex + 1, 0, copy);
@@ -166,6 +185,8 @@ export function splitAny(id: string, t: number): string | null {
   const right = out[out.findIndex((x) => x.id === id) + 1]!;
   store().apply(
     (d) => {
+      for (const transition of d.transitions ?? [])
+        if (transition.fromId === id) transition.fromId = right.id;
       d.tracks[f.trackIndex]!.items = (
         f.track.kind === 'main' && !p.freeMain ? relayout(out as VideoItem[], d.mainOffset ?? 0) : out
       ) as never;

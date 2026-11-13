@@ -175,6 +175,13 @@ export function carryTemplateEdits(
 ) {
   if (next.layout && previous.layout?.transform)
     next.layout.transform = structuredClone(previous.layout.transform);
+  if (next.layout && previous.layout) {
+    next.layout.keyframes = previous.layout.keyframes
+      ? structuredClone(previous.layout.keyframes)
+      : undefined;
+    next.layout.adjustment = previous.layout.adjustment ? { ...previous.layout.adjustment } : undefined;
+    next.layout.opacity = previous.layout.opacity;
+  }
   if (next.layout?.story && previous.layout?.story)
     next.layout.story = structuredClone(previous.layout.story);
   next.items = next.items.map((item, i) => {

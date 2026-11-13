@@ -27,8 +27,54 @@ export type Outline = { color: string; width: number }; // width：以 1080 寬�
 /** 裁切：各邊切掉的比例 0–0.9 */
 export type Crop = { l: number; t: number; r: number; b: number };
 
+export type ColorAdjustment = { brightness: number; saturation: number; temperature: number; tint: string };
+export type AnimatedValues = Transform & ColorAdjustment;
+export type Keyframe = { time: number; values: AnimatedValues };
+export type TransitionPreset =
+  | 'crossfade'
+  | 'push-left'
+  | 'push-right'
+  | 'push-up'
+  | 'push-down'
+  | 'slide-left'
+  | 'slide-right'
+  | 'wipe-left'
+  | 'wipe-right'
+  | 'wipe-up'
+  | 'wipe-down'
+  | 'split-horizontal'
+  | 'split-vertical'
+  | 'grid4'
+  | 'grid9'
+  | 'zoom-in'
+  | 'zoom-out'
+  | 'spin'
+  | 'page-turn'
+  | 'blur'
+  | 'glitch'
+  | 'film-up'
+  | 'film-left'
+  | 'projector'
+  | 'circle';
+export type VideoEffectPreset =
+  | 'shake'
+  | 'pulse'
+  | 'soft-blur'
+  | 'grain'
+  | 'mono'
+  | 'warm-tone'
+  | 'cool-tone'
+  | 'glitch-video'
+  | 'rgb-split'
+  | 'vignette'
+  | 'snow'
+  | 'sparkle';
+
 export type ItemBase = {
   id: string;
+  name?: string;
+  keyframes?: Keyframe[];
+  adjustment?: ColorAdjustment;
   start: number; // 時間軸位置（秒）。主軌由 relayout 自動算出，首尾相接
   duration: number; // 時間軸上的長度（秒）
   /** x、y：中心點，佔畫面寬/高的比例；scale：乘上「填滿/完整」算出的基本大小；rotation：度，順時針 */
@@ -52,6 +98,8 @@ export type VideoItem = ItemBase & {
   mask?: MediaMask;
   /** Retained source-time audio intervals; omitted = all sound. Empty = silent. */
   audioRanges?: [number, number][];
+  /** Retained source intervals for picture and its sound; omitted = continuous. */
+  sourceRanges?: [number, number][];
   /** Source selection is independent from the common template frame interval. */
   cell?: { sourceEnd: number; offset: number; blanks: [number, number][]; background: '#000000' | '#ffffff' };
   fit: 'cover' | 'contain';
@@ -191,6 +239,9 @@ export type Project = {
     style: 'photobooth' | 'filmstrip' | 'polaroid' | 'story';
     motion: 'none' | 'slide' | 'drift';
     transform?: Pick<Transform, 'x' | 'y' | 'scale'>;
+    keyframes?: Keyframe[];
+    adjustment?: ColorAdjustment;
+    opacity?: number;
     count?: number;
     story?: {
       title: string;
@@ -205,11 +256,13 @@ export type Project = {
   };
   effects?: {
     id: string;
-    preset: 'flash' | 'fade-black' | 'fade-white' | 'light-leak';
+    preset: 'flash' | 'fade-black' | 'fade-white' | 'light-leak' | VideoEffectPreset;
     start: number;
     duration: number;
     strength: number;
+    targetId?: string;
   }[];
+  transitions?: { id: string; preset: TransitionPreset; fromId: string; toId: string; duration: number }[];
   assets: Asset[];
   tracks: Track[];
   thumbnail?: string;
