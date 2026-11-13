@@ -101,6 +101,7 @@ test('選項及 popup 字級不大於功能列，特效只留小示意與名稱�
   expect((await cards.first().locator('canvas').boundingBox())!.height).toBeLessThan(75);
   await compactType(page, '.bottombar');
   await cards.first().scrollIntoViewIfNeeded();
+  await expect(cards.first().locator('canvas')).toHaveAttribute('data-demo-ready', 'true');
   await shot(page, 'compact-effects-and-names');
   await openTab(page, '音訊');
   await compactType(page, '.bottombar');

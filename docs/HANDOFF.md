@@ -1,6 +1,8 @@
 # 交接手冊（HANDOFF）
 
 ## VideoClip_2 當前交接（優先於以下來源 repo 的歷史紀錄）
+- compact-workspace 特效截圖須等待可見第一張 canvas 的 data-demo-ready=true，與既有 A/B 動畫驗收一致，避免剛滾入可視範圍尚未繪製。
+
 - compact-workspace 首輪 9d083a0：313/115 of 120；版型 img alt 需保留至左側 preview。SVG 非縮放 2px 外框會進 boundingBox，直徑要扣此外框；不可放寬實際遮罩輸出。真觸控後的套用須驗 dialog 關閉，button manipulation 防雙擊縮放；timeline contextmenu 防原生長按選單。CDP 拖曳需 source 在 viewport 且 elementFromPoint 命中，避免空白長按被誤當產品拖曳失效。
 
 - 最新 10 點 compact-workspace：PR #8 已使用者合併，main ccc85d8；313/120 待驗收。Timeline 用 expanded/collapsed key 重設分類，不可用 .clip DOM 當匯入完成（預設不渲染細列），測試須讀模型等待後透過 UI 開群組。新增/選取由 store subscription 僅展開所屬類，初始載入不自動展開。交接 circle 在 row h+1，44px 目標位於上下素材中心線之間，不再增加 ROW_H；舊中心拖曳/修剪要全過。選中 origin=drawing 的畫布透明區拖移優先抓住整張，pendingTap 保留正常 opaque hit，使輕點仍可切到下層；4–8px 已變形手勢也不能在放手時改選，其他透明貼圖仍可穿透。Pencil alpha 來源座標鎖紙紋，無實心核心；CropPointer 偏移 CSS px 後存 UV，SVG 指觸圈/目標圈不進遮罩模型。版型左圖右選單，底部不重複。
