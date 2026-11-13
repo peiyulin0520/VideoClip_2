@@ -1,7 +1,7 @@
 # 交接手冊（HANDOFF）
 
 ## VideoClip_2 當前交接（優先於以下來源 repo 的歷史紀錄）
-- 最新補正（PR #9 尚未合併，沿用）：全介面文字統一14px（--ui-font-size），只對 hint/sheet-msg/empty-note/note/role=note 明確註解使用11px；不能以 small 作註解，因主題名稱/群組數/來源標記也用small。作用域為 #root 和 portal .sheet，不影響畫布/文字模型。框內距縮小6px、輸入上下4px，保留44px觸控。播放時間用兩行但 textContent 仍是原來 current / total，320px減少間距不讓時間遮按鈕。預期313/121待CI，Safari原生輸入聚焦待真機。
+- 最新補正（PR #9 尚未合併，沿用）：全介面文字統一14px（--ui-font-size），只對 hint/sheet-msg/empty-note/note/role=note 明確註解使用11px；不能以 small 作註解，因主題名稱/群組數/來源標記也用small。作用域為 #root 和 portal .sheet，不影響畫布/文字模型。框內距縮小6px、輸入上下4px，保留44px觸控。播放時間用兩行但 textContent 仍是原來 current / total，320px減少間距不讓時間遮按鈕。預期313/121待CI，Safari原生輸入聚焦待真機。文字節點驗收只要求頁面非空且每個可見節點字級正確；首頁只有少量文字，不能硬要求和編輯器一樣多的節點數。
 
 - 最新 10 點最終：[Actions 43408392208](https://github.com/peiyulin0520/VideoClip_2/actions/runs/43408392208)：版本 86d56ad6e41af714ef7b508ad389539fe1312f2b 的 313 單元、120 Chromium e2e 全過；lint/格式/TypeScript/build/Pages/39 字體檢查成功。 artifact 14028996857，ZIP SHA-256 c5b3dfaa8cbf4f5a11c97dd2ab2ac805cdb02821e79ad92d755bf8daf8aca5f9 已核對；148 張成功畫面，其中 compact-workspace/ 新增 8 張。 PR #9 由使用者自行 Merge。下列待 CI/舊 PR 待合併是歷史；最後文件/截圖不改成功版本的 src/e2e。Safari 真機仍待確認。
 

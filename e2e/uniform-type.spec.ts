@@ -33,7 +33,7 @@ async function assertUiType(page: Page) {
     }
     return { checked, bad };
   });
-  expect(result.checked).toBeGreaterThan(15);
+  expect(result.checked).toBeGreaterThan(0);
   expect(result.bad).toEqual([]);
 }
 async function shot(page: Page, name: string) {
