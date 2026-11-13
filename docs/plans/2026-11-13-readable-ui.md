@@ -7,3 +7,6 @@
 - 普通連結、成功/警示/刪除文字分色，不能只用適合填色的accent來當小字。預覽、時間軸等固定深色媒體控制仍自配淺字。素材圖片/影片與刻意停用狀態不等同純色操作文字，人工另看使用情境。
 - 14px介面字距/詞距-0.02em，行高1.25；註解11px字距-0.01em、行高1.3；時間軸與播放兩行時間保留更緊的固定小列行高。首次設定群組gap縮小。
 - UI CSS不改使用者專案內的字級、字距、文字框或匯出。預期313單元/127 Chromium e2e、158張截圖（新增6），Safari待真機。
+
+
+全頁主題對比/字距最終：[Actions 43420368856](https://github.com/peiyulin0520/VideoClip_2/actions/runs/43420368856)：版本 8fd2969c77b84352a3cd16c7b4f025ae22177792 的313單元、127 Chromium e2e全過；lint/格式/TypeScript/build/Pages/39字體檢查成功。artifact 14033892743，ZIP SHA-256 f9664009e966a03e9b5ce3199610be1a54cb79a4532e0440f944f241e4906127 已核對；158張成功畫面，其中readability/新增6張。PR #9由使用者自行Merge，Safari待真機。

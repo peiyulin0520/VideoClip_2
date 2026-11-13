@@ -20,7 +20,7 @@ npm run check
 npm run e2e -- --trace off
 ```
 
-`check` 包含 lint、313 個單元測試、TypeScript、正式建置及 GitHub Pages 路徑/PWA/字體檔案檢查。121 個瀏覽器測試（含完整影片/音訊解碼、收藏、GIF、手動遮罩、Key 與主題）交由 GitHub Actions 的 Chromium 153 執行，CI 保存截圖 artifact；最新成功狀態見 PROGRESS.md。本次已更新 152 張 CI 畫面（docs/screenshots）中文可讀；iPhone Safari 仍待真機驗證。
+`check` 包含 lint、313 個單元測試、TypeScript、正式建置及 GitHub Pages 路徑/PWA/字體檔案檢查。127 個瀏覽器測試（含完整影片/音訊解碼、收藏、GIF、手動遮罩、Key 與主題）交由 GitHub Actions 的 Chromium 153 執行，CI 保存截圖 artifact；最新成功狀態見 PROGRESS.md。本次已更新 158 張 CI 畫面（docs/screenshots）中文可讀；iPhone Safari 仍待真機驗證。
 
 ## GitHub Pages
 
@@ -132,3 +132,10 @@ GIF 解碼器 gifuct-js 2.1.2 為 MIT，授權位於 public/licenses。輸出含
 全部操作介面14px，明確註解11px，包含首頁/設定/頂部/播放列/時間軸。文字框/按鈕左右6px、輸入框上下4px，保留44px觸控與專案文字素材的原始字級；窄螢幕播放時間兩行。
 
 [Actions 43415119800](https://github.com/peiyulin0520/VideoClip_2/actions/runs/43415119800)：版本 d2e6e912e29b2b2608590eb828f09a6d1e6e6deb 的313單元、121 Chromium e2e全過；lint/格式/TypeScript/build/Pages/39字體檢查成功。 [驗收畫面](docs/screenshots/uniform-type/)；PR #9由使用者自行Merge，Safari待真機。
+
+
+## 全頁主題文字對比與收緊字距
+
+首次備份/字體包及文字表面以主題底色和主字/說明色成組設定；六主題逐頁與popup審核。14px操作字距/詞距-0.02em、行高1.25；11px註解字距-0.01em/行高1.3，固定小列更緊。不改專案素材字體或渲染。
+
+[Actions 43420368856](https://github.com/peiyulin0520/VideoClip_2/actions/runs/43420368856)：版本 8fd2969c77b84352a3cd16c7b4f025ae22177792 的313單元、127 Chromium e2e全過；lint/格式/TypeScript/build/Pages/39字體檢查成功。 [驗收畫面](docs/screenshots/readability/)；PR #9由使用者自行Merge，Safari待真機。
