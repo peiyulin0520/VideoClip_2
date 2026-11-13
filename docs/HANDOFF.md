@@ -1,6 +1,8 @@
 # 交接手冊（HANDOFF）
 
 ## VideoClip_2 當前交接（優先於以下來源 repo 的歷史紀錄）
+- 最新九點最終：[Actions 43366595525](https://github.com/peiyulin0520/VideoClip_2/actions/runs/43366595525)：版本 c74dec591b3a9bcf88e425b49dbcfdac494d43d5 的 299 單元、110 Chromium e2e 全過，lint/格式/TypeScript/build/Pages/39 字體檢查成功。 artifact 14010687940，ZIP SHA-256 9cbea2ce6c63b1e2e65c118e40d579994e1a297331a42f66cc55ef01fa0da9cb 已核對；135 張成功畫面保存。 PR #7 待使用者自行 Merge，未部署。下列首輪 106/108、待 CI 與 PR #6 待合併屬過程/歷史。最後文件/截圖提交保持驗證過的程式與測試；Safari 待真機。
+
 - ce35e66 / Actions 43365555969 是 299/109 of 110：模板內嵌選段軸與 popup 同時存在同名「來源終點標記」，新 e2e shortFirstRange 必須限定 .sheet；這是 strict locator 問題，全部補色/來源像素斷言保留，產品不變。菱形手動往返及其餘 109 已成功。
 
 - 多組 popup/版型內嵌 SourceRanges 共用 item.sourceRanges，sourceEnd 取最後終點；調整不改共同 duration。Timeline onScroll 的 lastSet 必須一次消耗，否則菱形程式 seek 後手動回同秒數會被舊值攔截。兩項既有 e2e 已強化，299/110 待本輪。
