@@ -1,6 +1,8 @@
 # 交接手冊（HANDOFF）
 
 ## VideoClip_2 當前交接（優先於以下來源 repo 的歷史紀錄）
+- 最新九點最終：[Actions 43463065085](https://github.com/peiyulin0520/VideoClip_2/actions/runs/43463065085)：版本 6819c42e27914328f4ba183d493842903333f7f7 的321單元、134 Chromium e2e全過，lint/格式/TypeScript/build/Pages/39字體檢查成功。artifact 14058125854，ZIP SHA-256 be6d93e48b635a6ff142f6c6d2c05a8344a57c23b9c2b91a463f582826baad58 已核對；166張成功畫面（template-controls新增7張）。PR #10由使用者自行Merge，Safari仍待真機。以下待CI皆過程，最後文件/截圖不改成功產品/測試。
+
 - 九點第三輪 10cd2a5 / Actions43461401694 已321單元/134瀏覽器全過；核心產品與混色幾何驗收成功。最終另補人工看到的頁籤遮擋/安全區重複，完整新輪仍需過後才標PR #10 ready。
 - 人工檢視第二輪大手機截圖：箭頭仍擋特效tab，再提高到工具列+頁籤上方；加入最底各可見tab/工具中心elementFromPoint驗收。safe-bottom由editor/toolbar/panel重複改為只在bottombar一次，以34px模擬值驗證[0,34,6]，避免PWA多餘底部空白。需完整CI新輪，前三輪未作最終證據。
 - 九點第二輪 50092e1 / Actions43459368644：321單元、133/134瀏覽器；原127回歸全過，新增情境只剩整組zoom測試錯將50%淡入要求純紅。依既有zoom含淡入定義，改驗藍底不動、正確新位置紅色優勢與混色差值；產品不再修改。第三輪完整CI待驗。

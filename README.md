@@ -20,7 +20,7 @@ npm run check
 npm run e2e -- --trace off
 ```
 
-`check` 包含 lint、313 個單元測試、TypeScript、正式建置及 GitHub Pages 路徑/PWA/字體檔案檢查。127 個瀏覽器測試（含完整影片/音訊解碼、收藏、GIF、手動遮罩、Key 與主題）交由 GitHub Actions 的 Chromium 153 執行，CI 保存截圖 artifact；最新成功狀態見 PROGRESS.md。本次已更新 159 張 CI 畫面（docs/screenshots）中文可讀；iPhone Safari 仍待真機驗證。
+`check` 包含 lint、321 個單元測試、TypeScript、正式建置及 GitHub Pages 路徑/PWA/字體檔案檢查。134 個瀏覽器測試（含完整影片/音訊解碼、收藏、GIF、手動遮罩、Key 與主題）交由 GitHub Actions 的 Chromium 153 執行，CI 保存截圖 artifact；最新成功狀態見 PROGRESS.md。本次已更新 166 張 CI 畫面（docs/screenshots）中文可讀；iPhone Safari 仍待真機驗證。
 
 ## GitHub Pages
 
@@ -145,3 +145,10 @@ GIF 解碼器 gifuct-js 2.1.2 為 MIT，授權位於 public/licenses。輸出含
 
 
 時間軸小字最終：[Actions 43422783991](https://github.com/peiyulin0520/VideoClip_2/actions/runs/43422783991)：版本 fc9d5bb813573aeba69889efe37b1ee98e5786f3 的313單元、127 Chromium e2e全過；lint/格式/TypeScript/build/Pages/39字體檢查成功。 [時間軸畫面](docs/screenshots/uniform-type/small-timeline-labels.png)。
+
+
+## 可編輯獨立版型與清楚預覽（PR #10）
+
+版型文字可改或留空，底色/文字色/框架透明度及自由寬高可調；影片比例不拉扁版型。單一素材或整組版型可設25種進出場，兩段銜接與自訂名稱保留。每格進階設定收合重複內容，各動態預覽有播放/暫停圖示與狀態色。540低畫質預設、頂部可切，輸出邊框及框外斜紋區分影片範圍；最底仍可回頂，手機尺寸與可視高度自適應。
+
+[Actions 43463065085](https://github.com/peiyulin0520/VideoClip_2/actions/runs/43463065085)：版本 6819c42e27914328f4ba183d493842903333f7f7 的321單元、134 Chromium e2e全過，lint/格式/TypeScript/build/Pages/39字體檢查成功。 [驗收畫面](docs/screenshots/template-controls/)；使用者自行Merge PR #10才發布，Safari待真機。
