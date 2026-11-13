@@ -2878,9 +2878,20 @@ button:focus-visible {
   flex-direction: column;
 }
 .template-grid .template-art {
-  height: 46px;
+  height: 54px;
+  flex-shrink: 0;
+  padding: 3px;
+  gap: 2px;
+  grid-auto-rows: minmax(0, 1fr);
   max-width: 64px;
   margin: 0;
+}
+.template-grid .template-art i {
+  min-height: 0;
+  line-height: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 .template-assignment {
   display: grid;

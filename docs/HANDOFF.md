@@ -1,6 +1,8 @@
 # 交接手冊（HANDOFF）
 
 ## VideoClip_2 當前交接（優先於以下來源 repo 的歷史紀錄）
+- 小版型圖不能只降 height：三列數字的 min-content 會溢出。54px art、3px padding/2px gap、grid-auto-rows minmax(0,1fr)，數字 min-height0/line-height1；e2e 驗每格數字 bounds 在 art 內。
+
 - Crop e2e 要區分來源 UV 與專案座標；預設 overlay scale=.5，用 itemBox 換算實際遮罩取樣點，外部點也選原素材內側。CDP 發完資料不代表 React 狀態已渲染，每點等待 guide UV、touchEnd 等 guide 消失，再做套用/復原；不能以加 timeout/retry 繞過。自由筆觸 preventDefault 防相容點擊。
 
 - compact-workspace 特效截圖須等待可見第一張 canvas 的 data-demo-ready=true，與既有 A/B 動畫驗收一致，避免剛滾入可視範圍尚未繪製。

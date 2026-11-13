@@ -281,6 +281,17 @@ test('版型示意圖靠左，各格素材選單在右側，窄螢幕不溢出�
   await addOverlays(page, ['solid-red.webm', 'solid-green.webm']);
   await openTab(page, '版型');
   await page.getByRole('button', { name: '直式膠卷', exact: true }).tap();
+  expect(
+    await page.locator('.template-art').evaluateAll((arts) =>
+      arts.every((art) => {
+        const box = art.getBoundingClientRect();
+        return Array.from(art.querySelectorAll('i')).every((cell) => {
+          const b = cell.getBoundingClientRect();
+          return b.top >= box.top && b.bottom <= box.bottom && b.left >= box.left && b.right <= box.right;
+        });
+      }),
+    ),
+  ).toBe(true);
   const model = await current(page),
     asset = (name: string) => model.assets.find((a) => a.name === name)!;
   for (const [i, name] of ['solid-green.webm', 'solid-red.webm', 'solid-blue.webm'].entries())
