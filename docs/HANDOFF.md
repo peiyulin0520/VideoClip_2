@@ -1,6 +1,8 @@
 # 交接手冊（HANDOFF）
 
 ## VideoClip_2 當前交接（優先於以下來源 repo 的歷史紀錄）
+- 最新特效時長最終：[Actions 43474533667](https://github.com/peiyulin0520/VideoClip_2/actions/runs/43474533667)：版本 8e45a480e2c3818217935f677a2d1047bab19107 的331單元、138 Chromium e2e全過，lint/格式/TypeScript/build/Pages/39字體檢查成功。artifact 14062124542，ZIP SHA-256 8f225265b3f38d07947a1f074098f2d22e3bad37368686a923f18d1b1fc7d50f 已核對；171張成功畫面（effect-timing新增5張）。新5張及混搭已用清單已人工看過。原134及新4全通過；最後文件不改驗收src/e2e/設定。PR #10待使用者自行Merge，Safari仍待真機；以下首輪待CI均為過程。
+
 - 首輪Actions43472475288為330單元/137 of138；新增4時序全過，舊混搭像素仍依借用A影格的行為，改驗交接前後A退/B進，待第二輪完整驗收。人工看首輪截圖後將標籤可見文字縮成1起/1迄，aria保留完整特效/靜音名稱，避免統一14px字級時擠成兩行。
 - 最新任務特效時長/任意配對標籤：plans/2026-11-13-effect-timing.md。使用者明確選A10+B10維持20秒，交接前後分配，不採重疊17秒；因此轉場不借靜止首尾幀，A退出後B進入，各自影片/聲音不延後。單素材enter=B/exit=A。動畫ranges本地秒數，畫面/轉場ranges絕對秒數，[]表示不使用；取消舊半片長限制。本輪CI待驗，之前321/134不是本輪結果。Player暫時草稿只供popup，cleanup清除並還原秒數，切勿持久化或匯出草稿。退場wipe需和原viewport取交集，不能把已裁切格子的viewport鏡射到另一塊來源。TemplatePanel選新進出場須關舊motion，選舊motion須清animations，避免同時套兩套幾何。
 

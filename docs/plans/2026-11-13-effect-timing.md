@@ -9,3 +9,6 @@
 - 單素材出場推移與進場方向有別；wipe、分格、膠卷、zoom等保持共用預覽/匯出幾何。沒有額外改變速度或音訊偏移。
 
 驗收：本機check及GitHub Actions完整Chromium回歸，新增10秒動態紅綠/440Hz自製片驗影片在特效內前進、保留10秒及原音；兩支10秒維持20秒；不對稱A/B、任意區間、多組新增/刪除最後一組/復原/取消/重開、影片特效與共用修剪。Safari觸控、解碼及長片順暢仍待真機。
+
+
+最終驗收：[Actions 43474533667](https://github.com/peiyulin0520/VideoClip_2/actions/runs/43474533667)：版本 8e45a480e2c3818217935f677a2d1047bab19107 的331單元、138 Chromium e2e全過，lint/格式/TypeScript/build/Pages/39字體檢查成功。artifact 14062124542，ZIP SHA-256 8f225265b3f38d07947a1f074098f2d22e3bad37368686a923f18d1b1fc7d50f 已核對；171張成功畫面（effect-timing新增5張）。已人工看新5張及混搭已用清單。最後文件不改成功產品/測試，PR #10使用者自行Merge；Safari仍待真機。
