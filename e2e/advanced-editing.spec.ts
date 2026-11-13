@@ -223,10 +223,12 @@ test('兩個菱形之間位置大小與亮度線性變化，預覽單格及完�
   await createProjectWith(page, ['solid-red.webm']);
   await clips(page).first().tap();
   await page.getByRole('button', { name: '定格', exact: true }).tap();
+  await openTab(page, '圖層');
   await page.getByRole('button', { name: '定格細部調整', exact: true }).tap();
   await page.getByRole('button', { name: '完成定格', exact: true }).tap();
   await seekTo(page, 2);
   await page.getByRole('button', { name: '定格', exact: true }).tap();
+  await openTab(page, '圖層');
   await page.getByRole('button', { name: '定格細部調整', exact: true }).tap();
   await slider(page, '定格大小', 50);
   await slider(page, '水平位置', 75);
@@ -287,10 +289,12 @@ test('膠卷關鍵幀只縮放整組，框架與三格同步且重開保存', as
   await page.getByRole('button', { name: '套用多格版型', exact: true }).tap();
   const before = (await current(page)).tracks.find((t) => t.template)!.items.map((i) => i.transform);
   await page.getByRole('button', { name: '定格', exact: true }).tap();
+  await openTab(page, '圖層');
   await page.getByRole('button', { name: '定格細部調整', exact: true }).tap();
   await page.getByRole('button', { name: '完成定格', exact: true }).tap();
   await seekTo(page, 2);
   await page.getByRole('button', { name: '定格', exact: true }).tap();
+  await openTab(page, '圖層');
   await page.getByRole('button', { name: '定格細部調整', exact: true }).tap();
   await slider(page, '定格大小', 50);
   await page.getByRole('button', { name: '完成定格', exact: true }).tap();

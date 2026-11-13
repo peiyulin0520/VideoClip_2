@@ -1,6 +1,8 @@
 # 交接手冊（HANDOFF）
 
 ## VideoClip_2 當前交接（優先於以下來源 repo 的歷史紀錄）
+- PR #8 第一輪 824dfb7 / Actions 43383883589：306/108 of 114。交接 + 的 44px 目標會擋到短素材與片尾把手；為有交接的影像列在前方分配獨立 44px，按鈕 top=-22，不改素材列 h44/拖曳候選邊界。定格改單一播放列小按鈕，細調在圖層頁；避免多一列造成初始素材低於視窗。手動 mouse reorder 先 scrollIntoView。聲音標記由觸控像素換算，精度驗 0.01 秒，不做浮點完全相等。
+
 - 最新 11 點：PR #7 已使用者合併，main 3ca45e2。本次計畫 playback-refinement；306/114 待驗收。定格控制在 playbar，直接記錄，細調另開；模型不改名。EffectsJoin 存 UI 狀態供交接 + 進正確 A/B，專案重開清除此 UI context。已用效果置頂，防相同 pair/preset，舊重複在 editableProject 去冗餘。Preview 播放/activeTransitions 時不顯示 DOM 選取框（不清除 selectedId）；實際輸出另有像素檢查。鉛筆原固定 5 粒/像素對大筆刷過疏，增加石墨核心與按 size 增粒；brushDynamics 有變動壓力優先、否則速度/頭尾粗細。小音訊畫面與 SourceRanges 同列，移除兩舊捷徑後 e2e 要用手動 markMuteInterval。
 
 - 最新九點最終：[Actions 43366595525](https://github.com/peiyulin0520/VideoClip_2/actions/runs/43366595525)：版本 c74dec591b3a9bcf88e425b49dbcfdac494d43d5 的 299 單元、110 Chromium e2e 全過，lint/格式/TypeScript/build/Pages/39 字體檢查成功。 artifact 14010687940，ZIP SHA-256 9cbea2ce6c63b1e2e65c118e40d579994e1a297331a42f66cc55ef01fa0da9cb 已核對；135 張成功畫面保存。 PR #7 待使用者自行 Merge，未部署。下列首輪 106/108、待 CI 與 PR #6 待合併屬過程/歷史。最後文件/截圖提交保持驗證過的程式與測試；Safari 待真機。

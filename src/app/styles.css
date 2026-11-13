@@ -2737,3 +2737,49 @@ button:focus-visible {
   color: var(--accent);
   font-size: 12px;
 }
+
+/* Keep marking in the existing playback row; optional numerical controls live in Layers. */
+.editor .playbar {
+  flex-wrap: nowrap;
+}
+.editor .playbar .time {
+  font-size: 11px;
+}
+.freeze-controls {
+  flex-basis: auto;
+  order: 0;
+  padding: 0;
+  border: 0;
+  gap: 0;
+  flex-shrink: 0;
+}
+.freeze-button {
+  flex-direction: column;
+  width: 44px;
+  min-width: 44px;
+  padding: 2px;
+  gap: 0;
+  font-size: 11px;
+  border-radius: 10px;
+}
+.freeze-button svg {
+  width: 17px;
+  height: 17px;
+}
+.freeze-fine-control {
+  margin: 8px 16px;
+}
+.used-effects .effect-row {
+  margin-top: 0;
+}
+@media (max-width: 359px) {
+  .editor .playbar {
+    gap: 1px;
+    padding-inline: 2px;
+  }
+  .editor .playbar .time {
+    font-size: 10px;
+    white-space: normal;
+    text-align: center;
+  }
+}

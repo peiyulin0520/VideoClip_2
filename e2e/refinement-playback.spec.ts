@@ -51,10 +51,13 @@ test('聲音小預覽貼著時間軸，試播白線同步並能暫停，沒有�
   await markMuteInterval(page, 0.5, 1);
   await shot(page, 'compact-audio-preview-and-markers');
   await page.getByRole('button', { name: '套用聲音選段', exact: true }).tap();
-  expect((await current(page)).tracks[0]!.items[0]!).toHaveProperty('audioRanges', [
-    [0, 0.5],
-    [1, 3],
-  ]);
+  const item = (await current(page)).tracks[0]!.items[0]!;
+  expect('audioRanges' in item && item.audioRanges).toHaveLength(2);
+  if (!('audioRanges' in item) || !item.audioRanges) throw Error('Missing saved audio ranges');
+  expect(item.audioRanges[0]![0]).toBe(0);
+  expect(item.audioRanges[0]![1]).toBeCloseTo(0.5, 2);
+  expect(item.audioRanges[1]![0]).toBeCloseTo(1, 2);
+  expect(item.audioRanges[1]![1]).toBe(3);
 });
 test('定格在播放列直接記錄，細調另開，動畫交接與播放時沒有白色選取框', async ({ page }) => {
   await createProjectWith(page, ['solid-red.webm', 'solid-green.webm']);
@@ -65,6 +68,7 @@ test('定格在播放列直接記錄，細調另開，動畫交接與播放時�
   await expect(mark).toHaveAttribute('aria-pressed', 'true');
   await expect(page.getByRole('dialog')).toHaveCount(0);
   await seekTo(page, 3.8);
+  await openTab(page, '圖層');
   await page.getByRole('button', { name: '定格細部調整', exact: true }).tap();
   await slider(page, '定格大小', 50);
   await slider(page, '垂直位置', 75);
@@ -72,11 +76,13 @@ test('定格在播放列直接記錄，細調另開，動畫交接與播放時�
   await clips(page).nth(1).tap();
   await seekTo(page, 4);
   await mark.tap();
+  await openTab(page, '圖層');
   await page.getByRole('button', { name: '定格細部調整', exact: true }).tap();
   await slider(page, '定格大小', 50);
   await slider(page, '垂直位置', 25);
   await page.getByRole('button', { name: '完成定格', exact: true }).tap();
   await seekTo(page, 6);
+  await openTab(page, '圖層');
   await page.getByRole('button', { name: '定格細部調整', exact: true }).tap();
   await slider(page, '定格大小', 100);
   await page.getByRole('button', { name: '完成定格', exact: true }).tap();
@@ -100,6 +106,9 @@ test('交接圓底加號定位正確，已用特效在上方且亮框，單一�
   await createProjectWith(page, ['solid-red.webm', 'solid-green.webm', 'solid-blue.webm']);
   const joins = page.locator('.transition-join');
   await expect(joins).toHaveCount(2);
+  const joinBox = (await joins.first().boundingBox())!,
+    clipBox = (await clips(page).first().boundingBox())!;
+  expect(joinBox.y + joinBox.height).toBeLessThanOrEqual(clipBox.y + 0.5);
   await joins.nth(1).tap();
   await expect(page.locator('.bottombar').getByRole('tab', { name: '特效', exact: true })).toHaveAttribute(
     'aria-selected',
@@ -114,6 +123,16 @@ test('交接圓底加號定位正確，已用特效在上方且亮框，單一�
   expect((await current(page)).transitions).toHaveLength(1);
   await page.getByRole('button', { name: '向左推移', exact: true }).tap();
   expect((await current(page)).transitions).toHaveLength(2);
+  const mixed = await exportFrame(page, 8, [
+    [0.25, 0.5],
+    [0.75, 0.5],
+  ]);
+  expect(mixed.samples[0]![1]).toBeGreaterThan(240);
+  expect(mixed.samples[0]![2]).toBeLessThan(15);
+  expect(mixed.samples[1]![2]).toBeGreaterThan(100);
+  expect(mixed.samples[1]![2]).toBeLessThan(150);
+  expect(mixed.samples[1]![1]).toBeLessThan(15);
+
   await page.getByRole('button', { name: '閃光', exact: true }).tap();
   await page.getByRole('button', { name: '閃光', exact: true }).tap();
   expect((await current(page)).effects).toHaveLength(1);
@@ -151,7 +170,7 @@ test('交接圓底加號定位正確，已用特效在上方且亮框，單一�
       const s = getComputedStyle(el);
       return (
         s.color !== s.backgroundColor &&
-        s.backgroundColor !== getComputedStyle(el.parentElement!).backgroundColor
+        s.backgroundColor === getComputedStyle(document.querySelector('.export-button')!).backgroundColor
       );
     }),
   ).toBe(true);

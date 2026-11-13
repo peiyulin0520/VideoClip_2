@@ -7,7 +7,7 @@ import type { AnimatedValues } from '../../model/types';
 import { Sheet } from '../../ui/Sheet';
 import { Slider } from '../../ui/Slider';
 import { ColorPicker } from '../../ui/ColorPicker';
-export function KeyframeControl() {
+export function KeyframeControl({ detailsOnly = false }: { detailsOnly?: boolean }) {
   const project = useProjectStore((s) => s.project)!,
     id = useProjectStore((s) => s.selectedId);
   const player = useUI((s) => s.player);
@@ -35,44 +35,50 @@ export function KeyframeControl() {
     }
   };
   return (
-    <div className="freeze-controls">
-      <button
-        className={`chip freeze-button${found?.target.keyframes?.some((k) => Math.abs(k.time - (time - found.start)) < 0.02) ? ' active' : ''}`}
-        aria-label="定格"
-        aria-pressed={!!found?.target.keyframes?.some((k) => Math.abs(k.time - (time - found.start)) < 0.02)}
-        title="在目前秒數標記定格"
-        onClick={() => {
-          if (!id || !found || found.item.type === 'audio') return toast('請先選取影像、文字或貼紙');
-          player?.pause();
-          try {
-            useProjectStore.getState().apply((d) => addKeyframe(d, id, player?.time ?? 0));
-            toast(`已標記 ${((player?.time ?? 0) - found.start).toFixed(2)} 秒定格`);
-          } catch (e) {
-            toast((e as Error).message);
+    <div className={detailsOnly ? 'freeze-fine-control' : 'freeze-controls'}>
+      {!detailsOnly && (
+        <button
+          className={`chip freeze-button${found?.target.keyframes?.some((k) => Math.abs(k.time - (time - found.start)) < 0.02) ? ' active' : ''}`}
+          aria-label="定格"
+          aria-pressed={
+            !!found?.target.keyframes?.some((k) => Math.abs(k.time - (time - found.start)) < 0.02)
           }
-        }}
-      >
-        <Diamond
-          size={20}
-          fill={
-            found?.target.keyframes?.some((k) => Math.abs(k.time - (time - found.start)) < 0.02)
-              ? 'currentColor'
-              : 'none'
-          }
-        />
-        <span>定格</span>
-      </button>
-      <button
-        className="chip freeze-details-button"
-        aria-label="定格細部調整"
-        onClick={() => {
-          if (!id || !found || found.item.type === 'audio') return toast('請先選取影像、文字或貼紙');
-          player?.pause();
-          setOpen(true);
-        }}
-      >
-        細調
-      </button>
+          title="在目前秒數標記定格"
+          onClick={() => {
+            if (!id || !found || found.item.type === 'audio') return toast('請先選取影像、文字或貼紙');
+            player?.pause();
+            try {
+              useProjectStore.getState().apply((d) => addKeyframe(d, id, player?.time ?? 0));
+              toast(`已標記 ${((player?.time ?? 0) - found.start).toFixed(2)} 秒定格`);
+            } catch (e) {
+              toast((e as Error).message);
+            }
+          }}
+        >
+          <Diamond
+            size={20}
+            fill={
+              found?.target.keyframes?.some((k) => Math.abs(k.time - (time - found.start)) < 0.02)
+                ? 'currentColor'
+                : 'none'
+            }
+          />
+          <span>定格</span>
+        </button>
+      )}
+      {detailsOnly && (
+        <button
+          className="chip freeze-details-button"
+          aria-label="定格細部調整"
+          onClick={() => {
+            if (!id || !found || found.item.type === 'audio') return toast('請先選取影像、文字或貼紙');
+            player?.pause();
+            setOpen(true);
+          }}
+        >
+          定格細部調整
+        </button>
+      )}
       {open && found && values && id && (
         <Sheet open title="定格細部調整" onClose={() => setOpen(false)}>
           <p>

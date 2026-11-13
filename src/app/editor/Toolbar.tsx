@@ -1,3 +1,4 @@
+import { KeyframeControl } from './KeyframeControl';
 import { evaluatedItem } from '../../engine/keyframes';
 import { Sheet } from '../../ui/Sheet';
 import { EffectsPanel } from './EffectsPanel';
@@ -156,6 +157,9 @@ export function BottomBar({
       )}
       {!collapsed && tab === 'overlay' && <OverlayTab onImportOverlay={onImportOverlay} />}
       {!collapsed && tab === 'text' && <TextTab found={found} />}
+      {!collapsed && tab === 'layers' && found && found.item.type !== 'audio' && (
+        <KeyframeControl detailsOnly />
+      )}
       {!collapsed && tab === 'layers' && <LayersTab />}
       {!collapsed && tab === 'layout' && <TemplatePanel />}
       {!collapsed && tab === 'effects' && <EffectsPanel />}

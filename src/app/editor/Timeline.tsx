@@ -123,6 +123,7 @@ export function Timeline({
         top += ROW_H + ROW_GAP;
       }
       if (!collapsed.includes(category)) {
+        if (transitionPairs(project).some((pair) => pair.track.id === track.id)) top += ROW_H;
         rows.push({ track, index, top, h: ROW_H });
         top += ROW_H + ROW_GAP;
       }
@@ -539,7 +540,7 @@ export function Timeline({
                       key={pair.from.id}
                       className="transition-join"
                       aria-label={`新增轉場 ${pair.from.name ?? project.assets.find((a) => a.id === ('assetId' in pair.from ? pair.from.assetId : ''))?.name ?? 'A'} 到 ${pair.to.name ?? project.assets.find((a) => a.id === ('assetId' in pair.to ? pair.to.assetId : ''))?.name ?? 'B'}`}
-                      style={{ left: half + pair.to.start * pps, top: h / 2 }}
+                      style={{ left: half + pair.to.start * pps, top: -ROW_H / 2 }}
                       onPointerDown={(e) => e.stopPropagation()}
                       onClick={(e) => {
                         e.stopPropagation();
