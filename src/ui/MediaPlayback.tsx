@@ -1,6 +1,6 @@
 import { Play, Pause } from 'lucide-react';
 import { useEffect, useRef, useState, type RefObject } from 'react';
-import { toast } from '../store/uiStore';
+import { toast, useUI } from '../store/uiStore';
 
 /** Explicit controls for source previews; never rely on the browser's hidden controls. */
 export function MediaPlayback({
@@ -61,6 +61,7 @@ export function MediaPlayback({
         if (!el) return;
         if (!el.paused) el.pause();
         else {
+          useUI.getState().player?.pause();
           // eslint-disable-next-line react-hooks/immutability -- currentTime is an imperative DOM media API, not React data.
           if (el.currentTime < start || el.currentTime >= end - 0.015) el.currentTime = start;
           void el.play().catch(() => toast('無法播放，請再點一次'));

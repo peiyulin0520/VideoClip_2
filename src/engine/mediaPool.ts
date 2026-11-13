@@ -7,6 +7,7 @@ export class VideoPool {
   private tick = 0;
   private destroyed = false;
   private retries = new Map<HTMLVideoElement, number>();
+  private primeTimers = new Map<HTMLVideoElement, ReturnType<typeof setTimeout>>();
   private frameCallbacks = new Map<HTMLVideoElement, number>();
 
   constructor(
@@ -31,7 +32,8 @@ export class VideoPool {
         // Safari can expose metadata before a paused video has decoded a drawable
         // frame. A tiny seek plus muted priming unlocks that first frame.
         if (v.dataset.previewIntent === 'play') return;
-        const assetId = v.dataset.assetId;
+        const assetId = v.dataset.assetId,
+          itemId = v.dataset.itemId;
         v.dataset.priming = '1';
         v.muted = true;
         try {
@@ -40,16 +42,27 @@ export class VideoPool {
           /* metadata pending */
         }
         const finish = () => {
-          if (this.destroyed || v.dataset.assetId !== assetId) return;
+          if (this.destroyed || v.dataset.assetId !== assetId || v.dataset.itemId !== itemId) return;
           delete v.dataset.priming;
-          if (v.dataset.previewIntent !== 'play') v.pause();
+          const timer = this.primeTimers.get(v);
+          if (timer) clearTimeout(timer);
+          this.primeTimers.delete(v);
+          if (v.dataset.previewIntent !== 'play') {
+            v.pause();
+            const target = Number(v.dataset.seekTarget ?? 0);
+            if (Math.abs(v.currentTime - target) > 0.02 && !v.seeking) v.currentTime = target;
+          }
           changed();
         };
+        this.primeTimers.set(v, setTimeout(finish, 350));
         const audio = v.dataset.mediaKind === 'audio';
         if (!audio && v.requestVideoFrameCallback) v.requestVideoFrameCallback(finish);
         void v.play().then(() => {
           if (audio || !v.requestVideoFrameCallback) finish();
         }, finish);
+      });
+      v.addEventListener('playing', () => {
+        if (v.dataset.previewIntent !== 'play' && !v.dataset.priming) v.pause();
       });
       host.appendChild(v);
       this.els.push(v);
@@ -87,13 +100,21 @@ export class VideoPool {
           Number(a.dataset.used) - Number(b.dataset.used),
       );
       el = free[0]!;
+      el.pause();
+      el.dataset.previewIntent = 'pause';
+      delete el.dataset.seekTarget;
+      delete el.dataset.playPending;
+      const primeTimer = this.primeTimers.get(el);
+      if (primeTimer) clearTimeout(primeTimer);
+      this.primeTimers.delete(el);
       el.dataset.itemId = itemId;
       delete el.dataset.primed;
       delete el.dataset.priming;
     }
     el.dataset.mediaKind = audio ? 'audio' : 'video';
-    if (el.dataset.assetId !== assetId) {
+    if (el.dataset.assetId !== assetId || el.dataset.url !== url) {
       delete el.dataset.priming;
+      el.dataset.url = url;
       el.src = url;
       el.dataset.assetId = assetId;
       delete el.dataset.primed;
@@ -116,26 +137,29 @@ export class VideoPool {
   }
 
   pauseAllExcept(keep: Set<HTMLVideoElement>) {
-    for (const v of this.els) if (!keep.has(v) && !v.paused) v.pause();
+    for (const v of this.els)
+      if (!keep.has(v)) {
+        v.dataset.previewIntent = 'pause';
+        if (!v.paused) v.pause();
+      }
   }
 
-  /** iOS Safari：要在使用者點擊當下對每個元素 play() 一下，之後才能由程式啟動播放 */
+  /** VideoClip's synchronous unlock: queued elements are paused before any promise can race playback. */
   unlock() {
     for (const v of this.els) {
-      if (!v.paused || v.dataset.unlocked) continue;
-      v.muted = false;
-      void v.play().then(
-        () => {
-          v.dataset.unlocked = '1';
-          if (v.dataset.previewIntent !== 'play') v.pause();
-        },
-        () => {},
-      );
+      if (!v.paused || v.dataset.previewIntent === 'play' || v.dataset.unlocked || !v.getAttribute('src'))
+        continue;
+      v.dataset.unlocked = '1';
+      v.muted = true;
+      void v.play().catch(() => {});
+      v.pause();
     }
   }
 
   destroy() {
     this.destroyed = true;
+    for (const timer of this.primeTimers.values()) clearTimeout(timer);
+    this.primeTimers.clear();
     for (const raf of this.retries.values()) cancelAnimationFrame(raf);
     this.retries.clear();
     for (const [el, id] of this.frameCallbacks) el.cancelVideoFrameCallback?.(id);

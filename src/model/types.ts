@@ -4,6 +4,10 @@
 export type Aspect = '9:16' | '16:9' | '1:1' | '3:4' | '4:3';
 
 export type Asset = {
+  previewFiles?: Record<
+    string,
+    { status: 'ready' | 'none'; mime?: string; width?: number; height?: number; version: 1 }
+  >;
   id: string;
   kind: 'video' | 'image' | 'audio';
   name: string;

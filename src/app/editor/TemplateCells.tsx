@@ -9,7 +9,7 @@ import { SourceRanges } from '../../ui/SourceRanges';
 import { Slider } from '../../ui/Slider';
 import { includeAudio } from '../../engine/audioRanges';
 import { groupTransform } from '../../engine/templateGeometry';
-import { urlFor } from '../../engine/assetUrls';
+import { previewUrlFor as urlFor } from '../../engine/assetUrls';
 import { useUI } from '../../store/uiStore';
 import { FontSelect } from '../fonts/FontSelect';
 import { TrimEditor } from './TrimEditor';

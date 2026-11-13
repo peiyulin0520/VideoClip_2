@@ -10,7 +10,8 @@ import {
   useState,
   type PointerEvent as RPointerEvent,
 } from 'react';
-import { urlFor } from '../../engine/assetUrls';
+import { preparePreviews } from '../../engine/preparePreviews';
+import { previewUrlFor } from '../../engine/assetUrls';
 import { installDebugHook } from '../../engine/debug';
 import { useFonts } from '../../fonts/fontStore';
 import {
@@ -28,7 +29,7 @@ import { layoutMotion } from '../../engine/layouts';
 import { geoCtx } from '../../engine/scene';
 import { findItem, visibleLayers } from '../../engine/timeline';
 import { setTransform } from '../../store/actions';
-import { setAssetThumbs, useProjectStore } from '../../store/projectStore';
+import { setAssetPreview, setAssetThumbs, useProjectStore } from '../../store/projectStore';
 import { toast, useUI } from '../../store/uiStore';
 
 // v2：改成預設關閉（舊版 'vc-safe-zone' 預設開，會讓使用者誤以為粉紅區是畫面的一部分）
@@ -55,6 +56,7 @@ type Gesture =
     };
 
 export function Preview({ projectId, width, height }: { projectId: string; width: number; height: number }) {
+  const [retry, setRetry] = useState(0);
   const previewCap = usePreferences((s) => s.preview);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const poolRef = useRef<HTMLDivElement>(null);
@@ -78,6 +80,10 @@ export function Preview({ projectId, width, height }: { projectId: string; width
   const [selVisible, setSelVisible] = useState(true);
   const [timelineTime, setTimelineTime] = useState(0);
   const project = useProjectStore((s) => s.project)!;
+  const videoAssetsKey = project.assets
+    .filter((a) => a.kind === 'video')
+    .map((a) => a.id)
+    .join('|');
   const selectedId = useProjectStore((s) => s.selectedId);
   const player = useUI((s) => s.player);
   const liftedId = useUI((s) => s.liftedId);
@@ -114,42 +120,98 @@ export function Preview({ projectId, width, height }: { projectId: string; width
   const resumeRef = useRef<{ projectId: string; time: number; playing: boolean } | null>(null);
   useEffect(() => {
     let cancelled = false;
+    const abort = new AbortController();
+    useUI.setState({ previewLoad: { progress: 80, message: '準備預覽畫面' } });
     let created: Player | null = null;
     let unsub = () => {};
-    void Player.create({
-      host: poolRef.current!,
-      canvas: canvasRef.current!,
-      getProject: () => useProjectStore.getState().project,
-      getLiftedId: () => useUI.getState().liftedId,
-      urlFor: (id) => urlFor(projectId, id),
-      onThumb: setAssetThumbs,
-    }).then((player) => {
-      if (cancelled) return player.destroy();
-      created = player;
-      useUI.setState({ player });
-      const resume = resumeRef.current;
-      player.seek(resume && resume.projectId === projectId ? resume.time : 0);
-      if (resume?.projectId === projectId && resume.playing) player.play();
-      const unsubProject = useProjectStore.subscribe((s, prev) => {
-        if (s.project !== prev.project) player.refresh();
+    void (async () => {
+      const p = useProjectStore.getState().project!;
+      const failed = await preparePreviews(
+        projectId,
+        p.assets,
+        previewCap,
+        abort.signal,
+        (fraction, message) => {
+          const progress = 80 + Math.round(fraction * 15);
+          if (!cancelled && useUI.getState().previewLoad?.progress !== progress)
+            useUI.setState({ previewLoad: { progress, message } });
+        },
+        (id, metadata) => {
+          if (!cancelled) setAssetPreview(id, previewCap, metadata);
+        },
+      );
+      if (cancelled) return null;
+      if (failed) toast('部分影片無法建立輕量預覽，會使用原檔；匯出仍保留原始畫質');
+      return Player.create({
+        host: poolRef.current!,
+        canvas: canvasRef.current!,
+        getProject: () => useProjectStore.getState().project,
+        getLiftedId: () => useUI.getState().liftedId,
+        urlFor: (id) => previewUrlFor(projectId, id, previewCap),
+        onThumb: setAssetThumbs,
+        onPlaybackError: toast,
       });
-      const unsubFonts = useFonts.subscribe((s, prev) => {
-        if (s.epoch !== prev.epoch) player.refresh(); // 字體載入完成，字卡重畫
+    })()
+      .then(async (player) => {
+        if (!player) return;
+        if (cancelled) return player.destroy();
+        created = player;
+        useUI.setState({ player });
+        const resume = resumeRef.current;
+        player.seek(resume && resume.projectId === projectId ? resume.time : 0);
+
+        const unsubProject = useProjectStore.subscribe((s, prev) => {
+          if (s.project !== prev.project) player.refresh();
+        });
+        const unsubFonts = useFonts.subscribe((s, prev) => {
+          if (s.epoch !== prev.epoch) player.refresh(); // 字體載入完成，字卡重畫
+        });
+        unsub = () => {
+          unsubProject();
+          unsubFonts();
+        };
+        installDebugHook(player);
+        await player.prepare(player.time, (progress) => {
+          if (!cancelled && useUI.getState().previewLoad?.progress !== 95 + Math.round(progress * 0.05))
+            useUI.setState({
+              previewLoad: { progress: 95 + Math.round(progress * 0.05), message: '準備預覽畫面' },
+            });
+        });
+        if (cancelled) return;
+        await new Promise<void>((resolve) => requestAnimationFrame(() => resolve()));
+        if (cancelled) return;
+        useUI.setState({ previewLoad: null });
+        if (resume?.projectId === projectId && resume.playing) player.play();
+      })
+      .catch((error) => {
+        if (!cancelled)
+          useUI.setState({
+            previewLoad: {
+              progress: 80,
+              message: '素材尚未就緒',
+              error: String(error),
+              canSkip: true,
+              retry: () => setRetry((n) => n + 1),
+            },
+          });
       });
-      unsub = () => {
-        unsubProject();
-        unsubFonts();
-      };
-      installDebugHook(player);
-    });
     return () => {
       cancelled = true;
+      abort.abort();
       unsub();
       if (created) resumeRef.current = { projectId, time: created.time, playing: created.isPlaying };
       created?.destroy();
       useUI.setState({ player: null });
     };
-  }, [projectId, width, height, previewCap]); // 比例改了（寬高變了）就重建預覽引擎
+  }, [projectId, width, height, previewCap, retry, videoAssetsKey]); // 比例改了（寬高變了）就重建預覽引擎
+
+  useEffect(() => {
+    const pause = () => {
+      if (document.hidden) useUI.getState().player?.pause();
+    };
+    document.addEventListener('visibilitychange', pause);
+    return () => document.removeEventListener('visibilitychange', pause);
+  }, []);
 
   // ---- 舞台大小（CSS px）----
   useLayoutEffect(() => {

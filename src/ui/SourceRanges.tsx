@@ -14,6 +14,7 @@ export function SourceRanges({
   onMarkerChange,
   onEditStart,
   onEditEnd,
+  editableSides = [0, 1],
 }: {
   duration: number;
   ranges: [number, number][];
@@ -27,6 +28,7 @@ export function SourceRanges({
   onMarkerChange?: (ranges: [number, number][]) => void;
   onEditStart?: () => void;
   onEditEnd?: () => void;
+  editableSides?: number[];
 }) {
   const markers = markerRanges ?? ranges;
   const bar = useRef<HTMLDivElement>(null);
@@ -156,32 +158,36 @@ export function SourceRanges({
       ))}
       <div className="source-cursor" style={{ left: `${(cursor / duration) * 100}%` }} />
       {markers.flatMap((r, index) =>
-        r.map((v, side) => (
-          <button
-            key={`${index}-${side}`}
-            className={`source-marker ${side ? 'end' : 'start'}${side && (((r[1] - r[0]) / duration) * width < 44 || (markers[index + 1] && ((markers[index + 1]![0] - r[1]) / duration) * width < 44)) ? ' crowded' : ''}`}
-            aria-label={`${markerLabel ? `第${index + 1}組${markerLabel}` : markers.length > 1 ? `第${index + 1}段` : '來源'}${side ? '終點' : '起點'}標記`}
-            title={`${side ? '終點' : '起點'} ${v.toFixed(2)} 秒`}
-            style={{ left: `${(v / duration) * 100}%` }}
-            onPointerDown={(e) => drag(index, side, e)}
-            onKeyDown={(e) => {
-              if (e.key === 'Home' || e.key === 'End') {
-                e.preventDefault();
-                update(index, side, e.key === 'Home' ? 0 : duration);
-              }
-              if (e.key === 'ArrowRight' || e.key === 'ArrowLeft') {
-                e.preventDefault();
-                update(index, side, v + (e.key === 'ArrowRight' ? 0.05 : -0.05));
-              }
-            }}
-          >
-            <span aria-hidden="true">▼</span>
-            <small>
-              {index + 1}
-              {side ? '迄' : '起'}
-            </small>
-          </button>
-        )),
+        r.flatMap((v, side) =>
+          !editableSides.includes(side)
+            ? []
+            : [
+                <button
+                  key={`${index}-${side}`}
+                  className={`source-marker ${side ? 'end' : 'start'}${side && (((r[1] - r[0]) / duration) * width < 44 || (markers[index + 1] && ((markers[index + 1]![0] - r[1]) / duration) * width < 44)) ? ' crowded' : ''}`}
+                  aria-label={`${markerLabel ? `第${index + 1}組${markerLabel}` : markers.length > 1 ? `第${index + 1}段` : '來源'}${side ? '終點' : '起點'}標記`}
+                  title={`${side ? '終點' : '起點'} ${v.toFixed(2)} 秒`}
+                  style={{ left: `${(v / duration) * 100}%` }}
+                  onPointerDown={(e) => drag(index, side, e)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Home' || e.key === 'End') {
+                      e.preventDefault();
+                      update(index, side, e.key === 'Home' ? 0 : duration);
+                    }
+                    if (e.key === 'ArrowRight' || e.key === 'ArrowLeft') {
+                      e.preventDefault();
+                      update(index, side, v + (e.key === 'ArrowRight' ? 0.05 : -0.05));
+                    }
+                  }}
+                >
+                  <span aria-hidden="true">▼</span>
+                  <small>
+                    {index + 1}
+                    {side ? '迄' : '起'}
+                  </small>
+                </button>,
+              ],
+        ),
       )}
     </div>
   );

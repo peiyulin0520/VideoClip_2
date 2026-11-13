@@ -8,7 +8,7 @@ import type { VideoItem } from '../../model/types';
 import { useProjectStore } from '../../store/projectStore';
 import { useUI, toast } from '../../store/uiStore';
 import { trimSourceRange } from '../../engine/groupTiming';
-import { urlFor } from '../../engine/assetUrls';
+import { previewUrlFor as urlFor } from '../../engine/assetUrls';
 import { MIN_CLIP_DURATION } from '../../model/defaults';
 import { SourceRanges } from '../../ui/SourceRanges';
 import { Sheet } from '../../ui/Sheet';

@@ -3,7 +3,7 @@ import type { ClipAnimations, Project } from '../../model/types';
 import { TRANSITIONS } from '../../engine/transitions';
 import { EffectPreviews } from './EffectPreviews';
 import { EffectTimingEditor } from './EffectTimingEditor';
-import { animationRanges, resizeTimeRange } from '../../engine/animationTiming';
+import { animationRanges } from '../../engine/animationTiming';
 import { Slider } from '../../ui/Slider';
 
 export function AnimationSettings({
@@ -13,7 +13,9 @@ export function AnimationSettings({
   start = 0,
   thumbs = [],
   preview,
+  initialEdge = 'enter',
 }: {
+  initialEdge?: 'enter' | 'exit';
   value?: ClipAnimations;
   onChange: (value: ClipAnimations) => void;
   duration: number;
@@ -21,14 +23,14 @@ export function AnimationSettings({
   thumbs?: string[];
   preview: (value: ClipAnimations) => Project;
 }) {
-  const [edge, setEdge] = useState<'enter' | 'exit'>('enter');
+  const [edge, setEdge] = useState<'enter' | 'exit'>(initialEdge);
   const selected = value[edge];
   const [timing, setTiming] = useState(false);
   const ranges = animationRanges(selected, edge, duration);
   const length = ranges[0] ? ranges[0][1] - ranges[0][0] : (selected?.duration ?? 0.6);
   const withRanges = (r: [number, number][]) => ({
     ...value,
-    [edge]: selected && { ...selected, duration: r[0] ? r[0][1] - r[0][0] : selected.duration, ranges: r },
+    [edge]: selected && r[0] ? { preset: selected.preset, duration: r[0][1] - r[0][0] } : undefined,
   });
   return (
     <section aria-label="單一素材進出場動畫">
@@ -37,10 +39,11 @@ export function AnimationSettings({
           <button
             key={id}
             className={`chip${edge === id ? ' active' : ''}`}
+            aria-label={id === 'enter' ? '進場' : '出場'}
             aria-pressed={edge === id}
             onClick={() => setEdge(id)}
           >
-            {id === 'enter' ? '進場' : '出場'}
+            {id === 'enter' ? '開頭進場' : '結尾退場'}
           </button>
         ))}
         <button
@@ -65,14 +68,7 @@ export function AnimationSettings({
             value={length}
             format={(v) => v.toFixed(2) + ' 秒'}
             onChange={(length) => {
-              const current = ranges[0] ?? (edge === 'enter' ? [0, 0] : [duration, duration]);
-              const range: [number, number] = resizeTimeRange(
-                current as [number, number],
-                length,
-                0,
-                ranges[1]?.[0] ?? duration,
-              );
-              onChange(withRanges([range, ...ranges.slice(1)]));
+              onChange(withRanges([edge === 'enter' ? [0, length] : [duration - length, duration]]));
             }}
           />
           <button className="chip" onClick={() => setTiming(true)}>
@@ -91,9 +87,8 @@ export function AnimationSettings({
               onChange({
                 ...value,
                 [edge]: {
-                  ...selected,
                   preset: e.id,
-                  duration: selected?.duration ?? Math.min(0.6, duration),
+                  duration: Math.min(duration, length),
                 },
               })
             }
@@ -110,7 +105,16 @@ export function AnimationSettings({
       </EffectPreviews>
       {timing && selected && (
         <EffectTimingEditor
-          ranges={ranges}
+          singleEdge={edge}
+          ranges={
+            ranges.length
+              ? ranges
+              : [
+                  edge === 'enter'
+                    ? [0, Math.min(duration, length)]
+                    : [Math.max(0, duration - length), duration],
+                ]
+          }
           duration={duration}
           start={start}
           thumbs={thumbs}

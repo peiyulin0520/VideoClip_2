@@ -33,23 +33,48 @@ function EditorLoader({ projectId }: { projectId: string }) {
 
   useEffect(() => {
     let cancelled = false;
+    useUI.setState({ previewLoad: { progress: 0, message: '讀取專案資料' } });
     let autosave: ReturnType<typeof startAutosave> | null = null;
     (async () => {
       const p = await getProject(projectId);
       if (cancelled) return;
-      if (!p) return setStatus('missing');
-      const missing = await ensureUrls(p.id, p.assets);
+      if (!p) {
+        useUI.setState({ previewLoad: null });
+        return setStatus('missing');
+      }
+      useUI.setState({ previewLoad: { progress: 10, message: '讀取裝置中的素材' } });
+      const missing = await ensureUrls(p.id, p.assets, (done, total) => {
+        if (!cancelled)
+          useUI.setState({
+            previewLoad: {
+              progress: 10 + Math.round((60 * done) / Math.max(1, total)),
+              message: '讀取裝置中的素材',
+            },
+          });
+      });
       if (cancelled) return;
       for (const id of new Set(p.tracks.flatMap((tr) => tr.layout?.story?.fontIds ?? [])))
         if (id !== 'system') await ensureFont(id);
-      useUI.setState({ effectsJoin: null });
+      useUI.setState({ previewLoad: { progress: 80, message: '準備預覽畫面' } });
+      useUI.setState({ effectsJoin: null, effectsSingle: null });
       useProjectStore.getState().load(editableProject(p));
       autosave = startAutosave();
       setStatus('ready');
       if (missing.length) toast(`找不到素材檔：${missing.join('、')}`);
-    })();
+    })().catch((error) => {
+      if (!cancelled)
+        useUI.setState({
+          previewLoad: {
+            progress: 0,
+            message: '讀取專案失敗',
+            error: String(error),
+            retry: () => location.reload(),
+          },
+        });
+    });
     return () => {
       cancelled = true;
+      useUI.setState({ previewLoad: null });
       void autosave?.stop(); // 先同步抓目前內容存檔，再關閉
       useProjectStore.getState().close();
       releaseProjectUrls(projectId);
@@ -82,6 +107,8 @@ function EditorBody() {
   const canUndo = useProjectStore((s) => s.past.length > 0);
   const canRedo = useProjectStore((s) => s.future.length > 0);
   const player = useUI((s) => s.player);
+  const previewLoad = useUI((s) => s.previewLoad);
+  const [buffering, setBuffering] = useState(false);
   const fileInput = useRef<HTMLInputElement>(null);
   const [pps, setPps] = useState(60);
   const [time, setTime] = useState(0);
@@ -102,6 +129,10 @@ function EditorBody() {
   });
   const editorRef = useRef<HTMLElement>(null);
   const total = totalDuration(project);
+  useEffect(() => {
+    const el = editorRef.current;
+    if (el) el.inert = !!previewLoad;
+  }, [previewLoad]);
   useEffect(() => {
     const updateViewport = () => {
       const viewport = window.visualViewport;
@@ -129,6 +160,7 @@ function EditorBody() {
     return player.subscribe((t, p) => {
       setTime(t);
       setPlaying(p);
+      setBuffering(player.isBuffering);
     });
   }, [player]);
 
@@ -300,6 +332,11 @@ function EditorBody() {
         </button>
       )}
 
+      {buffering && (
+        <p className="hint playback-buffering" role="status">
+          正在準備播放畫面…
+        </p>
+      )}
       <div className="playbar">
         <button
           className="icon-btn"

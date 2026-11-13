@@ -3362,3 +3362,122 @@ html {
   width: 100%;
   min-width: 0;
 }
+
+/* All editable fields use the same paper capsule, including native Safari selects. */
+:root[data-theme]
+  body
+  :is(
+    input:not([type='range']):not([type='checkbox']):not([type='radio']):not([type='file']):not(
+        [type='color']
+      ):not([type='hidden']):not([type='button']):not([type='submit']):not([type='reset']),
+    select,
+    textarea
+  ) {
+  -webkit-appearance: none;
+  appearance: none;
+  border: 0;
+  border-radius: 999px;
+  box-shadow: none;
+  background-color: #efe5d7;
+  color: #30271f;
+  padding: 4px 6px;
+  min-height: 44px;
+  font-family: inherit;
+}
+:root[data-theme] body select {
+  padding-right: 30px;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%2379533e' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 8px center;
+  background-size: 16px;
+}
+:root[data-theme] body select option {
+  background: #efe5d7;
+  color: #30271f;
+}
+:root[data-theme] body textarea {
+  border-radius: 18px;
+}
+:root[data-theme] body :is(input, select, textarea):focus-visible {
+  outline: 2px solid #9d674e;
+  outline-offset: 2px;
+}
+:root[data-theme] body :is(input, textarea)::placeholder {
+  color: #73604f;
+  opacity: 1;
+}
+.effect-range-fields.single-edge-fields {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+.timeline-effect-badge {
+  position: absolute;
+  top: -22px;
+  transform: translateX(-50%);
+  z-index: 9;
+  height: 44px;
+  min-width: 44px;
+  padding: 0;
+  gap: 1px;
+  background: transparent;
+}
+.timeline-effect-badge span {
+  display: grid;
+  place-items: center;
+  min-width: 18px;
+  height: 18px;
+  padding-inline: 2px;
+  border-radius: 50%;
+  background: #306773;
+  color: #fff;
+  font-size: var(--timeline-font-size, 11px);
+}
+.timeline-effect-badge span[data-scope='pair'] {
+  background: #a54f39;
+}
+.family-row .timeline-effect-badge {
+  top: -2px;
+}
+.preview-loading-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 2200;
+  display: grid;
+  place-items: center;
+  padding: 16px;
+  background: #0009;
+}
+.preview-loading-card {
+  width: min(100%, 400px);
+  background: var(--panel);
+  color: var(--fg);
+  border-radius: 20px;
+  padding: 16px;
+  display: grid;
+  gap: 6px;
+}
+.preview-loading-card :is(h2, p) {
+  margin: 4px 0;
+}
+.preview-loading-card .btn {
+  text-decoration: none;
+  color: var(--fg);
+  background: var(--control);
+  border-radius: 999px;
+}
+.preview-loading-card .primary {
+  background: var(--accent);
+  color: var(--accent-ink);
+}
+.playback-buffering {
+  margin: 0;
+  padding: 4px 8px;
+}
+:root[data-theme] body .font-select {
+  background: #efe5d7;
+  color: #30271f;
+  border: 0;
+  border-radius: 999px;
+}
+:root[data-theme] body .font-select svg {
+  color: #79533e;
+}

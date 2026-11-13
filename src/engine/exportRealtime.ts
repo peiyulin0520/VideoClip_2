@@ -8,7 +8,7 @@ import { audioEntries } from './exportAudio';
 export function unlockExportAudio(): AudioContext | undefined {
   if (typeof AudioContext === 'undefined') return;
   try {
-    const ctx = new AudioContext();
+    const ctx = new AudioContext({ latencyHint: 'playback' });
     void ctx.resume();
     return ctx;
   } catch {
@@ -85,6 +85,7 @@ export async function exportRealtime(
       urlFor: (id) => urlFor(project.id, id),
       maxSize: options.maxSize,
       audioContext: context,
+      clock: 'wall',
     });
     player.seek(0);
     const deadline = performance.now() + 15000;

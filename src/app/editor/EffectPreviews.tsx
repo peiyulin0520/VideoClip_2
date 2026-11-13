@@ -1,3 +1,4 @@
+import { useUI } from '../../store/uiStore';
 import { Play, Pause } from 'lucide-react';
 import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { Compositor } from '../../engine/compositor';
@@ -75,11 +76,15 @@ export function EffectPreviews({
   presets: PreviewPreset[];
   single?: 'enter' | 'exit';
 }) {
+  const player = useUI((s) => s.player);
+  const [mainPlaying, setMainPlaying] = useState(player?.isPlaying ?? false);
+  useEffect(() => player?.subscribe((_, active) => setMainPlaying(active)), [player]);
   const [playing, setPlaying] = useState(true);
-  const running = useRef(true);
+  const effectivePlaying = playing && !mainPlaying;
+  const running = useRef(effectivePlaying);
   useEffect(() => {
-    running.current = playing;
-  }, [playing]);
+    running.current = effectivePlaying;
+  }, [effectivePlaying]);
   const root = useRef<HTMLDivElement>(null);
   const signature = presets.map((p) => `${p.type}:${p.id}`).join('|');
   useEffect(() => {
@@ -153,12 +158,17 @@ export function EffectPreviews({
   return (
     <div className="effect-previews">
       <button
-        className={`chip preview-toggle${playing ? ' active' : ''}`}
-        aria-label={playing ? '暫停特效示意' : '播放特效示意'}
-        aria-pressed={playing}
-        onClick={() => setPlaying((p) => !p)}
+        className={`chip preview-toggle${effectivePlaying ? ' active' : ''}`}
+        aria-label={effectivePlaying ? '暫停特效示意' : '播放特效示意'}
+        aria-pressed={effectivePlaying}
+        onClick={() => {
+          if (mainPlaying) {
+            player?.pause();
+            setPlaying(true);
+          } else setPlaying((p) => !p);
+        }}
       >
-        {playing ? <Pause size={18} /> : <Play size={18} />}
+        {effectivePlaying ? <Pause size={18} /> : <Play size={18} />}
       </button>
       <div ref={root} className="effect-grid">
         {children}

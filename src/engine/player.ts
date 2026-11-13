@@ -2,13 +2,14 @@ import { cellMediaTime } from './templateTiming';
 import type { Asset, Project, Track, VideoItem } from '../model/types';
 import { Compositor, type SceneLayer } from './compositor';
 import { toLocal } from './geometry';
+import { AudioPool } from './audioPool';
 import { VideoPool } from './mediaPool';
 import { captureThumb } from './probe';
 import { buildScene } from './scene';
 import { mainTrack, sourceTimeAt, totalDuration } from './timeline';
 import { usePreferences } from '../store/preferences';
 import { audioRetained } from './audioRanges';
-import { AudioBus, audibleClips } from './audio';
+import { AudioBus, audibleClips, previewPlaybackRate } from './audio';
 import { AnimatedGif } from './gif';
 import { getMedia } from '../storage/media';
 
@@ -17,6 +18,8 @@ type Deps = {
   getLiftedId?: () => string | null;
   urlFor: (assetId: string) => string | undefined;
   /** 素材沒有縮圖時，播放器拿到畫面後順手擷取一張（iPhone 匯入時可能產生不出來） */
+  clock?: 'preview' | 'wall';
+  onPlaybackError?: (message: string) => void;
   onThumb?: (assetId: string, thumbs: string[]) => void;
 };
 type Listener = (t: number, playing: boolean) => void;
@@ -53,6 +56,14 @@ export class Player {
     this.scheduleRender();
   }
   private playing = false;
+  private buffering = false;
+  private bufferSince = 0;
+  private lastSeeks = new WeakMap<HTMLMediaElement, { target: number; at: number }>();
+  private pendingPlay = new WeakSet<HTMLMediaElement>();
+  private requestedSeek = false;
+  private readyCount = 0;
+  private expectedCount = 0;
+  private audioPool: AudioPool;
   private raf = 0;
   private renderRaf = 0;
   private previewTime: number | null = null;
@@ -67,6 +78,7 @@ export class Player {
   private bus: AudioBus;
   private lastEmit = 0;
   frameReady = false;
+  private preloadReady = false;
   private lastScene: SceneLayer[] = [];
   private hitCanvas: HTMLCanvasElement | null = null;
 
@@ -76,7 +88,8 @@ export class Player {
     private deps: Deps,
     audioContext?: AudioContext,
   ) {
-    this.bus = new AudioBus(pool.els, audioContext);
+    this.audioPool = new AudioPool(pool.els[0]!.parentElement!, POOL_SIZE, () => this.scheduleRender());
+    this.bus = new AudioBus([...pool.els, ...this.audioPool.els], audioContext);
   }
 
   static async create(
@@ -136,12 +149,32 @@ export class Player {
     }
   }
 
+  get isBuffering() {
+    return this.buffering;
+  }
+
+  /** Prepare the actual first drawable scene. Progress counts ready sources, never elapsed time. */
+  async prepare(t = this.t, onProgress?: (value: number) => void) {
+    this.pause();
+    this.seek(t);
+    const deadline = performance.now() + 15000;
+    while (!this.frameReady || !this.preloadReady) {
+      if (this.destroyed) return;
+      onProgress?.(Math.min(99, Math.round((100 * this.readyCount) / Math.max(1, this.expectedCount))));
+      if (performance.now() > deadline) throw Error('預覽素材尚未準備完成，請重試或略過無法載入的素材');
+      await new Promise<void>((resolve) => setTimeout(resolve, 40));
+      this.render(t);
+    }
+    onProgress?.(100);
+  }
+
   get isPlaying() {
     return this.playing;
   }
 
   subscribe(fn: Listener): () => void {
     this.listeners.add(fn);
+    fn(this.t, this.playing);
     return () => this.listeners.delete(fn);
   }
 
@@ -164,6 +197,7 @@ export class Player {
       this.wallStart = performance.now();
       this.tStart = this.t;
     }
+    this.requestedSeek = true;
     this.render(this.t);
     this.emit();
   }
@@ -181,19 +215,23 @@ export class Player {
     this.previewTime = null;
     if (this.t >= total - 0.01) this.t = 0;
     this.bus.unlock();
-    this.pool.unlock();
     this.playing = true;
+    this.buffering = !this.frameReady;
+    this.bufferSince = performance.now();
     this.wallStart = performance.now();
     this.tStart = this.t;
     this.render(this.t);
+    this.pool.unlock();
     this.emit();
     this.raf = requestAnimationFrame(this.tick);
   }
 
   pause() {
-    if (!this.playing) return;
     this.playing = false;
+    this.buffering = false;
     cancelAnimationFrame(this.raf);
+    this.pool.pauseAllExcept(new Set());
+    this.audioPool.pauseAllExcept(new Set());
     this.render(this.t);
     this.emit();
   }
@@ -223,7 +261,29 @@ export class Player {
   private tick = () => {
     if (!this.playing) return;
     const total = this.total();
-    const t = this.tStart + (performance.now() - this.wallStart) / 1000;
+    const now = performance.now();
+    if (!this.frameReady && this.deps.clock !== 'wall') {
+      if (!this.buffering) this.bufferSince = now;
+      this.buffering = true;
+      this.wallStart = now;
+      this.tStart = this.t;
+      this.render(this.t);
+      this.emit();
+      if (now - this.bufferSince > 15000) {
+        this.pause();
+        this.deps.onPlaybackError?.('預覽暫時無法繼續，請稍候再播放');
+        return;
+      }
+      this.raf = requestAnimationFrame(this.tick);
+      return;
+    }
+    if (this.buffering) {
+      this.buffering = false;
+      this.wallStart = now;
+      this.tStart = this.t;
+      this.render(this.t);
+    }
+    const t = this.tStart + (now - this.wallStart) / 1000;
     const fps = this.getProject()?.fps ?? 30;
     if (Math.floor(t * fps) === Math.floor(this.t * fps) && t < total) {
       this.raf = requestAnimationFrame(this.tick);
@@ -255,11 +315,13 @@ export class Player {
     return img;
   }
 
-  private syncVideo(el: HTMLVideoElement, item: VideoItem, asset: Asset, track: Track, t: number) {
-    const active = this.playing && t >= item.start && t < item.start + item.duration;
+  private syncVideo(el: HTMLMediaElement, item: VideoItem, asset: Asset, track: Track, t: number) {
+    const active = this.playing && !this.buffering && t >= item.start && t < item.start + item.duration;
     el.dataset.previewIntent = active ? 'play' : 'pause';
     const s = sourceTimeAt(item, t);
     const gain =
+      !active ||
+      el.seeking ||
       t < item.start ||
       t >= item.start + item.duration ||
       (item.sourceRanges && cellMediaTime(item, t) === null) ||
@@ -269,17 +331,42 @@ export class Player {
       !asset.hasAudio
         ? 0
         : item.volume;
-    this.bus.set(el, gain);
-    el.muted = !!el.dataset.priming || gain === 0;
-    el.preservesPitch = false;
-    el.playbackRate = item.speed;
-    if (active) {
-      if (Math.abs(el.currentTime - s) > DRIFT && el.readyState >= 1) el.currentTime = s;
-      if (el.paused) void el.play().catch(() => {});
-    } else {
-      if (!el.paused && !el.dataset.priming) el.pause();
-      if (Math.abs(el.currentTime - s) > 0.02 && el.readyState >= 1) el.currentTime = s;
+    el.dataset.seekTarget = String(s);
+    const now = performance.now(),
+      last = this.lastSeeks.get(el);
+    const delta = s - el.currentTime;
+    if (
+      el.readyState >= 1 &&
+      !el.seeking &&
+      Math.abs(delta) > (active && !this.requestedSeek ? DRIFT : 0.02) &&
+      (!active || this.requestedSeek || !last || now - last.at > 1000)
+    ) {
+      this.lastSeeks.set(el, { target: s, at: now });
+      el.currentTime = Math.max(0, Math.min(s, Math.max(0, asset.duration - 0.001)));
     }
+    this.bus.set(el, el.seeking ? 0 : gain);
+    el.muted = !!el.dataset.priming || gain === 0;
+    if (!el.preservesPitch) el.preservesPitch = true;
+    const rate = active ? previewPlaybackRate(delta, item.speed) : item.speed;
+    if (el.playbackRate !== rate) el.playbackRate = rate;
+    if (active) {
+      if (el.paused && !this.pendingPlay.has(el)) {
+        this.pendingPlay.add(el);
+        void el.play().then(
+          () => {
+            this.pendingPlay.delete(el);
+            if (this.destroyed || !this.playing || el.dataset.previewIntent !== 'play') el.pause();
+          },
+          () => {
+            this.pendingPlay.delete(el);
+            if (this.playing && el.dataset.previewIntent === 'play') {
+              this.pause();
+              this.deps.onPlaybackError?.('瀏覽器尚未允許播放，請再點一次播放');
+            }
+          },
+        );
+      }
+    } else if (!el.paused && !el.dataset.priming) el.pause();
   }
 
   private render(t: number) {
@@ -289,7 +376,10 @@ export class Player {
       comp.render([]);
       return;
     }
-    const used = new Set<HTMLVideoElement>();
+    const used = new Set<HTMLVideoElement>(),
+      usedAudio = new Set<HTMLAudioElement>();
+    this.readyCount = 0;
+    this.expectedCount = 0;
     this.bus.clear();
 
     const scene = buildScene(
@@ -298,6 +388,7 @@ export class Player {
       comp.width,
       comp.height,
       (item, asset, track) => {
+        this.expectedCount++;
         const url = this.deps.urlFor(asset.id);
         if (!url) return null;
         if (item.type === 'image') {
@@ -305,6 +396,7 @@ export class Player {
             const gif = this.gifs.get(item.id);
             if (gif) {
               const frame = gif.frame(sourceTimeAt(item, t));
+              this.readyCount++;
               return {
                 source: frame.canvas,
                 ready: true,
@@ -327,6 +419,7 @@ export class Player {
           }
           const img = this.imageFor(asset.id);
           if (!img) return null;
+          if (img.complete && img.naturalWidth > 0) this.readyCount++;
           return {
             source: img,
             ready: img.complete && img.naturalWidth > 0,
@@ -338,6 +431,7 @@ export class Player {
         if (!el) return null; // 同時疊的影片超過上限，多的不畫
         used.add(el);
         this.syncVideo(el, item, asset, track, t);
+        if (el.readyState >= 2 && !el.seeking && !el.dataset.priming) this.readyCount++;
         if (
           track.kind === 'main' &&
           !p.flexibleLayers &&
@@ -362,14 +456,18 @@ export class Player {
       if (item.type !== 'audio') continue;
       const url = this.deps.urlFor(asset.id);
       if (!url) continue;
-      const el = this.pool.acquire(item.id, asset.id, url, used, true);
+      this.expectedCount++;
+      const el = this.audioPool.acquire(item.id, asset.id, url, usedAudio);
       if (!el) continue;
-      used.add(el);
+      usedAudio.add(el);
       this.syncVideo(el, item, asset, track, t);
+      if (el.readyState >= 2 && !el.seeking) this.readyCount++;
     }
 
     this.frameReady =
-      scene.every((layer) => layer.ready) && [...used].every((el) => el.readyState >= 2 && !el.seeking);
+      this.readyCount === this.expectedCount &&
+      scene.every((layer) => layer.ready) &&
+      [...used, ...usedAudio].every((el) => el.readyState >= 2 && !el.seeking && !el.dataset.priming);
 
     // 預載：下一個主軌片段、1 秒內要開始的疊加影片
     for (const { item, asset } of this.upcoming(p, t)) {
@@ -378,13 +476,20 @@ export class Player {
       const el = this.pool.acquire(item.id, asset.id, url, used);
       if (!el) continue;
       used.add(el);
-      if (el.dataset.primed !== '1') {
-        if (el.readyState >= 1) el.currentTime = item.trimIn;
+      el.dataset.seekTarget = String(item.trimIn);
+      if (el.dataset.primed !== '1' && el.readyState >= 1 && !el.seeking) {
+        el.currentTime = item.trimIn;
         el.dataset.primed = '1';
       }
       if (!el.paused) el.pause();
     }
+    this.preloadReady = [...used, ...usedAudio].every(
+      (el) => el.readyState >= 2 && !el.seeking && !el.dataset.priming,
+    );
     this.pool.pauseAllExcept(used);
+    this.audioPool.pauseAllExcept(usedAudio);
+    this.bus.flush();
+    this.requestedSeek = false;
     this.lastScene = scene;
     comp.render(scene, p.background ?? '#000000');
   }
@@ -419,7 +524,12 @@ export class Player {
         const next = items[cur + 1] as VideoItem | undefined;
         if (cur >= 0 && next) push(next);
       } else if (track.kind === 'overlay' || track.kind === 'main') {
-        for (const it of items as VideoItem[]) if (it.start > t && it.start <= t + PREFETCH_S) push(it);
+        const future = (items as VideoItem[])
+          .filter((it) => it.start > t && it.start <= t + PREFETCH_S)
+          .sort((a, b) => a.start - b.start);
+        if (track.template) {
+          for (const it of future.filter((it) => it.start === future[0]?.start)) push(it);
+        } else if (future[0]) push(future[0]);
       }
     }
     return out;
@@ -449,6 +559,7 @@ export class Player {
     this.playing = false;
     this.listeners.clear();
     this.pool.destroy();
+    this.audioPool.destroy();
     this.bus.destroy();
     this.compositor.destroy();
   }

@@ -32,7 +32,9 @@ test('10秒影片中3秒進場邊播邊動，白線同步、可暫停、匯出�
   test.setTimeout(150000);
   await createProjectWith(page, ['timing-video.webm']);
   await single(page);
-  await interval(page, 0, 3);
+  await sheet(page).getByLabel('第1組特效終點', { exact: true }).fill('3');
+  await expect(sheet(page).locator('.source-marker')).toHaveCount(1);
+  await expect(sheet(page).getByLabel('第1組特效起點', { exact: true })).toHaveCount(0);
   await expect(sheet(page).getByLabel('第1組特效時長', { exact: true })).toHaveValue('3');
   // The actual video changes red -> green during the effect, not after it.
   await point(page, 0.12);
@@ -60,7 +62,8 @@ test('10秒影片中3秒進場邊播邊動，白線同步、可暫停、匯出�
   await sheet(page).getByRole('button', { name: '套用特效起迄', exact: true }).tap();
   const it = (await current(page)).tracks[0]!.items[0]!;
   expect(it.duration).toBeCloseTo(10, 1);
-  expect(it.animations?.enter?.ranges).toEqual([[0, 3]]);
+  expect(it.animations?.enter?.duration).toBe(3);
+  expect(it.animations?.enter?.ranges).toBeUndefined();
   const red = await exportFrame(page, 1, [[0.5, 0.5]]),
     green = await exportFrame(page, 2, [[0.5, 0.5]]);
   expect(red.samples[0]![0]).toBeGreaterThan(60);
@@ -93,50 +96,56 @@ test('10秒影片中3秒進場邊播邊動，白線同步、可暫停、匯出�
   await shot(page, 'native-time-full-export');
 });
 
-test('任意秒數多組成對標籤，移除最後一組也可復原，取消不污染專案，套用可重開', async ({ page }) => {
+test('單素材固定開頭B進或結尾A退，僅一個可調標籤、時長連動且可復原取消重開', async ({ page }) => {
   await createProjectWith(page, ['timing-video.webm']);
   await single(page);
-  await interval(page, 4, 7);
-  await point(page, 0.8);
-  await sheet(page).getByRole('button', { name: '在白線位置新增一組起迄標記', exact: true }).tap();
-  await expect(sheet(page).locator('.source-marker')).toHaveCount(4);
-  await sheet(page).getByRole('button', { name: '移除第 1 組特效', exact: true }).tap();
-  await expect(sheet(page).locator('.source-marker')).toHaveCount(2);
-  await sheet(page).getByRole('button', { name: '移除第 1 組特效', exact: true }).tap();
-  await expect(sheet(page).locator('.source-marker')).toHaveCount(0);
+  await expect(sheet(page).locator('.source-marker')).toHaveCount(1);
+  await expect(sheet(page).locator('.source-marker')).toHaveText('▼1迄');
+  await expect(
+    sheet(page).getByRole('button', { name: '在白線位置新增一組起迄標記', exact: true }),
+  ).toHaveCount(0);
+  await sheet(page).getByLabel('第1組特效終點', { exact: true }).fill('3');
+  await sheet(page).getByLabel('第1組特效時長', { exact: true }).fill('4');
+  await expect(sheet(page).getByLabel('第1組特效終點', { exact: true })).toHaveValue('4');
   await sheet(page).getByRole('button', { name: '復原上一步選段', exact: true }).tap();
-  await expect(sheet(page).locator('.source-marker')).toHaveCount(2);
-  await sheet(page).getByRole('button', { name: '復原上一步選段', exact: true }).tap();
-  await expect(sheet(page).locator('.source-marker')).toHaveCount(4);
-  await shot(page, 'arbitrary-paired-ranges-and-undo');
+  await expect(sheet(page).getByLabel('第1組特效時長', { exact: true })).toHaveValue('3');
   await sheet(page).getByRole('button', { name: '取消', exact: true }).tap();
-  expect((await current(page)).tracks[0]!.items[0]!.animations?.enter?.ranges).toBeUndefined();
+  expect((await current(page)).tracks[0]!.items[0]!.animations?.enter?.duration).toBeCloseTo(0.6);
   await page.getByRole('button', { name: '調整特效起迄', exact: true }).tap();
-  await interval(page, 4, 7);
+  await sheet(page).getByLabel('第1組特效時長', { exact: true }).fill('3');
   await sheet(page).getByRole('button', { name: '套用特效起迄', exact: true }).tap();
   await expect
     .poll(async () =>
       page.evaluate(() =>
         (window as unknown as { __videoclip: { savedProject: () => Promise<Project> } }).__videoclip
           .savedProject()
-          .then((p) => p.tracks[0]!.items[0]!.animations?.enter?.ranges),
+          .then((p) => p.tracks[0]!.items[0]!.animations?.enter?.duration),
       ),
     )
-    .toEqual([[4, 7]]);
+    .toBe(3);
   await page.reload();
   await expect(page.locator('.editor')).toBeVisible();
   await openTab(page, '特效');
   await page.getByRole('button', { name: '單一素材', exact: true }).tap();
   await page.getByRole('button', { name: '調整特效起迄', exact: true }).tap();
-  await expect(sheet(page).getByLabel('第1組特效起點', { exact: true })).toHaveValue('4');
-  await expect(sheet(page).getByLabel('第1組特效終點', { exact: true })).toHaveValue('7');
-  await sheet(page).getByRole('button', { name: '結尾', exact: true }).tap();
-  await expect(sheet(page).getByRole('button', { name: '結尾', exact: true })).toHaveAttribute(
-    'aria-pressed',
-    'true',
+  await expect(sheet(page).getByLabel('第1組特效終點', { exact: true })).toHaveValue('3');
+  await sheet(page).getByRole('button', { name: '取消', exact: true }).tap();
+  await page.getByRole('button', { name: '出場', exact: true }).tap();
+  await page.getByRole('button', { name: '出場：向左推移', exact: true }).tap();
+  await page.getByRole('button', { name: '調整特效起迄', exact: true }).tap();
+  await expect(sheet(page).locator('.source-marker')).toHaveCount(1);
+  await expect(sheet(page).locator('.source-marker')).toHaveText('▼1起');
+  await expect(sheet(page).getByLabel('第1組特效終點', { exact: true })).toHaveCount(0);
+  await sheet(page).getByLabel('第1組特效時長', { exact: true }).fill('3');
+  const duration = (await current(page)).tracks[0]!.items[0]!.duration;
+  await expect(sheet(page).getByLabel('第1組特效起點', { exact: true })).toHaveValue(
+    String(Number((duration - 3).toFixed(2))),
   );
-  await sheet(page).getByRole('button', { name: '開頭', exact: true }).tap();
-  await expect(sheet(page).getByLabel('第1組特效起點', { exact: true })).toHaveValue('0');
+  await sheet(page).getByLabel('第1組特效起點', { exact: true }).fill('8');
+  await expect(sheet(page).getByLabel('第1組特效時長', { exact: true })).toHaveValue(
+    String(Number((duration - 8).toFixed(2))),
+  );
+  await shot(page, 'anchored-single-range-and-undo');
 });
 
 test('兩支10秒影片分配A退B進的3秒與不對稱起迄，總長20秒且來源持續播放', async ({ page }) => {

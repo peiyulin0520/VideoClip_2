@@ -6,7 +6,7 @@ import { useEffect, useRef, useState } from 'react';
 import type { Asset, VideoItem } from '../../model/types';
 import { Sheet } from '../../ui/Sheet';
 import { SourceRanges } from '../../ui/SourceRanges';
-import { urlFor } from '../../engine/assetUrls';
+import { previewUrlFor as urlFor } from '../../engine/assetUrls';
 import { excludeAudio, includeAudio, inverseRanges } from '../../engine/audioRanges';
 import { editItem } from '../../store/actions';
 import { useProjectStore } from '../../store/projectStore';

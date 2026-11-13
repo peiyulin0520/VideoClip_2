@@ -5,7 +5,7 @@ import type { MaskStroke, VideoItem, Crop } from '../../model/types';
 import { useProjectStore } from '../../store/projectStore';
 import { useUI } from '../../store/uiStore';
 import { editItem } from '../../store/actions';
-import { urlFor } from '../../engine/assetUrls';
+import { previewUrlFor as urlFor } from '../../engine/assetUrls';
 import { sourceTimeAt } from '../../engine/timeline';
 import { Sheet } from '../../ui/Sheet';
 import { Slider } from '../../ui/Slider';

@@ -55,12 +55,13 @@ describe('effect windows use native clip time', () => {
     expect(activeAnimation(animation, 'enter', 10, 6)?.progress).toBe(0.75);
     a.animations = { enter: { preset: 'crossfade', duration: 3, ranges: [[4, 7]] } };
     expect(activeAnimation(a.animations.enter, 'enter', 10, 3)).toBeNull();
-    expect(activeAnimation(a.animations.enter, 'enter', 10, 5)?.progress).toBeCloseTo(1 / 3);
+    expect(animationRanges(a.animations.enter, 'enter', 10)).toEqual([[0, 3]]);
+    expect(activeAnimation(a.animations.enter, 'enter', 10, 1)?.progress).toBeCloseTo(1 / 3);
     expect(sourceTimeAt(a, 5)).toBe(5);
     expect(sourceTimeAt(a, 6)).toBe(6);
     expect(a.duration).toBe(10);
   });
-  it('supports separate arbitrary windows, empty lists and legacy opening/ending defaults', () => {
+  it('anchors old single-clip windows to opening/ending while preserving length and disabled state', () => {
     const animation = {
       preset: 'push-left' as const,
       duration: 3,
@@ -69,7 +70,7 @@ describe('effect windows use native clip time', () => {
         [5, 8],
       ] as [number, number][],
     };
-    expect(activeAnimation(animation, 'exit', 10, 6)?.progress).toBeCloseTo(1 / 3);
+    expect(activeAnimation(animation, 'exit', 10, 8)?.progress).toBeCloseTo(1 / 3);
     expect(activeAnimation(animation, 'exit', 10, 4)).toBeNull();
     expect(animationRanges({ ...animation, ranges: [] }, 'enter', 10)).toEqual([]);
     expect(animationRanges({ preset: 'crossfade', duration: 3 }, 'exit', 10)).toEqual([[7, 10]]);

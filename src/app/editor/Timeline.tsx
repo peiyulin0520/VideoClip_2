@@ -20,6 +20,11 @@ import { setTimelineItems } from '../../engine/groupTiming';
 import { trackFamily, itemFamily, FAMILY_LABELS, type LayerDrop } from '../../engine/layerEditing';
 import { canPlace, findFreeStart } from '../../engine/timeline';
 import { Sheet } from '../../ui/Sheet';
+import {
+  groupTimelineEffectBadges,
+  timelineEffectBadges,
+  type TimelineEffectBadge,
+} from '../../engine/timelineEffects';
 import { transitionPairs } from '../../engine/transitions';
 
 const ROW_H = 44;
@@ -125,6 +130,62 @@ export function Timeline({
     [],
   );
   const total = totalDuration(project);
+  const badges = useMemo(() => timelineEffectBadges(project), [project]);
+  const [badgeChoice, setBadgeChoice] = useState<TimelineEffectBadge[] | null>(null);
+  const badgeScope = (badge: TimelineEffectBadge) =>
+    badge.kind === 'pair' ? '銜接' : badge.kind === 'screen' ? '畫面' : '單素材';
+  const openBadge = (badge: TimelineEffectBadge, request: number) => {
+    player?.pause();
+    player?.seek(badge.time);
+    if (badge.kind === 'pair' && badge.toId)
+      useUI.setState({
+        effectsSingle: null,
+        effectsJoin: { fromId: badge.itemId, toId: badge.toId, request },
+      });
+    else
+      useUI.setState({
+        effectsJoin: null,
+        effectsSingle: {
+          id: badge.itemId,
+          edge: badge.edge ?? 'enter',
+          mode: badge.effectId ? 'effect' : 'transition',
+          effectId: badge.effectId,
+          request,
+        },
+      });
+  };
+  const badgeButton = (group: TimelineEffectBadge[]) => {
+    const badge = group[0]!,
+      scope = group.every((b) => b.kind === badge.kind) ? badge.kind : 'mixed';
+    const glyphs = group.flatMap((b) => b.symbols.map((symbol) => ({ symbol, kind: b.kind })));
+    return (
+      <button
+        key={group.map((b) => b.id).join('|')}
+        className={`timeline-effect-badge ${scope}`}
+        data-testid="timeline-effect-badge"
+        data-time={badge.time}
+        data-scope={scope}
+        aria-label={`${group.map((b) => `${badgeScope(b)}特效 ${b.names.join('、')}`).join('、')} ${badge.time.toFixed(2)}秒`}
+        title={group.flatMap((b) => b.names).join('、')}
+        style={{ left: half + badge.time * pps }}
+        onPointerDown={(e) => e.stopPropagation()}
+        onClick={(e) => {
+          e.stopPropagation();
+          player?.pause();
+          player?.seek(badge.time);
+          if (group.length === 1) openBadge(badge, performance.now());
+          else setBadgeChoice(group);
+        }}
+      >
+        {glyphs.slice(0, 3).map((g, i) => (
+          <span key={i} data-scope={g.kind} aria-hidden="true">
+            {g.symbol}
+          </span>
+        ))}
+        {glyphs.length > 3 && <span aria-hidden="true">+{glyphs.length - 3}</span>}
+      </button>
+    );
+  };
 
   // Track array is bottom-to-top; every media lane can occupy any stack position.
   const rowLayout = useMemo(() => {
@@ -434,6 +495,26 @@ export function Timeline({
 
   return (
     <>
+      <Sheet open={!!badgeChoice} title="此秒數的特效" onClose={() => setBadgeChoice(null)}>
+        {badgeChoice?.map((b) => {
+          const item = project.tracks.flatMap((t) => t.items).find((it) => it.id === b.itemId);
+          const name =
+            item?.name ||
+            (item && 'assetId' in item ? project.assets.find((a) => a.id === item.assetId)?.name : '素材');
+          return (
+            <button
+              className="btn"
+              key={b.id}
+              onClick={() => {
+                openBadge(b, performance.now());
+                setBadgeChoice(null);
+              }}
+            >
+              {badgeScope(b)}特效 · {name} · {b.names.join('、')}
+            </button>
+          );
+        })}
+      </Sheet>
       {!!batch.length && <BatchLayerBar ids={batch} onChange={setBatch} />}
       <div className="timeline" style={{ height: viewH }} onContextMenu={(event) => event.preventDefault()}>
         <div
@@ -480,6 +561,11 @@ export function Timeline({
                     {tracks.some((t) => t.hidden) ? ` · ${tracks.filter((t) => t.hidden).length} 隱藏` : ''}
                   </small>
                 </button>
+                {collapsed.includes(category) &&
+                  groupTimelineEffectBadges(
+                    badges.filter((b) => tracks.some((t) => t.id === b.trackId)),
+                    true,
+                  ).map(badgeButton)}
                 {collapsed.includes(category) &&
                   tracks.flatMap((tr) =>
                     tr.items.map((it) => (
@@ -551,6 +637,7 @@ export function Timeline({
                     開場 {project.mainOffset}s
                   </div>
                 )}
+                {groupTimelineEffectBadges(badges.filter((b) => b.trackId === track.id)).map(badgeButton)}
                 {transitionPairs(project)
                   .filter((pair) => pair.track.id === track.id)
                   .map((pair) => (
@@ -565,6 +652,7 @@ export function Timeline({
                         player?.pause();
                         player?.seek(pair.to.start);
                         useUI.setState({
+                          effectsSingle: null,
                           effectsJoin: { fromId: pair.from.id, toId: pair.to.id, request: performance.now() },
                         });
                       }}

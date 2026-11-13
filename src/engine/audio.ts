@@ -27,45 +27,97 @@ export function audibleClips(project: Project, t: number): AudibleClip[] {
   });
 }
 
-/** One unlocked Web Audio output for all video and music elements (including iOS volume). */
+export function isIOSDevice() {
+  return (
+    /iP(hone|ad|od)/.test(navigator.userAgent) ||
+    (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1)
+  );
+}
+export function previewPlaybackRate(delta: number, speed: number, ios = isIOSDevice()) {
+  // VideoClip's Safari path deliberately avoids rate nudges: each change can restart decoding.
+  return ios || Math.abs(delta) <= 0.08 || Math.abs(delta) >= 0.3
+    ? speed
+    : speed * (1 + Math.max(-0.03, Math.min(0.03, delta * 0.1)));
+}
+
+/** Lazy, gesture-unlocked audio. Only audible sources get Web Audio nodes. */
 export class AudioBus {
-  readonly context: AudioContext | null;
+  private ctx: AudioContext | null = null;
+  get context() {
+    return this.ctx;
+  }
   private analyser: AnalyserNode | null = null;
-  private nodes = new Map<HTMLMediaElement, { source: MediaElementAudioSourceNode; gain: GainNode }>();
+  private output: DynamicsCompressorNode | null = null;
+  private nodes = new Map<
+    HTMLMediaElement,
+    { source: MediaElementAudioSourceNode; gain: GainNode; target: number }
+  >();
+  private wanted = new Map<HTMLMediaElement, number>();
+  private allowed: Set<HTMLMediaElement>;
   constructor(elements: HTMLMediaElement[], existing?: AudioContext) {
-    let ctx: AudioContext | null = existing ?? null;
-    try {
-      if (!ctx && typeof AudioContext !== 'undefined') ctx = new AudioContext();
-    } catch {
-      /* native output fallback */
-    }
-    this.context = ctx;
-    if (ctx) {
-      this.analyser = ctx.createAnalyser();
-      this.analyser.fftSize = 1024;
-    }
-    if (ctx)
-      for (const el of elements) {
-        const source = ctx.createMediaElementSource(el),
-          gain = ctx.createGain();
-        gain.gain.value = 0;
-        source.connect(gain).connect(ctx.destination);
-        if (this.analyser) gain.connect(this.analyser);
-        this.nodes.set(el, { source, gain });
-      }
+    this.allowed = new Set(elements);
+    if (existing) this.initialize(existing);
+  }
+  private initialize(ctx: AudioContext) {
+    this.ctx = ctx;
+    this.output = ctx.createDynamicsCompressor();
+    this.output.threshold.value = -1;
+    this.output.knee.value = 0;
+    this.output.ratio.value = 20;
+    this.output.attack.value = 0.003;
+    this.output.release.value = 0.08;
+    this.output.connect(ctx.destination);
+    this.analyser = ctx.createAnalyser();
+    this.analyser.fftSize = 1024;
+    this.output.connect(this.analyser);
   }
   unlock() {
-    if (this.context?.state === 'suspended') void this.context.resume();
+    const nav = navigator as Navigator & { audioSession?: { type: string } };
+    try {
+      if (nav.audioSession) nav.audioSession.type = 'playback';
+    } catch {
+      /* Older Safari may not allow setting the session. */
+    }
+    try {
+      if (!this.ctx && typeof AudioContext !== 'undefined')
+        this.initialize(new AudioContext({ latencyHint: 'playback' }));
+    } catch {
+      /* Native element audio remains available. */
+    }
+    if (this.ctx?.state === 'suspended') void this.ctx.resume().catch(() => {});
   }
   set(el: HTMLMediaElement, value: number) {
-    const node = this.nodes.get(el);
-    if (node) {
-      node.gain.gain.value = value;
-      el.volume = 1;
-    } else el.volume = Math.min(1, value);
+    this.wanted.set(el, Math.max(0, value));
   }
   clear() {
-    for (const { gain } of this.nodes.values()) gain.gain.value = 0;
+    this.wanted.clear();
+  }
+  flush() {
+    if (this.ctx && this.output)
+      for (const [el, value] of this.wanted)
+        if (value > 0 && this.allowed.has(el) && !this.nodes.has(el)) {
+          try {
+            const source = this.ctx.createMediaElementSource(el),
+              gain = this.ctx.createGain();
+            gain.gain.value = 0;
+            source.connect(gain).connect(this.output);
+            this.nodes.set(el, { source, gain, target: 0 });
+          } catch {
+            /* A source must never be connected to two contexts. */
+          }
+        }
+    for (const [el, node] of this.nodes) {
+      const value = this.wanted.get(el) ?? 0;
+      if (node.target !== value) {
+        const now = this.ctx!.currentTime;
+        node.gain.gain.cancelScheduledValues(now);
+        node.gain.gain.setTargetAtTime(value, now, 0.008);
+        node.target = value;
+      }
+      if (el.volume !== 1) el.volume = 1;
+    }
+    for (const [el, value] of this.wanted)
+      if (!this.nodes.has(el) && el.volume !== Math.min(1, value)) el.volume = Math.min(1, value);
   }
   energy() {
     if (!this.analyser) return 0;
@@ -73,10 +125,10 @@ export class AudioBus {
     this.analyser.getFloatTimeDomainData(samples);
     return Math.sqrt(samples.reduce((n, v) => n + v * v, 0) / samples.length);
   }
-  stream(): MediaStream | null {
-    if (!this.context) return null;
-    const dest = this.context.createMediaStreamDestination();
-    for (const { gain } of this.nodes.values()) gain.connect(dest);
+  stream() {
+    if (!this.ctx) return null;
+    const dest = this.ctx.createMediaStreamDestination();
+    this.output?.connect(dest);
     return dest.stream;
   }
   destroy() {
@@ -85,7 +137,8 @@ export class AudioBus {
       gain.disconnect();
     }
     this.analyser?.disconnect();
+    this.output?.disconnect();
     this.nodes.clear();
-    void this.context?.close().catch(() => {});
+    void this.ctx?.close().catch(() => {});
   }
 }

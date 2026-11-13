@@ -8,10 +8,8 @@ export function animationRanges(
   duration: number,
 ): TimeRange[] {
   if (!animation) return [];
-  if (animation.ranges)
-    return animation.ranges
-      .map(([a, b]) => [Math.max(0, a), Math.min(duration, b)] as TimeRange)
-      .filter(([a, b]) => b > a);
+  // Old arbitrary windows are now anchored to the selected clip edge. Empty legacy windows stay off.
+  if (animation.ranges?.length === 0) return [];
   const length = Math.min(Math.max(0, animation.duration), duration);
   return length > 0 ? [edge === 'enter' ? [0, length] : [duration - length, duration]] : [];
 }

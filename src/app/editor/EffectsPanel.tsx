@@ -21,6 +21,7 @@ export function EffectsPanel() {
   const selectedId = useProjectStore((s) => s.selectedId);
   const [scope, setScope] = useState<'single' | 'pair'>('pair');
   const join = useUI((s) => s.effectsJoin);
+  const single = useUI((s) => s.effectsSingle);
   const player = useUI((s) => s.player);
   const [time, setTime] = useState(player?.time ?? 0);
   useEffect(() => player?.subscribe(setTime), [player]);
@@ -37,6 +38,16 @@ export function EffectsPanel() {
     });
     return () => cancelAnimationFrame(frame);
   }, [join]);
+  useEffect(() => {
+    if (!single) return;
+    const frame = requestAnimationFrame(() => {
+      setScope(single.effectId ? 'pair' : 'single');
+      setMode(single.mode ?? 'transition');
+      if (single.effectId) setTimingId({ type: 'effect', id: single.effectId });
+      useProjectStore.getState().select(single.id);
+    });
+    return () => cancelAnimationFrame(frame);
+  }, [single]);
   const pairs = transitionPairs(p),
     pair = pairs.find((x) => x.from.id === pairId) ?? pairs[0];
   const filtered = (mode === 'transition' ? TRANSITIONS : VIDEO_EFFECTS).filter(
@@ -164,7 +175,8 @@ export function EffectsPanel() {
             <>
               <ProjectPreview start={target.start} duration={target.duration} label="單一素材結果" />
               <AnimationSettings
-                key={target.id}
+                key={`${target.id}:${single?.request ?? 0}`}
+                initialEdge={single?.id === target.id ? single.edge : undefined}
                 value={animations}
                 start={found?.track.layout?.start ?? target.start}
                 duration={found?.track.layout?.duration ?? target.duration}
