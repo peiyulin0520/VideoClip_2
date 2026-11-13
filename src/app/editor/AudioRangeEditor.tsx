@@ -3,7 +3,7 @@ import type { Asset, VideoItem } from '../../model/types';
 import { Sheet } from '../../ui/Sheet';
 import { SourceRanges } from '../../ui/SourceRanges';
 import { urlFor } from '../../engine/assetUrls';
-import { excludeAudio } from '../../engine/audioRanges';
+import { excludeAudio, includeAudio, inverseRanges } from '../../engine/audioRanges';
 import { editItem } from '../../store/actions';
 import { useProjectStore } from '../../store/projectStore';
 import { toast, useUI } from '../../store/uiStore';
@@ -23,6 +23,9 @@ export function AudioRangeEditor({
   );
   const [cursor, setCursor] = useState(item.trimIn),
     [playing, setPlaying] = useState(false);
+  const [markStart, setMarkStart] = useState<number | null>(null),
+    [markerMode, setMarkerMode] = useState<'keep' | 'mute'>('keep');
+  const muted = inverseRanges(ranges, asset.duration);
   const sceneCanvas = useRef<HTMLCanvasElement>(null);
   const media = useRef<HTMLVideoElement | HTMLAudioElement | null>(null);
   useEffect(() => {
@@ -131,7 +134,59 @@ export function AudioRangeEditor({
       >
         {playing ? '暫停試聽' : '播放試聽（含畫面）'}
       </button>
+      <p className="source-now">
+        目前：{cursor.toFixed(2)} 秒 {markStart !== null && `· 靜音起點 ${markStart.toFixed(2)} 秒`}
+      </p>
+      <div className="chips" aria-label="多組聲音起迄標記">
+        <button
+          className="chip"
+          onClick={() => {
+            media.current?.pause();
+            setPlaying(false);
+            setMarkStart(cursor);
+          }}
+        >
+          標記靜音起點
+        </button>
+        <button
+          className="chip"
+          disabled={markStart === null}
+          onClick={() => {
+            if (markStart === null) return;
+            if (cursor <= markStart + 0.009) return toast('請選擇起點之後的秒數作為終點');
+            setRanges((r) => excludeAudio(r, markStart, cursor));
+            setMarkStart(null);
+            setMarkerMode('mute');
+          }}
+        >
+          標記靜音終點並新增
+        </button>
+        {markStart !== null && (
+          <button className="chip" onClick={() => setMarkStart(null)}>
+            取消此組標記
+          </button>
+        )}
+      </div>
+      <div className="chips">
+        <button
+          className={`chip${markerMode === 'keep' ? ' active' : ''}`}
+          onClick={() => setMarkerMode('keep')}
+        >
+          調整保留聲音標記
+        </button>
+        <button
+          className={`chip${markerMode === 'mute' ? ' active' : ''}`}
+          onClick={() => setMarkerMode('mute')}
+        >
+          調整靜音標記（{muted.length} 組）
+        </button>
+      </div>
       <SourceRanges
+        markerRanges={markerMode === 'mute' ? muted : undefined}
+        markerLabel={markerMode === 'mute' ? '靜音' : undefined}
+        onMarkerChange={
+          markerMode === 'mute' ? (r) => setRanges(inverseRanges(r, asset.duration)) : undefined
+        }
         duration={asset.duration}
         ranges={ranges}
         thumbs={asset.thumbs}
@@ -157,6 +212,18 @@ export function AudioRangeEditor({
           還原完整聲音
         </button>
       </div>
+      {markerMode === 'mute' && (
+        <div className="muted-intervals">
+          {muted.map(([a, b], i) => (
+            <p key={i}>
+              靜音 {i + 1}：{a.toFixed(2)}–{b.toFixed(2)} 秒{' '}
+              <button className="chip" onClick={() => setRanges((r) => includeAudio(r, a, b))}>
+                移除第 {i + 1} 組靜音
+              </button>
+            </p>
+          ))}
+        </div>
+      )}
       <div className="audio-intervals">
         {ranges.map(([a, b], i) => (
           <p key={i}>

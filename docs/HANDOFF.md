@@ -1,6 +1,16 @@
 # 交接手冊（HANDOFF）
 
 ## VideoClip_2 當前交接（優先於以下來源 repo 的歷史紀錄）
+- 本次最終：程式 4d706878f81bae6e311cb866fc62c91047f02b3a / [Actions 43284472645](https://github.com/peiyulin0520/VideoClip_2/actions/runs/43284472645)：278 單元、98 Chromium e2e 全過；lint/格式/TypeScript/build/Pages/39 字體檢查成功。 118 張成功截圖保存（artifact 13973383981 / hash db4ab8d2c6dce9f972561963f4c36d482262643224c6ea4a7e4773a7f180b7a5）。PR #5 待使用者自行 Merge，未部署；Safari 仍待真機。下列「待 CI」與 PR #4 待合併均是過程/歷史。
+
+- 首輪 693515a / run 43282652239：277 單元、97/98 e2e；故事失敗因 ensureFont('system') 回 false，系統字體必須跳過載入，載入的是實際字體。新增 carryTemplateEdits：重新套用匹配的格子保留原來源/色塊等設定與 group transform，不把已套用組移到播放頭；群組長度變更同步草稿 seconds。278/98 待下輪 CI，PR #5 仍 draft。
+
+- 最新子任務 docs/plans/2026-11-13-template-story-workspace.md，PR #4 已使用者合併（main d12b39c）；本次新 PR 待 check/CI。下列 PR #4 待合併與 267/91 是上版歷史。
+- Template geometry 由 templateContexts/cellViewport/groupFrame 統一；itemBox 在模板內用 canonical 格位，Preview 手勢與 setTransform 轉到 layout.transform，來源 item.transform 不再被單格手勢改歪。文字/光效及整組暫時置頂也跟群組。每格選取仍以 Item ID 供剪輯使用。
+- 新 cell.sourceEnd 是來源秒數、offset/blanks 是群組內秒數；空白暫停來源消耗。mediaSegments、cellMediaTime、sourceTimeAt 與 audibleClips/AudioRenderer 共用。AudioRenderer 每段用自己的 sourceStart 對應時間，不可回到整個 item 的線性公式；來源選段不能重排整組。群組左裁/分割用 sliceCell 重設 offset/blank 對齊。
+- Project.effects 獨立於各 Item 型別；buildScene 統一預覽/匯出。故事字體必須在套用/重開/輸出前 ensureFont，不能只靠 CSS 系統替代。時間軸預設折疊，e2e helper 顯式展開；session 依專案保存，隱藏→展開時 viewportWidth 要觸發 syncScroll。
+- 取消 has-return 高度縮短，接近頁尾隱藏回頂，不留頁外白帶。點查看圖層先展開時間軸再捲入。
+
 - 本次最終：程式 3b9de60dc2cb325652b075313e1636d47e00f092 / [Actions 43262467680](https://github.com/peiyulin0520/VideoClip_2/actions/runs/43262467680)：267 單元、91 Chromium e2e 全過；lint/格式/TypeScript/build/Pages/39 字體檢查成功。 107 張截圖（artifact 13965235972，ZIP hash abc5fc912058d59aaea8cca8c47ad191fc30a4c37f8b6402933387ba4ff3a07c），PR #4 待使用者自行合併；Safari 待真機。下列「第三輪待 CI」「#3 待合併」均為過程/歷史。最新仕様見 refinement-markers-and-readability 計畫。
 
 - 第二輪 48128ac / run 43260960541：267/91 全過。但 fancy-free 的 preview.png 原圖為白字透明，非選取時四種淺主題仍需 CSS brightness(0)，不能只改 font-row 的 color（PNG 不繼承字色）。dark/mono 與選取深底保留白色。六主題新增 PNG 經 filter 的像素對比回歸，第三輪待 CI。

@@ -1,3 +1,7 @@
+import { groupFrame, templateContexts } from './templateGeometry';
+import { cellMediaTime } from './templateTiming';
+import { effectLayer, solidCanvas } from './sceneEffects';
+import { createTextItem } from '../model/defaults';
 import type { Asset, Item, Project, Track, VideoItem } from '../model/types';
 import type { SceneLayer } from './compositor';
 import { fittedSize, itemBox, type GeoCtx } from './geometry';
@@ -24,6 +28,7 @@ export function geoCtx(project: Project, canvasW: number, canvasH: number, t?: n
     canvasH,
     assets: project.assets,
     textSize: measureTextItem,
+    templates: templateContexts(project, canvasW, canvasH, t ?? 0),
     motions:
       t === undefined
         ? undefined
@@ -44,7 +49,7 @@ export function buildScene(
   provide: SourceProvider,
   previewLiftedId?: string | null,
 ): SceneLayer[] {
-  const ctx = geoCtx(project, canvasW, canvasH);
+  const ctx = geoCtx(project, canvasW, canvasH, t);
   const out: SceneLayer[] = [];
   const artAdded = new Set<string>();
   const layers = visibleLayers(project, t);
@@ -52,7 +57,7 @@ export function buildScene(
   for (const { item, track } of layers) {
     if (templateActive && track.kind === 'main' && !project.flexibleLayers) continue;
     const layout = track.layout ?? project.layout;
-    const motion = layoutMotion(layout, t);
+
     if (track.template && layout && !artAdded.has(track.id)) {
       const art = layoutArt(layout.style, canvasW, canvasH);
       out.push({
@@ -64,36 +69,109 @@ export function buildScene(
         srcH: canvasH,
         frameW: canvasW,
         frameH: canvasH,
-        box: {
-          cx: canvasW * (0.5 + motion.x),
-          cy: canvasH * (0.5 + motion.y),
-          w: canvasW,
-          h: canvasH,
-          rotation: 0,
-        },
+        box: groupFrame(track, canvasW, canvasH, t),
         opacity: 1,
         blend: 'normal',
         cornerRadius: 0,
       });
       artAdded.add(track.id);
     }
-    const layer = toLayer(item, track, project, ctx, provide);
-    if (layer) {
-      if (track.template) {
-        layer.box = {
-          ...layer.box,
-          cx: layer.box.cx + motion.x * canvasW,
-          cy: layer.box.cy + motion.y * canvasH,
-        };
-        if (layer.viewport) {
-          layer.viewport.x += motion.x * canvasW;
-          layer.viewport.y += motion.y * canvasH;
+    const viewport = ctx.templates?.[item.id]?.slot;
+    if (track.template && item.type !== 'text' && viewport) {
+      const source = solidCanvas(item.cell?.background ?? '#000000');
+      out.push({
+        id: `${item.id}-blank`,
+        kind: 'image',
+        source,
+        ready: true,
+        srcW: 256,
+        srcH: 2,
+        frameW: 256,
+        frameH: 2,
+        box: {
+          cx: (viewport.x + viewport.w / 2) * canvasW,
+          cy: (viewport.y + viewport.h / 2) * canvasH,
+          w: viewport.w * canvasW,
+          h: viewport.h * canvasH,
+          rotation: 0,
+        },
+        opacity: 1,
+        blend: 'normal',
+        cornerRadius: 0,
+      });
+    }
+    const layer =
+      item.type !== 'text' && item.cell && cellMediaTime(item, t) === null
+        ? null
+        : toLayer(item, track, project, ctx, provide);
+    if (layer) out.push(layer);
+    if (track.template && layout?.style === 'story' && item === track.items.at(-1)) {
+      const story = layout.story;
+      if (story && t >= layout.start + story.opening) {
+        const fonts = story.fontIds.length ? story.fontIds : ['system'];
+        const text = createTextItem(0, story.title);
+        text.card.runs[0]!.fontId =
+          fonts[Math.floor((t - layout.start) / Math.max(0.04, story.fontInterval)) % fonts.length]!;
+        text.card.runs[0]!.size = 90;
+        delete text.card.runs[0]!.shadow;
+        text.card.width = 900;
+        const value = renderText(text.card, uiScale(canvasW, canvasH), 2),
+          frame = groupFrame(track, canvasW, canvasH, t),
+          s = frame.w / canvasW;
+        out.push({
+          id: `${track.id}-title`,
+          kind: 'text',
+          source: value.canvas,
+          ready: true,
+          srcW: value.w,
+          srcH: value.h,
+          textKey: value.key,
+          box: { cx: frame.cx, cy: frame.cy, w: value.w * s, h: value.h * s, rotation: 0 },
+          opacity: 1,
+          blend: 'normal',
+          cornerRadius: 0,
+        });
+        if (story.flash) {
+          const e = effectLayer(
+            {
+              id: `${track.id}-flash`,
+              preset: 'light-leak',
+              start: layout.start + layout.duration - 0.7,
+              duration: 0.7,
+              strength: 1,
+            },
+            t,
+            canvasW,
+            canvasH,
+          );
+          if (e) {
+            e.box = {
+              ...e.box,
+              cx: frame.cx + (e.box.cx - canvasW / 2) * s,
+              cy: frame.cy,
+              w: e.box.w * s,
+              h: e.box.h * s,
+            };
+            e.viewport = { x: frame.cx - frame.w / 2, y: frame.cy - frame.h / 2, w: frame.w, h: frame.h };
+            out.push(e);
+          }
         }
       }
-      out.push(layer);
     }
   }
+  for (const effect of project.effects ?? []) {
+    const layer = effectLayer(effect, t, canvasW, canvasH);
+    if (layer) out.push(layer);
+  }
   if (previewLiftedId) {
+    const group = project.tracks.find(
+      (tr) => tr.template && tr.items.some((it) => it.id === previewLiftedId),
+    );
+    if (group) {
+      const ids = new Set(group.items.flatMap((it) => [it.id, `${it.id}-blank`]));
+      const raised = out.filter((l) => ids.has(l.id) || l.id.startsWith(`${group.id}-`));
+      return [...out.filter((l) => !raised.includes(l)), ...raised];
+    }
     const i = out.findIndex((layer) => layer.id === previewLiftedId);
     if (i >= 0) out.push(out.splice(i, 1)[0]!);
   }
@@ -153,14 +231,23 @@ function toLayer(
     srcW: src.srcW,
     srcH: src.srcH,
     sourceStamp: src.stamp,
-    viewport: item.slot
-      ? {
-          x: item.slot.x * ctx.canvasW,
-          y: item.slot.y * ctx.canvasH,
-          w: item.slot.w * ctx.canvasW,
-          h: item.slot.h * ctx.canvasH,
-        }
-      : undefined,
+    viewport: ctx.templates?.[item.id]
+      ? ctx.templates[item.id]!.slot
+        ? {
+            x: ctx.templates[item.id]!.slot!.x * ctx.canvasW,
+            y: ctx.templates[item.id]!.slot!.y * ctx.canvasH,
+            w: ctx.templates[item.id]!.slot!.w * ctx.canvasW,
+            h: ctx.templates[item.id]!.slot!.h * ctx.canvasH,
+          }
+        : undefined
+      : item.slot
+        ? {
+            x: item.slot.x * ctx.canvasW,
+            y: item.slot.y * ctx.canvasH,
+            w: item.slot.w * ctx.canvasW,
+            h: item.slot.h * ctx.canvasH,
+          }
+        : undefined,
     frameW: base.w * k,
     frameH: base.h * k,
   };

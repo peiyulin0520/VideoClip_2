@@ -6,7 +6,7 @@
 
 已具備多專案、多素材拼接、修剪/分割/變速、多軌疊加、拖移縮放旋轉、字卡排版/描邊/陰影、13 種裝飾、33 種圖形、字體下載/快取/本機匯入、首次使用精靈與 PWA。
 
-仍在規劃中：Fluent Emoji 內建貼圖、雲朵字與完整字卡模板、動畫/轉場/調色、進階動態遮罩追蹤、專案備份/Google Drive、IG 音樂推薦。本次新增完整逐格影片與音訊混音、相容即時匯出；格式依瀏覽器編碼能力明示 MP4 或 WebM。先前匯出與第二輪回饋已發布；本次 PR #4 尚待使用者合併，最新驗收見下方，細節見 PROGRESS。Google Drive 選項目前只是規劃入口。
+仍在規劃中：Fluent Emoji 內建貼圖、雲朵字與完整字卡模板、完整動畫/轉場目錄與調色、進階動態遮罩追蹤、專案備份/Google Drive、IG 音樂推薦。本次新增完整逐格影片與音訊混音、相容即時匯出；格式依瀏覽器編碼能力明示 MP4 或 WebM。先前匯出與第二輪回饋已發布；PR #4 已由使用者合併；本次 PR #5 驗收見下方，細節見 PROGRESS。Google Drive 選項目前只是規劃入口。
 
 原 Sites 的 Little Moments 是另一個版本；這個建立工作不修改原 Sites。兩套模型不同，目前沒有自動轉換專案或素材庫 ZIP，請保留舊資料與原始影片。
 
@@ -20,7 +20,7 @@ npm run check
 npm run e2e -- --trace off
 ```
 
-`check` 包含 lint、267 個單元測試、TypeScript、正式建置及 GitHub Pages 路徑/PWA/字體檔案檢查。91 個瀏覽器測試（含完整影片/音訊解碼、收藏、GIF、手動遮罩、Key 與主題）交由 GitHub Actions 的 Chromium 153 執行，CI 保存截圖 artifact；最新成功狀態見 PROGRESS.md。本次已更新 107 張 CI 畫面（docs/screenshots）中文可讀；iPhone Safari 仍待真機驗證。
+`check` 包含 lint、278 個單元測試、TypeScript、正式建置及 GitHub Pages 路徑/PWA/字體檔案檢查。98 個瀏覽器測試（含完整影片/音訊解碼、收藏、GIF、手動遮罩、Key 與主題）交由 GitHub Actions 的 Chromium 153 執行，CI 保存截圖 artifact；最新成功狀態見 PROGRESS.md。本次已更新 118 張 CI 畫面（docs/screenshots）中文可讀；iPhone Safari 仍待真機驗證。
 
 ## GitHub Pages
 
@@ -94,4 +94,13 @@ GIF 解碼器 gifuct-js 2.1.2 為 MIT，授權位於 public/licenses。輸出含
 
 新字塊預設無填色，次分類採淺暖色；裝飾距離改為 px 並解釋方向。六主題的自訂色、選取字體/圖層與白字 PNG 預覽都補齊對比。疊色模式有用途說明。0 秒靠左、色塊不重疊就共用一軌；右下浮動回頂有獨立觸控空間。
 
-程式 3b9de60dc2cb325652b075313e1636d47e00f092 / [Actions 43262467680](https://github.com/peiyulin0520/VideoClip_2/actions/runs/43262467680)：267 單元、91 Chromium e2e 全過；lint/格式/TypeScript/build/Pages/39 字體檢查成功。 107 張驗收圖在 docs/screenshots；[本次畫面](docs/screenshots/refinement/)包括裁切、多段聲音、筆刷、色塊與六種主題字體。[PR #4](https://github.com/peiyulin0520/VideoClip_2/pull/4) 由使用者自行 Merge，Safari 真機仍待確認。
+程式 3b9de60dc2cb325652b075313e1636d47e00f092 / [Actions 43262467680](https://github.com/peiyulin0520/VideoClip_2/actions/runs/43262467680)：267 單元、91 Chromium e2e 全過；lint/格式/TypeScript/build/Pages/39 字體檢查成功。 107 張驗收圖在 docs/screenshots；[本次畫面](docs/screenshots/refinement/)包括裁切、多段聲音、筆刷、色塊與六種主題字體。[PR #4](https://github.com/peiyulin0520/VideoClip_2/pull/4) 已由使用者自行合併；Safari 真機仍待確認。
+
+
+## 整組模板、展開故事與特效（PR #5）
+
+時間軸預設收合，需要時可展開全部圖層；頁尾不再保留回頂白帶。膠卷、拍貼與故事都在預覽整組縮放/移動，框架和影片一起改變，點格子仍能選該來源剪片段。各格採共同長度，來源不足補黑/白，可穿插色塊並接續來源；重新套用保留匹配格的調整。
+
+音訊可直接標多組靜音起點/終點、切換標記及移除單組。新增四種基本轉場特效，以及「展開故事」二/三格模板：單片上下展開、多格由上往下依序加入、中央文字快速換三種字體、最後暖光。預覽、單格與完整影片輸出共用。
+
+程式 4d706878f81bae6e311cb866fc62c91047f02b3a / [Actions 43284472645](https://github.com/peiyulin0520/VideoClip_2/actions/runs/43284472645)：278 單元、98 Chromium e2e 全過；lint/格式/TypeScript/build/Pages/39 字體檢查成功。 118 張截圖已更新，[新驗收畫面](docs/screenshots/story-workspace/)包含收合/頁尾、群組縮放、每格補色、多組靜音、故事階段與特效。[PR #5](https://github.com/peiyulin0520/VideoClip_2/pull/5) 由使用者自行 Merge 後發布；Safari 真機仍待確認。

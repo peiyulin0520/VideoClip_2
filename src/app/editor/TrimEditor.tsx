@@ -11,7 +11,10 @@ import { Sheet } from '../../ui/Sheet';
 export function TrimEditor({ item, onClose }: { item: VideoItem; onClose: () => void }) {
   const p = useProjectStore((s) => s.project)!,
     asset = p.assets.find((a) => a.id === item.assetId)!;
-  const [range, setRange] = useState([item.trimIn, item.trimIn + item.duration * item.speed]);
+  const [range, setRange] = useState([
+    item.trimIn,
+    Math.min(asset.duration, item.cell?.sourceEnd ?? item.trimIn + item.duration * item.speed),
+  ]);
   const video = useRef<HTMLVideoElement>(null);
   const [cursor, setCursor] = useState(item.trimIn);
   return (

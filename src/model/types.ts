@@ -52,6 +52,8 @@ export type VideoItem = ItemBase & {
   mask?: MediaMask;
   /** Retained source-time audio intervals; omitted = all sound. Empty = silent. */
   audioRanges?: [number, number][];
+  /** Source selection is independent from the common template frame interval. */
+  cell?: { sourceEnd: number; offset: number; blanks: [number, number][]; background: '#000000' | '#ffffff' };
   fit: 'cover' | 'contain';
   /** 多格版型的固定視窗（畫面比例座標）；素材可在視窗內拖移/縮放。 */
   slot?: { x: number; y: number; w: number; h: number };
@@ -186,11 +188,28 @@ export type Project = {
   flexibleLayers?: boolean; // Main/overlay share editable image/video lanes.
   background?: string;
   layout?: {
-    style: 'photobooth' | 'filmstrip' | 'polaroid';
+    style: 'photobooth' | 'filmstrip' | 'polaroid' | 'story';
     motion: 'none' | 'slide' | 'drift';
+    transform?: Pick<Transform, 'x' | 'y' | 'scale'>;
+    count?: number;
+    story?: {
+      title: string;
+      fontIds: string[];
+      fontInterval: number;
+      opening: number;
+      step: number;
+      flash: boolean;
+    };
     start: number;
     duration: number;
   };
+  effects?: {
+    id: string;
+    preset: 'flash' | 'fade-black' | 'fade-white' | 'light-leak';
+    start: number;
+    duration: number;
+    strength: number;
+  }[];
   assets: Asset[];
   tracks: Track[];
   thumbnail?: string;

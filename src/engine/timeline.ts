@@ -1,3 +1,4 @@
+import { cellMediaTime } from './templateTiming';
 import { MAX_SPEED, MIN_CLIP_DURATION, MIN_SPEED, newId } from '../model/defaults';
 import type { Asset, Item, Project, Track, VideoItem } from '../model/types';
 
@@ -74,7 +75,7 @@ export function layersAt(p: Project, t: number, includeHidden: boolean): Layer[]
 export function totalDuration(p: Project): number {
   return p.tracks.reduce(
     (max, tr) => tr.items.reduce((m, it) => Math.max(m, it.start + it.duration), max),
-    0,
+    Math.max(0, ...(p.effects ?? []).map((e) => e.start + e.duration)),
   );
 }
 
@@ -91,13 +92,14 @@ export function itemAt(items: VideoItem[], t: number): { item: VideoItem; index:
 
 /** 時間軸時間 → 素材內時間 */
 export function sourceTimeAt(item: VideoItem, t: number): number {
+  if (item.cell) return cellMediaTime(item, t) ?? item.trimIn;
   const local = Math.min(Math.max(t - item.start, 0), item.duration);
   return item.trimIn + local * item.speed;
 }
 
 /** 這個片段在目前 trimIn/speed 下，最長能有多長（秒） */
 export function maxDuration(item: VideoItem, asset: Asset | undefined): number {
-  if (item.type === 'image' || !asset) return 600;
+  if (item.cell || item.type === 'image' || !asset) return 600;
   return Math.max((asset.duration - item.trimIn) / item.speed, MIN_CLIP_DURATION);
 }
 

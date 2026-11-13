@@ -224,6 +224,9 @@ test('0 秒靠近圖層圖示，色塊不重疊時共用一層，浮動按鈕回
   expect(p.tracks.filter((t) => t.name === '留白色塊')).toHaveLength(2);
   await page.locator('.bottombar').scrollIntoViewIfNeeded();
   await capture(page, { path: `${shots}/shared-solids-and-return.png` });
+  await page.locator('.editor').evaluate((el) => {
+    el.scrollTop = Math.max(1, el.scrollTop - 80);
+  });
   await page.getByRole('button', { name: '回到最上方預覽', exact: true }).tap();
   await expect.poll(() => page.locator('.editor').evaluate((el) => el.scrollTop)).toBe(0);
 });

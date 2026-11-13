@@ -6,11 +6,15 @@ export const LAYOUTS: { id: LayoutStyle; label: string; count: number }[] = [
   { id: 'photobooth', label: '拍貼三格', count: 3 },
   { id: 'filmstrip', label: '直式膠卷', count: 3 },
   { id: 'polaroid', label: '四格相紙', count: 4 },
+  { id: 'story', label: '展開故事', count: 3 },
 ];
-export function slotLabel(style: LayoutStyle, index: number) {
+export function slotLabel(style: LayoutStyle, index: number, count = 3) {
+  if (style === 'story' && count === 2) return ['上方', '下方'][index]!;
   return style === 'polaroid' ? ['左上', '右上', '左下', '右下'][index]! : ['上方', '中間', '下方'][index]!;
 }
-export function layoutSlots(style: LayoutStyle): NonNullable<VideoItem['slot']>[] {
+export function layoutSlots(style: LayoutStyle, count = 3): NonNullable<VideoItem['slot']>[] {
+  if (style === 'story')
+    return Array.from({ length: count }, (_, i) => ({ x: 0, y: i / count, w: 1, h: 1 / count }));
   if (style === 'polaroid')
     return [
       { x: 0.07, y: 0.08, w: 0.4, h: 0.35 },
@@ -49,16 +53,10 @@ export function collagePlan(
   wanted: number,
   sourceItems?: VideoItem[],
 ) {
-  const slots = layoutSlots(style),
+  const slots = layoutSlots(style, Math.max(2, Math.min(3, ids.length))),
     assets = slots.map((_, i) => project.assets.find((a) => a.id === ids[i] && a.kind !== 'audio'));
   if (assets.some((a) => !a)) throw Error('請為每格選擇影片或照片');
-  const duration = Math.min(
-    Math.max(0.2, wanted),
-    60,
-    ...assets.map(
-      (asset, i) => sourceItems?.[i]?.duration ?? (asset!.kind === 'video' ? asset!.duration : 60),
-    ),
-  );
+  const duration = Math.min(Math.max(0.2, wanted), 60);
   if (!Number.isFinite(duration) || duration <= 0) throw Error('素材長度不正確');
   const track = createTrack('overlay', project.tracks);
   track.name = LAYOUTS.find((x) => x.id === style)!.label;
@@ -69,6 +67,20 @@ export function collagePlan(
     if (sourceItems?.[i]) Object.assign(item, structuredClone(sourceItems[i]), { id: item.id, start });
     Object.assign(item, {
       duration,
+      cell: {
+        sourceEnd:
+          asset!.kind === 'image'
+            ? 600
+            : Math.min(
+                asset!.duration,
+                sourceItems?.[i]
+                  ? sourceItems[i]!.trimIn + sourceItems[i]!.duration * sourceItems[i]!.speed
+                  : asset!.duration,
+              ),
+        offset: 0,
+        blanks: [],
+        background: '#000000',
+      },
       fit: 'cover',
       slot,
       // Only the first cell supplies sound by default; a group is one visible timeline layer.
@@ -77,7 +89,27 @@ export function collagePlan(
     });
     return item;
   });
-  const layout = { style, motion, start, duration };
+  const layout: NonNullable<Project['layout']> = {
+    style,
+    motion,
+    start,
+    duration,
+    count: slots.length,
+    transform: { x: 0.5, y: 0.5, scale: 1 },
+    ...(style === 'story'
+      ? {
+          motion: 'none',
+          story: {
+            title: 'NOVEMBER',
+            fontIds: ['system', 'noto-serif-tc', 'mantou-sans'],
+            fontInterval: 0.12,
+            opening: 0.7,
+            step: 0.45,
+            flash: true,
+          },
+        }
+      : {}),
+  };
   track.layout = { ...layout };
   const tracks = [track];
   return { tracks, layout };
@@ -91,7 +123,7 @@ export function layoutArt(style: LayoutStyle, w: number, h: number) {
   canvas.width = w;
   canvas.height = h;
   const c = canvas.getContext('2d')!;
-  c.fillStyle = style === 'filmstrip' ? '#17171b' : '#fff5df';
+  c.fillStyle = style === 'filmstrip' || style === 'story' ? '#17171b' : '#fff5df';
   c.fillRect(0, 0, w, h);
   if (style === 'filmstrip') {
     c.fillStyle = '#eee6d6';
@@ -105,7 +137,7 @@ export function layoutArt(style: LayoutStyle, w: number, h: number) {
   c.fillStyle = style === 'filmstrip' ? '#e3d4bc' : '#7e6c5b';
   c.textAlign = 'center';
   c.font = `${w * 0.035}px sans-serif`;
-  c.fillText('LITTLE MOMENTS', w / 2, h * 0.96);
+  if (style !== 'story') c.fillText('LITTLE MOMENTS', w / 2, h * 0.96);
   if (artCache.size >= 4) artCache.delete(artCache.keys().next().value!);
   artCache.set(key, canvas);
   return canvas;
@@ -134,4 +166,27 @@ export function mergeLegacyTemplate(project: Project): Project {
   const tracks = project.tracks.filter((t) => !t.template);
   tracks.splice(first, 0, group);
   return { ...project, tracks };
+}
+
+/** Reapplying a layout must retain the source cuts/gaps already edited in matching cells. */
+export function carryTemplateEdits(
+  next: import('../model/types').Track,
+  previous: import('../model/types').Track,
+) {
+  if (next.layout && previous.layout?.transform)
+    next.layout.transform = structuredClone(previous.layout.transform);
+  if (next.layout?.story && previous.layout?.story)
+    next.layout.story = structuredClone(previous.layout.story);
+  next.items = next.items.map((item, i) => {
+    const old = previous.items[i];
+    if (item.type === 'text' || !old || old.type === 'text' || old.assetId !== item.assetId) return item;
+    return {
+      ...structuredClone(old),
+      id: item.id,
+      start: item.start,
+      duration: item.duration,
+      slot: item.slot,
+      transform: item.transform,
+    };
+  });
 }

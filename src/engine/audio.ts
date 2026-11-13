@@ -1,3 +1,4 @@
+import { cellMediaTime } from './templateTiming';
 import type { Project, VideoItem, Track, Asset } from '../model/types';
 import { audioRetained } from './audioRanges';
 export type AudibleClip = { item: VideoItem; track: Track; asset: Asset; gain: number };
@@ -13,7 +14,8 @@ export function audibleClips(project: Project, t: number): AudibleClip[] {
         item.type === 'text' ||
         item.type === 'image' ||
         item.audioEnabled === false ||
-        !audioRetained(item, item.trimIn + (t - item.start) * item.speed) ||
+        cellMediaTime(item, t) === null ||
+        !audioRetained(item, cellMediaTime(item, t) ?? item.trimIn) ||
         item.volume <= 0 ||
         t < item.start ||
         t >= item.start + item.duration

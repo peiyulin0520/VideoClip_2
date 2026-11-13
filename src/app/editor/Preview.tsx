@@ -1,3 +1,4 @@
+import { groupFrame, groupTransform } from '../../engine/templateGeometry';
 import { Expand, Minimize, ShieldCheck } from 'lucide-react';
 import { useEffect, useMemo, useRef, useState, type PointerEvent as RPointerEvent } from 'react';
 import { urlFor } from '../../engine/assetUrls';
@@ -175,20 +176,15 @@ export function Preview({ projectId, width, height }: { projectId: string; width
     };
   }, [project, width, height, fontEpoch, timelineTime]);
   const sel = findItem(project, selectedId);
-  const selectionMotion = sel ? (geo.motions?.[sel.item.id] ?? geo.layoutMotion) : geo.layoutMotion;
-  const slot = sel?.item.type !== 'text' ? sel?.item.slot : undefined;
+
   const box =
     sel && selVisible
-      ? slot
-        ? {
-            cx: (slot.x + slot.w / 2 + selectionMotion.x) * width,
-            cy: (slot.y + slot.h / 2 + selectionMotion.y) * height,
-            w: slot.w * width,
-            h: slot.h * height,
-            rotation: 0,
-          }
+      ? sel.track.template
+        ? groupFrame(sel.track, width, height, timelineTime)
         : itemBox(sel.item, geo)
       : null;
+  const editableBox = (f: NonNullable<ReturnType<typeof findItem>>) =>
+    f.track.template ? groupFrame(f.track, width, height, player?.time ?? 0) : itemBox(f.item, geo);
   const selLocked = !!sel?.track.locked || !!sel?.track.hidden;
 
   const pointers = useRef(new Map<number, Pt>());
@@ -207,8 +203,8 @@ export function Preview({ projectId, width, height }: { projectId: string; width
       id,
       key: `gesture:move:${id}:${performance.now()}`,
       start: at,
-      startX: f.item.transform.x,
-      startY: f.item.transform.y,
+      startX: f.track.template ? groupTransform(f.track).x : f.item.transform.x,
+      startY: f.track.template ? groupTransform(f.track).y : f.item.transform.y,
       moved: false,
     };
   };
@@ -221,7 +217,7 @@ export function Preview({ projectId, width, height }: { projectId: string; width
     const st = useProjectStore.getState();
     let cur = findItem(st.project!, st.selectedId);
     if (pointers.current.size === 2) {
-      const currentBox = cur && itemBox(cur.item, geo);
+      const currentBox = cur && editableBox(cur);
       if (
         !currentBox ||
         ![...pointers.current.values()].every((point) => pointInBox(currentBox, point.x, point.y))
@@ -241,8 +237,8 @@ export function Preview({ projectId, width, height }: { projectId: string; width
         key: `gesture:pinch:${cur.item.id}:${performance.now()}`,
         startDist: Math.hypot(b.x - a.x, b.y - a.y) || 1,
         startAngle: Math.atan2(b.y - a.y, b.x - a.x),
-        startScale: cur.item.transform.scale,
-        startRot: cur.item.transform.rotation,
+        startScale: cur.track.template ? groupTransform(cur.track).scale : cur.item.transform.scale,
+        startRot: cur.track.template ? 0 : cur.item.transform.rotation,
       };
       return;
     }
@@ -251,13 +247,14 @@ export function Preview({ projectId, width, height }: { projectId: string; width
     useUI.getState().player?.pause();
     const t = useUI.getState().player?.time ?? 0;
     const layers = visibleLayers(st.project!, t).filter(
-      (layer) => player?.opaqueAt(layer.item.id, pt.x / width, pt.y / height) !== false,
+      (layer) =>
+        layer.track.template || player?.opaqueAt(layer.item.id, pt.x / width, pt.y / height) !== false,
     );
     const lift = useUI.getState().liftedId;
     const liftIndex = layers.findIndex((l) => l.item.id === lift);
     if (liftIndex >= 0) layers.push(layers.splice(liftIndex, 1)[0]!);
     let hit = topHit(layers, geo, pt.x, pt.y);
-    const currentBox = cur && itemBox(cur.item, geo);
+    const currentBox = cur && editableBox(cur);
     if (
       cur &&
       !cur.track.locked &&
@@ -333,7 +330,7 @@ export function Preview({ projectId, width, height }: { projectId: string; width
       if (!g.moved && Math.hypot(dx, dy) < 4 / k) return; // 小於 4px 當作點擊，不算移動
       g.moved = true;
       setDragging(true);
-      const base = itemBox(f.item, geo);
+      const base = editableBox(f);
       if (!base) return;
       let cx = g.startX * width + dx;
       let cy = g.startY * height + dy;
@@ -490,9 +487,12 @@ export function Preview({ projectId, width, height }: { projectId: string; width
         <button
           className="preview-layers"
           aria-label="查看全部圖層"
-          onClick={(e) =>
-            e.currentTarget.closest('.editor')!.querySelector('.timeline')!.scrollIntoView({ block: 'start' })
-          }
+          onClick={(e) => {
+            const page = e.currentTarget.closest('.editor')!,
+              toggle = page.querySelector<HTMLButtonElement>('.timeline-toggle')!;
+            if (toggle.getAttribute('aria-expanded') === 'false') toggle.click();
+            requestAnimationFrame(() => page.querySelector('.timeline')!.scrollIntoView({ block: 'start' }));
+          }}
         >
           查看圖層 ↓
         </button>
