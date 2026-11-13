@@ -1,6 +1,8 @@
 # 交接手冊（HANDOFF）
 
 ## VideoClip_2 當前交接（優先於以下來源 repo 的歷史紀錄）
+- 最新 10 點最終：[Actions 43408392208](https://github.com/peiyulin0520/VideoClip_2/actions/runs/43408392208)：版本 86d56ad6e41af714ef7b508ad389539fe1312f2b 的 313 單元、120 Chromium e2e 全過；lint/格式/TypeScript/build/Pages/39 字體檢查成功。 artifact 14028996857，ZIP SHA-256 c5b3dfaa8cbf4f5a11c97dd2ab2ac805cdb02821e79ad92d755bf8daf8aca5f9 已核對；148 張成功畫面，其中 compact-workspace/ 新增 8 張。 PR #9 由使用者自行 Merge。下列待 CI/舊 PR 待合併是歷史；最後文件/截圖不改成功版本的 src/e2e。Safari 真機仍待確認。
+
 - 4a6f513 / Actions 43406761969：313/118 of120，全6新情境已過。縮小後53px短片中心只離 join44目標約5px；原片段只有 PointerDown，行動 Chromium touch adjustment 可優先導向附近 button，ElementFromPoint 通過仍無 drag。片段加 onClick/role button/Enter Space 選取，使中心也有可操作語意；保留原長按400ms、交接44px，不以拉長 timeout 取代修正。拖曳 helper 也觀察實際 PointerDown 目標（非只 ElementFromPoint），不改狀態；鍵盤事件只處理片段自身，避免攔到菱形子按鈕。
 
 - 小版型圖不能只降 height：三列數字的 min-content 會溢出。54px art、3px padding/2px gap、grid-auto-rows minmax(0,1fr)，數字 min-height0/line-height1；e2e 驗每格數字 bounds 在 art 內。

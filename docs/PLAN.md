@@ -394,3 +394,6 @@ docs/
 
 
 2026-11-13 最新 11 點驗收：[Actions 43386450346](https://github.com/peiyulin0520/VideoClip_2/actions/runs/43386450346)：版本 8b61548265b98396fa70d5af4b5e884ff04448b5 的 306 單元、114 Chromium e2e 全數通過；lint/格式/TypeScript/build/Pages/39 字體檢查成功。 artifact 14019456046，ZIP SHA-256 1cd711f8bc09875f2b5299ce722fa440cfb287bba022a05c4e7e42e0941c861b 已核對；140 張成功畫面，其中 playback-refinement/ 新增 5 張。 PR #8 由使用者自行 Merge，§7 真機項目保留。
+
+
+2026-11-13 最新 10 點：[Actions 43408392208](https://github.com/peiyulin0520/VideoClip_2/actions/runs/43408392208)：版本 86d56ad6e41af714ef7b508ad389539fe1312f2b 的 313 單元、120 Chromium e2e 全過；lint/格式/TypeScript/build/Pages/39 字體檢查成功。 artifact 14028996857，ZIP SHA-256 c5b3dfaa8cbf4f5a11c97dd2ab2ac805cdb02821e79ad92d755bf8daf8aca5f9 已核對；148 張成功畫面，其中 compact-workspace/ 新增 8 張。 PR #9 由使用者自行 Merge；§7 真機項目保留。

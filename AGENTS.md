@@ -33,6 +33,8 @@
 
 11. **選項層級與按鈕回饋**：不同層級的主類/次類需用區塊、色彩或底線清楚區分，沿用 option-primary/option-secondary；選取型按鈕保留可見 active/aria-pressed。可操作的新增按鈕使用清楚的主題色，不能看起來像停用。這是 2026-11-13 使用者對之後所有同類介面的要求。
 
+12. **緊湊操作介面**：下方功能、選項與 popup 字級共用 --editor-control-font（14px），不得大於功能列；備註 11px。圖像/間距縮小，維持觸控目標。特效卡只動畫/名稱，整軸開啟先分類摘要，版型來源選單在預覽右側。這是 2026-11-13 最新長期介面偏好。
+
 ## 紀錄規則（每次都做）
 **每完成一個有意義的步驟（不是只有每個 Phase 結束），在同一個 commit 裡更新：**
 - `docs/PROGRESS.md`
@@ -54,4 +56,4 @@ Vite 8 · React 18 · TypeScript 5.9（別升 7：typescript-eslint 不支援）
 - 這個儲存庫來源是 VideoClip `78b178343409c46c7ba353ef3a6db6f279a7bde6`（main 已包含 PR #3），對外名稱 **Little Moments**。舊分支／PR 記錄只屬於來源 repo；本 repo 後續依最新指示建立 PR，由使用者自行合併。
 - 網址路徑 `/VideoClip_2/`；IndexedDB、OPFS、字體快取、localStorage 均使用獨立命名，避免同一個 github.io 網域的 `/VideoClip/` 被改動。不要刪除或自動搬移舊資料。
 - 現有 Sites 的 Little Moments 是另一套資料模型；未實作轉換，不能把 JSON 或素材庫 ZIP 當成這個版本可還原的檔案。
-- `npm run check` 仍須完成。此 Codex managed 環境缺少 Sites 指定的 `cua_repl.js`；Sites skill 明定不可另開 preview server／改用其他瀏覽器路徑，因此本機只列出 e2e。瀏覽器驗收已改由 GitHub Actions 執行：最新 306 單元/114 e2e 結果、run 及 140 張可讀繁中截圖來源見 PROGRESS.md。不要把來源 repo 或先前缺字的截圖當成最終驗收。
+- `npm run check` 仍須完成。此 Codex managed 環境缺少 Sites 指定的 `cua_repl.js`；Sites skill 明定不可另開 preview server／改用其他瀏覽器路徑，因此本機只列出 e2e。瀏覽器驗收已改由 GitHub Actions 執行：最新 313 單元/120 e2e 結果、run 及 148 張可讀繁中截圖來源見 PROGRESS.md。不要把來源 repo 或先前缺字的截圖當成最終驗收。

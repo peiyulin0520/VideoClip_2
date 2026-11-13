@@ -14,3 +14,6 @@
 10. 版型預覽靠左，右側依「第 N 格／位置」列素材選單，不要求與預覽格位逐一對齊；移除下面重複的素材列。來源與套用邏輯保持，320px 螢幕不得溢出。
 
 驗收：313 單元（新增 7 紙紋/偏移座標）、120 瀏覽器情境（新增 6）。舊測試明確透過 UI 展開所需群組；舊遮罩幾何情境選偏移 0，新情境驗預設偏移 56、實際觸控、原音/畫面與 PNG/單格輸出。素描以區域濃淡與紙紋空隙驗證，保留真正可見與輸出檢查。Safari 指壓/自由描邊、原生選單與縮小字級焦點、單指拖移及效能待真機確認。
+
+
+最終：[Actions 43408392208](https://github.com/peiyulin0520/VideoClip_2/actions/runs/43408392208)：版本 86d56ad6e41af714ef7b508ad389539fe1312f2b 的 313 單元、120 Chromium e2e 全過；lint/格式/TypeScript/build/Pages/39 字體檢查成功。 artifact 14028996857，ZIP SHA-256 c5b3dfaa8cbf4f5a11c97dd2ab2ac805cdb02821e79ad92d755bf8daf8aca5f9 已核對；148 張成功畫面，其中 compact-workspace/ 新增 8 張。 PR #9 交使用者自行 Merge；Safari 待真機。
