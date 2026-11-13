@@ -2785,24 +2785,23 @@ button:focus-visible {
   }
 }
 
-/* Compact editor controls share the function-tab type scale; touch targets remain 44px. */
+/* One type scale for all app UI; project text is rendered by the compositor. */
 :root {
-  --editor-control-font: 14px;
+  --ui-font-size: 14px;
+  --ui-note-font-size: 11px;
+  --editor-control-font: var(--ui-font-size);
 }
-:root[data-theme] :is(.bottombar, .sheet) {
-  font-size: var(--editor-control-font);
+:root[data-theme] :is(#root, .sheet),
+:root[data-theme] :is(#root, .sheet) :where(*) {
+  font-size: var(--ui-font-size) !important;
 }
-:root[data-theme] :is(.bottombar, .sheet) :where(*) {
-  font-size: var(--editor-control-font) !important;
-}
-:root[data-theme] :is(.bottombar, .sheet) :is(.hint, .sheet-msg, small, .audio-source-name) {
-  font-size: 11px !important;
-}
-:root[data-theme] .bottombar .tab {
-  font-size: var(--editor-control-font);
+/* Only explanatory notes use the smaller scale. Small tags also contain functional labels. */
+:root[data-theme] :is(#root, .sheet) :is(.hint, .sheet-msg, .empty-note, .note, [role='note']),
+:root[data-theme] :is(#root, .sheet) :is(.hint, .sheet-msg, .empty-note, .note, [role='note']) :where(*) {
+  font-size: var(--ui-note-font-size) !important;
 }
 :root[data-theme] .sheet {
-  padding: 10px 12px calc(10px + var(--safe-bottom));
+  padding: 8px 8px calc(8px + var(--safe-bottom));
   max-width: 620px;
   margin-inline: auto;
 }
@@ -2810,8 +2809,46 @@ button:focus-visible {
   margin-bottom: 8px;
   gap: 6px;
 }
-:root[data-theme] :is(.bottombar, .sheet) :is(.btn, .chip, .menu-item) {
-  padding-inline: 10px;
+:root[data-theme] :is(.btn, .chip, .menu-item, .font-select) {
+  min-height: 44px;
+  padding: 2px 6px;
+  gap: 4px;
+}
+:root[data-theme] .text-input {
+  min-height: 44px;
+  padding: 4px 6px;
+}
+:root[data-theme] .text-input.area {
+  min-height: 44px;
+  line-height: 1.35;
+  margin-block: 4px;
+}
+:root[data-theme] .panel {
+  padding: 6px 8px calc(6px + var(--safe-bottom));
+}
+:root[data-theme] .panel .sticky-tabs {
+  margin-inline: -8px;
+  padding: 4px 8px;
+  gap: 4px;
+}
+:root[data-theme] .panel .sticky-tabs .chip {
+  padding: 2px 6px;
+}
+:root[data-theme] .option-primary {
+  padding: 4px;
+}
+:root[data-theme] .option-secondary {
+  padding: 4px 0 6px;
+}
+:root[data-theme] :is(.template-cell, .install-box, .preview-picker, .batch-layer-bar) {
+  padding: 6px;
+}
+:root[data-theme] .template-cell {
+  margin-block: 6px;
+}
+:root[data-theme] .sheet-row {
+  gap: 6px;
+  margin-top: 6px;
 }
 :root[data-theme] :is(.bottombar, .sheet) .chips {
   gap: 4px;
@@ -2826,7 +2863,7 @@ button:focus-visible {
   min-width: 66px;
 }
 :root[data-theme] :is(.bottombar, .sheet) .color-custom-button {
-  padding: 4px 8px;
+  padding: 3px 6px;
   gap: 8px;
 }
 :root[data-theme] :is(.bottombar, .sheet) .color-sample {
@@ -2944,4 +2981,63 @@ button:focus-visible {
 }
 .transition-join {
   padding: 13px;
+}
+
+/* Keep equal-sized playback labels readable without spending another toolbar row. */
+.editor .playbar {
+  gap: 2px;
+  padding-inline: 4px;
+}
+.editor .playbar .time {
+  display: flex;
+  flex-direction: column;
+  flex-shrink: 0;
+  line-height: 16px;
+  overflow: visible;
+}
+.editor .playbar .icon-btn span {
+  line-height: 16px;
+}
+.family-toggle {
+  flex-direction: column;
+  line-height: 16px;
+}
+.family-toggle small {
+  max-width: 100%;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.editor .clip:has(.clip-audio) .clip-label {
+  top: 6px;
+  line-height: 14px;
+}
+.editor .clip-audio {
+  bottom: 6px;
+  line-height: 14px;
+  padding-block: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+@media (max-width: 359px) {
+  .editor .playbar {
+    gap: 0;
+    padding-inline: 0;
+    overflow-x: auto;
+  }
+  .editor .playbar .spacer {
+    display: none;
+  }
+}
+
+:root[data-theme] :is(.shape-cell, .deco-cell, .saved-material) {
+  padding: 4px;
+  gap: 2px;
+}
+:root[data-theme] :is(.preview-expand, .preview-layers, .safe-toggle, .export-button, .ratio-btn) {
+  padding-inline: 6px;
+}
+:root[data-theme] .name-btn {
+  padding-inline: 4px;
 }

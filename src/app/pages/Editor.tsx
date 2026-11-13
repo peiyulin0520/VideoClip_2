@@ -258,7 +258,7 @@ function EditorBody() {
           {playing ? <Pause size={22} /> : <Play size={22} />}
         </button>
         <span className="time" data-testid="time">
-          {formatTime(time)} / {formatTime(total)}
+          <span>{formatTime(time)}</span> <span>/ {formatTime(total)}</span>
         </span>
         <span className="spacer" />
         <KeyframeControl />
