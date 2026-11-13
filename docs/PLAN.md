@@ -330,6 +330,9 @@ docs/
 - 每次回報時誠實區分：✅ 已驗證（附截圖）／🟡 寫好但只在 Chromium 驗證／🔴 做不到。
 
 ## 7. 待真機驗證清單（Sonnet 無法在沙盒驗證，要請使用者在 iPhone 上試）
+- [ ] 全頁可讀性：六主題首次備份/字體包與字體選單，負字距/緊行高在Safari的中文、英文、網址與原生選單可讀且不重疊。
+- [ ] 全介面14px（註解11px）與縮小文字框內距：Safari原生輸入聚焦/選單、320px播放時間兩行/時間軸標記及44px觸控。
+- [ ] 最新 10 點：Safari 分類優先展開/重開、14px 控制與原生選單/輸入聚焦、緊湊交接入口及拖曳修剪、紙紋筆觸效能與手繪單指拖移、偏移瞄準圈保留/擦除/描邊（指觸不擋目標）與輸出、版型右側選單在窄螢幕操作。
 - [ ] 最新 11 點：Safari 小音訊畫面/白線同步/暫停後精準標記，定格直接記錄/預覽拖移、交接 + 與混搭、播放不出白框、鉛筆及硬體感壓/一般手指速度筆觸；長片效能待真機。
 - [ ] PR #7 九點：Safari 多組倒三角與白線新增/取消/局部復原、長按多選與分類收合、菱形定位/整組縮放、25 A/B/12 影片效果的即時效能與長片聲畫輸出、GIPHY 本機 Key 與主題圓圈。
 - [ ] 最新分型軌道：Safari 原影片直接觸控選取/雙指、550ms 長按遮擋選單、暫時置頂完成與匯出、單片段長按跨層/時間、異型拒絕/層間新建、主題 icon 對比。
@@ -393,3 +396,18 @@ docs/
 
 
 2026-11-13 最新 11 點驗收：[Actions 43386450346](https://github.com/peiyulin0520/VideoClip_2/actions/runs/43386450346)：版本 8b61548265b98396fa70d5af4b5e884ff04448b5 的 306 單元、114 Chromium e2e 全數通過；lint/格式/TypeScript/build/Pages/39 字體檢查成功。 artifact 14019456046，ZIP SHA-256 1cd711f8bc09875f2b5299ce722fa440cfb287bba022a05c4e7e42e0941c861b 已核對；140 張成功畫面，其中 playback-refinement/ 新增 5 張。 PR #8 由使用者自行 Merge，§7 真機項目保留。
+
+
+2026-11-13 最新 10 點：[Actions 43408392208](https://github.com/peiyulin0520/VideoClip_2/actions/runs/43408392208)：版本 86d56ad6e41af714ef7b508ad389539fe1312f2b 的 313 單元、120 Chromium e2e 全過；lint/格式/TypeScript/build/Pages/39 字體檢查成功。 artifact 14028996857，ZIP SHA-256 c5b3dfaa8cbf4f5a11c97dd2ab2ac805cdb02821e79ad92d755bf8daf8aca5f9 已核對；148 張成功畫面，其中 compact-workspace/ 新增 8 張。 PR #9 由使用者自行 Merge；§7 真機項目保留。
+
+
+全介面字級/框內距最終：[Actions 43415119800](https://github.com/peiyulin0520/VideoClip_2/actions/runs/43415119800)：版本 d2e6e912e29b2b2608590eb828f09a6d1e6e6deb 的313單元、121 Chromium e2e全過；lint/格式/TypeScript/build/Pages/39字體檢查成功。artifact 14031444059，ZIP SHA-256 5103eef54febd04d95d5f0855bdfafd9502f4cf35cf186000317ea73181471cc 已核對；152張成功畫面，其中uniform-type/新增4張。PR #9由使用者自行Merge，Safari待真機。
+
+
+全頁主題對比/字距最終：[Actions 43420368856](https://github.com/peiyulin0520/VideoClip_2/actions/runs/43420368856)：版本 8fd2969c77b84352a3cd16c7b4f025ae22177792 的313單元、127 Chromium e2e全過；lint/格式/TypeScript/build/Pages/39字體檢查成功。artifact 14033892743，ZIP SHA-256 f9664009e966a03e9b5ce3199610be1a54cb79a4532e0440f944f241e4906127 已核對；158張成功畫面，其中readability/新增6張。PR #9由使用者自行Merge，Safari待真機。
+
+
+2026-11-13 最新更正：預覽下方的圖層時間軸保留較小字級，刻度、分類與片段名稱11px，群組數及原音9px；其他頁籤、功能、播放列與彈窗仍14px，註解11px。保留收緊字距及44px觸控範圍。
+
+
+2026-11-13 最新例外：圖層時間軸刻度/分類/標籤11px，計數/原音9px，其他操作介面維持14px。[Actions 43422783991](https://github.com/peiyulin0520/VideoClip_2/actions/runs/43422783991)：版本 fc9d5bb813573aeba69889efe37b1ee98e5786f3 的313單元、127 Chromium e2e全過；lint/格式/TypeScript/build/Pages/39字體檢查成功。artifact 14036880124，ZIP SHA-256 6c1ef4fe7a5b5f2dc4ff8b93335c0138ca2b3a7e3c82b8d16897e19bf15423bb 已核對；159張成功畫面，新增uniform-type/small-timeline-labels.png。Safari待真機。

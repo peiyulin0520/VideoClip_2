@@ -1,3 +1,4 @@
+import { expandAllGroups } from './helpers';
 import { expect, test } from '@playwright/test';
 import {
   clipIds,
@@ -30,12 +31,14 @@ test('兩個專案各匯入 2 個素材：重新整理後都還在，編輯一�
 
   // 重新整理後資料還在（IndexedDB + OPFS）
   await page.reload();
+  await expandAllGroups(page);
   await expect(page.getByTestId('project-card')).toHaveCount(2);
   await expect(page.getByTestId('project-card').filter({ hasText: '新專案 1' })).toBeVisible();
   await expect(page.getByTestId('project-card').filter({ hasText: '新專案 2' })).toBeVisible();
 
   // 開專案 1，刪掉一個片段，再回首頁
   await page.getByRole('link', { name: '開啟 新專案 1' }).tap();
+  await expandAllGroups(page);
   await expect(clips(page)).toHaveCount(2);
   await clips(page).first().tap();
   await page.getByRole('button', { name: '刪除', exact: true }).tap();
@@ -46,15 +49,19 @@ test('兩個專案各匯入 2 個素材：重新整理後都還在，編輯一�
 
   // 專案 2 不受影響；專案 1 的修改有存下來（離開編輯器時立即存檔）
   await page.reload();
+  await expandAllGroups(page);
   await page.getByRole('link', { name: '開啟 新專案 2' }).tap();
+  await expandAllGroups(page);
   await expect(clips(page)).toHaveCount(2);
   await expect(page.getByTestId('time')).toContainText('/ 0:06.0');
   await page.getByRole('link', { name: '回首頁' }).tap();
   await page.getByRole('link', { name: '開啟 新專案 1' }).tap();
+  await expandAllGroups(page);
   await expect(clips(page)).toHaveCount(1);
   expect((await project(page)).tracks[0]!.items[0]!.start).toBe(2);
   // 重新整理後素材檔還在、能播放
   await page.reload();
+  await expandAllGroups(page);
   await expect(clips(page)).toHaveCount(1);
   await page.getByRole('button', { name: '播放' }).tap();
   await expect.poll(async () => timeText(page), { timeout: 5000 }).not.toMatch(/^0:00\.0/);
@@ -76,6 +83,7 @@ test('專案卡片選單：改名、複製、刪除', async ({ page }) => {
 
   // 副本的素材是獨立一份：開得起來、可以播
   await page.getByRole('link', { name: '開啟 旅行 vlog 副本' }).tap();
+  await expandAllGroups(page);
   await expect(clips(page)).toHaveCount(1);
   await page.getByRole('link', { name: '回首頁' }).tap();
 
@@ -84,6 +92,7 @@ test('專案卡片選單：改名、複製、刪除', async ({ page }) => {
   await page.getByRole('dialog').getByRole('button', { name: '刪除', exact: true }).tap();
   await expect(page.getByTestId('project-card')).toHaveCount(1);
   await page.reload();
+  await expandAllGroups(page);
   await expect(page.getByTestId('project-card')).toHaveCount(1);
 });
 

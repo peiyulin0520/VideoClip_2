@@ -1,3 +1,4 @@
+import { expandAllGroups } from './helpers';
 import { expect, test } from '@playwright/test';
 import {
   clips,
@@ -61,6 +62,7 @@ test('首次使用精靈：第一次嗎 → 備份位置 → 下載字體；完�
 
   // 重新整理：不會再問，也不會再顯示「還沒下載字體」
   await page.reload();
+  await expandAllGroups(page);
   await expect(page.getByRole('heading', { name: 'Little Moments' })).toBeVisible();
   await expect(page.getByTestId('welcome')).toHaveCount(0);
   await expect(page.getByTestId('fonts-banner')).toHaveCount(0);
@@ -132,6 +134,7 @@ test('字卡換字體：選單每個字體用自己的字形；沒下載過的�
   // 專案重新載入後字體還在（從快取讀，不會變回系統字體）
   await page.waitForTimeout(1200); // 等自動儲存（800ms）
   await page.reload();
+  await expandAllGroups(page);
   await expect(clips(page)).toHaveCount(2);
   const sample = async () => (await samplePreview(page, 0.5, 0.5)) as RGBA | null;
   await expect.poll(async () => !!(await sample())).toBe(true);
@@ -171,6 +174,7 @@ test('匯入自己的字體：選了檔案就能用，存在這台裝置，重�
   // 重新整理後：「我的字體」還在，字卡還是用它
   await page.waitForTimeout(1200); // 等自動儲存（800ms）
   await page.reload();
+  await expandAllGroups(page);
   await expect(clips(page)).toHaveCount(2);
   // 專案打開時畫字卡會自動從這台裝置的資料庫把字體載回來
   await expect

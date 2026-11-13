@@ -99,7 +99,7 @@ export function FontSelect({ value, onChange }: { value: string; onChange: (font
                       {f.previewKind === 'image' ? (
                         <img className="font-prev-img" src={previewImageUrl(f)} alt={f.label} />
                       ) : (
-                        <span className="font-prev" style={fam ? { fontFamily: `${fam}, system-ui` } : { opacity: 0.45 }}>
+                        <span className="font-prev" style={fam ? { fontFamily: `${fam}, system-ui` } : undefined}>
                           {f.label} 永遠的家 Aa 123
                         </span>
                       )}

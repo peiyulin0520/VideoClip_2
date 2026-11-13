@@ -33,6 +33,10 @@
 
 11. **選項層級與按鈕回饋**：不同層級的主類/次類需用區塊、色彩或底線清楚區分，沿用 option-primary/option-secondary；選取型按鈕保留可見 active/aria-pressed。可操作的新增按鈕使用清楚的主題色，不能看起來像停用。這是 2026-11-13 使用者對之後所有同類介面的要求。
 
+12. **緊湊操作介面**：操作介面（首頁、設定、頂部、播放列、下方功能、選項與 popup）共用 --ui-font-size（14px）；明確註解 11px。預覽下的圖層時間軸例外：刻度、分類、片段名稱11px，群組數/原音9px，保留緊字距與44px觸控（2026-11-13最新更正），不能把 small 標籤當作註解。專案內文字素材大小由使用者設定，CSS 不改成品。文字框與選項左右內距 6px、輸入框上下 4px，觸控目標維持 44px。圖像/間距縮小，維持觸控目標。特效卡只動畫/名稱，整軸開啟先分類摘要，版型來源選單在預覽右側。這是 2026-11-13 最新長期介面偏好。
+
+13. **全頁可讀性與字距**：所有文字卡片以同主題的底色/fg/說明色成組設定，不能固定深底卻繼承淺色主題深字；首次設定的備份/字體包也必須驗。操作字級14px使用 -0.02em 字距/詞距、1.25行高，註解11px用 -0.01em 字距、1.3行高，時間軸/播放時間的固定小列用更緊行高。僅限介面，不改影片文字。新增介面應通過六主題純色操作文字對比驗收，已停用控制與素材示意圖另看實際用途。
+
 ## 紀錄規則（每次都做）
 **每完成一個有意義的步驟（不是只有每個 Phase 結束），在同一個 commit 裡更新：**
 - `docs/PROGRESS.md`
@@ -54,4 +58,4 @@ Vite 8 · React 18 · TypeScript 5.9（別升 7：typescript-eslint 不支援）
 - 這個儲存庫來源是 VideoClip `78b178343409c46c7ba353ef3a6db6f279a7bde6`（main 已包含 PR #3），對外名稱 **Little Moments**。舊分支／PR 記錄只屬於來源 repo；本 repo 後續依最新指示建立 PR，由使用者自行合併。
 - 網址路徑 `/VideoClip_2/`；IndexedDB、OPFS、字體快取、localStorage 均使用獨立命名，避免同一個 github.io 網域的 `/VideoClip/` 被改動。不要刪除或自動搬移舊資料。
 - 現有 Sites 的 Little Moments 是另一套資料模型；未實作轉換，不能把 JSON 或素材庫 ZIP 當成這個版本可還原的檔案。
-- `npm run check` 仍須完成。此 Codex managed 環境缺少 Sites 指定的 `cua_repl.js`；Sites skill 明定不可另開 preview server／改用其他瀏覽器路徑，因此本機只列出 e2e。瀏覽器驗收已改由 GitHub Actions 執行：最新 306 單元/114 e2e 結果、run 及 140 張可讀繁中截圖來源見 PROGRESS.md。不要把來源 repo 或先前缺字的截圖當成最終驗收。
+- `npm run check` 仍須完成。此 Codex managed 環境缺少 Sites 指定的 `cua_repl.js`；Sites skill 明定不可另開 preview server／改用其他瀏覽器路徑，因此本機只列出 e2e。瀏覽器驗收已改由 GitHub Actions 執行：最新 313 單元/127 e2e 結果、run 及 159 張可讀繁中截圖來源見 PROGRESS.md。不要把來源 repo 或先前缺字的截圖當成最終驗收。

@@ -1,6 +1,35 @@
 # 交接手冊（HANDOFF）
 
 ## VideoClip_2 當前交接（優先於以下來源 repo 的歷史紀錄）
+- 最新時間軸小字最終：[Actions 43422783991](https://github.com/peiyulin0520/VideoClip_2/actions/runs/43422783991)：版本 fc9d5bb813573aeba69889efe37b1ee98e5786f3 的313單元、127 Chromium e2e全過；lint/格式/TypeScript/build/Pages/39字體檢查成功。artifact 14036880124，ZIP SHA-256 6c1ef4fe7a5b5f2dc4ff8b93335c0138ca2b3a7e3c82b8d16897e19bf15423bb 已核對；159張成功畫面，新增uniform-type/small-timeline-labels.png。時間軸11px/9px，其餘介面14px。最後文件/截圖不改驗收版本，以下待CI皆歷史；Safari待真機。
+
+- 最新使用者更正：只有.timeline圖層拖拉軸恢復小字11px，群組計數/原音9px；局部覆寫--ui-font-size，其他頁面/功能/頁籤/播放列仍14px。維持負字距/緊行高/44px觸控。既有uniform-type驗收實際收合與展開分類並留圖，完整CI待本次push。
+- 最新全頁主題對比/小字字距最終：[Actions 43420368856](https://github.com/peiyulin0520/VideoClip_2/actions/runs/43420368856)：版本 8fd2969c77b84352a3cd16c7b4f025ae22177792 的313單元、127 Chromium e2e全過；lint/格式/TypeScript/build/Pages/39字體檢查成功。artifact 14033892743，ZIP SHA-256 f9664009e966a03e9b5ce3199610be1a54cb79a4532e0440f944f241e4906127 已核對；158張成功畫面，其中readability/新增6張。PR #9由使用者自行Merge；最後文件/截圖不改成功版本產品/測試。以下待CI是過程紀錄，Safari仍待真機。
+
+- 最新全頁對比/字距：PR #9仍未合併。radio-card/pack-row不能固定深底卻沿用主題fg，文字表面需control/fg/muted成組；暖色/米色muted在control上原不足4.5，另用ui-link/success/warning/danger文字色，不把按鈕填色accent直接拿來當小字。FontSelect未載入fallback範例不再opacity.45，selected深底的warn另外配淺色。全介面字距/詞距-0.02em、行高1.25，註解-0.01em/1.3，小列按實際高度1或1.1。測試ui-contrast以文字可見範圍中心合成祖先RGBA背景，放在縮圖上方的絕對定位秒數不能錯算成縮圖深底，檢查純色UI文字；不拿素材示意圖或真正disabled當一般操作文字。預期313/127待CI，158張畫面。六主題以html[data-theme]實際確認，並涵蓋改名/畫面比例/匯出/片段範圍/裁切/聲音選段/畫畫/自訂色popup；不開始下載或匯出，只審核操作文字。
+
+- 最新全介面等字級/框內距最終：[Actions 43415119800](https://github.com/peiyulin0520/VideoClip_2/actions/runs/43415119800)：版本 d2e6e912e29b2b2608590eb828f09a6d1e6e6deb 的313單元、121 Chromium e2e全過；lint/格式/TypeScript/build/Pages/39字體檢查成功。artifact 14031444059，ZIP SHA-256 5103eef54febd04d95d5f0855bdfafd9502f4cf35cf186000317ea73181471cc 已核對；152張成功畫面，其中uniform-type/新增4張。PR #9由使用者自行Merge；最後文件/截圖不改成功版本產品/測試。以下待CI是過程紀錄，Safari仍待真機。
+
+- 首頁 banner/tip 原固定深底在米色主題會深字配深底；人工看圖發現，改 control（fallback panel）/fg 同主題色，padding6px。radio-card 也降內距14→6px，不動44px觸控或專案文字框。
+
+- 字級首輪 bba8e13 / Actions43412939957：313單元、原120瀏覽器情境全過；新情境未開始字級斷言，卡在初始新增按鈕名稱。初始按鈕是「＋ 新增文字（放在目前這一秒）」；只有選中既有字卡後的＋新增才有 aria-label「新增文字」。沿用既有測試 /新增文字/，不改產品或放寬字級/幾何斷言。
+
+- 最新補正（PR #9 尚未合併，沿用）：全介面文字統一14px（--ui-font-size），只對 hint/sheet-msg/empty-note/note/role=note 明確註解使用11px；不能以 small 作註解，因主題名稱/群組數/來源標記也用small。作用域為 #root 和 portal .sheet，不影響畫布/文字模型。框內距縮小6px、輸入上下4px，保留44px觸控。播放時間用兩行但 textContent 仍是原來 current / total，320px減少間距不讓時間遮按鈕。預期313/121待CI，Safari原生輸入聚焦待真機。文字節點驗收只要求頁面非空且每個可見節點字級正確；首頁只有少量文字，不能硬要求和編輯器一樣多的節點數。
+
+- 最新 10 點最終：[Actions 43408392208](https://github.com/peiyulin0520/VideoClip_2/actions/runs/43408392208)：版本 86d56ad6e41af714ef7b508ad389539fe1312f2b 的 313 單元、120 Chromium e2e 全過；lint/格式/TypeScript/build/Pages/39 字體檢查成功。 artifact 14028996857，ZIP SHA-256 c5b3dfaa8cbf4f5a11c97dd2ab2ac805cdb02821e79ad92d755bf8daf8aca5f9 已核對；148 張成功畫面，其中 compact-workspace/ 新增 8 張。 PR #9 由使用者自行 Merge。下列待 CI/舊 PR 待合併是歷史；最後文件/截圖不改成功版本的 src/e2e。Safari 真機仍待確認。
+
+- 4a6f513 / Actions 43406761969：313/118 of120，全6新情境已過。縮小後53px短片中心只離 join44目標約5px；原片段只有 PointerDown，行動 Chromium touch adjustment 可優先導向附近 button，ElementFromPoint 通過仍無 drag。片段加 onClick/role button/Enter Space 選取，使中心也有可操作語意；保留原長按400ms、交接44px，不以拉長 timeout 取代修正。拖曳 helper 也觀察實際 PointerDown 目標（非只 ElementFromPoint），不改狀態；鍵盤事件只處理片段自身，避免攔到菱形子按鈕。
+
+- 小版型圖不能只降 height：三列數字的 min-content 會溢出。54px art、3px padding/2px gap、grid-auto-rows minmax(0,1fr)，數字 min-height0/line-height1；e2e 驗每格數字 bounds 在 art 內。
+
+- Crop e2e 要區分來源 UV 與專案座標；預設 overlay scale=.5，用 itemBox 換算實際遮罩取樣點，外部點也選原素材內側。CDP 發完資料不代表 React 狀態已渲染，每點等待 guide UV、touchEnd 等 guide 消失，再做套用/復原；不能以加 timeout/retry 繞過。自由筆觸 preventDefault 防相容點擊。
+
+- compact-workspace 特效截圖須等待可見第一張 canvas 的 data-demo-ready=true，與既有 A/B 動畫驗收一致，避免剛滾入可視範圍尚未繪製。
+
+- compact-workspace 首輪 9d083a0：313/115 of 120；版型 img alt 需保留至左側 preview。SVG 非縮放 2px 外框會進 boundingBox，直徑要扣此外框；不可放寬實際遮罩輸出。真觸控後的套用須驗 dialog 關閉，button manipulation 防雙擊縮放；timeline contextmenu 防原生長按選單。CDP 拖曳需 source 在 viewport 且 elementFromPoint 命中，避免空白長按被誤當產品拖曳失效。
+
+- 最新 10 點 compact-workspace：PR #8 已使用者合併，main ccc85d8；313/120 待驗收。Timeline 用 expanded/collapsed key 重設分類，不可用 .clip DOM 當匯入完成（預設不渲染細列），測試須讀模型等待後透過 UI 開群組。新增/選取由 store subscription 僅展開所屬類，初始載入不自動展開。交接 circle 在 row h+1，44px 目標位於上下素材中心線之間，不再增加 ROW_H；舊中心拖曳/修剪要全過。選中 origin=drawing 的畫布透明區拖移優先抓住整張，pendingTap 保留正常 opaque hit，使輕點仍可切到下層；4–8px 已變形手勢也不能在放手時改選，其他透明貼圖仍可穿透。Pencil alpha 來源座標鎖紙紋，無實心核心；CropPointer 偏移 CSS px 後存 UV，SVG 指觸圈/目標圈不進遮罩模型。版型左圖右選單，底部不重複。
+
 - 最新 11 點最終：[Actions 43386450346](https://github.com/peiyulin0520/VideoClip_2/actions/runs/43386450346)：版本 8b61548265b98396fa70d5af4b5e884ff04448b5 的 306 單元、114 Chromium e2e 全數通過；lint/格式/TypeScript/build/Pages/39 字體檢查成功。 artifact 14019456046，ZIP SHA-256 1cd711f8bc09875f2b5299ce722fa440cfb287bba022a05c4e7e42e0941c861b 已核對；140 張成功畫面，其中 playback-refinement/ 新增 5 張。 PR #8 交使用者自行 Merge。下列 306/114 待驗收及舊 PR 待合併是歷史。最後文件/截圖不改成功版本的 src/e2e；Safari 真機待確認。
 
 - PR #8 第一輪 824dfb7 / Actions 43383883589：306/108 of 114。交接 + 的 44px 目標會擋到短素材與片尾把手；為有交接的影像列在前方分配獨立 44px，按鈕 top=-22，不改素材列 h44/拖曳候選邊界。定格改單一播放列小按鈕，細調在圖層頁；避免多一列造成初始素材低於視窗。手動 mouse reorder 先 scrollIntoView。聲音標記由觸控像素換算，精度驗 0.01 秒，不做浮點完全相等。

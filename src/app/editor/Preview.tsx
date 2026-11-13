@@ -272,6 +272,18 @@ export function Preview({ projectId, width, height }: { projectId: string; width
     if (liftIndex >= 0) layers.push(layers.splice(liftIndex, 1)[0]!);
     let hit = topHit(layers, geo, pt.x, pt.y);
     const currentBox = cur && editableBox(cur);
+    // A selected drawing is a transparent editing canvas. Empty pixels must not hand
+    // its one-finger drag to the video underneath; other transparent assets keep pass-through.
+    const selectedAssetId = cur?.item.type === 'image' ? cur.item.assetId : null;
+    const drawingDrag = !!(
+      cur &&
+      !cur.track.locked &&
+      !cur.track.hidden &&
+      currentBox &&
+      cur.item.type === 'image' &&
+      st.project!.assets.find((a) => a.id === selectedAssetId)?.origin === 'drawing' &&
+      pointInBox(currentBox, pt.x, pt.y)
+    );
     if (
       cur &&
       !cur.track.locked &&
@@ -301,6 +313,8 @@ export function Preview({ projectId, width, height }: { projectId: string; width
         setPicker({ ids, x, y });
       }, 550);
     }
+    // A tap keeps the ordinary opaque hit in pendingTap; only a drag keeps the selected canvas.
+    if (drawingDrag) hit = cur;
     if (!hit) {
       gesture.current = null;
       return;
@@ -367,7 +381,8 @@ export function Preview({ projectId, width, height }: { projectId: string; width
       e.type !== 'pointercancel' &&
       pending &&
       !pending.moved &&
-      !pending.held
+      !pending.held &&
+      !(gesture.current?.type === 'move' && gesture.current.moved)
     )
       useProjectStore.getState().select(pending.id);
     pointers.current.delete(e.pointerId);

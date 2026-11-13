@@ -20,7 +20,7 @@ npm run check
 npm run e2e -- --trace off
 ```
 
-`check` 包含 lint、306 個單元測試、TypeScript、正式建置及 GitHub Pages 路徑/PWA/字體檔案檢查。114 個瀏覽器測試（含完整影片/音訊解碼、收藏、GIF、手動遮罩、Key 與主題）交由 GitHub Actions 的 Chromium 153 執行，CI 保存截圖 artifact；最新成功狀態見 PROGRESS.md。本次已更新 140 張 CI 畫面（docs/screenshots）中文可讀；iPhone Safari 仍待真機驗證。
+`check` 包含 lint、313 個單元測試、TypeScript、正式建置及 GitHub Pages 路徑/PWA/字體檔案檢查。127 個瀏覽器測試（含完整影片/音訊解碼、收藏、GIF、手動遮罩、Key 與主題）交由 GitHub Actions 的 Chromium 153 執行，CI 保存截圖 artifact；最新成功狀態見 PROGRESS.md。本次已更新 159 張 CI 畫面（docs/screenshots）中文可讀；iPhone Safari 仍待真機驗證。
 
 ## GitHub Pages
 
@@ -119,3 +119,29 @@ GIF 解碼器 gifuct-js 2.1.2 為 MIT，授權位於 public/licenses。輸出含
 音訊小畫面在時間軸旁，同步白線並可暫停標記。定格改在播放列按一下記錄，細調另開；播放與轉場不顯示編輯白框。交接獨立列的圓底＋可進正確 A/B，已用效果與移除在上、選項亮框、同種每交接一次並支援混搭。鉛筆增加可見石墨筆觸，新增硬體壓力/手指速度筆；主次分類、按鈕配色與 GIPHY 純貼圖一併調整。
 
 [Actions 43386450346](https://github.com/peiyulin0520/VideoClip_2/actions/runs/43386450346)：版本 8b61548265b98396fa70d5af4b5e884ff04448b5 的 306 單元、114 Chromium e2e 全數通過；lint/格式/TypeScript/build/Pages/39 字體檢查成功。 [PR #8](https://github.com/peiyulin0520/VideoClip_2/pull/8) 由使用者自行 Merge；[本次截圖](docs/screenshots/playback-refinement/)。Safari 待真機。用法見 docs/USAGE.md。
+
+## 分類優先、緊湊選單與偏移剪裁（PR #9）
+
+時間軸先顯示分類摘要，按需要展開；控制字級以功能列為上限、特效三欄只動畫與名稱，版型左圖右選單。鉛筆改紙紋素描、保留單一感壓筆；已選手繪可直接單指拖，輕點仍能選其他素材。播放圖示有短標籤，交接小圓圈不佔獨立列。自由保留/擦除/描邊可用下方控制圈瞄準上方目標，偏移及粗細可調。
+
+[Actions 43408392208](https://github.com/peiyulin0520/VideoClip_2/actions/runs/43408392208)：版本 86d56ad6e41af714ef7b508ad389539fe1312f2b 的 313 單元、120 Chromium e2e 全過；lint/格式/TypeScript/build/Pages/39 字體檢查成功。 [PR #9](https://github.com/peiyulin0520/VideoClip_2/pull/9) 由使用者自行 Merge；[本次畫面](docs/screenshots/compact-workspace/)，用法見 docs/USAGE.md。Safari 待真機。
+
+
+## 全介面等字級與縮小框內距
+
+全部操作介面14px，明確註解11px，包含首頁/設定/頂部/播放列/時間軸。文字框/按鈕左右6px、輸入框上下4px，保留44px觸控與專案文字素材的原始字級；窄螢幕播放時間兩行。
+
+[Actions 43415119800](https://github.com/peiyulin0520/VideoClip_2/actions/runs/43415119800)：版本 d2e6e912e29b2b2608590eb828f09a6d1e6e6deb 的313單元、121 Chromium e2e全過；lint/格式/TypeScript/build/Pages/39字體檢查成功。 [驗收畫面](docs/screenshots/uniform-type/)；PR #9由使用者自行Merge，Safari待真機。
+
+
+## 全頁主題文字對比與收緊字距
+
+首次備份/字體包及文字表面以主題底色和主字/說明色成組設定；六主題逐頁與popup審核。14px操作字距/詞距-0.02em、行高1.25；11px註解字距-0.01em/行高1.3，固定小列更緊。不改專案素材字體或渲染。
+
+[Actions 43420368856](https://github.com/peiyulin0520/VideoClip_2/actions/runs/43420368856)：版本 8fd2969c77b84352a3cd16c7b4f025ae22177792 的313單元、127 Chromium e2e全過；lint/格式/TypeScript/build/Pages/39字體檢查成功。 [驗收畫面](docs/screenshots/readability/)；PR #9由使用者自行Merge，Safari待真機。
+
+
+2026-11-13 最新更正：預覽下方的圖層時間軸保留較小字級，刻度、分類與片段名稱11px，群組數及原音9px；其他頁籤、功能、播放列與彈窗仍14px，註解11px。保留收緊字距及44px觸控範圍。
+
+
+時間軸小字最終：[Actions 43422783991](https://github.com/peiyulin0520/VideoClip_2/actions/runs/43422783991)：版本 fc9d5bb813573aeba69889efe37b1ee98e5786f3 的313單元、127 Chromium e2e全過；lint/格式/TypeScript/build/Pages/39字體檢查成功。 [時間軸畫面](docs/screenshots/uniform-type/small-timeline-labels.png)。

@@ -1,3 +1,4 @@
+import { expandAllGroups } from './helpers';
 import { expect, test, type Page } from '@playwright/test';
 import type { Project, VideoItem } from '../src/model/types';
 import {
@@ -58,6 +59,8 @@ test('時間軸預設收合，展開各層；頁尾停在最後功能，沒有�
     Array.from({ length: 7 }, () => 'photo.png'),
   );
   await page.getByRole('button', { name: /^展開時間軸/ }).tap();
+  await expect(page.getByTestId('track')).toHaveCount(0);
+  await expandAllGroups(page);
   await expect(page.getByTestId('track')).toHaveCount(8);
   await shot(page, 'expanded-layers');
   await page.getByRole('button', { name: /^收合時間軸/ }).tap();
@@ -96,6 +99,7 @@ test('預覽雙指縮放整條膠卷與每格來源，單格點選不會改變�
   await shot(page, 'filmstrip-group-scale');
   await page.getByRole('link', { name: '回首頁', exact: true }).tap();
   await page.goBack();
+  await expandAllGroups(page);
   await expect
     .poll(async () => (await current(page)).tracks.find((t) => t.template)?.layout?.transform?.scale)
     .toBeCloseTo(scale);

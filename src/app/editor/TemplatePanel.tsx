@@ -160,29 +160,60 @@ export function TemplatePanel() {
         目前選擇：{LAYOUTS.find((l) => l.id === style)!.label}{' '}
         {project.layout?.style === style ? '（已套用）' : '（待套用）'}
       </p>
-      <div className="slot-map" aria-label="版型格子位置對照">
-        {layoutSlots(style, count).map((slot, i) => {
-          const a = media.find((a) => a.id === ids[i]);
-          return (
-            <button
-              key={i}
-              className={focusSlot === i ? 'active' : ''}
-              aria-label={`選擇第 ${i + 1} 格 ${slotLabel(style, i, count)}`}
-              onClick={() => setFocusSlot(i)}
-              style={{
-                left: `${slot.x * 100}%`,
-                top: `${slot.y * 100}%`,
-                width: `${slot.w * 100}%`,
-                height: `${slot.h * 100}%`,
-              }}
-            >
-              {a?.thumbs[0] && <img src={a.thumbs[0]} alt="" />}
-              <strong>
-                {i + 1} · {slotLabel(style, i, count)}
-              </strong>
-            </button>
-          );
-        })}
+      <div className="template-assignment" aria-label="版型預覽與各格素材">
+        <div className="slot-map" aria-label="版型格子位置對照">
+          {layoutSlots(style, count).map((slot, i) => {
+            const a = media.find((a) => a.id === ids[i]);
+            return (
+              <button
+                key={i}
+                className={focusSlot === i ? 'active' : ''}
+                aria-label={`選擇第 ${i + 1} 格 ${slotLabel(style, i, count)}`}
+                onClick={() => setFocusSlot(i)}
+                style={{
+                  left: `${slot.x * 100}%`,
+                  top: `${slot.y * 100}%`,
+                  width: `${slot.w * 100}%`,
+                  height: `${slot.h * 100}%`,
+                }}
+              >
+                {a?.thumbs[0] && <img src={a.thumbs[0]} alt={`第 ${i + 1} 格素材縮圖`} />}
+                <strong>
+                  {i + 1} · {slotLabel(style, i, count)}
+                </strong>
+              </button>
+            );
+          })}
+        </div>
+        <div className="template-source-choices">
+          {ids.map((id, i) => (
+            <label className={`slot-choice${focusSlot === i ? ' focused' : ''}`} key={i}>
+              <span>
+                第 {i + 1} 格 · {slotLabel(style, i, count)}
+              </span>
+              <select
+                aria-label={`第 ${i + 1} 格素材`}
+                value={id}
+                onChange={(e) => {
+                  setFocusSlot(i);
+                  setSourceIds(null);
+                  const next = [...ids];
+                  next[i] = e.target.value;
+                  setSelected(next);
+                }}
+              >
+                <option value="">選擇素材</option>
+                {project.assets
+                  .filter((a) => a.kind !== 'audio')
+                  .map((a) => (
+                    <option key={a.id} value={a.id}>
+                      {assetLabel(a.id)}
+                    </option>
+                  ))}
+              </select>
+            </label>
+          ))}
+        </div>
       </div>
       <div className="chips">
         <button className={`chip${sourceIds === null ? ' active' : ''}`} onClick={() => setSourceIds(null)}>
@@ -230,36 +261,6 @@ export function TemplatePanel() {
         data-testid="template-files"
         onChange={(e) => void onFiles(e.target.files)}
       />
-      {ids.map((id, i) => (
-        <label className={`slot-choice${focusSlot === i ? ' focused' : ''}`} key={i}>
-          <span>
-            第 {i + 1} 格 · {slotLabel(style, i, count)}
-          </span>
-          {media.find((a) => a.id === id)?.thumbs[0] && (
-            <img src={media.find((a) => a.id === id)!.thumbs[0]} alt={`第 ${i + 1} 格素材縮圖`} />
-          )}
-          <select
-            aria-label={`第 ${i + 1} 格素材`}
-            value={id}
-            onChange={(e) => {
-              setFocusSlot(i);
-              setSourceIds(null);
-              const next = [...ids];
-              next[i] = e.target.value;
-              setSelected(next);
-            }}
-          >
-            <option value="">選擇素材</option>
-            {project.assets
-              .filter((a) => a.kind !== 'audio')
-              .map((a) => (
-                <option key={a.id} value={a.id}>
-                  {assetLabel(a.id)}
-                </option>
-              ))}
-          </select>
-        </label>
-      ))}
       <label className="number-control">
         動態效果
         <select

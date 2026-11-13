@@ -1,3 +1,4 @@
+import { expandAllGroups } from './helpers';
 import { expect, test, type Page } from '@playwright/test';
 import type { Project } from '../src/model/types';
 import {
@@ -47,6 +48,7 @@ test('六種主題的深色媒體按鈕與文字都清楚，米色可從設定�
       })
       .tap();
     await page.goto(editorUrl);
+    await expandAllGroups(page);
     await expect(page.getByTestId('track')).toHaveCount(1);
     await expect(page.locator('html')).toHaveAttribute('data-theme', theme);
     await expect.poll(async () => isRed(await samplePreview(page, 0.5, 0.5))).toBe(true);

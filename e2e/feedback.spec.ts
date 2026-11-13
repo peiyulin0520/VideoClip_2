@@ -1,3 +1,4 @@
+import { setCropOffset } from './helpers';
 import { dragTimelineItem } from './helpers';
 import { expect, test, type Page, type Locator } from '@playwright/test';
 import type { Project } from '../src/model/types';
@@ -247,6 +248,7 @@ test('裁切套用前可看透明結果，復原上一筆描邊不改原片', as
   await openTab(page, '剪輯');
   await page.getByRole('button', { name: '裁切', exact: true }).tap();
   await page.getByRole('button', { name: '自由描邊保留區域', exact: true }).tap();
+  await setCropOffset(page);
   const stage = page.getByTestId('crop-stage'),
     box = (await stage.boundingBox())!;
   const draw = async (x: number) => {

@@ -1,3 +1,4 @@
+import { expandAllGroups } from './helpers';
 import { expect, test } from '@playwright/test';
 import {
   addOverlays,
@@ -34,6 +35,7 @@ test('安全區參考線：預設不顯示；開關有文字；打開後常駐�
   // 重新整理後保留
   await page.waitForTimeout(1200);
   await page.reload();
+  await expandAllGroups(page);
   await expect(clips(page)).toHaveCount(1, { timeout: 20_000 });
   await expect(page.getByTestId('safe-zone')).toBeVisible();
 

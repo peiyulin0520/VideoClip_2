@@ -43,8 +43,22 @@ export async function createProjectWith(page: Page, files: string[], expandTimel
   await page.getByRole('button', { name: '新增專案' }).tap();
   await page.getByTestId('new-project-files').setInputFiles(files.map(fixture));
   await expect(page).toHaveURL(/#\/p\//);
-  await expect(page.getByTestId('clip')).toHaveCount(files.length, { timeout: 20_000 });
-  if (expandTimeline) await page.getByRole('button', { name: /^展開時間軸/ }).tap();
+  await expect
+    .poll(
+      () =>
+        page.evaluate(() => {
+          const hook = (
+            window as unknown as { __videoclip?: { project: () => { tracks: { items: unknown[] }[] } } }
+          ).__videoclip;
+          return hook?.project().tracks.reduce((n, track) => n + track.items.length, 0) ?? 0;
+        }),
+      { timeout: 20_000 },
+    )
+    .toBe(files.length);
+  if (expandTimeline) {
+    await page.getByRole('button', { name: /^展開時間軸/ }).tap();
+    await expandAllGroups(page);
+  }
 }
 
 export const clips = (page: Page) => page.getByTestId('clip');
@@ -188,14 +202,19 @@ export async function openTab(
 /** 疊加分頁 →「加入影片或照片」→ 選檔案 */
 export async function addOverlays(page: Page, files: string[]) {
   await openTab(page, '影像');
-  const before = await page.getByTestId('clip').count();
+  const before = (await project(page)).tracks.reduce((n, track) => n + track.items.length, 0);
   const [chooser] = await Promise.all([
     page.waitForEvent('filechooser'),
     page.getByRole('button', { name: /加入影片或照片/ }).tap(),
   ]);
   await chooser.setFiles(files.map(fixture));
   // 匯入是非同步的（讀檔、縮圖），等到時間軸上多出這幾個物件
-  await expect(page.getByTestId('clip')).toHaveCount(before + files.length, { timeout: 20_000 });
+  await expect
+    .poll(async () => (await project(page)).tracks.reduce((n, track) => n + track.items.length, 0), {
+      timeout: 20_000,
+    })
+    .toBe(before + files.length);
+  if (await page.locator('#editor-timeline').isVisible()) await expandAllGroups(page);
 }
 
 export const regionHash = (page: Page, r: [number, number, number, number]) =>
@@ -212,12 +231,32 @@ export async function dragTimelineItem(
   dy: number,
   beforeRelease?: () => Promise<void>,
 ) {
+  await source.scrollIntoViewIfNeeded();
+  await expect(source).toBeInViewport();
   const box = (await source.boundingBox())!;
   const x = box.x + Math.min(box.width / 2, 70),
     y = box.y + box.height / 2;
+  expect(
+    await source.evaluate((el, point) => el.contains(document.elementFromPoint(point.x, point.y)), { x, y }),
+    'The held point must belong to the intended clip',
+  ).toBe(true);
+  const observed = await source.evaluateHandle((el) => {
+    const down = { inside: false, target: '' };
+    document.addEventListener(
+      'pointerdown',
+      (event) => {
+        down.inside = el.contains(event.target as Node);
+        down.target = (event.target as Element).outerHTML.slice(0, 300);
+      },
+      { capture: true, once: true },
+    );
+    return down;
+  });
   const session = await page.context().newCDPSession(page);
   try {
     await session.send('Input.dispatchTouchEvent', { type: 'touchStart', touchPoints: [{ x, y, id: 1 }] });
+    const down = await observed.jsonValue();
+    expect(down.inside, 'Actual touch target: ' + down.target).toBe(true);
     await page.waitForTimeout(500); // The actual long-press threshold is 400ms.
     await expect(source).toHaveClass(/dragging/);
     for (let i = 1; i <= 10; i++)
@@ -228,6 +267,7 @@ export async function dragTimelineItem(
     await beforeRelease?.();
     await session.send('Input.dispatchTouchEvent', { type: 'touchEnd', touchPoints: [] });
   } finally {
+    await observed.dispose();
     await session.detach();
   }
 }
@@ -241,4 +281,20 @@ export async function markMuteInterval(page: Page, from: number, to: number, dur
   await strip.tap({ position: { x: (x * to) / duration, y: 20 } });
   await page.getByRole('button', { name: '標記靜音終點並新增', exact: true }).tap();
   await page.getByRole('button', { name: '調整保留聲音標記', exact: true }).tap();
+}
+
+/** Legacy scenarios explicitly open the groups they edit; the product still starts folded. */
+export async function expandAllGroups(page: Page) {
+  if (!page.url().includes('#/p/')) return;
+  await expect(page.locator('.timeline')).toBeAttached({ timeout: 20_000 });
+  const toggle = page.getByRole('button', { name: /^展開時間軸/ });
+  if (await toggle.count()) await toggle.tap();
+  const groups = page.locator('.timeline').getByRole('button', { name: /^展開.*群組$/ });
+  while (await groups.count()) await groups.first().tap();
+}
+export async function setCropOffset(page: Page, value = 0) {
+  await page.getByRole('slider', { name: '瞄準偏移', exact: true }).evaluate((el, v) => {
+    Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value')!.set!.call(el, String(v));
+    el.dispatchEvent(new Event('input', { bubbles: true }));
+  }, value);
 }
