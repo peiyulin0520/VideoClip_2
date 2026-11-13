@@ -1,7 +1,17 @@
-import { Application, CanvasSource, Container, Graphics, Rectangle, Sprite, Texture } from 'pixi.js';
+import {
+  Application,
+  CanvasSource,
+  Container,
+  Graphics,
+  Rectangle,
+  Sprite,
+  Texture,
+  ColorMatrixFilter,
+  BlurFilter,
+} from 'pixi.js';
 import 'pixi.js/advanced-blend-modes';
 import { paintMask } from './mediaMask';
-import type { MediaMask, BlendMode, Crop, Outline } from '../model/types';
+import type { MediaMask, BlendMode, Crop, Outline, ColorAdjustment } from '../model/types';
 import type { Box } from './geometry';
 import { uiScale } from './textRender';
 
@@ -29,10 +39,13 @@ export type SceneLayer = {
   mask?: MediaMask;
   sourceStamp?: number;
   opacity: number;
+  adjustment?: ColorAdjustment;
+  blur?: number;
   blend: BlendMode;
   cornerRadius: number; // 0–0.5
   outline?: Outline;
   viewport?: { x: number; y: number; w: number; h: number };
+  clipCircle?: { x: number; y: number; r: number };
 };
 
 type Obj = {
@@ -53,6 +66,8 @@ type Obj = {
   alphaCanvas?: HTMLCanvasElement;
   alphaKey?: string;
   outlineKey: string;
+  colorFilter?: ColorMatrixFilter;
+  blurFilter?: BlurFilter;
 };
 
 export class Compositor {
@@ -247,27 +262,77 @@ export class Compositor {
     o.sprite.width = box.w;
     o.sprite.height = box.h;
     o.sprite.blendMode = layer.blend;
+    const adjustment = layer.adjustment;
+    o.sprite.tint = adjustment?.tint ?? '#ffffff';
+    const filters = [];
+    if (
+      adjustment &&
+      (adjustment.brightness !== 1 || adjustment.saturation !== 1 || adjustment.temperature !== 0)
+    ) {
+      const color = (o.colorFilter ??= new ColorMatrixFilter());
+      const sat = adjustment.saturation,
+        inv = 1 - sat,
+        bright = adjustment.brightness,
+        temp = adjustment.temperature * 0.18;
+      const r = bright * (1 + temp),
+        g = bright,
+        b = bright * (1 - temp);
+      color.matrix = [
+        (0.2126 * inv + sat) * r,
+        0.7152 * inv * r,
+        0.0722 * inv * r,
+        0,
+        0,
+        0.2126 * inv * g,
+        (0.7152 * inv + sat) * g,
+        0.0722 * inv * g,
+        0,
+        0,
+        0.2126 * inv * b,
+        0.7152 * inv * b,
+        (0.0722 * inv + sat) * b,
+        0,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+      ];
+      filters.push(color);
+    }
+    if (layer.blur && layer.blur > 0) {
+      const blur = (o.blurFilter ??= new BlurFilter({ strength: 1, quality: 3 }));
+      blur.strength = layer.blur;
+      filters.push(blur);
+    }
+    o.sprite.filters = filters;
 
     // ---- 圓角遮罩 ----
     const radius = Math.min(layer.cornerRadius * Math.min(box.w, box.h), Math.min(box.w, box.h) / 2);
-    if (radius > 0.5 || layer.viewport) {
+    if (radius > 0.5 || layer.viewport || layer.clipCircle) {
       const vp = layer.viewport;
-      const key = `${box.w.toFixed(1)}|${box.h.toFixed(1)}|${radius.toFixed(1)}|${vp ? [vp.x - box.cx, vp.y - box.cy, vp.w, vp.h].join(',') : ''}`;
+      const key = `${box.w.toFixed(1)}|${box.h.toFixed(1)}|${radius.toFixed(1)}|${vp ? [vp.x - box.cx, vp.y - box.cy, vp.w, vp.h].join(',') : ''}|${JSON.stringify(layer.clipCircle)}`;
       if (!o.mask) {
         o.mask = new Graphics();
         o.container.addChild(o.mask);
       }
       if (o.maskKey !== key) {
-        o.mask
-          .clear()
-          .roundRect(
-            vp ? vp.x - box.cx : -box.w / 2,
-            vp ? vp.y - box.cy : -box.h / 2,
-            vp?.w ?? box.w,
-            vp?.h ?? box.h,
-            radius,
-          )
-          .fill(0xffffff);
+        o.mask.clear();
+        if (layer.clipCircle)
+          o.mask
+            .circle(layer.clipCircle.x - box.cx, layer.clipCircle.y - box.cy, layer.clipCircle.r)
+            .fill(0xffffff);
+        else
+          o.mask
+            .roundRect(
+              vp ? vp.x - box.cx : -box.w / 2,
+              vp ? vp.y - box.cy : -box.h / 2,
+              vp?.w ?? box.w,
+              vp?.h ?? box.h,
+              radius,
+            )
+            .fill(0xffffff);
         o.maskKey = key;
       }
       o.sprite.mask = o.mask;
@@ -307,6 +372,8 @@ export class Compositor {
     o.container.destroy({ children: true });
     o.texture?.destroy(false);
     o.textureSource?.destroy();
+    o.colorFilter?.destroy();
+    o.blurFilter?.destroy();
   }
 
   /** 讀畫面上某一點的 RGBA（x、y 是合成器畫布像素） */

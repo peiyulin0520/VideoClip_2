@@ -1,3 +1,4 @@
+import { trimKeyframes } from './keyframes';
 import { sliceCell } from './templateTiming';
 import type { Item, Project, VideoItem } from '../model/types';
 import { findItem, itemEnd } from './timeline';
@@ -7,6 +8,7 @@ import { MIN_CLIP_DURATION } from '../model/defaults';
 export function setTimelineItems(project: Project, trackId: string, next: Item[]) {
   const track = project.tracks.find((t) => t.id === trackId);
   if (!track) return;
+  const previousLayout = track.layout;
   if (track.template && track.items.length > 1) {
     const changed = next.find((it) => {
       const prev = track.items.find((p) => p.id === it.id);
@@ -37,6 +39,14 @@ export function setTimelineItems(project: Project, trackId: string, next: Item[]
       ...(track.layout ?? project.layout),
       start: track.items[0].start,
       duration: track.items[0].duration,
+      keyframes:
+        previousLayout && previousLayout.duration !== track.items[0].duration
+          ? trimKeyframes(
+              previousLayout,
+              track.items[0].start - previousLayout.start,
+              track.items[0].start - previousLayout.start + track.items[0].duration,
+            )
+          : previousLayout?.keyframes,
     };
     track.layout = layout;
     project.layout = { ...layout };
@@ -79,6 +89,16 @@ export function trimSourceRange(project: Project, itemId: string, from: number, 
   setTimelineItems(
     project,
     found.track.id,
-    found.track.items.map((it) => (it.id === item.id ? { ...item, start, trimIn, duration } : it)),
+    found.track.items.map((it) =>
+      it.id === item.id
+        ? {
+            ...item,
+            start,
+            trimIn,
+            duration,
+            keyframes: trimKeyframes(item, start - item.start, start - item.start + duration),
+          }
+        : it,
+    ),
   );
 }

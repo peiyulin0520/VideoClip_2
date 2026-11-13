@@ -12,6 +12,8 @@ export function SourceRanges({
   markerRanges,
   markerLabel,
   onMarkerChange,
+  onEditStart,
+  onEditEnd,
 }: {
   duration: number;
   ranges: [number, number][];
@@ -23,6 +25,8 @@ export function SourceRanges({
   markerRanges?: [number, number][];
   markerLabel?: string;
   onMarkerChange?: (ranges: [number, number][]) => void;
+  onEditStart?: () => void;
+  onEditEnd?: () => void;
 }) {
   const markers = markerRanges ?? ranges;
   const bar = useRef<HTMLDivElement>(null);
@@ -46,6 +50,7 @@ export function SourceRanges({
   };
   const drag = (index: number, side: number, e: PointerEvent<HTMLButtonElement>) => {
     e.preventDefault();
+    onEditStart?.();
     e.currentTarget.setPointerCapture(e.pointerId);
     const el = e.currentTarget,
       originX = e.clientX,
@@ -53,6 +58,7 @@ export function SourceRanges({
     const move = (ev: globalThis.PointerEvent) =>
       update(index, side, origin + ((ev.clientX - originX) / bar.current!.clientWidth) * duration);
     const up = () => {
+      onEditEnd?.();
       el.removeEventListener('pointermove', move);
       el.removeEventListener('pointerup', up);
       el.removeEventListener('pointercancel', up);
@@ -127,6 +133,10 @@ export function SourceRanges({
             style={{ left: `${(v / duration) * 100}%` }}
             onPointerDown={(e) => drag(index, side, e)}
             onKeyDown={(e) => {
+              if (e.key === 'Home' || e.key === 'End') {
+                e.preventDefault();
+                update(index, side, e.key === 'Home' ? 0 : duration);
+              }
               if (e.key === 'ArrowRight' || e.key === 'ArrowLeft') {
                 e.preventDefault();
                 update(index, side, v + (e.key === 'ArrowRight' ? 0.05 : -0.05));

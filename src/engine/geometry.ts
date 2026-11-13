@@ -1,3 +1,4 @@
+import { evaluatedItem } from './keyframes';
 import { maskContains } from './mediaMask';
 import type { Asset, BlendMode, Crop, Item, TextItem } from '../model/types';
 import type { Layer } from './timeline';
@@ -8,6 +9,7 @@ export type TextSize = (item: TextItem, canvasW: number, canvasH: number) => { w
 export type GeoCtx = {
   canvasW: number;
   canvasH: number;
+  time?: number;
   assets: Asset[];
   textSize: TextSize;
   layoutMotion?: { x: number; y: number };
@@ -40,6 +42,7 @@ export function croppedSource(asset: Asset, crop?: Crop): { w: number; h: number
 }
 
 export function itemBox(item: Item, ctx: GeoCtx): Box | null {
+  if (ctx.time !== undefined) item = evaluatedItem(item, ctx.time);
   if (item.type === 'audio') return null;
   const { canvasW: cw, canvasH: ch } = ctx;
   const cell = ctx.templates?.[item.id];
@@ -120,7 +123,7 @@ export function hitLayers(layers: Layer[], ctx: GeoCtx, px: number, py: number):
   const hits: Layer[] = [];
   for (let i = layers.length - 1; i >= 0; i--) {
     const l = layers[i]!;
-    if (l.track.locked || l.item.transform.opacity <= 0.01) continue;
+    if (l.track.locked || evaluatedItem(l.item, ctx.time ?? l.item.start).transform.opacity <= 0.01) continue;
     const cell = ctx.templates?.[l.item.id];
     if (cell?.anchor && pointInBox(cell.frame, px, py)) {
       hits.push(l);

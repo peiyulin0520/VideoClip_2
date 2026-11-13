@@ -1,3 +1,4 @@
+import { itemCategory, laneCategory } from './batchLayers';
 import { createMainTrack, createTrack, MIN_CLIP_DURATION, newId } from '../model/defaults';
 import type { Item, Project, Track, VideoItem } from '../model/types';
 import { canPlace, findFreeStart, findItem, sourceTimeAt } from './timeline';
@@ -62,6 +63,8 @@ export function moveLayerItem(project: Project, id: string, desired: number, dro
   if ('trackId' in drop && !target) throw Error('找不到目標圖層');
   if (target?.locked) throw Error('目標圖層已鎖定');
   if (target && trackFamily(target) !== family) throw Error('影像、字卡與音效必須放在各自類型的圖層');
+  if (target?.items.length && itemCategory(source.item, project) !== laneCategory(target, project))
+    throw Error('影像、文字、貼紙與音訊需放在各自類型的圖層');
   if (source.track.template || target?.template) {
     if (source.track === target) {
       const delta = start - source.item.start;

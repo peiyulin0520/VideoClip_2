@@ -1,9 +1,11 @@
+import { animationValues } from './keyframes';
 import type { Project, Track, VideoItem } from '../model/types';
 import type { Box } from './geometry';
 import { layoutMotion, layoutSlots } from './layouts';
-export const groupTransform = (track: Track) => track.layout?.transform ?? { x: 0.5, y: 0.5, scale: 1 };
+export const groupTransform = (track: Track, t = track.layout?.start ?? 0) =>
+  animationValues(track.layout ?? {}, t - (track.layout?.start ?? 0));
 export function groupFrame(track: Track, w: number, h: number, t: number): Box {
-  const tf = groupTransform(track),
+  const tf = groupTransform(track, t),
     motion = layoutMotion(track.layout, t);
   return {
     cx: (tf.x + motion.x) * w,
@@ -34,7 +36,7 @@ export function cellViewport(track: Track, item: VideoItem, index: number, t: nu
       slot = { x: 0, y: index / count - (1 - p) / count, w: 1, h: 1 / count };
     }
   }
-  const tf = groupTransform(track),
+  const tf = groupTransform(track, t),
     m = layoutMotion(layout, t);
   return {
     x: tf.x + m.x + (slot.x - 0.5) * tf.scale,

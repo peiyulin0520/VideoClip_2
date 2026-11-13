@@ -1,3 +1,4 @@
+import { KeyframeControl } from '../editor/KeyframeControl';
 import { ensureFont } from '../../fonts/fontStore';
 import { ArrowUp, PanelBottom, ChevronLeft, Pause, Play, Redo2, Undo2, ZoomIn, ZoomOut } from 'lucide-react';
 import { useCallback, useEffect, useRef, useState } from 'react';
@@ -211,6 +212,7 @@ function EditorBody() {
         <button className="ratio-btn" aria-label="畫面比例" onClick={() => setRatioOpen(true)}>
           {project.aspect}
         </button>
+        <KeyframeControl />
         <button
           className="icon-btn"
           aria-label="復原"

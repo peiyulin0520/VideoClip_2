@@ -31,7 +31,21 @@ test('六種主題的深色媒體按鈕與文字都清楚，米色可從設定�
   for (const theme of ['dark', 'mono', 'light', 'fresh', 'warm', 'beige']) {
     await page.getByRole('link', { name: '回首頁', exact: true }).tap();
     await page.getByRole('link', { name: '設定', exact: true }).tap();
-    await page.getByLabel('網頁風格').selectOption(theme);
+    await page
+      .getByRole('radio', {
+        name: (
+          {
+            dark: '經典深色',
+            mono: '黑白',
+            light: '清爽白色',
+            fresh: '清新薄荷',
+            warm: '溫暖棕色',
+            beige: '米色紙感',
+          } as Record<string, string>
+        )[theme]!,
+        exact: true,
+      })
+      .tap();
     await page.goto(editorUrl);
     await expect(page.getByTestId('track')).toHaveCount(1);
     await expect(page.locator('html')).toHaveAttribute('data-theme', theme);

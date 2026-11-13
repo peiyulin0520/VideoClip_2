@@ -382,3 +382,6 @@ docs/
 
 
 2026-11-12 UTC 本次整組模板/故事驗收：程式 4d706878f81bae6e311cb866fc62c91047f02b3a / [Actions 43284472645](https://github.com/peiyulin0520/VideoClip_2/actions/runs/43284472645)：278 單元、98 Chromium e2e 全過；lint/格式/TypeScript/build/Pages/39 字體檢查成功。 118 張截圖；PR #5 交使用者自行 Merge。§7 仍需 Safari 真機驗證收合/捲動、整組雙指、格子精修、多組聲音與匯出。
+
+
+2026-11-13 九點子任務見 plans/2026-11-13-advanced-editing.md：多組選段/局部復原、命名/批次/分類收合、線性關鍵幀、A/B 動畫轉場與影片特效、GIPHY Key 設定與主題圓圈。§7 真機待驗收：密集三角/菱形觸控、長按多選/分類、實際 iPhone 效果效能、音訊解鎖與長片匯出。

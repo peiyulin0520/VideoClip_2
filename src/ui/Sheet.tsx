@@ -7,11 +7,13 @@ export function Sheet({
   title,
   onClose,
   children,
+  titleAction,
 }: {
   open: boolean;
   title: string;
   onClose: () => void;
   children: ReactNode;
+  titleAction?: ReactNode;
 }) {
   if (!open) return null;
   return createPortal(
@@ -23,7 +25,10 @@ export function Sheet({
         aria-modal="true"
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="sheet-title">{title}</div>
+        <div className="sheet-heading">
+          <div className="sheet-title">{title}</div>
+          {titleAction}
+        </div>
         {children}
       </div>
     </div>,

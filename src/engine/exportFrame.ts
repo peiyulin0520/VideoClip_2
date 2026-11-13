@@ -1,9 +1,10 @@
+import { renderLayers } from './transitions';
 import { cellMediaTime } from './templateTiming';
 import type { Asset, Project, VideoItem } from '../model/types';
 import { Compositor } from './compositor';
 import { buildScene } from './scene';
 import { AnimatedGif } from './gif';
-import { sourceTimeAt, visibleLayers } from './timeline';
+import { sourceTimeAt } from './timeline';
 
 function once(el: EventTarget, ok: string, ms = 8000): Promise<void> {
   return new Promise((resolve, reject) => {
@@ -40,7 +41,7 @@ export async function renderFrame(
   const cleanup: (() => void)[] = [];
   try {
     await Promise.all(
-      visibleLayers(project, t).map(async ({ item }) => {
+      renderLayers(project, t).map(async ({ item }) => {
         if (item.type === 'text' || item.type === 'audio' || (item.cell && cellMediaTime(item, t) === null))
           return;
         const asset = project.assets.find((a) => a.id === item.assetId);
@@ -76,7 +77,7 @@ export async function renderFrame(
           v.load();
         });
         await once(v, 'loadeddata');
-        v.currentTime = sourceTimeAt(item as VideoItem, t);
+        v.currentTime = Math.min(asset.duration - 0.001, Math.max(0.001, sourceTimeAt(item as VideoItem, t)));
         await once(v, 'seeked');
         prepared.set(item.id, { source: v, w: v.videoWidth, h: v.videoHeight });
       }),

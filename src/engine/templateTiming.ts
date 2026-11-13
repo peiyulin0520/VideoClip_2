@@ -1,7 +1,7 @@
 import type { VideoItem } from '../model/types';
 export type MediaSegment = { start: number; end: number; sourceStart: number };
 /** Local gaps pause source consumption; trailing shortage becomes a solid, never a frozen frame. */
-export function mediaSegments(item: VideoItem): MediaSegment[] {
+function rawSegments(item: VideoItem): MediaSegment[] {
   if (!item.cell) return [{ start: item.start, end: item.start + item.duration, sourceStart: item.trimIn }];
   const c = item.cell,
     segments: MediaSegment[] = [];
@@ -24,8 +24,20 @@ export function mediaSegments(item: VideoItem): MediaSegment[] {
   }
   return segments;
 }
+export function mediaSegments(item: VideoItem): MediaSegment[] {
+  const segments = rawSegments(item);
+  if (!item.sourceRanges) return segments;
+  return segments.flatMap((s) =>
+    item.sourceRanges!.flatMap(([a, b]) => {
+      const start = Math.max(s.start, s.start + (a - s.sourceStart) / item.speed);
+      const end = Math.min(s.end, s.start + (b - s.sourceStart) / item.speed);
+      return end > start ? [{ start, end, sourceStart: s.sourceStart + (start - s.start) * item.speed }] : [];
+    }),
+  );
+}
 export function cellMediaTime(item: VideoItem, t: number): number | null {
-  if (!item.cell) return item.trimIn + Math.min(Math.max(t - item.start, 0), item.duration) * item.speed;
+  if (!item.cell && !item.sourceRanges)
+    return item.trimIn + Math.min(Math.max(t - item.start, 0), item.duration) * item.speed;
   const s = mediaSegments(item).find((s) => t >= s.start && t < s.end);
   return s ? s.sourceStart + (t - s.start) * item.speed : null;
 }

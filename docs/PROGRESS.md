@@ -3,13 +3,12 @@
 規則：每完成一個有意義的步驟，就在同一個 commit 裡 **覆寫「交接快照」** 並 **在「日誌」最上面新增一筆**（規則全文見 `AGENTS.md`「紀錄規則」，背景與架構見 `docs/HANDOFF.md`）。
 
 ## 交接快照（VideoClip_2 最新狀態）
-- **日期/分支**：2026-11-13 / codex/establish-little-moments；PR #5 已使用者合併，main 8c10a55。
-- **完成**：main Actions #41 被舊四格漂移測試擋住，已修正測試並建立 [PR #6](https://github.com/peiyulin0520/VideoClip_2/pull/6)。產品程式/設定與 main 完全相同。
-- **原因**：重新套用保留原起點是使用者要求，舊測試仍按移到播放頭的假設判斷 2.7 秒紅格；3 秒版型該時上格已漂離。舊畫面尚未重畫也可能假成功。
-- **修正**：顯式定位相對原起點的 0/1.5/2.7 秒，黑/紅/藍正向斷言並比對匯出；連續三次重新套用保持原起點與長度。不加 retry/timeout/skip。
-- **驗證**：[Actions #42](https://github.com/peiyulin0520/VideoClip_2/actions/runs/43342981901) 成功，程式/測試 6b031d249513f765babc00b53973d58faeee2eb6：278 單元、98 Chromium e2e 全過，lint/格式/TypeScript/build/Pages/39 字體檢查成功。 基線/修正本機 check 均成功；最後文件/截圖提交不改 e2e 或 src。
-- **證據**：成功 CI artifact 14000233770，ZIP SHA-256 3ae5ee1f98eda79c73178a33746af026a977408b4f3ac2c3f41e47e143845845 已核對；CI 產生 119 張圖，本次只新增 usability/polaroid-drift.png，保留既有成功截圖，總 119 張。失敗 artifact 僅在 workspace 診斷，不加入 repo。
-- **發布/下一步**：PR #6 由使用者自行 Merge，再由 main Actions 發布；本次未推 main、未代合併、未開 auto-merge。#41 未進部署，公開頁仍是上一成功發布版。Safari 待真機。
+- **日期/分支**：2026-11-13 / codex/establish-little-moments；PR #6 已使用者合併，main b9a5e94 / Actions 43345475628 發布成功。
+- **任務**：最新九點，見 docs/plans/2026-11-13-advanced-editing.md；多組選段/取消/局部復原、命名與批次圖層/分類收合、線性關鍵幀、A/B 動畫轉場與影片特效、GIPHY/主題圓圈均已接入，待整體驗收。
+- **架構**：sourceRanges 為來源秒數保留範圍，和 mediaSegments 求交，灰區維持原時間空白；草稿局部 history 不進專案。batchLayers 僅同類合併且檢查重疊，另有明確依序接續。關鍵幀取樣共用 geometry/scene、分割/修剪，模板走 layout 的整組曲線。renderLayers 會在 A/B 交接期間提供雙方來源，單格/影片/預覽共用；影片色彩以 Pixi filter、遮罩/粒子/變形同源。示意格共用小 compositor，僅畫可見格。
+- **驗證**：基線 check 278 成功；新 296 單元已成功。完整 check（lint/格式/296 單元/TS/build/Pages/39 字體）成功；新 10 e2e、共 108 瀏覽器待 CI 驗收。原測試僅適配新主題 radio、隱藏 Key 與移除還原按鈕的 UI，原行為斷言保留。
+- **偏好/假設**：使用者要求主動按鈕才新增第二組標記。已詢問多組影像間是否留空白，目前依先前固定時間位置要求保留空白；若回覆則同步。參考圖只用概念/行為，不放第三方圖或素材。
+- **下一步/發布**：完成完整 check、CI、成功截圖與文件；新 PR 由使用者自行 Merge，不推 main、不代合併、不開 auto-merge。Safari 待真機。既有 119 張僅是先前成功驗收。
 
 ## 日誌格式（新增一筆時照這個）
 ```
@@ -23,6 +22,8 @@
 ```
 
 ## 使用者已確認的偏好
+- 2026-11-13 九點：白線定位後按鈕新增多組選段、popup 取消/局部復原；素材命名、長按 icon 多選排序/刪除/同類合併/隱藏、分類收合；參考 Insta360/CapCut 的影片特效與動畫 A/B 轉場；復原左側菱形與線性位置/大小/色彩關鍵幀；GIPHY 無棋盤且 Key 設定移到首頁設定；主題用底色/字色圓圈。
+
 - 最新（使用者 11/13）時間軸先收合，有需要再展開；底部不要保留大空白。膠卷只能整組縮放/移動、內片同步，格子可點來選來源片段；各格共同秒數、不足補黑白，可插入色塊湊秒數。音訊要多組明確起迄以去中間聲音；新增特效頁籤，參考單片上下展開、多格依序放入、中央字快速換字體、閃光轉場。
 
 - 2026-11-12 最新補充：細部影片/音訊選段不要兩側拉霸，以秒數上方小倒三角標起迄；聲音可多組保留區間以去掉中間聲音，保留正常色、未選反灰，選段可看該秒影片畫面。裁切補充「已列入第一點」=圈選後用筆刷與橡皮擦局部精修。
@@ -69,6 +70,13 @@
 - 2026-11-11 找到新字體來源 max32002/pop-gothic（大波浪圓體，含注音）→ 已加入手寫可愛包。問「能不能直接下載到我的 files 下載資料夾」→ 答：網頁在 iPhone 不能自動寫進「檔案」App 資料夾；官方字體存在瀏覽器裡，自己的字體用「匯入字體檔」從檔案 App 選
 
 ## 日誌（最新在最上面）
+
+- 2026-11-13 進階編輯九點實作與驗收準備
+  - 新 sourceSelections/useDraftHistory、batchLayers、keyframes、transitions/videoEffects/effectCatalog；相應 popup/Timeline/KeyframeControl/EffectsPanel/示意動畫與設定 UI。
+  - 基線 278 與新 296 單元成功，TS/完整 check/108 瀏覽器待最終驗收。完整 check 296 成功，108 e2e 待 CI；新 e2e 全自製圖像/影片；Key 測試值僅為假資料，不記錄真實 Key。
+  - 模板保持整組操作；同列合併先驗證同類與重疊，重疊可明確選依序接續；A/B 在交接期間解碼雙方，額外來源不能提前出聲；變更及新坑同步 HANDOFF/PLAN/EFFECTS。
+  - 後續：完整 CI、截圖、PR，使用者自行 Merge；Safari 真機待確認。
+
 
 - 2026-11-13 漂移驗收修復完成
   - [Actions #42](https://github.com/peiyulin0520/VideoClip_2/actions/runs/43342981901) 成功，程式/測試 6b031d249513f765babc00b53973d58faeee2eb6：278 單元、98 Chromium e2e 全過，lint/格式/TypeScript/build/Pages/39 字體檢查成功。

@@ -1,3 +1,4 @@
+import { evaluatedItem } from '../../engine/keyframes';
 import { groupFrame, groupTransform } from '../../engine/templateGeometry';
 import { Expand, Minimize, ShieldCheck } from 'lucide-react';
 import { useEffect, useMemo, useRef, useState, type PointerEvent as RPointerEvent } from 'react';
@@ -66,6 +67,7 @@ export function Preview({ projectId, width, height }: { projectId: string; width
   const [dragging, setDragging] = useState(false); // 拖移/縮放中：安全區參考線暫時出現
   const [guides, setGuides] = useState<{ x: number | null; y: number | null }>({ x: null, y: null });
   const [selVisible, setSelVisible] = useState(true);
+  const [timelineTime, setTimelineTime] = useState(0);
   const project = useProjectStore((s) => s.project)!;
   const selectedId = useProjectStore((s) => s.selectedId);
   const player = useUI((s) => s.player);
@@ -151,6 +153,7 @@ export function Preview({ projectId, width, height }: { projectId: string; width
   useEffect(() => {
     if (!player) return;
     const check = (t: number) => {
+      setTimelineTime(t);
       const p = useProjectStore.getState().project;
       const id = useProjectStore.getState().selectedId;
       const f = p && findItem(p, id);
@@ -167,7 +170,6 @@ export function Preview({ projectId, width, height }: { projectId: string; width
   }, [player, selectedId, project]);
 
   const k = cssW / width; // 專案座標 → CSS px
-  const timelineTime = player?.time ?? 0;
   const geo = useMemo(() => {
     void fontEpoch; // New font metrics invalidate selection geometry.
     return {
@@ -203,8 +205,12 @@ export function Preview({ projectId, width, height }: { projectId: string; width
       id,
       key: `gesture:move:${id}:${performance.now()}`,
       start: at,
-      startX: f.track.template ? groupTransform(f.track).x : f.item.transform.x,
-      startY: f.track.template ? groupTransform(f.track).y : f.item.transform.y,
+      startX: f.track.template
+        ? groupTransform(f.track, player?.time).x
+        : evaluatedItem(f.item, player?.time ?? f.item.start).transform.x,
+      startY: f.track.template
+        ? groupTransform(f.track, player?.time).y
+        : evaluatedItem(f.item, player?.time ?? f.item.start).transform.y,
       moved: false,
     };
   };
@@ -237,8 +243,12 @@ export function Preview({ projectId, width, height }: { projectId: string; width
         key: `gesture:pinch:${cur.item.id}:${performance.now()}`,
         startDist: Math.hypot(b.x - a.x, b.y - a.y) || 1,
         startAngle: Math.atan2(b.y - a.y, b.x - a.x),
-        startScale: cur.track.template ? groupTransform(cur.track).scale : cur.item.transform.scale,
-        startRot: cur.track.template ? 0 : cur.item.transform.rotation,
+        startScale: cur.track.template
+          ? groupTransform(cur.track, player?.time).scale
+          : evaluatedItem(cur.item, player?.time ?? cur.item.start).transform.scale,
+        startRot: cur.track.template
+          ? 0
+          : evaluatedItem(cur.item, player?.time ?? cur.item.start).transform.rotation,
       };
       return;
     }

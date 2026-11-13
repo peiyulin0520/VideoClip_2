@@ -1,8 +1,9 @@
+import { GiphyKeyForm } from '../../ui/GiphyKeyForm';
 import { useEffect, useRef, useState } from 'react';
 import { useProjectStore } from '../../store/projectStore';
 import { useUI, toast } from '../../store/uiStore';
 import { addMaterialFiles } from '../../engine/materials';
-import { listLibrary, saveLibrary, removeLibrary, readGiphyKey, writeGiphyKey } from '../../storage/library';
+import { listLibrary, saveLibrary, removeLibrary, readGiphyKey } from '../../storage/library';
 import type { LibraryRecord } from '../../storage/db';
 import { getMedia } from '../../storage/media';
 import { findItem } from '../../engine/timeline';
@@ -34,6 +35,7 @@ export function AssetsPanel() {
     [remember, setRemember] = useState(false),
     [drawing, setDrawing] = useState(false),
     [backdrop, setBackdrop] = useState('');
+  const [keySaved, setKeySaved] = useState(false);
   const [key, setKey] = useState(''),
     [query, setQuery] = useState(''),
     [results, setResults] = useState<GiphySticker[]>([]),
@@ -48,7 +50,10 @@ export function AssetsPanel() {
   const refresh = () => listLibrary().then(setRecords);
   useEffect(() => {
     void refresh();
-    void readGiphyKey().then(setKey);
+    void readGiphyKey().then((value) => {
+      setKey(value);
+      setKeySaved(!!value);
+    });
     return () => abort.current?.abort();
   }, []);
   const upload = async (files: File[], origin: 'upload' | 'drawing' = 'upload') => {
@@ -270,47 +275,14 @@ export function AssetsPanel() {
             </a>{' '}
             · 搜尋結果每次重新取得；加入的貼圖只隨專案保存。
           </p>
-          <label className="field">
-            你這台裝置的 GIPHY API Key
-            <input
-              type="password"
-              autoComplete="off"
-              aria-label="GIPHY API Key"
-              value={key}
-              onChange={(e) => setKey(e.target.value)}
+          {!keySaved && (
+            <GiphyKeyForm
+              onSaved={(value) => {
+                setKey(value);
+                setKeySaved(true);
+              }}
             />
-          </label>
-          <div className="chips">
-            <button
-              className="btn"
-              onClick={() => {
-                void writeGiphyKey(key).then(() => toast('Key 已儲存在這台裝置'));
-              }}
-            >
-              儲存 Key
-            </button>
-            <button
-              className="btn"
-              onClick={() => {
-                setKey('');
-                void writeGiphyKey('');
-              }}
-            >
-              移除 Key
-            </button>
-          </div>
-          <details>
-            <summary>如何申請免費 API Key？</summary>
-            <p className="hint">
-              前往{' '}
-              <a href="https://developers.giphy.com/" target="_blank" rel="noreferrer">
-                GIPHY Developers
-              </a>{' '}
-              建立帳號 → Dashboard → Create an API Key → 選 API。應用名稱填 LittleMoments，平台選
-              Web；說明可填「LittleMoments 網頁影片剪輯與貼圖搜尋」。建立後複製 API Key，貼在本頁儲存。Key
-              僅存在這個瀏覽器，不會寫進公開 GitHub 或與別的裝置同步。
-            </p>
-          </details>
+          )}
           <form
             className="giphy-search"
             onSubmit={(e) => {

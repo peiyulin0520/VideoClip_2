@@ -1,3 +1,6 @@
+import { itemCategory, laneCategory, LANE_NAMES, type LaneCategory } from '../../engine/batchLayers';
+import { BatchLayerBar } from './BatchLayerBar';
+import { HoldButton } from '../../ui/HoldButton';
 import { Eye, EyeOff, Film, Layers, Lock, Plus, Type, Volume2, VolumeX } from 'lucide-react';
 import {
   useCallback,
@@ -99,19 +102,33 @@ export function Timeline({
   const [drag, setDrag] = useState<Drag | null>(null);
   const [menuTrackId, setMenuTrackId] = useState<string | null>(null);
 
+  const [batch, setBatch] = useState<string[]>([]);
+  const [collapsed, setCollapsed] = useState<LaneCategory[]>([]);
   const total = totalDuration(project);
 
   // Track array is bottom-to-top; every media lane can occupy any stack position.
-  const rows = useMemo(() => {
-    const list = project.tracks.map((track, index) => ({ track, index })).reverse();
-    const heights = list.map(() => ROW_H);
-    return list.map((r, i) => ({
-      ...r,
-      h: heights[i]!,
-      top: RULER_H + ROW_GAP + heights.slice(0, i).reduce((sum, h) => sum + h + ROW_GAP, 0),
-    }));
-  }, [project.tracks]);
-  const contentH = (rows.length ? rows[rows.length - 1]!.top + rows[rows.length - 1]!.h : RULER_H) + 12;
+  const rowLayout = useMemo(() => {
+    const rows: { track: Track; index: number; top: number; h: number }[] = [];
+    const groups: { category: LaneCategory; top: number; tracks: Track[] }[] = [];
+    let top = RULER_H + ROW_GAP;
+    for (const { track, index } of project.tracks.map((track, index) => ({ track, index })).reverse()) {
+      const category = laneCategory(track, project);
+      if (!groups.some((g) => g.category === category)) {
+        groups.push({
+          category,
+          top,
+          tracks: project.tracks.filter((t) => laneCategory(t, project) === category),
+        });
+        top += ROW_H + ROW_GAP;
+      }
+      if (!collapsed.includes(category)) {
+        rows.push({ track, index, top, h: ROW_H });
+        top += ROW_H + ROW_GAP;
+      }
+    }
+    return { rows, groups, contentH: top + 12 };
+  }, [project, collapsed]);
+  const { rows, groups, contentH } = rowLayout;
 
   useLayoutEffect(() => {
     const el = scrollRef.current!;
@@ -273,6 +290,8 @@ export function Timeline({
         !!destination &&
         (destination.locked ||
           itemFamily(item) !== trackFamily(destination) ||
+          (!!destination.items.length &&
+            itemCategory(item, project) !== laneCategory(destination, project)) ||
           (destination !== track &&
             (destination.template ||
               track.template ||
@@ -392,244 +411,327 @@ export function Timeline({
   const viewH = Math.max(contentH, 106);
 
   return (
-    <div className="timeline" style={{ height: viewH }}>
-      <div
-        className="tl-scroll"
-        ref={scrollRef}
-        onScroll={onScroll}
-        onPointerDown={() => player?.pause()}
-        onClick={(e) => {
-          if (e.target === e.currentTarget || (e.target as HTMLElement).dataset.bg)
-            useProjectStore.getState().select(null);
-        }}
-        data-testid="timeline-scroll"
-      >
+    <>
+      {!!batch.length && <BatchLayerBar ids={batch} onChange={setBatch} />}
+      <div className="timeline" style={{ height: viewH }}>
         <div
-          className="tl-content"
-          data-bg="1"
-          style={{ width: viewportWidth + total * pps, height: contentH }}
+          className="tl-scroll"
+          ref={scrollRef}
+          onScroll={onScroll}
+          onPointerDown={() => player?.pause()}
+          onClick={(e) => {
+            if (e.target === e.currentTarget || (e.target as HTMLElement).dataset.bg)
+              useProjectStore.getState().select(null);
+          }}
+          data-testid="timeline-scroll"
         >
-          <div className="ruler" style={{ height: RULER_H }}>
-            {ticks.map((t) => (
-              <span key={t} className="tick" style={{ left: half + t * pps }}>
-                {Math.floor(t / 60)}:{String(Math.round(t % 60)).padStart(2, '0')}
-              </span>
+          <div
+            className="tl-content"
+            data-bg="1"
+            style={{ width: viewportWidth + total * pps, height: contentH }}
+          >
+            <div className="ruler" style={{ height: RULER_H }}>
+              {ticks.map((t) => (
+                <span key={t} className="tick" style={{ left: half + t * pps }}>
+                  {Math.floor(t / 60)}:{String(Math.round(t % 60)).padStart(2, '0')}
+                </span>
+              ))}
+            </div>
+
+            {groups.map(({ category, top, tracks }) => (
+              <div key={category} className="family-row" style={{ top, height: ROW_H }}>
+                <button
+                  className="family-toggle"
+                  aria-label={`${collapsed.includes(category) ? '展開' : '收合'}${LANE_NAMES[category]}群組`}
+                  aria-expanded={!collapsed.includes(category)}
+                  onClick={() =>
+                    setCollapsed((before) =>
+                      before.includes(category)
+                        ? before.filter((c) => c !== category)
+                        : [...before, category],
+                    )
+                  }
+                >
+                  {collapsed.includes(category) ? '▸' : '▾'} {LANE_NAMES[category]}
+                  <small>
+                    ×{tracks.length}
+                    {tracks.some((t) => t.hidden) ? ` · ${tracks.filter((t) => t.hidden).length} 隱藏` : ''}
+                  </small>
+                </button>
+                {collapsed.includes(category) &&
+                  tracks.flatMap((tr) =>
+                    tr.items.map((it) => (
+                      <span
+                        key={it.id}
+                        className={`family-summary${tr.hidden ? ' off' : ''}`}
+                        style={{ left: half + it.start * pps, width: Math.max(3, it.duration * pps) }}
+                      />
+                    )),
+                  )}
+              </div>
             ))}
-          </div>
-
-          {rows.map(({ track, top, h }) => (
-            <div
-              key={track.id}
-              className={`track${track.hidden ? ' off' : ''}${drag?.targetId === track.id ? (drag.invalid ? ' drop-invalid' : ' layer-drop') : ''}`}
-              data-testid="track"
-              data-kind={track.kind}
-              data-track-id={track.id}
-              data-bg="1"
-              style={{ top, height: h }}
-            >
-              <button
-                className="track-chip"
-                aria-label={`${track.name} 軌道設定`}
-                data-testid="track-chip"
-                title="點選開啟軌道設定"
-                onClick={() => {
-                  setMenuTrackId(track.id);
-                }}
+            {rows.map(({ track, top, h }) => (
+              <div
+                key={track.id}
+                className={`track${track.hidden ? ' off' : ''}${drag?.targetId === track.id ? (drag.invalid ? ' drop-invalid' : ' layer-drop') : ''}`}
+                data-testid="track"
+                data-kind={track.kind}
+                data-track-id={track.id}
+                data-bg="1"
+                style={{ top, height: h }}
               >
-                {track.kind === 'main' || track.kind === 'overlay' ? (
-                  <Film size={16} />
-                ) : track.kind === 'text' ? (
-                  <Type size={16} />
-                ) : (
-                  <Layers size={16} />
-                )}
-                {track.locked ? (
-                  <Lock size={11} />
-                ) : track.hidden ? (
-                  <EyeOff size={11} />
-                ) : track.muted ? (
-                  <VolumeX size={11} />
-                ) : null}
-              </button>
-
-              {!project.flexibleLayers && track.kind === 'main' && (project.mainOffset ?? 0) > 0 && (
-                <div
-                  className="intro-gap"
-                  data-testid="intro-gap"
-                  style={{
-                    left: half,
-                    width: project.mainOffset! * pps,
-                    height: h,
-                    background: project.background ?? '#000000',
-                    color: project.background === '#ffffff' ? '#111' : '#fff',
+                <HoldButton
+                  className={`track-chip${batch.includes(track.id) ? ' batch-selected' : ''}`}
+                  aria-pressed={batch.includes(track.id)}
+                  onHold={() => {
+                    setBatch((ids) => (ids.includes(track.id) ? ids : [...ids, track.id]));
+                    setMenuTrackId(null);
+                  }}
+                  aria-label={`${track.name} 軌道設定`}
+                  data-testid="track-chip"
+                  title="點選開啟軌道設定"
+                  onClick={() => {
+                    if (batch.length)
+                      setBatch((ids) =>
+                        ids.includes(track.id) ? ids.filter((id) => id !== track.id) : [...ids, track.id],
+                      );
+                    else setMenuTrackId(track.id);
                   }}
                 >
-                  開場 {project.mainOffset}s
-                </div>
-              )}
-              {(track.template ? track.items.slice(0, 1) : track.items).map((it) => {
-                const asset = isVideoItem(it) ? project.assets.find((a) => a.id === it.assetId) : undefined;
-                const selected =
-                  it.id === selectedId || !!(track.template && track.items.some((x) => x.id === selectedId));
-                const dragging = drag?.id === it.id;
-                const dx = dragging ? drag!.dx : 0;
-                return (
+                  {track.kind === 'main' || track.kind === 'overlay' ? (
+                    <Film size={16} />
+                  ) : track.kind === 'text' ? (
+                    <Type size={16} />
+                  ) : (
+                    <Layers size={16} />
+                  )}
+                  {track.locked ? (
+                    <Lock size={11} />
+                  ) : track.hidden ? (
+                    <EyeOff size={11} />
+                  ) : track.muted ? (
+                    <VolumeX size={11} />
+                  ) : null}
+                </HoldButton>
+
+                {!project.flexibleLayers && track.kind === 'main' && (project.mainOffset ?? 0) > 0 && (
                   <div
-                    key={it.id}
-                    className={`clip${selected ? ' selected' : ''}${dragging ? ' dragging' : ''}${it.type === 'text' ? ' is-text' : it.type === 'audio' ? ' is-audio' : ''}${it.duration * pps < 80 ? ' short' : ''}`}
-                    data-testid="clip"
-                    data-selected={selected}
-                    data-item-id={it.id}
-                    data-kind={it.type}
+                    className="intro-gap"
+                    data-testid="intro-gap"
                     style={{
-                      left: half + it.start * pps,
-                      width: Math.max(it.duration * pps, 4),
-                      transform: dragging ? `translate(${dx}px, ${drag!.dy}px)` : undefined,
+                      left: half,
+                      width: project.mainOffset! * pps,
+                      height: h,
+                      background: project.background ?? '#000000',
+                      color: project.background === '#ffffff' ? '#111' : '#fff',
                     }}
-                    onPointerDown={(e) => startItemGesture(e, it, track)}
                   >
-                    {isVideoItem(it) ? <Tiles item={it} asset={asset} pps={pps} h={h - 16} /> : null}
-                    <div className="clip-label">
-                      {track.template
-                        ? `${track.name} · ${track.items.length} 格`
-                        : it.type === 'text'
-                          ? it.card.runs[0]?.text === ''
-                            ? '圖形'
-                            : `Aa ${it.card.runs[0]?.text.replace(/\n/g, ' ') ?? ''}`
-                          : `${asset?.generated ? '留白' : it.type === 'audio' ? '♫ 音訊' : it.type === 'image' ? '照片' : '影片'} ${it.duration.toFixed(1)}s`}
-                      {isVideoItem(it) && it.speed !== 1 && ` · ${it.speed}x`}
-                      {isVideoItem(it) && it.type === 'video' && it.volume === 0 && ' · 靜音'}
-                    </div>
-                    {asset?.hasAudio && it.type === 'video' && (
-                      <div className="clip-audio">
-                        {it.audioEnabled === false || it.volume === 0 || track.muted
-                          ? '原音已關閉'
-                          : '♫ 原音'}
-                      </div>
-                    )}
-                    {selected && !dragging && !track.locked && (
-                      <>
-                        <div
-                          className="handle left"
-                          data-testid="trim-start"
-                          onPointerDown={(e) => startTrim(e, it, track, 'start')}
-                        />
-                        <div
-                          className="handle right"
-                          data-testid="trim-end"
-                          onPointerDown={(e) => startTrim(e, it, track, 'end')}
-                        />
-                      </>
-                    )}
+                    開場 {project.mainOffset}s
                   </div>
-                );
-              })}
+                )}
+                {(track.template ? track.items.slice(0, 1) : track.items).map((it) => {
+                  const asset = isVideoItem(it) ? project.assets.find((a) => a.id === it.assetId) : undefined;
+                  const selected =
+                    it.id === selectedId ||
+                    !!(track.template && track.items.some((x) => x.id === selectedId));
+                  const dragging = drag?.id === it.id;
+                  const dx = dragging ? drag!.dx : 0;
+                  return (
+                    <div
+                      key={it.id}
+                      className={`clip${selected ? ' selected' : ''}${dragging ? ' dragging' : ''}${it.type === 'text' ? ' is-text' : it.type === 'audio' ? ' is-audio' : ''}${it.duration * pps < 80 ? ' short' : ''}`}
+                      data-testid="clip"
+                      data-selected={selected}
+                      data-item-id={it.id}
+                      data-kind={it.type}
+                      style={{
+                        left: half + it.start * pps,
+                        width: Math.max(it.duration * pps, 4),
+                        transform: dragging ? `translate(${dx}px, ${drag!.dy}px)` : undefined,
+                      }}
+                      onPointerDown={(e) => startItemGesture(e, it, track)}
+                    >
+                      {isVideoItem(it) ? <Tiles item={it} asset={asset} pps={pps} h={h - 16} /> : null}
+                      <div className="clip-label">
+                        {it.name
+                          ? `${it.name} · ${it.duration.toFixed(1)}s`
+                          : track.template
+                            ? `${track.name} · ${track.items.length} 格`
+                            : it.type === 'text'
+                              ? it.card.runs[0]?.text === ''
+                                ? '圖形'
+                                : `Aa ${it.card.runs[0]?.text.replace(/\n/g, ' ') ?? ''}`
+                              : `${asset?.generated ? '留白' : (asset?.name ?? (it.type === 'audio' ? '♫ 音訊' : '素材'))} ${it.duration.toFixed(1)}s`}
+                        {isVideoItem(it) && it.speed !== 1 && ` · ${it.speed}x`}
+                        {isVideoItem(it) && it.type === 'video' && it.volume === 0 && ' · 靜音'}
+                      </div>
+                      {(track.template ? track.layout?.keyframes : it.keyframes)?.map((frame, i) => (
+                        <button
+                          key={frame.time}
+                          className="timeline-keyframe"
+                          aria-label={`第${i + 1}個關鍵幀 ${frame.time.toFixed(2)}秒`}
+                          style={{ left: Math.min(it.duration * pps - 4, frame.time * pps) }}
+                          onPointerDown={(e) => e.stopPropagation()}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            useProjectStore.getState().select(it.id);
+                            player?.seek(it.start + Math.min(it.duration - 0.001, frame.time));
+                          }}
+                        >
+                          ◆
+                        </button>
+                      ))}
+                      {asset?.hasAudio && it.type === 'video' && (
+                        <div className="clip-audio">
+                          {it.audioEnabled === false || it.volume === 0 || track.muted
+                            ? '原音已關閉'
+                            : '♫ 原音'}
+                        </div>
+                      )}
+                      {selected && !dragging && !track.locked && (
+                        <>
+                          <div
+                            className="handle left"
+                            data-testid="trim-start"
+                            onPointerDown={(e) => startTrim(e, it, track, 'start')}
+                          />
+                          <div
+                            className="handle right"
+                            data-testid="trim-end"
+                            onPointerDown={(e) => startTrim(e, it, track, 'end')}
+                          />
+                        </>
+                      )}
+                    </div>
+                  );
+                })}
 
-              {trackFamily(track) === 'visual' && !track.template && (
-                <>
-                  <button
-                    className="add-clip"
-                    aria-label="加入素材"
-                    style={{ left: half + Math.max(0, ...track.items.map(itemEnd)) * pps + 8 }}
-                    onClick={() => onAdd(track.id)}
-                    onPointerDown={(e) => e.stopPropagation()}
-                  >
-                    <Plus size={22} />
-                  </button>
-                </>
-              )}
-            </div>
-          ))}
-          {drag && (
-            <div
-              className={`item-drop-hint${drag.invalid ? ' invalid' : ''}`}
-              role="status"
-              data-testid="item-drop-hint"
-              data-valid={!drag.invalid}
-              style={{
-                top: drag.insertTop ?? rows.find((row) => row.track.id === drag.targetId)?.top ?? RULER_H,
-              }}
-            >
-              {drag.label}
-            </div>
-          )}
-          {drag && drag.snapX !== null && (
-            <div className="snap-line" style={{ left: half + drag.snapX * pps }} />
-          )}
+                {trackFamily(track) === 'visual' && !track.template && (
+                  <>
+                    <button
+                      className="add-clip"
+                      aria-label="加入素材"
+                      style={{ left: half + Math.max(0, ...track.items.map(itemEnd)) * pps + 8 }}
+                      onClick={() => onAdd(track.id)}
+                      onPointerDown={(e) => e.stopPropagation()}
+                    >
+                      <Plus size={22} />
+                    </button>
+                  </>
+                )}
+              </div>
+            ))}
+            {drag && (
+              <div
+                className={`item-drop-hint${drag.invalid ? ' invalid' : ''}`}
+                role="status"
+                data-testid="item-drop-hint"
+                data-valid={!drag.invalid}
+                style={{
+                  top: drag.insertTop ?? rows.find((row) => row.track.id === drag.targetId)?.top ?? RULER_H,
+                }}
+              >
+                {drag.label}
+              </div>
+            )}
+            {drag && drag.snapX !== null && (
+              <div className="snap-line" style={{ left: half + drag.snapX * pps }} />
+            )}
+          </div>
         </div>
-      </div>
-      <div className="playhead" />
+        <div className="playhead" />
 
-      <Sheet open={!!menuTrack} title={menuTrack?.name ?? ''} onClose={() => setMenuTrackId(null)}>
-        {menuTrack && (
-          <>
-            <button
-              className="menu-item"
-              onClick={() => {
-                patchTrack(menuTrack.id, { hidden: !menuTrack.hidden });
-                setMenuTrackId(null);
-              }}
-            >
-              {menuTrack.hidden ? <Eye size={20} /> : <EyeOff size={20} />}
-              {menuTrack.hidden ? '顯示這條軌道' : '隱藏這條軌道'}
-            </button>
-            <button
-              className="menu-item"
-              onClick={() => {
-                patchTrack(menuTrack.id, { locked: !menuTrack.locked });
-                setMenuTrackId(null);
-              }}
-            >
-              <Lock size={20} /> {menuTrack.locked ? '解除鎖定' : '鎖定（不能選取、移動）'}
-            </button>
-            {menuTrack.kind !== 'text' && (
+        <Sheet open={!!menuTrack} title={menuTrack?.name ?? ''} onClose={() => setMenuTrackId(null)}>
+          {menuTrack && (
+            <>
+              <label className="field">
+                圖層名稱
+                <input
+                  aria-label="圖層名稱"
+                  defaultValue={menuTrack.name}
+                  onBlur={(e) => {
+                    const name = e.target.value.trim();
+                    if (name) patchTrack(menuTrack.id, { name });
+                  }}
+                />
+              </label>
               <button
                 className="menu-item"
                 onClick={() => {
-                  patchTrack(menuTrack.id, { muted: !menuTrack.muted });
+                  setBatch([menuTrack.id]);
                   setMenuTrackId(null);
                 }}
               >
-                {menuTrack.muted ? <Volume2 size={20} /> : <VolumeX size={20} />}
-                {menuTrack.muted ? '取消靜音' : '這條軌道靜音'}
+                開始多選圖層
               </button>
-            )}
-            {menuTrack && (
-              <>
+              <button
+                className="menu-item"
+                onClick={() => {
+                  patchTrack(menuTrack.id, { hidden: !menuTrack.hidden });
+                  setMenuTrackId(null);
+                }}
+              >
+                {menuTrack.hidden ? <Eye size={20} /> : <EyeOff size={20} />}
+                {menuTrack.hidden ? '顯示這條軌道' : '隱藏這條軌道'}
+              </button>
+              <button
+                className="menu-item"
+                onClick={() => {
+                  patchTrack(menuTrack.id, { locked: !menuTrack.locked });
+                  setMenuTrackId(null);
+                }}
+              >
+                <Lock size={20} /> {menuTrack.locked ? '解除鎖定' : '鎖定（不能選取、移動）'}
+              </button>
+              {menuTrack.kind !== 'text' && (
                 <button
                   className="menu-item"
                   onClick={() => {
-                    if (menuIndex >= project.tracks.length - 1) toast('已經在最上層');
-                    else shiftTrackLayer(menuTrack.id, 1);
+                    patchTrack(menuTrack.id, { muted: !menuTrack.muted });
                     setMenuTrackId(null);
                   }}
                 >
-                  ▲ 往上一層
+                  {menuTrack.muted ? <Volume2 size={20} /> : <VolumeX size={20} />}
+                  {menuTrack.muted ? '取消靜音' : '這條軌道靜音'}
                 </button>
-                <button
-                  className="menu-item"
-                  onClick={() => {
-                    if (menuIndex <= 0) toast('已經在最下層');
-                    else shiftTrackLayer(menuTrack.id, -1);
-                    setMenuTrackId(null);
-                  }}
-                >
-                  ▼ 往下一層
-                </button>
-                <button
-                  className="menu-item danger"
-                  onClick={() => {
-                    removeTrack(menuTrack.id);
-                    setMenuTrackId(null);
-                  }}
-                >
-                  刪除這條軌道（含裡面的物件）
-                </button>
-              </>
-            )}
-          </>
-        )}
-      </Sheet>
-    </div>
+              )}
+              {menuTrack && (
+                <>
+                  <button
+                    className="menu-item"
+                    onClick={() => {
+                      if (menuIndex >= project.tracks.length - 1) toast('已經在最上層');
+                      else shiftTrackLayer(menuTrack.id, 1);
+                      setMenuTrackId(null);
+                    }}
+                  >
+                    ▲ 往上一層
+                  </button>
+                  <button
+                    className="menu-item"
+                    onClick={() => {
+                      if (menuIndex <= 0) toast('已經在最下層');
+                      else shiftTrackLayer(menuTrack.id, -1);
+                      setMenuTrackId(null);
+                    }}
+                  >
+                    ▼ 往下一層
+                  </button>
+                  <button
+                    className="menu-item danger"
+                    onClick={() => {
+                      removeTrack(menuTrack.id);
+                      setMenuTrackId(null);
+                    }}
+                  >
+                    刪除這條軌道（含裡面的物件）
+                  </button>
+                </>
+              )}
+            </>
+          )}
+        </Sheet>
+      </div>
+    </>
   );
 }
