@@ -4,6 +4,7 @@ import { useRef, useState } from 'react';
 import type { Track, VideoItem } from '../../model/types';
 import { useProjectStore } from '../../store/projectStore';
 import { editItem, setTransform } from '../../store/actions';
+import { RangeActions } from '../../ui/RangeActions';
 import { SourceRanges } from '../../ui/SourceRanges';
 import { Slider } from '../../ui/Slider';
 import { includeAudio } from '../../engine/audioRanges';
@@ -172,6 +173,20 @@ function Cell({
   const [advanced, setAdvanced] = useState(false);
   const [cursor, setCursor] = useState(item.trimIn);
   const selectedEnd = Math.min(asset.duration, cell.sourceEnd);
+  const sourceRanges = item.sourceRanges ?? [[item.trimIn, selectedEnd] as [number, number]];
+  const changeRanges = (ranges: [number, number][]) =>
+    editItem(
+      item.id,
+      (it) => {
+        if (it.type === 'text') return;
+        it.sourceRanges = ranges;
+        if (ranges.length) {
+          it.trimIn = ranges[0]![0];
+          it.cell = { ...cell, sourceEnd: ranges.at(-1)![1] };
+        }
+      },
+      { coalesce: `cell-source:${item.id}` },
+    );
   return (
     <details className="template-cell" open={open}>
       <summary
@@ -213,26 +228,28 @@ function Cell({
             cursor={cursor}
             duration={asset.duration}
             minimum={Math.min(asset.duration, MIN_CLIP_DURATION * item.speed)}
-            ranges={item.sourceRanges ?? [[item.trimIn, selectedEnd]]}
+            ranges={sourceRanges}
             thumbs={asset.thumbs}
-            onChange={(ranges) =>
-              editItem(
-                item.id,
-                (it) => {
-                  if (it.type !== 'text') {
-                    it.trimIn = ranges[0]![0];
-                    it.sourceRanges = ranges.length > 1 ? ranges : undefined;
-                    it.cell = { ...cell, sourceEnd: ranges.at(-1)![1] };
-                  }
-                },
-                { coalesce: `cell-source:${item.id}` },
-              )
-            }
+            onChange={changeRanges}
             onSeek={(t) => {
               setCursor(t);
               if (video.current) video.current.currentTime = Math.min(t, asset.duration - 0.001);
             }}
           />
+          <RangeActions
+            ranges={sourceRanges}
+            cursor={cursor}
+            duration={asset.duration}
+            minimum={MIN_CLIP_DURATION * item.speed}
+            onChange={changeRanges}
+          />
+          <button
+            className="chip"
+            disabled={!useProjectStore.getState().past.length}
+            onClick={() => useProjectStore.getState().undo()}
+          >
+            復原第 {index + 1} 格選段
+          </button>
         </>
       )}
       <button

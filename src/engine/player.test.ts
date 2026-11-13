@@ -64,3 +64,37 @@ it('defaults to a 540px preview and permits a higher cap without changing projec
   expect(previewSize(p, 1080)).toEqual({ width: 608, height: 1080 });
   expect(p).toEqual({ width: 1080, height: 1920 });
 });
+
+it('timing-sheet preview uses a transient project and restores the real project without persisting', async () => {
+  const frames = new Map<number, FrameRequestCallback>();
+  let next = 0;
+  vi.stubGlobal('requestAnimationFrame', (cb: FrameRequestCallback) => {
+    frames.set(++next, cb);
+    return next;
+  });
+  vi.stubGlobal('cancelAnimationFrame', (id: number) => frames.delete(id));
+  vi.spyOn(HTMLMediaElement.prototype, 'pause').mockImplementation(() => {});
+  vi.spyOn(HTMLMediaElement.prototype, 'load').mockImplementation(() => {});
+  const flush = () => {
+    const batch = [...frames.values()];
+    frames.clear();
+    for (const cb of batch) cb(0);
+  };
+  const project = createProject('stored'),
+    draft = structuredClone(project);
+  draft.name = 'draft';
+  const player = await Player.create({
+    host: document.createElement('div'),
+    canvas: document.createElement('canvas'),
+    getProject: () => project,
+    urlFor: () => undefined,
+  });
+  player.setPreviewProject(draft);
+  flush();
+  expect(vi.mocked(buildScene).mock.calls.at(-1)![0]).toBe(draft);
+  expect(project.name).toBe('stored');
+  player.setPreviewProject(null);
+  flush();
+  expect(vi.mocked(buildScene).mock.calls.at(-1)![0]).toBe(project);
+  player.destroy();
+});

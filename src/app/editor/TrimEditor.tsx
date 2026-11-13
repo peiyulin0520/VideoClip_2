@@ -1,7 +1,7 @@
 import { MediaPlayback } from '../../ui/MediaPlayback';
 import { Undo2 } from 'lucide-react';
 import { useDraftHistory } from '../../ui/useDraftHistory';
-import { SelectionAddButton } from '../../ui/SelectionAddButton';
+import { RangeActions } from '../../ui/RangeActions';
 import { selectedSourceRanges } from '../../engine/sourceSelections';
 import { useRef, useState } from 'react';
 import type { VideoItem } from '../../model/types';
@@ -62,23 +62,13 @@ export function TrimEditor({ item, onClose }: { item: VideoItem; onClose: () => 
           if (video.current) video.current.currentTime = Math.min(t, asset.duration - 0.001);
         }}
       />
-      <p className="source-now">目前白線：{cursor.toFixed(2)} 秒</p>
-      <SelectionAddButton
+      <RangeActions
         ranges={ranges}
         cursor={cursor}
         duration={asset.duration}
         minimum={MIN_CLIP_DURATION * item.speed}
         onChange={history.set}
       />
-      {ranges.length > 1 &&
-        ranges.map(([a, b], i) => (
-          <p key={i}>
-            第 {i + 1} 組：{a.toFixed(2)}–{b.toFixed(2)} 秒{' '}
-            <button className="chip" onClick={() => history.set(ranges.filter((_, j) => j !== i))}>
-              移除第 {i + 1} 組片段
-            </button>
-          </p>
-        ))}
       <p data-testid="source-range-values">
         來源 {range[0]!.toFixed(1)} 秒 → {range[1]!.toFixed(1)} 秒 · 選取{' '}
         {(ranges.reduce((n, [a, b]) => n + b - a, 0) / item.speed).toFixed(1)} 秒 / 原始素材{' '}
@@ -93,6 +83,7 @@ export function TrimEditor({ item, onClose }: { item: VideoItem; onClose: () => 
         </button>
         <button
           className="btn primary"
+          disabled={!ranges.length}
           onClick={() => {
             try {
               useUI.getState().player?.pause();

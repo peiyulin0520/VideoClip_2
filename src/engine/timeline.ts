@@ -79,7 +79,10 @@ export function layersAt(p: Project, t: number, includeHidden: boolean): Layer[]
 export function totalDuration(p: Project): number {
   return p.tracks.reduce(
     (max, tr) => tr.items.reduce((m, it) => Math.max(m, it.start + it.duration), max),
-    Math.max(0, ...(p.effects ?? []).map((e) => e.start + e.duration)),
+    Math.max(
+      0,
+      ...(p.effects ?? []).flatMap((e) => (e.ranges ? e.ranges.map((r) => r[1]) : [e.start + e.duration])),
+    ),
   );
 }
 

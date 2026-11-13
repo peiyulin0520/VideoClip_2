@@ -1,6 +1,7 @@
 import type { Project } from '../model/types';
 import type { SceneLayer } from './compositor';
-import { transitionPair } from './transitions';
+import { transitionSingle } from './transitions';
+import { activeAnimation } from './animationTiming';
 import { groupFrame } from './templateGeometry';
 
 /** Animate only the chosen asset, or the entire template frame/cells/title together. */
@@ -27,19 +28,15 @@ export function applySingleAnimations(
         : track.items.filter((it) => it.type !== 'audio').map((it) => ({ ...it, group: false }));
     for (const target of targets) {
       if (!target.animations || t < target.start || t >= target.start + target.duration) continue;
-      const enter = target.animations.enter,
-        exit = target.animations.exit;
-      const enterDuration = Math.min(enter?.duration ?? 0, target.duration / 2);
-      const exitDuration = Math.min(exit?.duration ?? 0, target.duration / 2);
       const local = t - target.start;
-      const animation =
-        enter && local < enterDuration
-          ? enter
-          : exit && local >= target.duration - exitDuration
-            ? exit
-            : null;
-      if (!animation) continue;
-      const p = animation === enter ? local / enterDuration : (target.duration - local) / exitDuration;
+      // Explicit windows may last the full clip; no hidden half-clip clamp.
+      const incoming = activeAnimation(target.animations.enter, 'enter', target.duration, local);
+      const outgoing = activeAnimation(target.animations.exit, 'exit', target.duration, local);
+      const active = outgoing ?? incoming;
+      if (!active) continue;
+      const { animation, progress } = active;
+      const role = outgoing ? 'exit' : 'enter';
+      const p = role === 'enter' ? progress : 1 - progress;
       const chosen = out.filter((l) =>
         target.group
           ? track.items.some((it) => l.id === it.id || l.id.startsWith(`${it.id}-`)) ||
@@ -50,7 +47,14 @@ export function applySingleAnimations(
       if (!frame) continue;
       if (target.group && ['zoom-in', 'zoom-out', 'spin', 'page-turn'].includes(animation.preset)) {
         const kind = animation.preset;
-        const scale = kind === 'page-turn' ? 1 : kind === 'zoom-out' ? 1.5 - 0.5 * p : 0.5 + 0.5 * p;
+        const scale =
+          kind === 'page-turn'
+            ? 1
+            : role === 'exit' && ['zoom-in', 'zoom-out'].includes(kind)
+              ? 1 + (kind === 'zoom-in' ? 0.5 : -0.5) * progress
+              : kind === 'zoom-out'
+                ? 1.5 - 0.5 * p
+                : 0.5 + 0.5 * p;
         const ids = new Set(chosen.map((l) => l.id));
         out = out.map((l) =>
           ids.has(l.id)
@@ -59,11 +63,11 @@ export function applySingleAnimations(
                 continuity: undefined,
                 opacity: l.opacity * (kind === 'page-turn' ? 1 : p),
                 animationTransform: {
-                  x: kind === 'page-turn' ? frame.cx + frame.w / 2 : frame.cx,
+                  x: kind === 'page-turn' ? frame.cx + ((role === 'enter' ? 1 : -1) * frame.w) / 2 : frame.cx,
                   y: frame.cy,
                   scaleX: kind === 'page-turn' ? p : scale,
                   scaleY: scale,
-                  rotation: kind === 'spin' ? (1 - p) * 100 : 0,
+                  rotation: kind === 'spin' ? (role === 'enter' ? (1 - p) * 100 : -progress * 100) : 0,
                 },
               }
             : l,
@@ -80,20 +84,17 @@ export function applySingleAnimations(
             ? { ...layer.viewport, x: layer.viewport.x - left, y: layer.viewport.y - top }
             : undefined,
         };
-        const blank = { ...normalized, id: `${layer.id}-empty`, opacity: 0 };
-        return transitionPair(
-          [blank, normalized],
-          blank,
+        return transitionSingle(
           normalized,
           animation.preset,
-          Math.max(0, Math.min(1, p)),
+          Math.max(0, Math.min(1, progress)),
+          role,
           frame.w,
           frame.h,
           `${layer.id}-single`,
         )
           .filter(
             (l) =>
-              l.id !== blank.id &&
               l.opacity > 0 &&
               (!target.group || !l.id.includes('-single-film-') || layer.id === `${track.id}-frame`),
           )

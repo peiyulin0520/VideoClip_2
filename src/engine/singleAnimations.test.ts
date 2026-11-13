@@ -38,7 +38,7 @@ function fixture() {
   p.tracks[0]!.items = [a];
   return { p, a };
 }
-describe('single A entry/exit with an empty other side', () => {
+describe('single B entry / A exit with an empty other side', () => {
   it('fades only A and leaves unrelated layers unchanged', () => {
     const { p, a } = fixture();
     a.animations = {
@@ -74,14 +74,14 @@ describe('single A entry/exit with an empty other side', () => {
     expect(result[0]).toBe(background);
     for (const x of result.slice(1)) expect(x.box.cx).toBe(78.125);
   });
-  it('clamps overlapping entry/exit lengths and preserves appearance when reapplying a template', () => {
+  it('allows full-clip durations with exit taking precedence and preserves appearance when reapplying a template', () => {
     const { p, a } = fixture();
     a.duration = 1;
     a.animations = {
       enter: { preset: 'crossfade', duration: 3 },
       exit: { preset: 'crossfade', duration: 3 },
     };
-    expect(applySingleAnimations([layer('a')], p, 0.25, 100, 100)[0]!.opacity).toBeCloseTo(0.4);
+    expect(applySingleAnimations([layer('a')], p, 0.25, 100, 100)[0]!.opacity).toBeCloseTo(0.6);
     const old = collagePlan(p, ['a', 'a', 'a'], 'photobooth', 'none', 0, 3).tracks[0]!;
     Object.assign(old.layout!, {
       caption: '',

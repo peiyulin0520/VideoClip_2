@@ -1,0 +1,197 @@
+import { test, expect, type Page } from '@playwright/test';
+import { createProjectWith, openTab, clips, samplePreview, exportFrame } from './helpers';
+import type { Project } from '../src/model/types';
+const current = (page: Page): Promise<Project> =>
+  page.evaluate(() =>
+    (window as unknown as { __videoclip: { project: () => Project } }).__videoclip.project(),
+  );
+const sheet = (page: Page) => page.getByRole('dialog', { name: '特效起迄', exact: true });
+async function point(page: Page, fraction: number) {
+  const strip = sheet(page).getByRole('slider', { name: '選段白線位置', exact: true });
+  await strip.scrollIntoViewIfNeeded();
+  const b = (await strip.boundingBox())!;
+  await strip.tap({ position: { x: b.width * fraction, y: b.height / 2 } });
+}
+async function single(page: Page) {
+  await openTab(page, '特效');
+  await page.getByRole('button', { name: '單一素材', exact: true }).tap();
+  await page.getByRole('button', { name: '進場：疊化', exact: true }).tap();
+  await page.getByRole('button', { name: '調整特效起迄', exact: true }).tap();
+}
+async function interval(page: Page, a: number, b: number) {
+  // Extend the end first so the start can move anywhere without crossing its paired end.
+  await sheet(page).getByLabel('第1組特效終點', { exact: true }).fill(String(b));
+  await sheet(page).getByLabel('第1組特效起點', { exact: true }).fill(String(a));
+}
+async function shot(page: Page, name: string) {
+  await expect(page.locator('.toast')).toHaveCount(0);
+  await page.screenshot({ path: `docs/screenshots/effect-timing/${name}.png` });
+}
+
+test('10秒影片中3秒進場邊播邊動，白線同步、可暫停、匯出保留完整片長及聲音', async ({ page }) => {
+  test.setTimeout(150000);
+  await createProjectWith(page, ['timing-video.webm']);
+  await single(page);
+  await interval(page, 0, 3);
+  await expect(sheet(page).getByLabel('第1組特效時長', { exact: true })).toHaveValue('3');
+  // The actual video changes red -> green during the effect, not after it.
+  await point(page, 0.12);
+  await sheet(page).getByRole('button', { name: '播放特效結果', exact: true }).tap();
+  await expect
+    .poll(async () => {
+      const c = await samplePreview(page, 0.5, 0.5);
+      return !!c && c[1] > 40 && c[0] < 20;
+    })
+    .toBe(true);
+  await sheet(page).getByRole('button', { name: '暫停特效結果', exact: true }).tap();
+  const time = await sheet(page).getByRole('slider', { name: '選段白線位置' }).getAttribute('aria-valuenow');
+  expect(Number(time)).toBeGreaterThan(1.5);
+  expect(Number(time)).toBeLessThan(2.6);
+  await expect(sheet(page).getByRole('button', { name: '播放特效結果', exact: true })).toHaveAttribute(
+    'aria-pressed',
+    'false',
+  );
+  const pixels = await sheet(page)
+    .getByLabel('特效結果畫面', { exact: true })
+    .evaluate((el) => [...(el as HTMLCanvasElement).getContext('2d')!.getImageData(120, 100, 1, 1).data]);
+  expect(pixels[3]).toBe(255);
+  expect(pixels[1]).toBeGreaterThan(20);
+  await shot(page, 'three-seconds-playing-content');
+  await sheet(page).getByRole('button', { name: '套用特效起迄', exact: true }).tap();
+  const it = (await current(page)).tracks[0]!.items[0]!;
+  expect(it.duration).toBeCloseTo(10, 1);
+  expect(it.animations?.enter?.ranges).toEqual([[0, 3]]);
+  const red = await exportFrame(page, 1, [[0.5, 0.5]]),
+    green = await exportFrame(page, 2, [[0.5, 0.5]]);
+  expect(red.samples[0]![0]).toBeGreaterThan(60);
+  expect(green.samples[0]![1]).toBeGreaterThan(40);
+  expect(green.samples[0]![0]).toBeLessThan(20);
+  await page.getByRole('button', { name: '匯出影片', exact: true }).tap();
+  await page.getByLabel('匯出解析度', { exact: true }).selectOption('360');
+  await page.getByLabel('匯出影格率', { exact: true }).selectOption('24');
+  await page.getByRole('button', { name: '開始匯出', exact: true }).tap();
+  await expect(page.getByRole('link', { name: '下載影片', exact: true })).toBeVisible({ timeout: 90000 });
+  const url = (await page.getByLabel('匯出影片預覽', { exact: true }).getAttribute('src'))!;
+  const movie = await page.evaluate(
+    (url) =>
+      (
+        window as unknown as {
+          __videoclip: {
+            inspectMovie: (
+              url: string,
+              t: number,
+              p: [number, number][],
+            ) => Promise<{ duration: number; rms: number; samples: number[][] }>;
+          };
+        }
+      ).__videoclip.inspectMovie(url, 2, [[0.5, 0.5]]),
+    url,
+  );
+  expect(movie.duration).toBeCloseTo(10, 1);
+  expect(movie.rms).toBeGreaterThan(0.01);
+  expect(movie.samples[0]![1]).toBeGreaterThan(40);
+  await shot(page, 'native-time-full-export');
+});
+
+test('任意秒數多組成對標籤，移除最後一組也可復原，取消不污染專案，套用可重開', async ({ page }) => {
+  await createProjectWith(page, ['timing-video.webm']);
+  await single(page);
+  await interval(page, 4, 7);
+  await point(page, 0.8);
+  await sheet(page).getByRole('button', { name: '在白線位置新增一組起迄標記', exact: true }).tap();
+  await expect(sheet(page).locator('.source-marker')).toHaveCount(4);
+  await sheet(page).getByRole('button', { name: '移除第 1 組特效', exact: true }).tap();
+  await expect(sheet(page).locator('.source-marker')).toHaveCount(2);
+  await sheet(page).getByRole('button', { name: '移除第 1 組特效', exact: true }).tap();
+  await expect(sheet(page).locator('.source-marker')).toHaveCount(0);
+  await sheet(page).getByRole('button', { name: '復原上一步選段', exact: true }).tap();
+  await expect(sheet(page).locator('.source-marker')).toHaveCount(2);
+  await sheet(page).getByRole('button', { name: '復原上一步選段', exact: true }).tap();
+  await expect(sheet(page).locator('.source-marker')).toHaveCount(4);
+  await shot(page, 'arbitrary-paired-ranges-and-undo');
+  await sheet(page).getByRole('button', { name: '取消', exact: true }).tap();
+  expect((await current(page)).tracks[0]!.items[0]!.animations?.enter?.ranges).toBeUndefined();
+  await page.getByRole('button', { name: '調整特效起迄', exact: true }).tap();
+  await interval(page, 4, 7);
+  await sheet(page).getByRole('button', { name: '套用特效起迄', exact: true }).tap();
+  await expect
+    .poll(async () =>
+      page.evaluate(() =>
+        (window as unknown as { __videoclip: { savedProject: () => Promise<Project> } }).__videoclip
+          .savedProject()
+          .then((p) => p.tracks[0]!.items[0]!.animations?.enter?.ranges),
+      ),
+    )
+    .toEqual([[4, 7]]);
+  await page.reload();
+  await expect(page.locator('.editor')).toBeVisible();
+  await openTab(page, '特效');
+  await page.getByRole('button', { name: '單一素材', exact: true }).tap();
+  await page.getByRole('button', { name: '調整特效起迄', exact: true }).tap();
+  await expect(sheet(page).getByLabel('第1組特效起點', { exact: true })).toHaveValue('4');
+  await expect(sheet(page).getByLabel('第1組特效終點', { exact: true })).toHaveValue('7');
+  await sheet(page).getByRole('button', { name: '結尾', exact: true }).tap();
+  await expect(sheet(page).getByRole('button', { name: '結尾', exact: true })).toHaveAttribute(
+    'aria-pressed',
+    'true',
+  );
+  await sheet(page).getByRole('button', { name: '開頭', exact: true }).tap();
+  await expect(sheet(page).getByLabel('第1組特效起點', { exact: true })).toHaveValue('0');
+});
+
+test('兩支10秒影片分配A退B進的3秒與不對稱起迄，總長20秒且來源持續播放', async ({ page }) => {
+  await createProjectWith(page, ['timing-video.webm', 'timing-video.webm']);
+  await openTab(page, '特效');
+  await page.getByRole('button', { name: '疊化', exact: true }).tap();
+  await page.getByRole('button', { name: '調整特效起迄', exact: true }).tap();
+  const p = await current(page),
+    join = p.tracks[0]!.items[1]!.start;
+  await sheet(page).getByLabel('第1組特效時長', { exact: true }).fill('3');
+  await expect(sheet(page).getByLabel('第1組特效時長', { exact: true })).toHaveValue('3');
+  await expect(sheet(page)).toContainText('B 終點 1.50 秒');
+  await shot(page, 'pair-A-start-B-end');
+  await sheet(page).getByRole('button', { name: '套用特效起迄', exact: true }).tap();
+  const saved = await current(page);
+  expect(saved.tracks[0]!.items.map((it) => [it.start, it.duration])).toEqual(
+    p.tracks[0]!.items.map((it) => [it.start, it.duration]),
+  );
+  expect(saved.tracks[0]!.items.at(-1)!.start + saved.tracks[0]!.items.at(-1)!.duration).toBeCloseTo(20, 1);
+  const green = await exportFrame(page, 9, [[0.5, 0.5]]),
+    red = await exportFrame(page, join + 0.75, [[0.5, 0.5]]);
+  expect(green.samples[0]![1]).toBeGreaterThan(50);
+  expect(green.samples[0]![0]).toBeLessThan(20);
+  expect(red.samples[0]![0]).toBeGreaterThan(90);
+  expect(red.samples[0]![1]).toBeLessThan(20);
+  await page.getByRole('button', { name: '調整特效起迄', exact: true }).tap();
+  await interval(page, join - 2, join + 1);
+  await sheet(page).getByRole('button', { name: '套用特效起迄', exact: true }).tap();
+  expect((await current(page)).transitions![0]!.ranges).toEqual([[join - 2, join + 1]]);
+});
+
+test('影片特效也共用多組標記，來源修剪可移除最後一組但不誤套用完整來源', async ({ page }) => {
+  await createProjectWith(page, ['timing-video.webm']);
+  await openTab(page, '特效');
+  await page.getByRole('tab', { name: '影片特效', exact: true }).tap();
+  await page.getByRole('button', { name: '黑白電影', exact: true }).tap();
+  await page.getByRole('button', { name: '調整特效起迄', exact: true }).tap();
+  await interval(page, 1, 3);
+  await point(page, 0.6);
+  await sheet(page).getByRole('button', { name: '在白線位置新增一組起迄標記', exact: true }).tap();
+  await expect(sheet(page).locator('.source-marker')).toHaveCount(4);
+  await sheet(page).getByRole('button', { name: '套用特效起迄', exact: true }).tap();
+  const frame = await exportFrame(page, 2, [[0.5, 0.5]]),
+    outside = await exportFrame(page, 4, [[0.5, 0.5]]);
+  expect(Math.abs(frame.samples[0]![0]! - frame.samples[0]![1]!)).toBeLessThan(3);
+  expect(outside.samples[0]![0]).toBeGreaterThan(200);
+  await clips(page).first().tap();
+  await openTab(page, '剪輯');
+  await page.getByRole('button', { name: '片段範圍', exact: true }).tap();
+  const trim = page.getByRole('dialog', { name: '剪取片段', exact: true });
+  await trim.getByRole('button', { name: '移除第 1 組片段', exact: true }).tap();
+  await expect(trim.locator('.source-marker')).toHaveCount(0);
+  await expect(trim.getByRole('button', { name: '套用片段範圍', exact: true })).toBeDisabled();
+  await trim.getByRole('button', { name: '復原上一步選段', exact: true }).tap();
+  await expect(trim.locator('.source-marker')).toHaveCount(2);
+  await shot(page, 'shared-trim-pair-removal');
+  await trim.getByRole('button', { name: '取消', exact: true }).tap();
+});

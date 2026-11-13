@@ -1,5 +1,8 @@
 import { AnimationSettings } from './AnimationSettings';
 import { ProjectPreview } from './ProjectPreview';
+import { EffectTimingEditor } from './EffectTimingEditor';
+import { transitionRanges } from '../../engine/animationTiming';
+import { totalDuration } from '../../engine/timeline';
 import { findItem } from '../../engine/timeline';
 import { useEffect, useState } from 'react';
 import { useProjectStore } from '../../store/projectStore';
@@ -13,6 +16,7 @@ import { EffectPreviews } from './EffectPreviews';
 import { uniqueEffects } from '../../engine/effectDuplicates';
 
 export function EffectsPanel() {
+  const [timingId, setTimingId] = useState<{ type: 'transition' | 'effect'; id: string } | null>(null);
   const p = useProjectStore((s) => s.project)!;
   const selectedId = useProjectStore((s) => s.selectedId);
   const [scope, setScope] = useState<'single' | 'pair'>('pair');
@@ -45,7 +49,9 @@ export function EffectsPanel() {
     ...filtered.map((e) => ({ ...e, type: mode })),
   ];
   const atCursor = (effect: NonNullable<typeof p.effects>[number]) =>
-    time >= effect.start - 0.05 && time <= effect.start + effect.duration;
+    (effect.ranges ?? [[effect.start, effect.start + effect.duration]]).some(
+      ([a, b]) => time >= a - 0.05 && time <= b,
+    );
   const onPair = (effect: NonNullable<typeof p.effects>[number]) =>
     !!pair &&
     (effect.transitionFromId
@@ -140,7 +146,7 @@ export function EffectsPanel() {
       {mode === 'transition' && scope === 'single' ? (
         <>
           <label className="field">
-            A 素材
+            動畫素材
             <select
               aria-label="單一動畫素材"
               value={target?.id ?? ''}
@@ -158,7 +164,20 @@ export function EffectsPanel() {
             <>
               <ProjectPreview start={target.start} duration={target.duration} label="單一素材結果" />
               <AnimationSettings
+                key={target.id}
                 value={animations}
+                start={found?.track.layout?.start ?? target.start}
+                duration={found?.track.layout?.duration ?? target.duration}
+                thumbs={target.type !== 'text' ? p.assets.find((a) => a.id === target.assetId)?.thumbs : []}
+                preview={(value) => {
+                  const draft = structuredClone(p),
+                    f = findItem(draft, target.id)!;
+                  if (f.track.template && f.track.layout) {
+                    f.track.layout.animations = value;
+                    f.track.layout.motion = 'none';
+                  } else f.item.animations = value;
+                  return draft;
+                }}
                 onChange={(value) =>
                   useProjectStore.getState().apply((d) => {
                     const f = findItem(d, target.id);
@@ -209,6 +228,9 @@ export function EffectsPanel() {
                 >
                   {TRANSITIONS.find((e) => e.id === tr.preset)?.label}
                 </button>
+                <button className="chip" onClick={() => setTimingId({ type: 'transition', id: tr.id })}>
+                  調整特效起迄
+                </button>
                 <button
                   className="chip"
                   onClick={() =>
@@ -243,43 +265,12 @@ export function EffectsPanel() {
                 >
                   移除特效
                 </button>
+                <button className="chip" onClick={() => setTimingId({ type: 'effect', id: e.id })}>
+                  調整特效起迄
+                </button>
                 {mode === 'effect' && (
                   <details className="effect-details">
                     <summary>調整影片特效</summary>
-                    <label className="field">
-                      出現時間（秒）
-                      <input
-                        type="number"
-                        min={0}
-                        step={0.01}
-                        aria-label={'特效出現時間 ' + e.id}
-                        value={e.start}
-                        onChange={(event) =>
-                          useProjectStore.getState().apply((d) => {
-                            d.effects!.find((x) => x.id === e.id)!.start = Math.max(
-                              0,
-                              Number(event.target.value),
-                            );
-                          })
-                        }
-                      />
-                    </label>
-                    <Slider
-                      label={'特效長度 ' + e.id}
-                      min={0.1}
-                      max={10}
-                      step={0.05}
-                      value={e.duration}
-                      format={(v) => v.toFixed(2) + ' 秒'}
-                      onChange={(v) =>
-                        useProjectStore.getState().apply(
-                          (d) => {
-                            d.effects!.find((x) => x.id === e.id)!.duration = v;
-                          },
-                          { coalesce: 'fx-time:' + e.id },
-                        )
-                      }
-                    />
                     <Slider
                       label={'特效強度 ' + e.id}
                       min={0}
@@ -398,6 +389,56 @@ export function EffectsPanel() {
           {!cards.length && <p className="hint">此分類尚無選項，請選擇其他分類。</p>}
         </>
       )}
+      {timingId &&
+        (() => {
+          const tr =
+            timingId.type === 'transition' ? p.transitions?.find((x) => x.id === timingId.id) : undefined;
+          const fx = timingId.type === 'effect' ? p.effects?.find((x) => x.id === timingId.id) : undefined;
+          const from = tr && findItem(p, tr.fromId)?.item,
+            to = tr && findItem(p, tr.toId)?.item;
+          if (!fx && !(tr && from && to)) return null;
+          const start = from?.start ?? 0;
+          const duration = to ? to.start + to.duration - start : totalDuration(p);
+          const initial = (
+            tr && from && to
+              ? transitionRanges(tr, from, to)
+              : (fx!.ranges ?? [[fx!.start, fx!.start + fx!.duration]])
+          ).map(([a, b]) => [a - start, b - start] as [number, number]);
+          const patch = (draft: typeof p, ranges: [number, number][]) => {
+            const target = tr
+              ? draft.transitions!.find((x) => x.id === tr.id)!
+              : draft.effects!.find((x) => x.id === fx!.id)!;
+            target.ranges = ranges.map(([a, b]) => [a + start, b + start]);
+            if (tr && to && 'fromId' in target) target.anchor = to.start;
+            target.duration = ranges[0] ? ranges[0][1] - ranges[0][0] : target.duration;
+            if ('start' in target && ranges[0]) target.start = ranges[0][0] + start;
+          };
+          const thumbs =
+            from && to
+              ? [from, to].flatMap((it) =>
+                  it.type !== 'text' ? (p.assets.find((a) => a.id === it.assetId)?.thumbs ?? []) : [],
+                )
+              : target && target.type !== 'text'
+                ? p.assets.find((a) => a.id === target.assetId)?.thumbs
+                : [];
+          return (
+            <EffectTimingEditor
+              key={timingId.id}
+              ranges={initial}
+              duration={duration}
+              start={start}
+              joinAt={to ? to.start - start : undefined}
+              thumbs={thumbs}
+              onClose={() => setTimingId(null)}
+              preview={(r) => {
+                const draft = structuredClone(p);
+                patch(draft, r);
+                return draft;
+              }}
+              onApply={(r) => useProjectStore.getState().apply((d) => patch(d, r))}
+            />
+          );
+        })()}
     </div>
   );
 }

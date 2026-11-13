@@ -70,7 +70,7 @@ export type VideoEffectPreset =
   | 'snow'
   | 'sparkle';
 
-export type ClipAnimation = { preset: TransitionPreset; duration: number };
+export type ClipAnimation = { preset: TransitionPreset; duration: number; ranges?: [number, number][] };
 export type ClipAnimations = { enter?: ClipAnimation; exit?: ClipAnimation };
 
 export type ItemBase = {
@@ -270,11 +270,20 @@ export type Project = {
     start: number;
     duration: number;
     strength: number;
+    ranges?: [number, number][];
     targetId?: string;
     transitionFromId?: string;
     transitionToId?: string;
   }[];
-  transitions?: { id: string; preset: TransitionPreset; fromId: string; toId: string; duration: number }[];
+  transitions?: {
+    id: string;
+    preset: TransitionPreset;
+    fromId: string;
+    toId: string;
+    duration: number;
+    ranges?: [number, number][];
+    anchor?: number;
+  }[];
   assets: Asset[];
   tracks: Track[];
   thumbnail?: string;

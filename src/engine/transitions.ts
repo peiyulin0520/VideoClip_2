@@ -1,4 +1,4 @@
-import { cellMediaTime } from './templateTiming';
+import { transitionRanges } from './animationTiming';
 import { filmBorderCanvas } from './transitionArt';
 import type { Project, TransitionPreset } from '../model/types';
 import type { SceneLayer } from './compositor';
@@ -33,32 +33,15 @@ export function activeTransitions(project: Project, t: number) {
       Math.abs(itemEnd(from.item) - to.item.start) > 0.05
     )
       return [];
-    const duration = Math.min(transition.duration, from.item.duration * 2, to.item.duration * 2);
-    const start = to.item.start - duration / 2,
-      p = (t - start) / duration;
-    return p >= 0 && p < 1 ? [{ transition, from, to, p }] : [];
+    const range = transitionRanges(transition, from.item, to.item).find(
+      ([start, end]) => t >= start && t < end,
+    );
+    return range ? [{ transition, from, to, range, p: (t - range[0]) / (range[1] - range[0]) }] : [];
   });
 }
-/** Decode both sides throughout a transition, including held edge frames outside each clip. */
+/** Native clip clocks keep moving. Never borrow a frozen first/last frame from the other side. */
 export function renderLayers(project: Project, t: number): Layer[] {
-  const active = activeTransitions(project, t),
-    out = visibleLayers(project, t);
-  for (const { from, to } of active) {
-    for (const f of [from, to])
-      if (
-        !(
-          f.item.type !== 'text' &&
-          f.item.sourceRanges &&
-          cellMediaTime(
-            f.item,
-            Math.max(f.item.start, Math.min(t, f.item.start + f.item.duration - 0.001)),
-          ) === null
-        ) &&
-        !out.some((l) => l.item.id === f.item.id)
-      )
-        out.push({ item: f.item, track: f.track, trackIndex: f.trackIndex });
-  }
-  return out.sort((a, b) => a.trackIndex - b.trackIndex || a.item.start - b.item.start);
+  return visibleLayers(project, t);
 }
 function move(layer: SceneLayer, x: number, y: number): SceneLayer {
   return {
@@ -90,21 +73,17 @@ export function applyTransitions(
   h: number,
 ): SceneLayer[] {
   let out = layers;
-  for (const { transition: tr, from, to, p } of activeTransitions(project, t)) {
-    const a = out.find((l) => l.id === from.item.id),
-      b = out.find((l) => l.id === to.item.id);
-    if (!a || !b) {
-      // A deselected source stays absent even when borrowing edge frames for the join.
-      out = out.map((layer) =>
-        layer.id === b?.id
-          ? { ...layer, opacity: layer.opacity * p }
-          : layer.id === a?.id
-            ? { ...layer, opacity: layer.opacity * (1 - p) }
-            : layer,
-      );
-      continue;
-    }
-    out = transitionPair(out, a, b, tr.preset, p, w, h, tr.id);
+  for (const { transition: tr, from, to, range } of activeTransitions(project, t)) {
+    const outgoing = t < to.item.start;
+    const target = outgoing ? from.item : to.item;
+    const a = outgoing ? range[0] : Math.max(range[0], to.item.start);
+    const b = outgoing ? Math.min(range[1], to.item.start) : range[1];
+    if (b <= a) continue;
+    out = out.flatMap((layer) =>
+      layer.id === target.id || layer.id.startsWith(`${target.id}-`)
+        ? transitionSingle(layer, tr.preset, (t - a) / (b - a), outgoing ? 'exit' : 'enter', w, h, tr.id)
+        : [layer],
+    );
   }
   return out;
 }
@@ -229,4 +208,51 @@ export function transitionPair(
         });
   }
   return layers.flatMap((l) => (l.id === a.id ? [aa] : l.id === b.id ? [bb, ...extra] : [l]));
+}
+
+/** A leaves towards the transition direction; B enters from the opposite side.
+ * Geometry/masks use the shared preset renderer, with an explicit outgoing role. */
+export function transitionSingle(
+  layer: SceneLayer,
+  preset: TransitionPreset,
+  progress: number,
+  role: 'enter' | 'exit',
+  w: number,
+  h: number,
+  id: string,
+) {
+  const blank = { ...layer, id: `${layer.id}-empty`, opacity: 0 };
+  const p = role === 'enter' ? progress : 1 - progress;
+  const result = transitionPair([blank, layer], blank, layer, preset, p, w, h, id).filter(
+    (l) => l.id !== blank.id && l.opacity > 0,
+  );
+  if (role === 'enter') return result;
+  const horizontal = preset.endsWith('left') || preset.endsWith('right');
+  const moving = preset.startsWith('push-') || preset.startsWith('slide-') || preset.startsWith('film-');
+  return result.map((l) => {
+    let out = l;
+    if (moving)
+      out = move(
+        out,
+        horizontal ? -2 * (l.box.cx - layer.box.cx) : 0,
+        horizontal ? 0 : -2 * (l.box.cy - layer.box.cy),
+      );
+    if (preset.startsWith('wipe-') && out.viewport)
+      out = {
+        ...out,
+        viewport: {
+          ...out.viewport,
+          x: horizontal ? w - out.viewport.x - out.viewport.w : out.viewport.x,
+          y: horizontal ? out.viewport.y : h - out.viewport.y - out.viewport.h,
+        },
+      };
+    if (preset === 'page-turn') out = { ...out, box: { ...out.box, cx: out.box.w / 2 } };
+    if (preset === 'zoom-in' || preset === 'zoom-out') {
+      const scale = preset === 'zoom-in' ? 1 + 0.5 * progress : 1 - 0.5 * progress;
+      out = { ...out, box: { ...out.box, w: layer.box.w * scale, h: layer.box.h * scale } };
+    }
+    if (preset === 'spin')
+      out = { ...out, box: { ...out.box, rotation: layer.box.rotation - progress * 100 } };
+    return out;
+  });
 }

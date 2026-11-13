@@ -168,6 +168,7 @@ test('音訊可直接標記多組精確靜音起迄，顯示對應畫面並可�
   ]) {
     await sourcePoint(page, a!);
     await page.getByRole('button', { name: '標記靜音起點', exact: true }).tap();
+    expect((await page.locator('.source-marker').count()) % 2).toBe(0);
     await sourcePoint(page, b!);
     await page.getByRole('button', { name: '標記靜音終點並新增', exact: true }).tap();
   }

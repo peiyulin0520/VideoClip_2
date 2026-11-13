@@ -41,6 +41,17 @@ export function previewSize(
  */
 export class Player {
   private t = 0;
+  private draftProject: Project | null = null;
+
+  private getProject() {
+    return this.draftProject ?? this.deps.getProject();
+  }
+
+  /** Temporary timing-sheet preview; never persisted or exported. */
+  setPreviewProject(project: Project | null) {
+    this.draftProject = project;
+    this.scheduleRender();
+  }
   private playing = false;
   private raf = 0;
   private renderRaf = 0;
@@ -142,7 +153,7 @@ export class Player {
   }
 
   private total(): number {
-    const p = this.deps.getProject();
+    const p = this.getProject();
     return p ? totalDuration(p) : 0;
   }
 
@@ -213,7 +224,7 @@ export class Player {
     if (!this.playing) return;
     const total = this.total();
     const t = this.tStart + (performance.now() - this.wallStart) / 1000;
-    const fps = this.deps.getProject()?.fps ?? 30;
+    const fps = this.getProject()?.fps ?? 30;
     if (Math.floor(t * fps) === Math.floor(this.t * fps) && t < total) {
       this.raf = requestAnimationFrame(this.tick);
       return;
@@ -272,7 +283,7 @@ export class Player {
   }
 
   private render(t: number) {
-    const p = this.deps.getProject();
+    const p = this.getProject();
     const { compositor: comp } = this;
     if (!p) {
       comp.render([]);
@@ -424,7 +435,7 @@ export class Player {
 
   /** 預覽主軌目前的片段 id（測試用） */
   currentMainItemId(): string | undefined {
-    const p = this.deps.getProject();
+    const p = this.getProject();
     if (!p) return undefined;
     return mainTrack(p).items.find((x) => this.t >= x.start && this.t < x.start + x.duration)?.id;
   }

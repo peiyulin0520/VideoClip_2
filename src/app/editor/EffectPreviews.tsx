@@ -46,7 +46,7 @@ function demoProject(preset: PreviewPreset, single?: 'enter' | 'exit'): Project 
   }));
   p.tracks[0]!.items = p.assets.map((a, i) => ({ ...createClip(a), id: a.id, start: i, duration: 1 }));
   if (single) {
-    p.tracks[0]!.items = [p.tracks[0]!.items[0]!];
+    p.tracks[0]!.items = [{ ...p.tracks[0]!.items[single === 'enter' ? 1 : 0]!, start: 0 }];
     p.tracks[0]!.items[0]!.duration = 2;
     p.tracks[0]!.items[0]!.animations = { [single]: { preset: preset.id, duration: 1 } };
   } else if (preset.type === 'transition')

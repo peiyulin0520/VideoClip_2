@@ -85,7 +85,14 @@ export function SourceRanges({
       </div>
       <div
         className="source-thumbs"
-        onPointerDown={(e) =>
+        role="slider"
+        tabIndex={0}
+        aria-label="選段白線位置"
+        aria-valuemin={0}
+        aria-valuemax={duration}
+        aria-valuenow={cursor}
+        onPointerDown={(e) => {
+          e.currentTarget.setPointerCapture(e.pointerId);
           onSeek(
             Math.max(
               0,
@@ -95,8 +102,33 @@ export function SourceRanges({
                   duration,
               ),
             ),
-          )
-        }
+          );
+        }}
+        onPointerMove={(e) => {
+          if (e.currentTarget.hasPointerCapture(e.pointerId))
+            onSeek(
+              Math.max(
+                0,
+                Math.min(
+                  duration,
+                  ((e.clientX - bar.current!.getBoundingClientRect().left) / bar.current!.clientWidth) *
+                    duration,
+                ),
+              ),
+            );
+        }}
+        onKeyDown={(e) => {
+          if (['ArrowLeft', 'ArrowRight', 'Home', 'End'].includes(e.key)) {
+            e.preventDefault();
+            onSeek(
+              e.key === 'Home'
+                ? 0
+                : e.key === 'End'
+                  ? duration
+                  : Math.max(0, Math.min(duration, cursor + (e.key === 'ArrowRight' ? 0.05 : -0.05))),
+            );
+          }
+        }}
       >
         {(thumbs.length ? thumbs : ['']).map((src, i) =>
           src ? (

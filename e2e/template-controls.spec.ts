@@ -128,6 +128,11 @@ test('版型進階設定預設收合、只有一條來源軸，預覽與popup皆
   const cell = page.locator('.template-cell').first();
   await expect(cell.getByRole('button', { name: '補白', exact: true })).toBeHidden();
   await expect(cell.getByTestId('source-range')).toHaveCount(1);
+  await cell.getByRole('button', { name: '移除第 1 組片段', exact: true }).tap();
+  await expect(cell.locator('.source-marker')).toHaveCount(0);
+  await cell.getByRole('button', { name: '復原第 1 格選段', exact: true }).tap();
+  await expect(cell.locator('.source-marker')).toHaveCount(2);
+
   await cell.getByRole('button', { name: '播放第 1 格預覽', exact: true }).tap();
   await expect(cell.getByRole('button', { name: '暫停第 1 格預覽', exact: true })).toHaveAttribute(
     'aria-pressed',

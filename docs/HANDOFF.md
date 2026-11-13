@@ -1,6 +1,8 @@
 # 交接手冊（HANDOFF）
 
 ## VideoClip_2 當前交接（優先於以下來源 repo 的歷史紀錄）
+- 最新任務特效時長/任意配對標籤：plans/2026-11-13-effect-timing.md。使用者明確選A10+B10維持20秒，交接前後分配，不採重疊17秒；因此轉場不借靜止首尾幀，A退出後B進入，各自影片/聲音不延後。單素材enter=B/exit=A。動畫ranges本地秒數，畫面/轉場ranges絕對秒數，[]表示不使用；取消舊半片長限制。本輪CI待驗，之前321/134不是本輪結果。Player暫時草稿只供popup，cleanup清除並還原秒數，切勿持久化或匯出草稿。
+
 - 最新九點最終：[Actions 43463065085](https://github.com/peiyulin0520/VideoClip_2/actions/runs/43463065085)：版本 6819c42e27914328f4ba183d493842903333f7f7 的321單元、134 Chromium e2e全過，lint/格式/TypeScript/build/Pages/39字體檢查成功。artifact 14058125854，ZIP SHA-256 be6d93e48b635a6ff142f6c6d2c05a8344a57c23b9c2b91a463f582826baad58 已核對；166張成功畫面（template-controls新增7張）。PR #10由使用者自行Merge，Safari仍待真機。以下待CI皆過程，最後文件/截圖不改成功產品/測試。
 
 - 九點第三輪 10cd2a5 / Actions43461401694 已321單元/134瀏覽器全過；核心產品與混色幾何驗收成功。最終另補人工看到的頁籤遮擋/安全區重複，完整新輪仍需過後才標PR #10 ready。

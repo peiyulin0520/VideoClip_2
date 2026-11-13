@@ -48,7 +48,12 @@ export function ProjectPreview({
   return (
     <div className="project-preview" aria-label={`${label}預覽`}>
       {!targetCanvas && (
-        <canvas width={240} height={Math.round((240 * p.height) / p.width)} aria-label={`${label}畫面`} />
+        <canvas
+          ref={canvas}
+          width={240}
+          height={Math.round((240 * p.height) / p.width)}
+          aria-label={`${label}畫面`}
+        />
       )}
       <button
         className={`chip preview-toggle${playing ? ' active' : ''}`}

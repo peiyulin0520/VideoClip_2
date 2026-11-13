@@ -257,6 +257,21 @@ export function TemplatePanel() {
           <summary>進出場動畫</summary>
           <AnimationSettings
             value={appearance.animations}
+            duration={seconds}
+            start={activeGroup?.layout?.start ?? 0}
+            preview={(animations) => {
+              const draft = structuredClone(project);
+              const group = draft.tracks.find((t) => t.id === activeGroup?.id);
+              if (group?.layout) {
+                group.layout.animations = animations;
+                group.layout.motion = 'none';
+              } else {
+                const plan = collagePlan(draft, ids, style, 'none', 0, seconds, sources);
+                Object.assign(plan.tracks[0]!.layout!, appearance, { animations });
+                draft.tracks.push(...plan.tracks);
+              }
+              return draft;
+            }}
             onChange={(animations: ClipAnimations) => patchAppearance({ animations })}
           />
         </details>

@@ -1,3 +1,4 @@
+import { effectAtTime } from './animationTiming';
 import type { Project } from '../model/types';
 import type { SceneLayer } from './compositor';
 export type Effect = NonNullable<Project['effects']>[number];
@@ -29,7 +30,9 @@ export function solidCanvas(color: string) {
 }
 export function effectLayer(effect: Effect, t: number, w: number, h: number): SceneLayer | null {
   if (!['flash', 'light-leak', 'fade-black', 'fade-white'].includes(effect.preset)) return null;
-  const p = (t - effect.start) / effect.duration;
+  const active = effectAtTime(effect, t);
+  if (!active) return null;
+  const p = (t - active.start) / active.duration;
   if (p < 0 || p >= 1) return null;
   const warm = effect.preset === 'light-leak',
     source = solidCanvas(warm ? 'warm' : effect.preset === 'fade-black' ? '#000000' : '#ffffff');
