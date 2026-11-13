@@ -14,10 +14,12 @@ import {
   isGreen,
 } from './helpers';
 const shots = 'docs/screenshots/advanced-editing';
-const current = (page: Page): Promise<Project> =>
-  page.evaluate(() =>
+const current = async (page: Page): Promise<Project> => {
+  await page.waitForFunction(() => !!(window as unknown as { __videoclip?: unknown }).__videoclip);
+  return page.evaluate(() =>
     (window as unknown as { __videoclip: { project: () => Project } }).__videoclip.project(),
   );
+};
 async function shot(page: Page, name: string) {
   await expect(page.locator('.toast')).toHaveCount(0);
   await page.screenshot({ path: `${shots}/${name}.png` });
@@ -164,7 +166,7 @@ test('素材可命名，長按左側進多選，批次排序顯示合併刪除�
   expect((await current(page)).tracks.filter((t) => ids.includes(t.id)).every((t) => t.hidden)).toBe(true);
   await page.getByRole('button', { name: '顯示選取圖層', exact: true }).tap();
   await page.getByRole('button', { name: '合併成同一列', exact: true }).tap();
-  await expect(page.locator('.toast')).toContainText('重疊');
+  await expect(page.locator('.toast').filter({ hasText: '素材時間重疊' })).toBeVisible();
   await page.getByRole('button', { name: '合併並依序接續', exact: true }).tap();
   expect((await current(page)).tracks.filter((t) => ids.includes(t.id))).toHaveLength(1);
   const merged = (await current(page)).tracks.find((t) => ids.includes(t.id))!;
@@ -234,6 +236,11 @@ test('兩個菱形之間位置大小與亮度線性變化，預覽單格及完�
   expect(frame.samples[1]![0]).toBeLessThan(205);
   await page.getByTestId('stage').scrollIntoViewIfNeeded();
   await shot(page, 'linear-keyframe-midpoint');
+  await openTab(page, '圖層');
+  await page.getByRole('button', { name: '位置、大小、旋轉歸位', exact: true }).tap();
+  expect((await current(page)).tracks[0]!.items[0]!.keyframes).toHaveLength(3);
+  await page.getByRole('button', { name: '復原', exact: true }).tap();
+  expect((await current(page)).tracks[0]!.items[0]!.keyframes).toHaveLength(2);
   await beginExport(page);
   const movie = await inspect(page, 1, [
     [0.1, 0.5],

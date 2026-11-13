@@ -6,7 +6,7 @@
 - **日期/分支**：2026-11-13 / codex/establish-little-moments；PR #6 已使用者合併，main b9a5e94 / Actions 43345475628 發布成功。
 - **任務**：最新九點，見 docs/plans/2026-11-13-advanced-editing.md；多組選段/取消/局部復原、命名與批次圖層/分類收合、線性關鍵幀、A/B 動畫轉場與影片特效、GIPHY/主題圓圈均已接入，待整體驗收。
 - **架構**：sourceRanges 為來源秒數保留範圍，和 mediaSegments 求交，灰區維持原時間空白；草稿局部 history 不進專案。batchLayers 僅同類合併且檢查重疊，另有明確依序接續。關鍵幀取樣共用 geometry/scene、分割/修剪，模板走 layout 的整組曲線。renderLayers 會在 A/B 交接期間提供雙方來源，單格/影片/預覽共用；影片色彩以 Pixi filter、遮罩/粒子/變形同源。示意格共用小 compositor，僅畫可見格。
-- **驗證**：基線 check 278 成功；新 296 單元已成功。完整 check（lint/格式/296 單元/TS/build/Pages/39 字體）成功；新 10 e2e、共 108 瀏覽器待 CI 驗收。原測試僅適配新主題 radio、隱藏 Key 與移除還原按鈕的 UI，原行為斷言保留。
+- **驗證**：基線 check 278 成功；新 297 單元已成功。完整 check（lint/格式/297 單元/TS/build/Pages/39 字體）成功；第一輪 106/108（原有 98 全過），已修正兩個測試等待/訊息定位；下一輪 108 項待驗收。原測試僅適配新主題 radio、隱藏 Key 與移除還原按鈕的 UI，原行為斷言保留。
 - **偏好/假設**：使用者要求主動按鈕才新增第二組標記。已詢問多組影像間是否留空白，目前依先前固定時間位置要求保留空白；若回覆則同步。參考圖只用概念/行為，不放第三方圖或素材。
 - **下一步/發布**：完成完整 check、CI、成功截圖與文件；新 PR 由使用者自行 Merge，不推 main、不代合併、不開 auto-merge。Safari 待真機。既有 119 張僅是先前成功驗收。
 
@@ -70,6 +70,12 @@
 - 2026-11-11 找到新字體來源 max32002/pop-gothic（大波浪圓體，含注音）→ 已加入手寫可愛包。問「能不能直接下載到我的 files 下載資料夾」→ 答：網頁在 iPhone 不能自動寫進「檔案」App 資料夾；官方字體存在瀏覽器裡，自己的字體用「匯入字體檔」從檔案 App 選
 
 ## 日誌（最新在最上面）
+
+- 2026-11-13 第一輪瀏覽器驗收與關鍵幀歸位補強
+  - 45cba26 / Actions 43360577038：296 單元、106/108 e2e，原有 98 項全過。新多選測試需精確選「素材時間重疊」toast（匯入訊息可能仍存在），重開測試須等待 debug/player 載入才讀 Project；保留斷言、不加 retry/timeout/skip。
+  - 歸位按鈕改走目前時間點的關鍵幀，setTransform 先停播放並依時間分開 coalesce；新增此動作可復原的單元與實際按鈕 e2e，297 單元/check 成功。主工具分頁查詢限縮主 tablist，避免和效果子分頁同名。效果清單實際 25 真轉場、12 影片特效及原 4 轉場；膠片轉場附自製齒孔邊框，與一般推移有視覺區別。
+  - 下一輪完整驗收及截圖後交 PR #7，由使用者自行 Merge；首輪失敗 artifact 不做交付證據。
+
 
 - 2026-11-13 進階編輯九點實作與驗收準備
   - 新 sourceSelections/useDraftHistory、batchLayers、keyframes、transitions/videoEffects/effectCatalog；相應 popup/Timeline/KeyframeControl/EffectsPanel/示意動畫與設定 UI。

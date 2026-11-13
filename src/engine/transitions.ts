@@ -1,3 +1,4 @@
+import { filmBorderCanvas } from './transitionArt';
 import type { Project } from '../model/types';
 import type { SceneLayer } from './compositor';
 import type { Layer } from './timeline';
@@ -176,6 +177,24 @@ export function applyTransitions(
             ),
           );
       }
+    }
+    if (kind === 'film-left' || kind === 'film-up') {
+      const art = filmBorderCanvas();
+      for (const [i, l] of [aa, bb].entries())
+        extra.push({
+          id: `${tr.id}-film-${i}`,
+          kind: 'image',
+          source: art,
+          srcW: 160,
+          srcH: 96,
+          frameW: 160,
+          frameH: 96,
+          ready: true,
+          box: { cx: l.box.cx, cy: l.box.cy, w, h, rotation: 0 },
+          opacity: Math.sin(Math.PI * p),
+          blend: 'normal',
+          cornerRadius: 0,
+        });
     }
     out = out.flatMap((l) => (l.id === a.id ? [aa] : l.id === b.id ? [bb, ...extra] : [l]));
   }

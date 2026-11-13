@@ -51,13 +51,16 @@ export function editItem(id: string, recipe: (it: Draft<Item>) => void, opts?: O
 }
 
 export function setTransform(id: string, patch: Partial<Transform>, coalesce = `tf:${id}`) {
+  const player = useUI.getState().player;
+  player?.pause();
+  const time = player?.time;
   store().apply(
     (d) => {
       const f = findItem(d, id);
       if (!f) return;
-      editAnimatedValues(d, id, useUI.getState().player?.time ?? f.item.start, patch);
+      editAnimatedValues(d, id, time ?? f.item.start, patch);
     },
-    { coalesce },
+    { coalesce: `${coalesce}:${time ?? 0}` },
   );
 }
 

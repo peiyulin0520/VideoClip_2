@@ -732,12 +732,16 @@ function LayersTab() {
           <button
             className="btn"
             onClick={() =>
-              editItem(it.id, (x) => {
-                x.transform.x = 0.5;
-                x.transform.y = 0.5;
-                x.transform.scale = x.type === 'text' || x.fit === 'cover' ? 1 : 0.5;
-                x.transform.rotation = 0;
-              })
+              setTransform(
+                it.id,
+                {
+                  x: 0.5,
+                  y: 0.5,
+                  scale: found?.track.template || it.type === 'text' || it.fit === 'cover' ? 1 : 0.5,
+                  rotation: 0,
+                },
+                `reset:${it.id}`,
+              )
             }
           >
             位置、大小、旋轉歸位

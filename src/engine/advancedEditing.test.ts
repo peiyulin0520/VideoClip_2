@@ -1,3 +1,7 @@
+import { useProjectStore } from '../store/projectStore';
+import { useUI } from '../store/uiStore';
+import { setTransform } from '../store/actions';
+import type { Player } from './player';
 import { describe, expect, it } from 'vitest';
 import type { Asset, Project, VideoItem } from '../model/types';
 import { createClip, createProject, createTextItem, createTrack } from '../model/defaults';
@@ -181,6 +185,26 @@ describe('batch layer operations', () => {
   });
 });
 describe('linear keyframes', () => {
+  it('transform editing and reset write only the current diamond and remain undoable', () => {
+    const p = project();
+    addKeyframe(p, 'a', 0);
+    editAnimatedValues(p, 'a', 2, { x: 0.75, scale: 0.5 }, true);
+    useProjectStore.getState().load(p);
+    useUI.setState({ player: { time: 2, pause: () => {} } as unknown as Player });
+    try {
+      setTransform('a', { x: 0.5, y: 0.5, scale: 1, rotation: 0 });
+      const target = useProjectStore.getState().project!.tracks[0]!.items[0]!;
+      expect(target.keyframes).toHaveLength(2);
+      expect(target.keyframes![0]!.values.scale).toBe(1);
+      expect(target.keyframes![1]!.values.scale).toBe(1);
+      expect(useProjectStore.getState().undo()).toBe(true);
+      expect(useProjectStore.getState().project!.tracks[0]!.items[0]!.keyframes![1]!.values.scale).toBe(0.5);
+    } finally {
+      useUI.setState({ player: null });
+      useProjectStore.getState().close();
+    }
+  });
+
   it('interpolates transform, opacity, brightness and actual RGB at the midpoint', () => {
     const p = project();
     addKeyframe(p, 'a', 0);
