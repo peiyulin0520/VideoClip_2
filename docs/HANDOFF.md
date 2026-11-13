@@ -1,6 +1,8 @@
 # 交接手冊（HANDOFF）
 
 ## VideoClip_2 當前交接（優先於以下來源 repo 的歷史紀錄）
+- ce35e66 / Actions 43365555969 是 299/109 of 110：模板內嵌選段軸與 popup 同時存在同名「來源終點標記」，新 e2e shortFirstRange 必須限定 .sheet；這是 strict locator 問題，全部補色/來源像素斷言保留，產品不變。菱形手動往返及其餘 109 已成功。
+
 - 多組 popup/版型內嵌 SourceRanges 共用 item.sourceRanges，sourceEnd 取最後終點；調整不改共同 duration。Timeline onScroll 的 lastSet 必須一次消耗，否則菱形程式 seek 後手動回同秒數會被舊值攔截。兩項既有 e2e 已強化，299/110 待本輪。
 
 - c9719aa / run 43362965472 的 297/108 已全過；補兩個已發現組合問題後再驗收：模板灰區保留補色/框架，A/B 借用來源先檢查來源選段，缺單方則對透明背景淡入/出，不能洩出未選畫面。各有單元與實際像素 e2e，總 299/110。

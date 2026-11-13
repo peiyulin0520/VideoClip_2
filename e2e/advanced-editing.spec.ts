@@ -30,7 +30,7 @@ async function sourcePoint(page: Page, fraction: number) {
   await el.tap({ position: { x: (await el.boundingBox())!.width * fraction, y: 30 } });
 }
 async function shortFirstRange(page: Page, minimum: number) {
-  const marker = page.getByRole('button', { name: '來源終點標記', exact: true });
+  const marker = page.locator('.sheet').getByRole('button', { name: '來源終點標記', exact: true });
   await marker.press('Home');
   for (let i = 0; i < Math.round((0.5 - minimum) / 0.05); i++) await marker.press('ArrowRight');
 }
