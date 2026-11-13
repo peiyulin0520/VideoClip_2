@@ -3307,3 +3307,17 @@ html {
     padding-inline: 0;
   }
 }
+/* The return button clears the last tool row without reserving footer space. */
+.back-to-preview {
+  bottom: calc(76px + env(safe-area-inset-bottom) + var(--visible-bottom-inset, 0px));
+}
+.editor .safe-toggle,
+.editor .preview-expand,
+.editor .preview-layers {
+  background: #17171bf2;
+  color: #fff;
+}
+.editor .safe-toggle.on {
+  background: var(--accent);
+  color: var(--accent-ink);
+}

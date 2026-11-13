@@ -148,7 +148,7 @@ export function ExportPanel({ onClose }: { onClose: () => void }) {
             {(result.blob.size / 1024 / 1024).toFixed(1)} MB
           </p>
           <video ref={resultVideo} src={result.url} playsInline aria-label="匯出影片預覽" />
-          <MediaPlayback media={resultVideo} label="匯出影片預覽" />
+          <MediaPlayback media={resultVideo} label="匯出結果" />
           <div className="chips">
             <a className="btn primary" href={result.url} download={result.name}>
               下載影片

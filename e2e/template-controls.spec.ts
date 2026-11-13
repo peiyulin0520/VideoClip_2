@@ -163,6 +163,13 @@ test('版型進階設定預設收合、只有一條來源軸，預覽與popup皆
   ]);
   expect(isBlue(frame.samples[0]!)).toBe(true);
   expect(isRed(frame.samples[1]!)).toBe(true);
+  await page.getByRole('button', { name: '進場：拉近鏡頭', exact: true }).tap();
+  const zoom = await exportFrame(page, 0.3, [
+    [0.5, 0.1],
+    [0.5, 0.32],
+  ]);
+  expect(isBlue(zoom.samples[0]!)).toBe(true);
+  expect(isRed(zoom.samples[1]!)).toBe(true);
 });
 
 test('兩個銜接選項優先顯示自訂片段名稱，特效主類無重複外框', async ({ page }) => {
@@ -317,8 +324,10 @@ test('預設低畫質且可在比例旁調整，影片輸出框隨比例改變�
       .toBeCloseTo(ratio, 2);
   }
   await expect(page.locator('.export-bounds-label')).toContainText('1:1');
+  await page.getByRole('button', { name: '畫面比例', exact: true }).tap();
+  await page.getByRole('radio', { name: '橫式 4:3', exact: true }).tap();
   await page.getByTestId('stage').scrollIntoViewIfNeeded();
-  await shot(page, 'low-quality-square-output-bounds');
+  await shot(page, 'low-quality-wide-output-bounds');
   await page.getByRole('button', { name: '播放', exact: true }).tap();
   await expect(page.getByRole('button', { name: '暫停', exact: true })).toHaveAttribute(
     'aria-pressed',

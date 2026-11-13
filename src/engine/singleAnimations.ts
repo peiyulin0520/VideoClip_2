@@ -48,6 +48,28 @@ export function applySingleAnimations(
       );
       const frame = target.group ? groupFrame(track, w, h, t) : chosen[0]?.box;
       if (!frame) continue;
+      if (target.group && ['zoom-in', 'zoom-out', 'spin', 'page-turn'].includes(animation.preset)) {
+        const kind = animation.preset;
+        const scale = kind === 'page-turn' ? 1 : kind === 'zoom-out' ? 1.5 - 0.5 * p : 0.5 + 0.5 * p;
+        const ids = new Set(chosen.map((l) => l.id));
+        out = out.map((l) =>
+          ids.has(l.id)
+            ? {
+                ...l,
+                continuity: undefined,
+                opacity: l.opacity * (kind === 'page-turn' ? 1 : p),
+                animationTransform: {
+                  x: kind === 'page-turn' ? frame.cx + frame.w / 2 : frame.cx,
+                  y: frame.cy,
+                  scaleX: kind === 'page-turn' ? p : scale,
+                  scaleY: scale,
+                  rotation: kind === 'spin' ? (1 - p) * 100 : 0,
+                },
+              }
+            : l,
+        );
+        continue;
+      }
       const left = frame.cx - frame.w / 2,
         top = frame.cy - frame.h / 2;
       const transformed = chosen.flatMap((layer) => {
@@ -69,7 +91,12 @@ export function applySingleAnimations(
           frame.h,
           `${layer.id}-single`,
         )
-          .filter((l) => l.id !== blank.id && l.opacity > 0)
+          .filter(
+            (l) =>
+              l.id !== blank.id &&
+              l.opacity > 0 &&
+              (!target.group || !l.id.includes('-single-film-') || layer.id === `${track.id}-frame`),
+          )
           .map((l): SceneLayer => ({
             ...l,
             continuity: undefined,

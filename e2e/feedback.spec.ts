@@ -199,8 +199,8 @@ test('版型格子位置與素材可辨識，套用後只有一個群組，刪�
   expect(p.tracks.filter((t) => t.template)).toHaveLength(1);
   expect(group.items).toHaveLength(4);
   await expect(clips(page)).toHaveCount(2);
-  await expect.poll(async () => isRed(await samplePreview(page, 0.25, 0.2))).toBe(true);
-  await expect.poll(async () => isGreen(await samplePreview(page, 0.75, 0.2))).toBe(true);
+  await expect.poll(async () => isRed(await samplePreview(page, 0.25, 0.35))).toBe(true);
+  await expect.poll(async () => isGreen(await samplePreview(page, 0.75, 0.35))).toBe(true);
   await page.screenshot({ path: `${shots}/numbered-template-group.png` });
   await openTab(page, '剪輯');
   // Slow native decoding must not keep a deleted group's frame visible.

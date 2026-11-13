@@ -129,7 +129,10 @@ export function TemplateCells({ track }: { track: Track }) {
             index={i}
             open={it.id === selected}
             onSelect={() => useProjectStore.getState().select(it.id)}
-            onEdit={() => setEditing(it)}
+            onEdit={() => {
+              useUI.getState().player?.pause();
+              setEditing(it);
+            }}
           />
         ),
       )}
@@ -242,7 +245,13 @@ function Cell({
       {advanced && (
         <div className="cell-advanced">
           {asset.kind === 'video' && (
-            <button className="chip" onClick={onEdit}>
+            <button
+              className="chip"
+              onClick={() => {
+                video.current?.pause();
+                onEdit();
+              }}
+            >
               選取第 {index + 1} 格片段範圍
             </button>
           )}

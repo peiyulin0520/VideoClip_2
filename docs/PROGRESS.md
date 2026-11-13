@@ -80,6 +80,7 @@
 - 2026-11-11 找到新字體來源 max32002/pop-gothic（大波浪圓體，含注音）→ 已加入手寫可愛包。問「能不能直接下載到我的 files 下載資料夾」→ 答：網頁在 iPhone 不能自動寫進「檔案」App 資料夾；官方字體存在瀏覽器裡，自己的字體用「匯入字體檔」從檔案 App 選
 
 ## 日誌（最新在最上面）
+- 九點首輪 e16e7fc / Actions43456433286：321單元、120/134瀏覽器（新增7全過）。7個匯出測試舊getByLabel非exact也匹配新播放label，改控制label為匯出結果；相紙改方形，舊取樣點調整到實際新格內；最底回頂擋工具，升到最後工具列上方且不加空白；安全區底色加深過淺色對比；放大舞台同步量測並等實際resize。第二輪完整驗收待push。
 - 2026-11-13 六點版型/預覽/單素材動畫（新PR待建）：main6ac2f13，模型/合成/表單一起更新。單一A和A/B用同一transitionPair，框架透明度與整組opacity分開。317單元已成功，132瀏覽器待CI；Safari待真機。
 - 2026-11-13 時間軸小字最終驗收（PR #9）
   - [Actions 43422783991](https://github.com/peiyulin0520/VideoClip_2/actions/runs/43422783991)：版本 fc9d5bb813573aeba69889efe37b1ee98e5786f3 的313單元、127 Chromium e2e全過；lint/格式/TypeScript/build/Pages/39字體檢查成功。

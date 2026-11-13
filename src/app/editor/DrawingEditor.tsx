@@ -91,7 +91,13 @@ export function DrawingEditor({
           backgroundImage: background ? `url(${background})` : undefined,
         }}
       >
-        <canvas className="drawing-backdrop" width={w} height={h} ref={backdrop} aria-hidden="true" />
+        <canvas
+          className="drawing-backdrop"
+          width={Math.round(w * Math.min(1, 540 / h))}
+          height={Math.min(540, h)}
+          ref={backdrop}
+          aria-hidden="true"
+        />
         <canvas
           width={w}
           height={h}

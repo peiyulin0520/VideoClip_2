@@ -153,6 +153,7 @@ export function Preview({ projectId, width, height }: { projectId: string; width
 
   // ---- 舞台大小（CSS px）----
   useLayoutEffect(() => {
+    void expanded;
     const el = stageRef.current!.parentElement!;
     const measure = () =>
       setViewport((old) =>
@@ -164,7 +165,7 @@ export function Preview({ projectId, width, height }: { projectId: string; width
     observer.observe(el);
     measure();
     return () => observer.disconnect();
-  }, []);
+  }, [expanded]);
   const stageWidth = Math.max(1, Math.min(viewport.width, (viewport.height * width) / height));
 
   useEffect(() => {

@@ -60,7 +60,9 @@ test('移除大圓鈕，以雙指縮放；放大預覽可回到編輯', async ({
   expect((await project(page)).tracks[1]!.items[0]!.transform.scale).toBeGreaterThan(before * 1.3);
   const small = (await page.getByTestId('stage').boundingBox())!;
   await page.getByRole('button', { name: '放大預覽', exact: true }).tap();
-  expect((await page.getByTestId('stage').boundingBox())!.height).toBeGreaterThan(small.height * 1.4);
+  await expect
+    .poll(async () => (await page.getByTestId('stage').boundingBox())!.height)
+    .toBeGreaterThan(small.height * 1.4);
   await page.screenshot({ path: `${shot}/expanded-preview.png` });
   await page.getByRole('button', { name: '縮回預覽' }).tap();
   await expect(page.locator('.expanded-preview')).toHaveCount(0);

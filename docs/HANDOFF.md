@@ -1,6 +1,8 @@
 # 交接手冊（HANDOFF）
 
 ## VideoClip_2 當前交接（優先於以下來源 repo 的歷史紀錄）
+- 整組zoom/spin/page-turn以SceneLayer.animationTransform同步變換整組座標與容器（含viewport mask），避免每一格各自縮放/轉動；其他動畫共用transitionPair，膠片外框只加整組一次。新增瀏覽器像素對照整組縮放位置。
+- 九點首輪 e16e7fc / Actions43456433286：321單元、120/134瀏覽器（新增7全過）。7個匯出測試舊getByLabel非exact也匹配新播放label，改控制label為匯出結果；相紙改方形，舊取樣點調整到實際新格內；最底回頂擋工具，升到最後工具列上方且不加空白；安全區底色加深過淺色對比；放大舞台同步量測並等實際resize。第二輪完整驗收待push。
 - 追加三點同任務：layout.size有獨立長寬，layoutDefaultSize長型1080×1920/相紙1080平方；groupFrame/cellViewport不直接伸成畫布。scene框架畫布依自身比例且紋理上限跟輸出，避免巨大自訂框爆記憶體。預覽540預設（preferences previewModeVersion2遷移），頂部quality sheet可調且重建保留秒數/播放；隱藏示意卡不渲染，副預覽只可見30fps。stage父容器量測等比fit，外圍斜紋/邊線/範圍label僅UI，不匯出。321單元已過，134瀏覽器待CI；Safari待真機。
 - 最新六點：PR #9已Merge，main6ac2f13。本次新PR待建。layout.caption/frameColor/captionColor/frameOpacity/animations可存，重套carryTemplateEdits保留；layoutArt快取含caption/color，opacity在scene frame層。singleAnimations對目標或整組在其frame局部座標共用transitionPair，B透明，其他層不動；每段動效不超過片長一半。每格來源只一軸，advanced折疊補色/延後/popup，色塊起迄數字可改。動態預覽明確Play/Pause/active；ProjectPreview複製shared compositor並控制player，Drawing底圖不混入儲存畫作。最底顯示回頂，visualViewport修正實際可見高度；字級390基準及較大手機上限+10%，窄手機不縮小44px觸控。317本機成功，132e2e待驗。見plans/2026-11-13-template-controls.md。
 - 最新時間軸小字最終：[Actions 43422783991](https://github.com/peiyulin0520/VideoClip_2/actions/runs/43422783991)：版本 fc9d5bb813573aeba69889efe37b1ee98e5786f3 的313單元、127 Chromium e2e全過；lint/格式/TypeScript/build/Pages/39字體檢查成功。artifact 14036880124，ZIP SHA-256 6c1ef4fe7a5b5f2dc4ff8b93335c0138ca2b3a7e3c82b8d16897e19bf15423bb 已核對；159張成功畫面，新增uniform-type/small-timeline-labels.png。時間軸11px/9px，其餘介面14px。最後文件/截圖不改驗收版本，以下待CI皆歷史；Safari待真機。
