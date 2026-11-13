@@ -1,6 +1,8 @@
 # 交接手冊（HANDOFF）
 
 ## VideoClip_2 當前交接（優先於以下來源 repo 的歷史紀錄）
+- Crop e2e 要區分來源 UV 與專案座標；預設 overlay scale=.5，用 itemBox 換算實際遮罩取樣點，外部點也選原素材內側。CDP 發完資料不代表 React 狀態已渲染，每點等待 guide UV、touchEnd 等 guide 消失，再做套用/復原；不能以加 timeout/retry 繞過。自由筆觸 preventDefault 防相容點擊。
+
 - compact-workspace 特效截圖須等待可見第一張 canvas 的 data-demo-ready=true，與既有 A/B 動畫驗收一致，避免剛滾入可視範圍尚未繪製。
 
 - compact-workspace 首輪 9d083a0：313/115 of 120；版型 img alt 需保留至左側 preview。SVG 非縮放 2px 外框會進 boundingBox，直徑要扣此外框；不可放寬實際遮罩輸出。真觸控後的套用須驗 dialog 關閉，button manipulation 防雙擊縮放；timeline contextmenu 防原生長按選單。CDP 拖曳需 source 在 viewport 且 elementFromPoint 命中，避免空白長按被誤當產品拖曳失效。

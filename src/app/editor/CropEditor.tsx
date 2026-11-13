@@ -169,6 +169,7 @@ export function CropEditor({ item, onClose }: { item: VideoItem; onClose: () => 
             preserveAspectRatio="none"
             onPointerDown={(e) => {
               if (mode === 'crop') return;
+              e.preventDefault();
               setAim(pointer(e));
               setSnapshots((h) => [...h, { points, strokes }]);
               if (mode === 'keep' || mode === 'erase') {

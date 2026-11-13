@@ -11,6 +11,7 @@ import {
   isGreen,
 } from './helpers';
 import type { Project, VideoItem } from '../src/model/types';
+import { itemBox } from '../src/engine/geometry';
 
 const current = (page: Page): Promise<Project> =>
   page.evaluate(() =>
@@ -55,12 +56,39 @@ async function cropStroke(page: Page, targets: [number, number][], whileDown?: (
         type: i ? 'touchMove' : 'touchStart',
         touchPoints: [{ x: b.x + x * b.width, y: b.y + y * b.height + offset, id: 1 }],
       });
+      await expect
+        .poll(async () => {
+          const guide = page.getByTestId('crop-offset-guide');
+          return [
+            Number(await guide.getAttribute('data-target-x')),
+            Number(await guide.getAttribute('data-target-y')),
+          ].map((n) => Math.round(n * 100));
+        })
+        .toEqual([x, y].map((n) => Math.round(n * 100)));
     }
     await whileDown?.();
     await session.send('Input.dispatchTouchEvent', { type: 'touchEnd', touchPoints: [] });
+    await expect(page.getByTestId('crop-offset-guide')).toHaveCount(0);
   } finally {
     await session.detach();
   }
+}
+// Crop UVs refer to the source; the default overlay occupies only half the project.
+async function sourcePoint(page: Page) {
+  const p = await current(page),
+    id = await selectedItemId(page);
+  const item = p.tracks.flatMap((t) => t.items).find((it) => it.id === id)!;
+  const box = itemBox(item, {
+    canvasW: p.width,
+    canvasH: p.height,
+    assets: p.assets,
+    textSize: () => ({ w: 0, h: 0 }),
+  })!;
+  expect(box.rotation).toBe(0);
+  return (x: number, y: number): [number, number] => [
+    (box.cx + (x - 0.5) * box.w) / p.width,
+    (box.cy + (y - 0.5) * box.h) / p.height,
+  ];
 }
 test('展開時間軸先看到分類摘要，只展開要調整的音訊，重開仍先收合', async ({ page }) => {
   await createProjectWith(page, ['tone-video.webm'], false);
@@ -170,6 +198,7 @@ test('偏移控制圈瞄準擦除與保留，大小可調，匯出改的是上�
   test.setTimeout(60000);
   await createProjectWith(page, ['solid-green.webm']);
   await addOverlays(page, ['solid-red.webm']);
+  const toProject = await sourcePoint(page);
   await openTab(page, '剪輯');
   await page.getByRole('button', { name: '裁切', exact: true }).tap();
   await page.getByRole('button', { name: '裁切橡皮擦', exact: true }).tap();
@@ -191,11 +220,8 @@ test('偏移控制圈瞄準擦除與保留，大小可調，匯出改的是上�
   await expect(page.getByTestId('crop-offset-guide')).toHaveCount(0);
   await page.getByRole('button', { name: '套用裁切', exact: true }).tap();
   await expect(page.getByRole('dialog', { name: '裁切／手動去背', exact: true })).toHaveCount(0);
-  await expect.poll(async () => isGreen(await samplePreview(page, 0.5, 0.4))).toBe(true);
-  const erased = await exportFrame(page, 0, [
-    [0.5, 0.4],
-    [0.5, contactY],
-  ]);
+  await expect.poll(async () => isGreen(await samplePreview(page, ...toProject(0.5, 0.4)))).toBe(true);
+  const erased = await exportFrame(page, 0, [toProject(0.5, 0.4), toProject(0.5, contactY)]);
   expect(isGreen(erased.samples[0] as [number, number, number, number])).toBe(true);
   expect(isRed(erased.samples[1] as [number, number, number, number])).toBe(true);
   await page.getByRole('button', { name: '裁切', exact: true }).tap();
@@ -204,13 +230,14 @@ test('偏移控制圈瞄準擦除與保留，大小可調，匯出改的是上�
   await cropStroke(page, [[0.5, 0.4]]);
   await page.getByRole('button', { name: '套用裁切', exact: true }).tap();
   await expect(page.getByRole('dialog', { name: '裁切／手動去背', exact: true })).toHaveCount(0);
-  const restored = await exportFrame(page, 0, [[0.5, 0.4]]);
+  const restored = await exportFrame(page, 0, [toProject(0.5, 0.4)]);
   expect(isRed(restored.samples[0] as [number, number, number, number])).toBe(true);
 });
 test('自由描邊也用偏移瞄準，逐筆復原及取消不改原片，保留區域輸出正確', async ({ page }) => {
   test.setTimeout(60000);
   await createProjectWith(page, ['solid-green.webm']);
   await addOverlays(page, ['solid-red.webm']);
+  const toProject = await sourcePoint(page);
   await openTab(page, '剪輯');
   await page.getByRole('button', { name: '裁切', exact: true }).tap();
   await page.getByRole('button', { name: '自由描邊保留區域', exact: true }).tap();
@@ -230,10 +257,7 @@ test('自由描邊也用偏移瞄準，逐筆復原及取消不改原片，保�
   await cropStroke(page, targets);
   await page.getByRole('button', { name: '套用裁切', exact: true }).tap();
   await expect(page.getByRole('dialog', { name: '裁切／手動去背', exact: true })).toHaveCount(0);
-  const frame = await exportFrame(page, 0, [
-    [0.1, 0.5],
-    [0.5, 0.5],
-  ]);
+  const frame = await exportFrame(page, 0, [toProject(0.1, 0.5), toProject(0.5, 0.5)]);
   expect(isGreen(frame.samples[0] as [number, number, number, number])).toBe(true);
   expect(isRed(frame.samples[1] as [number, number, number, number])).toBe(true);
   const masks = (await current(page)).tracks.map((t) =>
