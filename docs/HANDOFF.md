@@ -1,6 +1,8 @@
 # 交接手冊（HANDOFF）
 
 ## VideoClip_2 當前交接（優先於以下來源 repo 的歷史紀錄）
+- 首頁 banner/tip 原固定深底在米色主題會深字配深底；人工看圖發現，改 control（fallback panel）/fg 同主題色，padding6px。radio-card 也降內距14→6px，不動44px觸控或專案文字框。
+
 - 字級首輪 bba8e13 / Actions43412939957：313單元、原120瀏覽器情境全過；新情境未開始字級斷言，卡在初始新增按鈕名稱。初始按鈕是「＋ 新增文字（放在目前這一秒）」；只有選中既有字卡後的＋新增才有 aria-label「新增文字」。沿用既有測試 /新增文字/，不改產品或放寬字級/幾何斷言。
 
 - 最新補正（PR #9 尚未合併，沿用）：全介面文字統一14px（--ui-font-size），只對 hint/sheet-msg/empty-note/note/role=note 明確註解使用11px；不能以 small 作註解，因主題名稱/群組數/來源標記也用small。作用域為 #root 和 portal .sheet，不影響畫布/文字模型。框內距縮小6px、輸入上下4px，保留44px觸控。播放時間用兩行但 textContent 仍是原來 current / total，320px減少間距不讓時間遮按鈕。預期313/121待CI，Safari原生輸入聚焦待真機。文字節點驗收只要求頁面非空且每個可見節點字級正確；首頁只有少量文字，不能硬要求和編輯器一樣多的節點數。

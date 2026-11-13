@@ -3041,3 +3041,13 @@ button:focus-visible {
 :root[data-theme] .name-btn {
   padding-inline: 4px;
 }
+
+:root[data-theme] .radio-card {
+  padding: 6px;
+}
+:root[data-theme] :is(.banner, .tip) {
+  padding: 6px;
+  gap: 6px;
+  background: var(--control, var(--panel));
+  color: var(--fg);
+}
