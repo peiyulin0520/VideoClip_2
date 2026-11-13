@@ -182,12 +182,14 @@ test('偏移控制圈瞄準擦除與保留，大小可調，匯出改的是上�
       contact = (await page.getByTestId('crop-contact-circle').boundingBox())!;
     expect(contact.y + contact.height / 2 - target.y - target.height / 2).toBeCloseTo(56, 0);
     const stage = (await page.getByTestId('crop-stage').boundingBox())!;
-    expect(target.width).toBeCloseTo(stage.width * 0.2, 0);
+    // SVG bounds include the 2px non-scaling outline.
+    expect(target.width - 2).toBeCloseTo(stage.width * 0.2, 0);
     contactY = (contact.y + contact.height / 2 - stage.y) / stage.height;
     await shot(page, 'offset-eraser-aiming');
   });
   await expect(page.getByTestId('crop-offset-guide')).toHaveCount(0);
   await page.getByRole('button', { name: '套用裁切', exact: true }).tap();
+  await expect(page.getByRole('dialog', { name: '裁切／手動去背', exact: true })).toHaveCount(0);
   await expect.poll(async () => isGreen(await samplePreview(page, 0.5, 0.4))).toBe(true);
   const erased = await exportFrame(page, 0, [
     [0.5, 0.4],
@@ -200,6 +202,7 @@ test('偏移控制圈瞄準擦除與保留，大小可調，匯出改的是上�
   await slider(page, '保留筆刷粗細', 20);
   await cropStroke(page, [[0.5, 0.4]]);
   await page.getByRole('button', { name: '套用裁切', exact: true }).tap();
+  await expect(page.getByRole('dialog', { name: '裁切／手動去背', exact: true })).toHaveCount(0);
   const restored = await exportFrame(page, 0, [[0.5, 0.4]]);
   expect(isRed(restored.samples[0] as [number, number, number, number])).toBe(true);
 });
@@ -225,6 +228,7 @@ test('自由描邊也用偏移瞄準，逐筆復原及取消不改原片，保�
   await expect(page.locator('.crop-stage polygon')).toHaveCount(0);
   await cropStroke(page, targets);
   await page.getByRole('button', { name: '套用裁切', exact: true }).tap();
+  await expect(page.getByRole('dialog', { name: '裁切／手動去背', exact: true })).toHaveCount(0);
   const frame = await exportFrame(page, 0, [
     [0.1, 0.5],
     [0.5, 0.5],

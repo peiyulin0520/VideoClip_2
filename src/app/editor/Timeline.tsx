@@ -435,7 +435,7 @@ export function Timeline({
   return (
     <>
       {!!batch.length && <BatchLayerBar ids={batch} onChange={setBatch} />}
-      <div className="timeline" style={{ height: viewH }}>
+      <div className="timeline" style={{ height: viewH }} onContextMenu={(event) => event.preventDefault()}>
         <div
           className="tl-scroll"
           ref={scrollRef}

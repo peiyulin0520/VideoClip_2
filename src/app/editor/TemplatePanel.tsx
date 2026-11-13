@@ -177,7 +177,7 @@ export function TemplatePanel() {
                   height: `${slot.h * 100}%`,
                 }}
               >
-                {a?.thumbs[0] && <img src={a.thumbs[0]} alt="" />}
+                {a?.thumbs[0] && <img src={a.thumbs[0]} alt={`第 ${i + 1} 格素材縮圖`} />}
                 <strong>
                   {i + 1} · {slotLabel(style, i, count)}
                 </strong>

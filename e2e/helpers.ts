@@ -231,9 +231,15 @@ export async function dragTimelineItem(
   dy: number,
   beforeRelease?: () => Promise<void>,
 ) {
+  await source.scrollIntoViewIfNeeded();
+  await expect(source).toBeInViewport();
   const box = (await source.boundingBox())!;
   const x = box.x + Math.min(box.width / 2, 70),
     y = box.y + box.height / 2;
+  expect(
+    await source.evaluate((el, point) => el.contains(document.elementFromPoint(point.x, point.y)), { x, y }),
+    'The held point must belong to the intended clip',
+  ).toBe(true);
   const session = await page.context().newCDPSession(page);
   try {
     await session.send('Input.dispatchTouchEvent', { type: 'touchStart', touchPoints: [{ x, y, id: 1 }] });

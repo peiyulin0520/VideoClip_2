@@ -74,6 +74,7 @@ button {
   --line: #2c2c2c;
 }
 button {
+  touch-action: manipulation;
   cursor: pointer;
   font-family: inherit;
 }
@@ -2873,10 +2874,13 @@ button:focus-visible {
 .template-grid button {
   gap: 4px;
   padding: 4px;
+  min-height: 86px;
+  flex-direction: column;
 }
 .template-grid .template-art {
   height: 46px;
   max-width: 64px;
+  margin: 0;
 }
 .template-assignment {
   display: grid;
