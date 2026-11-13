@@ -203,7 +203,62 @@ export function Preview({ projectId, width, height }: { projectId: string; width
       created?.destroy();
       useUI.setState({ player: null });
     };
-  }, [projectId, width, height, previewCap, retry, videoAssetsKey]); // 比例改了（寬高變了）就重建預覽引擎
+  }, [projectId, width, height, previewCap, retry]); // 比例改了（寬高變了）就重建預覽引擎
+
+  // Imports keep the compositor/player alive. Only new media needs preparation.
+  useEffect(() => {
+    if (!player || useUI.getState().previewLoad) return;
+    const p = useProjectStore.getState().project;
+    if (!p || p.id !== projectId) return;
+    const pending = p.assets.filter((a) => a.kind === 'video' && !a.previewFiles?.[String(previewCap)]);
+    if (!pending.length) return;
+    const abort = new AbortController();
+    let cancelled = false;
+    const time = player.time;
+    player.pause();
+    useUI.setState({ previewLoad: { progress: 80, message: '準備新匯入的影片' } });
+    void preparePreviews(
+      projectId,
+      pending,
+      previewCap,
+      abort.signal,
+      (fraction, message) => {
+        if (!cancelled)
+          useUI.setState({ previewLoad: { progress: 80 + Math.floor(fraction * 15), message } });
+      },
+      (id, metadata) => {
+        if (!cancelled) setAssetPreview(id, previewCap, metadata);
+      },
+    )
+      .then(async (failed) => {
+        if (cancelled) return;
+        if (failed) toast('部分影片無法建立輕量預覽，會使用原檔；匯出仍保留原始畫質');
+        await player.prepare(time, (progress) => {
+          if (!cancelled)
+            useUI.setState({
+              previewLoad: { progress: 95 + Math.floor(progress * 0.05), message: '準備預覽畫面' },
+            });
+        });
+        if (!cancelled) useUI.setState({ previewLoad: null });
+      })
+      .catch((error) => {
+        if (!cancelled)
+          useUI.setState({
+            previewLoad: {
+              progress: 95,
+              message: '新素材尚未就緒',
+              error: String(error),
+              canSkip: true,
+              retry: () => setRetry((n) => n + 1),
+            },
+          });
+      });
+    return () => {
+      cancelled = true;
+      abort.abort();
+      if (useUI.getState().player === player) useUI.setState({ previewLoad: null });
+    };
+  }, [projectId, videoAssetsKey, previewCap, player]);
 
   useEffect(() => {
     const pause = () => {

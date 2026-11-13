@@ -1,6 +1,8 @@
 # 交接手冊（HANDOFF）
 
 ## VideoClip_2 當前交接（優先於以下來源 repo 的歷史紀錄）
+- 第三輪快速仍5/6，匯入時CDP evaluate無回應；Preview主引擎不能依videoAssetsKey重建。新assets改獨立prepare effect，保留player/compositor，只準備新proxy、重新首幀對齊，品質/比例重建仍保留；待新完整CI。
+
 - 首輪播放43513918905為341單元/92瀏覽器成功，26失敗25未跑且20分時限。補destroyed player全部公開操作/late frame guard，避免ProjectPreview cleanup或舊React閉包render已銷毀compositor；測試須等待新player.ready，池的實際class是.pool。新增branch-only preview-smoke先回報新情境，完整build仍驗所有。第二輪待驗，不能宣稱已順暢。
 
 - 最新未提交待測：plans/2026-11-13-anchored-effects-and-playback.md；source在workspace，PR #10仍未合併。固定單素材邊界優先於上一輪任意；同秒特效marker需合併作用範圍後供選擇，不能彼此蓋住；真正proxy參考VideoClip，urlFor只原檔，previewUrlFor只預覽，勿低畫質匯出。本輪還缺新測試/check/CI，先前331/138是基線。
