@@ -240,9 +240,23 @@ export async function dragTimelineItem(
     await source.evaluate((el, point) => el.contains(document.elementFromPoint(point.x, point.y)), { x, y }),
     'The held point must belong to the intended clip',
   ).toBe(true);
+  const observed = await source.evaluateHandle((el) => {
+    const down = { inside: false, target: '' };
+    document.addEventListener(
+      'pointerdown',
+      (event) => {
+        down.inside = el.contains(event.target as Node);
+        down.target = (event.target as Element).outerHTML.slice(0, 300);
+      },
+      { capture: true, once: true },
+    );
+    return down;
+  });
   const session = await page.context().newCDPSession(page);
   try {
     await session.send('Input.dispatchTouchEvent', { type: 'touchStart', touchPoints: [{ x, y, id: 1 }] });
+    const down = await observed.jsonValue();
+    expect(down.inside, 'Actual touch target: ' + down.target).toBe(true);
     await page.waitForTimeout(500); // The actual long-press threshold is 400ms.
     await expect(source).toHaveClass(/dragging/);
     for (let i = 1; i <= 10; i++)
@@ -253,6 +267,7 @@ export async function dragTimelineItem(
     await beforeRelease?.();
     await session.send('Input.dispatchTouchEvent', { type: 'touchEnd', touchPoints: [] });
   } finally {
+    await observed.dispose();
     await session.detach();
   }
 }

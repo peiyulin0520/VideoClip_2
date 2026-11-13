@@ -587,6 +587,19 @@ export function Timeline({
                       data-selected={selected}
                       data-item-id={it.id}
                       data-kind={it.type}
+                      role="button"
+                      tabIndex={0}
+                      aria-label={`選取${it.name ?? (it.type === 'text' ? '文字' : (asset?.name ?? '素材'))}`}
+                      onClick={(e) => e.stopPropagation()}
+                      onKeyDown={(e) => {
+                        if (e.target !== e.currentTarget) return;
+                        if (e.key === 'Enter' || e.key === ' ') {
+                          e.preventDefault();
+                          useProjectStore.getState().select(it.id);
+                          player?.pause();
+                          player?.seek(Math.max(it.start, Math.min(player.time, itemEnd(it) - 0.01)));
+                        }
+                      }}
                       style={{
                         left: half + it.start * pps,
                         width: Math.max(it.duration * pps, 4),
