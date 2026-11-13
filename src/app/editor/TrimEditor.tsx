@@ -1,3 +1,4 @@
+import { MediaPlayback } from '../../ui/MediaPlayback';
 import { Undo2 } from 'lucide-react';
 import { useDraftHistory } from '../../ui/useDraftHistory';
 import { SelectionAddButton } from '../../ui/SelectionAddButton';
@@ -46,6 +47,7 @@ export function TrimEditor({ item, onClose }: { item: VideoItem; onClose: () => 
           e.currentTarget.currentTime = Math.min(Math.max(cursor, 0.001), asset.duration - 0.001);
         }}
       />
+      <MediaPlayback media={video} label="片段預覽" start={range[0]} end={range[1]} onTime={setCursor} />
       <SourceRanges
         duration={asset.duration}
         minimum={MIN_CLIP_DURATION * item.speed}

@@ -1,21 +1,24 @@
 import { animationValues } from './keyframes';
 import type { Project, Track, VideoItem } from '../model/types';
 import type { Box } from './geometry';
-import { layoutMotion, layoutSlots } from './layouts';
+import { layoutMotion, layoutSlots, layoutDefaultSize } from './layouts';
 export const groupTransform = (track: Track, t = track.layout?.start ?? 0) =>
   animationValues(track.layout ?? {}, t - (track.layout?.start ?? 0));
 export function groupFrame(track: Track, w: number, h: number, t: number): Box {
   const tf = groupTransform(track, t),
     motion = layoutMotion(track.layout, t);
+  const presetSize = layoutDefaultSize(track.layout?.style ?? 'photobooth');
+  const size = track.layout?.size ?? presetSize;
+  const fit = Math.min(w / presetSize.width, h / presetSize.height);
   return {
     cx: (tf.x + motion.x) * w,
     cy: (tf.y + motion.y) * h,
-    w: w * tf.scale,
-    h: h * tf.scale,
+    w: Math.max(1, size.width) * fit * tf.scale,
+    h: Math.max(1, size.height) * fit * tf.scale,
     rotation: 0,
   };
 }
-export function cellViewport(track: Track, item: VideoItem, index: number, t: number) {
+export function cellViewport(track: Track, item: VideoItem, index: number, t: number, w = 1080, h = 1920) {
   const layout = track.layout;
   let slot = item.slot ?? layoutSlots(layout?.style ?? 'filmstrip', layout?.count)[index]!;
   if (layout?.style === 'story') {
@@ -36,13 +39,12 @@ export function cellViewport(track: Track, item: VideoItem, index: number, t: nu
       slot = { x: 0, y: index / count - (1 - p) / count, w: 1, h: 1 / count };
     }
   }
-  const tf = groupTransform(track, t),
-    m = layoutMotion(layout, t);
+  const frame = groupFrame(track, w, h, t);
   return {
-    x: tf.x + m.x + (slot.x - 0.5) * tf.scale,
-    y: tf.y + m.y + (slot.y - 0.5) * tf.scale,
-    w: slot.w * tf.scale,
-    h: slot.h * tf.scale,
+    x: (frame.cx + (slot.x - 0.5) * frame.w) / w,
+    y: (frame.cy + (slot.y - 0.5) * frame.h) / h,
+    w: (slot.w * frame.w) / w,
+    h: (slot.h * frame.h) / h,
   };
 }
 export function templateContexts(project: Project, w: number, h: number, t: number) {
@@ -56,7 +58,7 @@ export function templateContexts(project: Project, w: number, h: number, t: numb
             : [
                 [
                   it.id,
-                  { slot: cellViewport(tr, it, i, t), frame: groupFrame(tr, w, h, t), anchor: i === 0 },
+                  { slot: cellViewport(tr, it, i, t, w, h), frame: groupFrame(tr, w, h, t), anchor: i === 0 },
                 ],
               ],
         ),

@@ -263,7 +263,8 @@ describe('linear keyframes', () => {
     const frame = groupFrame(tr, 160, 96, 1),
       slot = cellViewport(tr, tr.items[0] as VideoItem, 0, 1)!;
     expect(frame.cx).toBe(96);
-    expect(frame.w).toBe(120);
+    expect(frame.w).toBe(40.5);
+    expect(frame.h).toBe(72);
     expect(slot.w).toBeCloseTo(0.76 * 0.75);
     expect(tr.items.map((it) => it.transform)).toEqual(before);
   });

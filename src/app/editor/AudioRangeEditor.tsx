@@ -1,3 +1,4 @@
+import { Play, Pause } from 'lucide-react';
 import { Undo2 } from 'lucide-react';
 import { useDraftHistory } from '../../ui/useDraftHistory';
 import { SelectionAddButton } from '../../ui/SelectionAddButton';
@@ -153,7 +154,7 @@ export function AudioRangeEditor({
               }
             }}
           >
-            {playing ? '⏸ 暫停試聽' : '▶ 播放試聽'}
+            {playing ? <Pause size={18} /> : <Play size={18} />}
           </button>
           <p className="source-now">
             目前：{cursor.toFixed(2)} 秒 {markStart !== null && `· 靜音起點 ${markStart.toFixed(2)} 秒`}

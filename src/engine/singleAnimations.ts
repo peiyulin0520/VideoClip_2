@@ -1,0 +1,94 @@
+import type { Project } from '../model/types';
+import type { SceneLayer } from './compositor';
+import { transitionPair } from './transitions';
+import { groupFrame } from './templateGeometry';
+
+/** Animate only the chosen asset, or the entire template frame/cells/title together. */
+export function applySingleAnimations(
+  layers: SceneLayer[],
+  project: Project,
+  t: number,
+  w: number,
+  h: number,
+) {
+  let out = layers;
+  for (const track of project.tracks) {
+    const targets =
+      track.template && track.layout
+        ? [
+            {
+              id: track.id,
+              start: track.layout.start,
+              duration: track.layout.duration,
+              animations: track.layout.animations,
+              group: true,
+            },
+          ]
+        : track.items.filter((it) => it.type !== 'audio').map((it) => ({ ...it, group: false }));
+    for (const target of targets) {
+      if (!target.animations || t < target.start || t >= target.start + target.duration) continue;
+      const enter = target.animations.enter,
+        exit = target.animations.exit;
+      const enterDuration = Math.min(enter?.duration ?? 0, target.duration / 2);
+      const exitDuration = Math.min(exit?.duration ?? 0, target.duration / 2);
+      const local = t - target.start;
+      const animation =
+        enter && local < enterDuration
+          ? enter
+          : exit && local >= target.duration - exitDuration
+            ? exit
+            : null;
+      if (!animation) continue;
+      const p = animation === enter ? local / enterDuration : (target.duration - local) / exitDuration;
+      const chosen = out.filter((l) =>
+        target.group
+          ? track.items.some((it) => l.id === it.id || l.id.startsWith(`${it.id}-`)) ||
+            l.id.startsWith(`${track.id}-`)
+          : l.id === target.id,
+      );
+      const frame = target.group ? groupFrame(track, w, h, t) : chosen[0]?.box;
+      if (!frame) continue;
+      const left = frame.cx - frame.w / 2,
+        top = frame.cy - frame.h / 2;
+      const transformed = chosen.flatMap((layer) => {
+        const normalized: SceneLayer = {
+          ...layer,
+          box: { ...layer.box, cx: layer.box.cx - left, cy: layer.box.cy - top },
+          viewport: layer.viewport
+            ? { ...layer.viewport, x: layer.viewport.x - left, y: layer.viewport.y - top }
+            : undefined,
+        };
+        const blank = { ...normalized, id: `${layer.id}-empty`, opacity: 0 };
+        return transitionPair(
+          [blank, normalized],
+          blank,
+          normalized,
+          animation.preset,
+          Math.max(0, Math.min(1, p)),
+          frame.w,
+          frame.h,
+          `${layer.id}-single`,
+        )
+          .filter((l) => l.id !== blank.id && l.opacity > 0)
+          .map((l): SceneLayer => ({
+            ...l,
+            continuity: undefined,
+            box: { ...l.box, cx: l.box.cx + left, cy: l.box.cy + top },
+            viewport: l.viewport
+              ? { ...l.viewport, x: l.viewport.x + left, y: l.viewport.y + top }
+              : undefined,
+            clipCircle: l.clipCircle
+              ? { ...l.clipCircle, x: l.clipCircle.x + left, y: l.clipCircle.y + top }
+              : undefined,
+          }));
+      });
+      const ids = new Set(chosen.map((l) => l.id));
+      const index = out.findIndex((l) => ids.has(l.id));
+      if (index >= 0) {
+        out = out.filter((l) => !ids.has(l.id));
+        out.splice(index, 0, ...transformed);
+      }
+    }
+  }
+  return out;
+}

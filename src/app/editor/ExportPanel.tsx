@@ -1,3 +1,4 @@
+import { MediaPlayback } from '../../ui/MediaPlayback';
 import { useEffect, useRef, useState } from 'react';
 import { Sheet } from '../../ui/Sheet';
 import { useProjectStore } from '../../store/projectStore';
@@ -16,6 +17,7 @@ export function ExportPanel({ onClose }: { onClose: () => void }) {
     [message, setMessage] = useState(''),
     [error, setError] = useState('');
   const [result, setResult] = useState<(VideoResult & { url: string; name: string }) | null>(null);
+  const resultVideo = useRef<HTMLVideoElement>(null);
   const controller = useRef<AbortController | null>(null),
     lastUrl = useRef(''),
     preview = useRef<HTMLDivElement>(null);
@@ -145,7 +147,8 @@ export function ExportPanel({ onClose }: { onClose: () => void }) {
             {result.extension.toUpperCase()} · {result.width} × {result.height} ·{' '}
             {(result.blob.size / 1024 / 1024).toFixed(1)} MB
           </p>
-          <video src={result.url} controls playsInline aria-label="匯出影片預覽" />
+          <video ref={resultVideo} src={result.url} playsInline aria-label="匯出影片預覽" />
+          <MediaPlayback media={resultVideo} label="匯出影片預覽" />
           <div className="chips">
             <a className="btn primary" href={result.url} download={result.name}>
               下載影片

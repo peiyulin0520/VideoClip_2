@@ -1,3 +1,7 @@
+import { ProjectPreview } from './ProjectPreview';
+import { AnimationSettings } from './AnimationSettings';
+import { ColorPicker } from '../../ui/ColorPicker';
+import { Slider } from '../../ui/Slider';
 import { TemplateCells } from './TemplateCells';
 import { ensureFont } from '../../fonts/fontStore';
 import { useRef, useState } from 'react';
@@ -6,6 +10,7 @@ import {
   carryTemplateEdits,
   LAYOUTS,
   layoutSlots,
+  layoutDefaultSize,
   slotLabel,
   type LayoutStyle,
   type LayoutMotion,
@@ -13,7 +18,7 @@ import {
 import { importFiles } from '../../engine/importMedia';
 import { ensureUrls } from '../../engine/assetUrls';
 import { useProjectStore } from '../../store/projectStore';
-import type { VideoItem } from '../../model/types';
+import type { ClipAnimations, Project, VideoItem } from '../../model/types';
 import { toast, useUI } from '../../store/uiStore';
 
 export function TemplatePanel() {
@@ -36,6 +41,24 @@ export function TemplatePanel() {
     ),
     [focusSlot, setFocusSlot] = useState(0),
     [sourceIds, setSourceIds] = useState<string[] | null>(null);
+  const [appearance, setAppearance] = useState<Partial<NonNullable<Project['layout']>>>({
+    size: activeGroup?.layout?.size ?? layoutDefaultSize(style),
+    caption: activeGroup?.layout?.caption ?? 'LITTLE MOMENTS',
+    frameColor:
+      activeGroup?.layout?.frameColor ?? (style === 'filmstrip' || style === 'story' ? '#17171b' : '#fff5df'),
+    captionColor: activeGroup?.layout?.captionColor ?? (style === 'filmstrip' ? '#e3d4bc' : '#7e6c5b'),
+    frameOpacity: activeGroup?.layout?.frameOpacity ?? 1,
+    animations: activeGroup?.layout?.animations,
+  });
+  const patchAppearance = (patch: Partial<NonNullable<Project['layout']>>) => {
+    setAppearance((v) => ({ ...v, ...patch }));
+    if (activeGroup?.layout?.style === style)
+      useProjectStore.getState().apply((d) => {
+        const group = d.tracks.find((t) => t.id === activeGroup.id)!;
+        Object.assign(group.layout!, patch);
+        if (d.layout?.style === style) Object.assign(d.layout, patch);
+      });
+  };
   const [storyCount, setStoryCount] = useState(Math.min(3, activeGroup?.layout?.count ?? 3));
   const referenceLength = activeGroup?.layout?.duration ?? 3;
   const seconds =
@@ -94,6 +117,8 @@ export function TemplatePanel() {
         sources,
       );
       if (activeGroup && !sourceIds) carryTemplateEdits(plan.tracks[0]!, activeGroup);
+      Object.assign(plan.layout, appearance);
+      Object.assign(plan.tracks[0]!.layout!, appearance);
       if (plan.layout.story) {
         useUI.getState().setBusy('正在準備故事模板字體…');
         for (const id of plan.tracks[0]!.layout?.story?.fontIds ?? [])
@@ -130,6 +155,16 @@ export function TemplatePanel() {
             aria-pressed={style === l.id}
             onClick={() => {
               setStyle(l.id);
+              const current = activeGroup?.layout?.style === l.id ? activeGroup.layout : undefined;
+              setAppearance({
+                size: current?.size ?? layoutDefaultSize(l.id),
+                caption: current?.caption ?? 'LITTLE MOMENTS',
+                frameColor:
+                  current?.frameColor ?? (l.id === 'filmstrip' || l.id === 'story' ? '#17171b' : '#fff5df'),
+                captionColor: current?.captionColor ?? (l.id === 'filmstrip' ? '#e3d4bc' : '#7e6c5b'),
+                frameOpacity: current?.frameOpacity ?? 1,
+                animations: current?.animations,
+              });
               setFocusSlot(0);
             }}
           >
@@ -160,8 +195,80 @@ export function TemplatePanel() {
         目前選擇：{LAYOUTS.find((l) => l.id === style)!.label}{' '}
         {project.layout?.style === style ? '（已套用）' : '（待套用）'}
       </p>
+      <section className="template-appearance" aria-label="版型文字與色彩">
+        <div className="template-dimensions">
+          {(['width', 'height'] as const).map((dimension) => (
+            <label className="field" key={dimension}>
+              {dimension === 'width' ? '版型寬度' : '版型高度'}
+              <input
+                type="number"
+                aria-label={dimension === 'width' ? '版型寬度' : '版型高度'}
+                min={1}
+                max={12000}
+                step={1}
+                value={appearance.size?.[dimension] ?? layoutDefaultSize(style)[dimension]}
+                onChange={(e) =>
+                  patchAppearance({
+                    size: {
+                      width: appearance.size?.width ?? 1080,
+                      height: appearance.size?.height ?? layoutDefaultSize(style).height,
+                      [dimension]: Math.max(1, Math.min(12000, Number(e.target.value))),
+                    },
+                  })
+                }
+              />
+            </label>
+          ))}
+        </div>
+        <p className="hint">只調版型寬、高；右上比例控制整支影片，版型保留原有形狀。</p>
+        {style !== 'story' && (
+          <label className="field">
+            版型文字（可留空）
+            <input
+              aria-label="版型文字"
+              value={appearance.caption ?? ''}
+              maxLength={80}
+              onChange={(e) => patchAppearance({ caption: e.target.value })}
+            />
+          </label>
+        )}
+        <ColorPicker
+          label="版型底色"
+          value={appearance.frameColor ?? '#fff5df'}
+          onChange={(frameColor) => patchAppearance({ frameColor })}
+        />
+        {style !== 'story' && (
+          <ColorPicker
+            label="版型文字色彩"
+            value={appearance.captionColor ?? '#7e6c5b'}
+            onChange={(captionColor) => patchAppearance({ captionColor })}
+          />
+        )}
+        <Slider
+          label="版型框架透明度"
+          value={(appearance.frameOpacity ?? 1) * 100}
+          min={0}
+          max={100}
+          step={1}
+          format={(v) => v + '%'}
+          onChange={(v) => patchAppearance({ frameOpacity: v / 100 })}
+        />
+        <details>
+          <summary>進出場動畫</summary>
+          <AnimationSettings
+            value={appearance.animations}
+            onChange={(animations: ClipAnimations) => patchAppearance({ animations })}
+          />
+        </details>
+      </section>
       <div className="template-assignment" aria-label="版型預覽與各格素材">
-        <div className="slot-map" aria-label="版型格子位置對照">
+        <div
+          className="slot-map"
+          aria-label="版型格子位置對照"
+          style={{
+            aspectRatio: `${appearance.size?.width ?? 1080} / ${appearance.size?.height ?? layoutDefaultSize(style).height}`,
+          }}
+        >
           {layoutSlots(style, count).map((slot, i) => {
             const a = media.find((a) => a.id === ids[i]);
             return (
@@ -310,7 +417,12 @@ export function TemplatePanel() {
           移除版型
         </button>
       )}
-      {activeGroup && <TemplateCells track={activeGroup} />}
+      {activeGroup && (
+        <>
+          <ProjectPreview start={activeGroup.items[0]!.start} duration={activeGroup.items[0]!.duration} />
+          <TemplateCells track={activeGroup} />
+        </>
+      )}
       <button className="btn primary done" onClick={() => void apply()}>
         套用多格版型
       </button>

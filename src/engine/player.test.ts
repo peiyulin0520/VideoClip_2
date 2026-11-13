@@ -1,7 +1,7 @@
 import { afterEach, expect, it, vi } from 'vitest';
 import { createProject, createTextItem, createTrack } from '../model/defaults';
 import { buildScene } from './scene';
-import { Player } from './player';
+import { Player, previewSize } from './player';
 
 vi.mock('./compositor', () => ({
   Compositor: {
@@ -56,4 +56,11 @@ it('修剪的專案更新與邊緣預覽每幀只畫一次，解碼通知仍保�
   expect(vi.mocked(buildScene).mock.calls.at(-1)![1]).toBe(0);
   expect(player.time).toBe(0);
   player.destroy();
+});
+
+it('defaults to a 540px preview and permits a higher cap without changing project dimensions', () => {
+  const p = { width: 1080, height: 1920 };
+  expect(previewSize(p)).toEqual({ width: 304, height: 540 });
+  expect(previewSize(p, 1080)).toEqual({ width: 608, height: 1080 });
+  expect(p).toEqual({ width: 1080, height: 1920 });
 });

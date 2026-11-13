@@ -163,3 +163,9 @@ type BrushStroke = {
 
 
 2026-11-13 最新 10 點：控制字級以功能列為上限、特效三欄只動畫/名稱；鉛筆改紙紋空隙無實心底線，毛筆與感壓合併保留感壓。自由保留/擦除/描邊用 56 CSS px 預設偏移的目標圈，可調 0–120；存的是目標來源 UV。控制圈僅編輯提示，不進輸出。
+
+
+2026-11-13：版型文字/底色/文字色/框架透明度可調並保存。Item.animations與layout.animations各有enter/exit（preset/duration），共用25種transitionPair；單一A對透明側，整組版型的frame/blank/cell/title同步，其他層不動。預覽和匯出共享buildScene。詳見plans/2026-11-13-template-controls.md，Safari待真機。
+
+
+追加：版型寬高獨立於Project.width/height，拍貼/膠卷/故事預設長型、四格相紙預設方形，自訂長寬儲存在layout.size。groupFrame等比容納預設、相對預設尺寸調寬高，來源slot與框架採相同投影；改影片比例只改外部畫布。

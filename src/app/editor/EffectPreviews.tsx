@@ -1,4 +1,5 @@
-import { useEffect, useRef, type ReactNode } from 'react';
+import { Play, Pause } from 'lucide-react';
+import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { Compositor } from '../../engine/compositor';
 import { buildScene } from '../../engine/scene';
 import { createClip, createProject } from '../../model/defaults';
@@ -25,7 +26,7 @@ function demoSources() {
     return c;
   });
 }
-function demoProject(preset: PreviewPreset): Project {
+function demoProject(preset: PreviewPreset, single?: 'enter' | 'exit'): Project {
   const p = createProject('A/B');
   p.width = W;
   p.height = H;
@@ -44,7 +45,11 @@ function demoProject(preset: PreviewPreset): Project {
     thumbs: [],
   }));
   p.tracks[0]!.items = p.assets.map((a, i) => ({ ...createClip(a), id: a.id, start: i, duration: 1 }));
-  if (preset.type === 'transition')
+  if (single) {
+    p.tracks[0]!.items = [p.tracks[0]!.items[0]!];
+    p.tracks[0]!.items[0]!.duration = 2;
+    p.tracks[0]!.items[0]!.animations = { [single]: { preset: preset.id, duration: 1 } };
+  } else if (preset.type === 'transition')
     p.transitions = [
       { id: 'demo', preset: preset.id as TransitionPreset, fromId: 'A', toId: 'B', duration: 1 },
     ];
@@ -61,14 +66,29 @@ function demoProject(preset: PreviewPreset): Project {
   return p;
 }
 /** One small shared WebGL compositor for every visible A/B card, avoiding context exhaustion. */
-export function EffectPreviews({ children, presets }: { children: ReactNode; presets: PreviewPreset[] }) {
+export function EffectPreviews({
+  children,
+  presets,
+  single,
+}: {
+  children: ReactNode;
+  presets: PreviewPreset[];
+  single?: 'enter' | 'exit';
+}) {
+  const [playing, setPlaying] = useState(true);
+  const running = useRef(true);
+  useEffect(() => {
+    running.current = playing;
+  }, [playing]);
   const root = useRef<HTMLDivElement>(null);
   const signature = presets.map((p) => `${p.type}:${p.id}`).join('|');
   useEffect(() => {
     let stopped = false,
       raf = 0,
       comp: Compositor | null = null,
-      last = 0;
+      last = 0,
+      elapsed = 0,
+      previous = 0;
     const sources = demoSources();
     const entries = signature
       .split('|')
@@ -77,7 +97,7 @@ export function EffectPreviews({ children, presets }: { children: ReactNode; pre
         const [type, id] = value.split(':');
         return { key: value, preset: { id: id!, type: type as PreviewPreset['type'] } };
       });
-    const projects = new Map(entries.map((e) => [e.key, demoProject(e.preset)]));
+    const projects = new Map(entries.map((e) => [e.key, demoProject(e.preset, single)]));
     void Compositor.create({ width: W, height: H }).then((created) => {
       if (stopped) {
         created.destroy();
@@ -86,20 +106,28 @@ export function EffectPreviews({ children, presets }: { children: ReactNode; pre
       comp = created;
       const draw = (now: number) => {
         if (stopped) return;
-        if (now - last > 160) {
+        if (previous && running.current) elapsed += now - previous;
+        previous = now;
+        if (now - last > 160 && (running.current || !last)) {
           last = now;
           const phase = window.matchMedia('(prefers-reduced-motion: reduce)').matches
             ? 0.5
-            : (now / 1800) % 1;
+            : (elapsed / 1800) % 1;
           for (const canvas of root.current?.querySelectorAll<HTMLCanvasElement>(
             'canvas[data-effect-demo]',
           ) ?? []) {
             const rect = canvas.getBoundingClientRect();
-            if (rect.bottom < 0 || rect.top > innerHeight) continue;
+            if (!rect.width || !rect.height || rect.bottom < 0 || rect.top > innerHeight) continue;
             const key = canvas.dataset.effectDemo!,
               p = projects.get(key);
             if (!p) continue;
-            const t = key.startsWith('transition:') ? 0.5 + phase : 0.05 + phase * 1.9;
+            const t = single
+              ? single === 'enter'
+                ? phase
+                : 1 + phase
+              : key.startsWith('transition:')
+                ? 0.5 + phase
+                : 0.05 + phase * 1.9;
             comp!.render(
               buildScene(p, t, W, H, (item) => ({
                 source: sources[item.assetId === 'A' ? 0 : 1]!,
@@ -121,10 +149,20 @@ export function EffectPreviews({ children, presets }: { children: ReactNode; pre
       cancelAnimationFrame(raf);
       comp?.destroy();
     };
-  }, [signature]);
+  }, [signature, single]);
   return (
-    <div ref={root} className="effect-grid">
-      {children}
+    <div className="effect-previews">
+      <button
+        className={`chip preview-toggle${playing ? ' active' : ''}`}
+        aria-label={playing ? '暫停特效示意' : '播放特效示意'}
+        aria-pressed={playing}
+        onClick={() => setPlaying((p) => !p)}
+      >
+        {playing ? <Pause size={18} /> : <Play size={18} />}
+      </button>
+      <div ref={root} className="effect-grid">
+        {children}
+      </div>
     </div>
   );
 }

@@ -1,3 +1,4 @@
+import { applySingleAnimations } from './singleAnimations';
 import { renderLayers, applyTransitions } from './transitions';
 import { applyVideoEffects, videoEffectOverlay } from './videoEffects';
 import { animationValues, evaluatedItem } from './keyframes';
@@ -62,18 +63,28 @@ export function buildScene(
     const layout = track.layout ?? project.layout;
 
     if (track.template && layout && !artAdded.has(track.id)) {
-      const art = layoutArt(layout.style, canvasW, canvasH);
+      const frame = groupFrame(track, canvasW, canvasH, t);
+      const scale = Math.max(0.05, animationValues(layout, t - layout.start).scale);
+      const artW = frame.w / scale,
+        artH = frame.h / scale;
+      const textureScale = Math.min(1, Math.max(canvasW, canvasH) / Math.max(artW, artH));
+      const art = layoutArt(
+        layout.style,
+        Math.max(2, Math.round(artW * textureScale)),
+        Math.max(2, Math.round(artH * textureScale)),
+        layout,
+      );
       out.push({
         id: `${track.id}-frame`,
         kind: 'image',
         source: art,
         ready: true,
-        srcW: canvasW,
-        srcH: canvasH,
-        frameW: canvasW,
-        frameH: canvasH,
-        box: groupFrame(track, canvasW, canvasH, t),
-        opacity: animationValues(layout, t - layout.start).opacity,
+        srcW: art.width,
+        srcH: art.height,
+        frameW: art.width,
+        frameH: art.height,
+        box: frame,
+        opacity: animationValues(layout, t - layout.start).opacity * (layout.frameOpacity ?? 1),
         adjustment: animationValues(layout, t - layout.start),
         blend: 'normal',
         cornerRadius: 0,
@@ -165,6 +176,7 @@ export function buildScene(
       }
     }
   }
+  out = applySingleAnimations(out, project, t, canvasW, canvasH);
   out = applyVideoEffects(applyTransitions(out, project, t, canvasW, canvasH), project, t, canvasW, canvasH);
   for (const effect of project.effects ?? []) {
     const layer = effectLayer(effect, t, canvasW, canvasH) ?? videoEffectOverlay(effect, t, canvasW, canvasH);
@@ -235,8 +247,8 @@ function toLayer(
   const base = fittedSize(
     cw,
     ch,
-    ctx.canvasW * (item.slot?.w ?? 1),
-    ctx.canvasH * (item.slot?.h ?? 1),
+    ctx.canvasW * (ctx.templates?.[item.id]?.slot?.w ?? item.slot?.w ?? 1),
+    ctx.canvasH * (ctx.templates?.[item.id]?.slot?.h ?? item.slot?.h ?? 1),
     item.fit,
   );
   const k = Math.min(1, src.srcW / base.w, src.srcH / base.h); // Never expand a small GIF to a full-resolution media texture.

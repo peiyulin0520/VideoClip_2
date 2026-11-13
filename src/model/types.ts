@@ -70,7 +70,11 @@ export type VideoEffectPreset =
   | 'snow'
   | 'sparkle';
 
+export type ClipAnimation = { preset: TransitionPreset; duration: number };
+export type ClipAnimations = { enter?: ClipAnimation; exit?: ClipAnimation };
+
 export type ItemBase = {
+  animations?: ClipAnimations;
   id: string;
   name?: string;
   keyframes?: Keyframe[];
@@ -238,6 +242,12 @@ export type Project = {
   layout?: {
     style: 'photobooth' | 'filmstrip' | 'polaroid' | 'story';
     motion: 'none' | 'slide' | 'drift';
+    size?: { width: number; height: number };
+    caption?: string;
+    frameColor?: string;
+    captionColor?: string;
+    frameOpacity?: number;
+    animations?: ClipAnimations;
     transform?: Pick<Transform, 'x' | 'y' | 'scale'>;
     keyframes?: Keyframe[];
     adjustment?: ColorAdjustment;

@@ -2,7 +2,14 @@ import { evaluatedItem } from '../../engine/keyframes';
 import { activeTransitions } from '../../engine/transitions';
 import { groupFrame, groupTransform } from '../../engine/templateGeometry';
 import { Expand, Minimize, ShieldCheck } from 'lucide-react';
-import { useEffect, useMemo, useRef, useState, type PointerEvent as RPointerEvent } from 'react';
+import {
+  useEffect,
+  useLayoutEffect,
+  useMemo,
+  useRef,
+  useState,
+  type PointerEvent as RPointerEvent,
+} from 'react';
 import { urlFor } from '../../engine/assetUrls';
 import { installDebugHook } from '../../engine/debug';
 import { useFonts } from '../../fonts/fontStore';
@@ -52,6 +59,7 @@ export function Preview({ projectId, width, height }: { projectId: string; width
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const poolRef = useRef<HTMLDivElement>(null);
   const stageRef = useRef<HTMLDivElement>(null);
+  const [viewport, setViewport] = useState({ width: 1, height: 1 });
   const [cssW, setCssW] = useState(1);
   const [expanded, setExpanded] = useState(false);
   const pageScroll = useRef(0);
@@ -103,7 +111,7 @@ export function Preview({ projectId, width, height }: { projectId: string; width
 
   // ---- 建立 / 銷毀播放引擎（含 Pixi 合成器）----
   // 比例改了（寬高變了）會重建；記住舊的播放時間，重建後回到同一個位置（換專案則歸 0）
-  const resumeRef = useRef<{ projectId: string; time: number } | null>(null);
+  const resumeRef = useRef<{ projectId: string; time: number; playing: boolean } | null>(null);
   useEffect(() => {
     let cancelled = false;
     let created: Player | null = null;
@@ -121,6 +129,7 @@ export function Preview({ projectId, width, height }: { projectId: string; width
       useUI.setState({ player });
       const resume = resumeRef.current;
       player.seek(resume && resume.projectId === projectId ? resume.time : 0);
+      if (resume?.projectId === projectId && resume.playing) player.play();
       const unsubProject = useProjectStore.subscribe((s, prev) => {
         if (s.project !== prev.project) player.refresh();
       });
@@ -136,13 +145,28 @@ export function Preview({ projectId, width, height }: { projectId: string; width
     return () => {
       cancelled = true;
       unsub();
-      if (created) resumeRef.current = { projectId, time: created.time };
+      if (created) resumeRef.current = { projectId, time: created.time, playing: created.isPlaying };
       created?.destroy();
       useUI.setState({ player: null });
     };
   }, [projectId, width, height, previewCap]); // 比例改了（寬高變了）就重建預覽引擎
 
   // ---- 舞台大小（CSS px）----
+  useLayoutEffect(() => {
+    const el = stageRef.current!.parentElement!;
+    const measure = () =>
+      setViewport((old) =>
+        old.width === el.clientWidth && old.height === el.clientHeight
+          ? old
+          : { width: el.clientWidth, height: el.clientHeight },
+      );
+    const observer = new ResizeObserver(measure);
+    observer.observe(el);
+    measure();
+    return () => observer.disconnect();
+  }, []);
+  const stageWidth = Math.max(1, Math.min(viewport.width, (viewport.height * width) / height));
+
   useEffect(() => {
     const el = stageRef.current!;
     const ro = new ResizeObserver(() => setCssW(el.clientWidth || 1));
@@ -410,10 +434,18 @@ export function Preview({ projectId, width, height }: { projectId: string; width
 
   return (
     <div className={`stage-wrap${expanded ? ' expanded-preview' : ''}`}>
+      <span className="export-bounds-label" role="note">
+        框內為影片輸出範圍 · {project.aspect}
+      </span>
       <div
         ref={stageRef}
         className="stage"
-        style={{ ['--ratio' as string]: `${width} / ${height}` }}
+        style={{
+          ['--ratio' as string]: width / height,
+          width: stageWidth,
+          height: (stageWidth * height) / width,
+        }}
+        aria-label={`影片輸出範圍 ${project.aspect}`}
         data-testid="stage"
         onContextMenu={(e) => e.preventDefault()}
         onPointerDown={onPointerDown}

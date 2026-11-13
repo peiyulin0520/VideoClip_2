@@ -44,7 +44,7 @@ test('在空白編輯器匯入第一支影片，不重整就有首格；沒有 l
   await expandAllGroups(page);
   await expect(clips(page)).toHaveCount(1);
   await expect.poll(async () => isRed(await samplePreview(page, 0.5, 0.5))).toBe(true);
-  await expect(page.getByTestId('preview-canvas')).toHaveAttribute('height', '1080');
+  await expect(page.getByTestId('preview-canvas')).toHaveAttribute('height', '540');
   await page.screenshot({ path: `${shot}/first-import.png` });
 });
 
@@ -207,9 +207,9 @@ test('四格相紙：每格素材、實際滑入與漂移畫面、移除版型',
   const p = await project(page);
   expect(p.tracks.filter((t) => t.name.includes('四格相紙'))).toHaveLength(1);
   expect(p.tracks.find((t) => t.name.includes('四格相紙'))!.items).toHaveLength(4);
-  await expect.poll(async () => isRed(await samplePreview(page, 0.2, 0.2))).toBe(false);
+  await expect.poll(async () => isRed(await samplePreview(page, 0.2, 0.35))).toBe(false);
   await seekTo(page, 1.2);
-  await expect.poll(async () => isRed(await samplePreview(page, 0.2, 0.2))).toBe(true);
+  await expect.poll(async () => isRed(await samplePreview(page, 0.2, 0.35))).toBe(true);
   await page.screenshot({ path: `${shot}/polaroid.png` });
   // Reapplying preserves the group's original start, rather than moving it to 1.2s.
   // Seek explicitly and check distinct colors so stale pixels cannot satisfy the next phase.
@@ -234,8 +234,10 @@ test('四格相紙：每格素材、實際滑入與漂移畫面、移除版型',
           : color === 'blue'
             ? isBlue(c)
             : !!c && c[0] < 25 && c[1] < 25 && c[2] < 25;
-      await expect.poll(async () => matches(await samplePreview(page, 0.2, 0.25))).toBe(true);
-      const frame = await exportFrame(page, originalStart + local, [[0.2, 0.25]]);
+      await expect
+        .poll(async () => matches(await samplePreview(page, 0.2, local === 2.7 ? 0.23 : 0.4)))
+        .toBe(true);
+      const frame = await exportFrame(page, originalStart + local, [[0.2, local === 2.7 ? 0.23 : 0.4]]);
       expect(matches(frame.samples[0] as Awaited<ReturnType<typeof samplePreview>>)).toBe(true);
     }
   }

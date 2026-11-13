@@ -1,3 +1,4 @@
+import { usePreferences } from '../../store/preferences';
 import { KeyframeControl } from '../editor/KeyframeControl';
 import { ensureFont } from '../../fonts/fontStore';
 import { ArrowUp, PanelBottom, ChevronLeft, Pause, Play, Redo2, Undo2, ZoomIn, ZoomOut } from 'lucide-react';
@@ -86,11 +87,12 @@ function EditorBody() {
   const [time, setTime] = useState(0);
   const [playing, setPlaying] = useState(false);
   const [renaming, setRenaming] = useState(false);
+  const previewQuality = usePreferences((s) => s.preview);
+  const [qualityOpen, setQualityOpen] = useState(false);
   const [ratioOpen, setRatioOpen] = useState(false);
   const [exportOpen, setExportOpen] = useState(false);
   const [nameDraft, setNameDraft] = useState('');
   const [showTop, setShowTop] = useState(false);
-  const [atEnd, setAtEnd] = useState(false);
   const [timelineOpen, setTimelineOpen] = useState(() => {
     try {
       return sessionStorage.getItem(`lm2-timeline:${project.id}`) === '1';
@@ -100,6 +102,27 @@ function EditorBody() {
   });
   const editorRef = useRef<HTMLElement>(null);
   const total = totalDuration(project);
+  useEffect(() => {
+    const updateViewport = () => {
+      const viewport = window.visualViewport;
+      const el = editorRef.current;
+      if (!el) return;
+      el.style.setProperty('--app-viewport-height', `${viewport?.height ?? window.innerHeight}px`);
+      el.style.setProperty(
+        '--visible-bottom-inset',
+        `${Math.max(0, window.innerHeight - (viewport?.height ?? window.innerHeight) - (viewport?.offsetTop ?? 0))}px`,
+      );
+    };
+    updateViewport();
+    window.addEventListener('resize', updateViewport);
+    window.visualViewport?.addEventListener('resize', updateViewport);
+    window.visualViewport?.addEventListener('scroll', updateViewport);
+    return () => {
+      window.removeEventListener('resize', updateViewport);
+      window.visualViewport?.removeEventListener('resize', updateViewport);
+      window.visualViewport?.removeEventListener('scroll', updateViewport);
+    };
+  }, []);
 
   useEffect(() => {
     if (!player) return;
@@ -182,12 +205,11 @@ function EditorBody() {
         const editor = editorRef.current!,
           preview = editor.querySelector('.stage-wrap'),
           header = editor.querySelector('.ed-top');
-        setAtEnd(editor.scrollHeight - editor.scrollTop - editor.clientHeight < 12);
         if (preview && header)
           setShowTop(preview.getBoundingClientRect().top < header.getBoundingClientRect().bottom - 2);
       }}
     >
-      {showTop && !atEnd && (
+      {showTop && (
         <button
           className="back-to-preview"
           aria-label="回到最上方預覽"
@@ -196,6 +218,29 @@ function EditorBody() {
           <ArrowUp size={24} />
         </button>
       )}
+      <Sheet open={qualityOpen} title="預覽畫質" onClose={() => setQualityOpen(false)}>
+        <p className="hint">只影響預覽；影片比例與匯出畫質不變。低畫質較省運算，適合多圖層播放。</p>
+        <div className="chips">
+          {[
+            [540, '低畫質・順暢'],
+            [720, '標準'],
+            [1080, '平衡'],
+            [1920, '精細'],
+          ].map(([value, label]) => (
+            <button
+              className={`chip${previewQuality === value ? ' active' : ''}`}
+              key={value}
+              aria-pressed={previewQuality === value}
+              onClick={() => {
+                usePreferences.getState().set({ preview: Number(value) });
+                setQualityOpen(false);
+              }}
+            >
+              {label}
+            </button>
+          ))}
+        </div>
+      </Sheet>
       <header className="ed-top">
         <Link className="icon-btn" to="/" aria-label="回首頁">
           <ChevronLeft />
@@ -212,6 +257,15 @@ function EditorBody() {
         </button>
         <button className="ratio-btn" aria-label="畫面比例" onClick={() => setRatioOpen(true)}>
           {project.aspect}
+        </button>
+        <button className="quality-button" aria-label="預覽畫質" onClick={() => setQualityOpen(true)}>
+          {previewQuality <= 540
+            ? '順暢'
+            : previewQuality <= 720
+              ? '標準'
+              : previewQuality <= 1080
+                ? '平衡'
+                : '精細'}
         </button>
         <button
           className="icon-btn"
@@ -250,6 +304,8 @@ function EditorBody() {
         <button
           className="icon-btn"
           aria-label={playing ? '暫停' : '播放'}
+          aria-pressed={playing}
+          data-playing={playing}
           onClick={() => {
             if (total <= 0) return toast('先匯入影片或照片');
             player?.toggle();

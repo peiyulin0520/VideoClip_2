@@ -1,4 +1,5 @@
-import { useMemo, useState, type PointerEvent } from 'react';
+import { MediaPlayback } from '../../ui/MediaPlayback';
+import { useMemo, useRef, useState, type PointerEvent } from 'react';
 import { paintMask } from '../../engine/mediaMask';
 import type { MaskStroke, VideoItem, Crop } from '../../model/types';
 import { useProjectStore } from '../../store/projectStore';
@@ -11,6 +12,7 @@ import { Slider } from '../../ui/Slider';
 import { cropPointer } from '../../engine/cropPointer';
 
 export function CropEditor({ item, onClose }: { item: VideoItem; onClose: () => void }) {
+  const video = useRef<HTMLVideoElement>(null);
   const project = useProjectStore((s) => s.project)!,
     asset = project.assets.find((a) => a.id === item.assetId)!;
   const [crop, setCrop] = useState<Crop>(item.crop ?? { l: 0, t: 0, r: 0, b: 0 }),
@@ -118,6 +120,7 @@ export function CropEditor({ item, onClose }: { item: VideoItem; onClose: () => 
           onChange={setOffset}
         />
       )}
+      {item.type === 'video' && <MediaPlayback media={video} label="裁切預覽" />}
       <div
         className="crop-stage"
         onContextMenu={(event) => event.preventDefault()}
@@ -149,6 +152,7 @@ export function CropEditor({ item, onClose }: { item: VideoItem; onClose: () => 
               <img src={source} alt="裁切素材" />
             ) : (
               <video
+                ref={video}
                 src={source}
                 playsInline
                 muted

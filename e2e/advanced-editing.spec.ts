@@ -335,8 +335,9 @@ test('膠卷多組來源的中間未選時段保留白色補時與框架，之�
   await expect(page.locator('.busy')).toHaveCount(0);
   await page.getByRole('button', { name: '套用多格版型', exact: true }).tap();
   const cell = page.locator('.template-cell').first();
+  await cell.getByRole('button', { name: '進階設定', exact: true }).tap();
   await cell.getByRole('button', { name: '補白', exact: true }).tap();
-  await cell.getByRole('button', { name: '放大選取第 1 格片段', exact: true }).tap();
+  await cell.getByRole('button', { name: '選取第 1 格片段範圍', exact: true }).tap();
   await shortFirstRange(page, 0.2);
   await sourcePoint(page, 0.5);
   await page.getByRole('button', { name: '在白線位置新增一組起迄標記', exact: true }).tap();
