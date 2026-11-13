@@ -77,7 +77,7 @@ jobs:
       - run: npx playwright install chromium --only-shell
       - name: Preview lifecycle and local proxy smoke tests
         timeout-minutes: 6
-        run: npm run e2e -- e2e/anchored-playback.spec.ts --trace off --workers=1
+        run: npm run e2e -- e2e/anchored-playback.spec.ts e2e/template-controls.spec.ts e2e/story-workspace.spec.ts --trace off --workers=1
       - uses: actions/upload-artifact@v4
         if: always()
         with:

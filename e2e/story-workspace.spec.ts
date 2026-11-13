@@ -1,3 +1,4 @@
+import { waitForPreviewReady } from './helpers';
 import { expandAllGroups } from './helpers';
 import { expect, test, type Page } from '@playwright/test';
 import type { Project, VideoItem } from '../src/model/types';
@@ -33,6 +34,7 @@ async function template(
   await page.getByRole('button', { name: style, exact: true }).tap();
   await page.getByTestId('template-files').setInputFiles(files.map(fixture));
   await expect(page.locator('.busy')).toHaveCount(0);
+  await waitForPreviewReady(page);
   const p = await current(page);
   for (let i = 0; i < files.length; i++)
     await page

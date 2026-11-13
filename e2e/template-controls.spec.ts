@@ -1,3 +1,4 @@
+import { waitForPreviewReady } from './helpers';
 import { expect, test, type Page } from '@playwright/test';
 import { createProjectWith, openTab, fixture, clips, addOverlays, exportFrame, seekTo } from './helpers';
 import type { Project } from '../src/model/types';
@@ -23,6 +24,7 @@ async function template(page: Page) {
     .getByTestId('template-files')
     .setInputFiles(['solid-red.webm', 'solid-green.webm', 'tone-video.webm'].map(fixture));
   await expect(page.locator('.busy')).toHaveCount(0);
+  await waitForPreviewReady(page);
   const p = await current(page);
   for (const [i, file] of ['solid-red.webm', 'solid-green.webm', 'tone-video.webm'].entries())
     await page

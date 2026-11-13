@@ -40,7 +40,7 @@
 14. **預覽與版型**：版型有獨立寬/高，不隨影片比例拉扁；影片輸出框與框外斜紋明確區分。預覽預設540，頂部可調，切換保留時間/播放且不改匯出。動態預覽用▶/⏸圖示及播放中底色；每格補色/延後/放大片段範圍收在進階設定，不重複時間軸。單一B進場/A退場與A/B銜接需可切換；版型文字可留空，自訂色/框架透明度需真正影響預覽匯出。最底仍有回頂，使用visualViewport處理可見高度，保持44px觸控。
 
 15. **特效時間**：A10+B10維持20秒，轉場3秒分配交接前後，不重疊縮成17。單素材最新更正只能開頭B進/結尾A退：固定一端，只一個1迄或1起，時長與可調秒數連動；來源/畫面特效/銜接可多組配對/移除/復原。時間軸銜接棕色字在接點、單素材藍綠字在實際特效起點，收合也看得到。
-16. **表單及播放**：全頁可填/下拉用淺棕無黑框深字膠囊，棕色自訂箭頭。真正proxy只供預覽、原檔不變/匯出不可取proxy。參考VideoClip的iOS播放模式，實際載入進度100%後開放編輯，禁止無操作自動播；速率相同不可每幀重設、seek中不可重複seek；音訊需保留剪輯，分離聲音不可多開video解碼。
+16. **表單及播放**：全頁可填/下拉用淺棕無黑框深字膠囊，棕色自訂箭頭。真正proxy只供預覽、原檔不變/匯出不可取proxy。參考VideoClip的iOS播放模式，實際載入進度100%後開放編輯，禁止無操作自動播；速率相同不可每幀重設、seek中不可重複seek；音訊需保留剪輯，分離聲音不可多開video解碼。匯入新影片只準備新proxy，不依assets變化銷毀主player；prepare讀當下time。destroy後忽略舊UI/解碼回呼，通知listener走快照。
 
 ## 紀錄規則（每次都做）
 **每完成一個有意義的步驟（不是只有每個 Phase 結束），在同一個 commit 裡更新：**
@@ -63,4 +63,4 @@ Vite 8 · React 18 · TypeScript 5.9（別升 7：typescript-eslint 不支援）
 - 這個儲存庫來源是 VideoClip `78b178343409c46c7ba353ef3a6db6f279a7bde6`（main 已包含 PR #3），對外名稱 **Little Moments**。舊分支／PR 記錄只屬於來源 repo；本 repo 後續依最新指示建立 PR，由使用者自行合併。
 - 網址路徑 `/VideoClip_2/`；IndexedDB、OPFS、字體快取、localStorage 均使用獨立命名，避免同一個 github.io 網域的 `/VideoClip/` 被改動。不要刪除或自動搬移舊資料。
 - 現有 Sites 的 Little Moments 是另一套資料模型；未實作轉換，不能把 JSON 或素材庫 ZIP 當成這個版本可還原的檔案。
-- `npm run check` 仍須完成。此 Codex managed 環境缺少 Sites 指定的 `cua_repl.js`；Sites skill 明定不可另開 preview server／改用其他瀏覽器路徑，因此本機只列出 e2e。瀏覽器驗收已改由 GitHub Actions 執行：最新 331 單元/138 e2e 結果、run 及 171 張可讀繁中截圖來源見 PROGRESS.md。不要把來源 repo 或先前缺字的截圖當成最終驗收。
+- `npm run check` 仍須完成。此 Codex managed 環境缺少 Sites 指定的 `cua_repl.js`；Sites skill 明定不可另開 preview server／改用其他瀏覽器路徑，因此本機只列出 e2e。瀏覽器驗收已改由 GitHub Actions 執行：最新單元/e2e結果、run及可讀繁中截圖來源見PROGRESS.md。不要把來源 repo 或先前缺字的截圖當成最終驗收。

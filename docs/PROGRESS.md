@@ -3,10 +3,10 @@
 規則：每完成一個有意義的步驟，就在同一個 commit 裡 **覆寫「交接快照」** 並 **在「日誌」最上面新增一筆**（規則全文見 `AGENTS.md`「紀錄規則」，背景與架構見 `docs/HANDOFF.md`）。
 
 ## 交接快照（VideoClip_2 最新狀態）
-- 2026-11-13 / codex/establish-little-moments；最新source0cc8eb5，PR #10仍open未合併。
-- 本輪source0cc8eb5（Actions43513918905驗收中）：代表字/單素材與銜接色別、單素材固定B開頭/A結尾單標籤及連動秒數、全站膠囊表單；追加播放不穩/爆音/自動播，已比對VideoClip main，接本機worker proxy/載入100%與inert、分離audio pool/lazyWebAudio/平滑gain/速率變動時才設定/iOS禁速率微調/seek防重複/停示意/非播放guard。
-- 待完成：CI/成功截圖；本機新check已342單元/格式/lint/TypeScript/build/Pages過；144 e2e尚待第二輪CI，不能沿用基線331/138稱本輪瀏覽器已過。詳見plans/2026-11-13-anchored-effects-and-playback.md。
-- 下一步：完整驗收後更新PR #10供使用者Merge；Safari必須真機，不代發布/不推main。
+- 2026-11-13 / codex/establish-little-moments；source2877465c1d905d39ce54170f0aac642f7596b5bf；PR #10 open未合併。
+- 已實作：固定單素材B開頭/A結尾及連動秒數、時間軸代表字/作用範圍顏色、全頁膠囊表單；參考VideoClip的真proxy/本機快取、真實載入100%/inert、禁止無操作自動播、音訊平滑/limiter/獨立audio、seek/速率/晚到回呼保護。新增影片另準備、主player不重建，保留追加後秒數；通知走listener快照。
+- 本機343單元及完整check成功；Actions43519974884快速6/6成功、完整140/144；已補兩個版型helper等真實載入閘再fill，產品src不改，待新完整144。成功截圖/artifact待補。先前失敗的92/26及快測5/6是歷史，不當本輪驗收。
+- 下一步：推測試閘補正、完整驗收、更新成功截圖/PR #10。使用者自行Merge，Safari需真機；不推main、不代發布。
 
 ## 日誌格式（新增一筆時照這個）
 ```
@@ -83,6 +83,8 @@
 - 2026-11-11 找到新字體來源 max32002/pop-gothic（大波浪圓體，含注音）→ 已加入手寫可愛包。問「能不能直接下載到我的 files 下載資料夾」→ 答：網頁在 iPhone 不能自動寫進「檔案」App 資料夾；官方字體存在瀏覽器裡，自己的字體用「匯入字體檔」從檔案 App 選
 
 ## 日誌（最新在最上面）
+- 2026-11-13 2877465/43519974884：343單元、快速6/6成功、完整140/144；4個版型舊helper只等import busy消失就fill欄位，未等新inert/實際預覽閘，導致文字/長度仍套預設。新增waitForPreviewReady（實際frameReady+無overlay+editor非inert），兩個template helper在fill前等待，所有原文字/時長/像素斷言保留，快測擴至三個檔。本輪source產品不改，需再完整驗收。
+
 - 2026-11-13 c51d72e/43519385506快速6/6過，保留player解決匯入卡住；補追加主軌後保留新seek秒數（prepare時讀現在time，不能預先捕捉）及通知listener快照，避免同步訂閱替換在同一emit被重複走訪。下一輪應343單元/144完整e2e。
 
 - 2026-11-13 匯入預覽保留播放器：第二/三輪快速5/6過，匯入後瀏覽器執行緒卡住連診斷evaluate也不回。將新影片準備分成獨立可取消effect，保留原player/compositor，只建立新proxy/重新prepare，避免每加asset都重建整套。新增影片情境及原26失敗必須完整回歸。
