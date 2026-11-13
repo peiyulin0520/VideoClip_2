@@ -1,6 +1,8 @@
 # 交接手冊（HANDOFF）
 
 ## VideoClip_2 當前交接（優先於以下來源 repo 的歷史紀錄）
+- 第二輪 f2abcca / run 43361792188：297/107 of 108，批次操作/即時復原都過，唯硬重整未等 IDB 寫入 undo。重開驗收應先確認 savedProject 已有三層與名稱，再 reload 讀回模型及 DOM；不可用 in-memory Project 當作持久化完成。GIPHY 截圖捲到結果。產品程式不改，待第三輪。
+
 - 九點首輪 45cba26 / run 43360577038 為 296/106 of 108（原有 98 全過），兩處新測試需等待 debug/player 重開、精確定位多則 toast。新增歸位走目前關鍵幀與依時間 coalesce，297/check 成功。下一輪 PR #7 待 CI；效果表實際 25 A/B、12 影片特效及原 4 轉場。
 
 - 最新九點 docs/plans/2026-11-13-advanced-editing.md：main b9a5e94（PR #6 使用者已合併），main Actions 43345475628 成功。新 sourceRanges 用來源秒數保留中間空白，mediaSegments 與聲音/匯出共享；popup history 草稿局部，取消不寫專案。關鍵幀 local 秒數/完整 AnimatedValues，layout.keyframes 對整組，幾何/來源/輸出共用；修剪分割取樣邊界避免曲線跳變。A/B renderLayers 額外解碼兩方，播放器借用區間需 pause 並靜音，不能提前播放原音。特效選項共用一個 compositor 畫可見卡片，避免逐格 WebGL context 數量耗盡。batch 同類判定含貼紙 origin，分類收合不能改 z-order。296 單元已成功，108 e2e 待 CI；本次新 PR 待驗收。下列 PR #6 待合併是歷史。

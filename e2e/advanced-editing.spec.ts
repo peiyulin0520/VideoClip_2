@@ -181,7 +181,21 @@ test('素材可命名，長按左側進多選，批次排序顯示合併刪除�
   expect((await current(page)).tracks).toHaveLength(1);
   await page.getByRole('button', { name: '復原', exact: true }).tap();
   expect((await current(page)).tracks).toHaveLength(3);
+  await expect
+    .poll(() =>
+      page.evaluate(async () => {
+        const saved = await (
+          window as unknown as { __videoclip: { savedProject: () => Promise<Project> } }
+        ).__videoclip.savedProject();
+        return {
+          tracks: saved.tracks.length,
+          names: saved.tracks.flatMap((t) => t.items).filter((it) => it.name === '我的晚餐').length,
+        };
+      }),
+    )
+    .toEqual({ tracks: 3, names: 1 });
   await page.reload();
+  expect((await current(page)).tracks).toHaveLength(3);
   await expect(clips(page).filter({ hasText: '我的晚餐' })).toHaveCount(1);
 });
 
@@ -431,6 +445,7 @@ test('主題以有字圓圈顯示，GIPHY Key 在首頁設定管理且貼圖無�
   const sticker = page.getByRole('button', { name: '加入貼圖 透明測試', exact: true });
   await expect(sticker).toBeVisible();
   expect(await sticker.evaluate((el) => getComputedStyle(el).backgroundImage)).toBe('none');
+  await sticker.scrollIntoViewIfNeeded();
   await shot(page, 'giphy-no-checker');
   await page.getByRole('link', { name: '回首頁', exact: true }).tap();
   await page.getByRole('link', { name: '設定', exact: true }).tap();
