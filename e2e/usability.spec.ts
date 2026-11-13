@@ -4,6 +4,7 @@ import {
   createProjectWith,
   fixture,
   isRed,
+  isBlue,
   openTab,
   samplePreview,
   project,
@@ -207,11 +208,36 @@ test('四格相紙：每格素材、實際滑入與漂移畫面、移除版型',
   await seekTo(page, 1.2);
   await expect.poll(async () => isRed(await samplePreview(page, 0.2, 0.2))).toBe(true);
   await page.screenshot({ path: `${shot}/polaroid.png` });
-  await page.getByLabel('版型動態效果').selectOption('drift');
-  await page.getByRole('button', { name: '套用多格版型', exact: true }).tap();
-  await expect.poll(async () => isRed(await samplePreview(page, 0.2, 0.2))).toBe(false);
-  await seekTo(page, 2.7);
-  await expect.poll(async () => isRed(await samplePreview(page, 0.2, 0.2))).toBe(true);
+  // Reapplying preserves the group's original start, rather than moving it to 1.2s.
+  // Seek explicitly and check distinct colors so stale pixels cannot satisfy the next phase.
+  const originalStart = p.tracks.find((t) => t.name.includes('四格相紙'))!.items[0]!.start;
+  for (let pass = 0; pass < 3; pass++) {
+    await page.getByLabel('版型動態效果').selectOption('drift');
+    await page.getByRole('button', { name: '套用多格版型', exact: true }).tap();
+    const group = (await project(page)).tracks.find((t) => t.name.includes('四格相紙'))!;
+    expect(group.items.every((item) => item.start === originalStart && item.duration === 3)).toBe(true);
+    for (const [local, color] of [
+      [0, 'black'],
+      [1.5, 'red'],
+      [2.7, 'blue'],
+    ] as const) {
+      await seekTo(page, originalStart + local);
+      await expect(page.getByTestId('time')).toContainText(
+        `0:${(originalStart + local).toFixed(1).padStart(4, '0')}`,
+      );
+      const matches = (c: Awaited<ReturnType<typeof samplePreview>>) =>
+        color === 'red'
+          ? isRed(c)
+          : color === 'blue'
+            ? isBlue(c)
+            : !!c && c[0] < 25 && c[1] < 25 && c[2] < 25;
+      await expect.poll(async () => matches(await samplePreview(page, 0.2, 0.25))).toBe(true);
+      const frame = await exportFrame(page, originalStart + local, [[0.2, 0.25]]);
+      expect(matches(frame.samples[0] as Awaited<ReturnType<typeof samplePreview>>)).toBe(true);
+    }
+  }
+  await page.getByTestId('stage').scrollIntoViewIfNeeded();
+  await page.screenshot({ path: `${shot}/polaroid-drift.png` });
   await page.getByRole('button', { name: '移除版型', exact: true }).tap();
   expect((await project(page)).tracks.filter((t) => t.name.includes('四格相紙'))).toHaveLength(0);
 });

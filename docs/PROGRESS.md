@@ -3,13 +3,12 @@
 規則：每完成一個有意義的步驟，就在同一個 commit 裡 **覆寫「交接快照」** 並 **在「日誌」最上面新增一筆**（規則全文見 `AGENTS.md`「紀錄規則」，背景與架構見 `docs/HANDOFF.md`）。
 
 ## 交接快照（VideoClip_2 最新狀態）
-- **日期/分支**：2026-11-12 UTC（使用者 11/13 iPhone 回報）/ codex/establish-little-moments；PR #4 已由使用者合併，基線 main d12b39c。本次 PR #5。
-- **任務**：docs/plans/2026-11-13-template-story-workspace.md 已完成：預設收合、無頁尾保留空白、整組模板/各格片段補時、多組精確靜音、特效頁籤與展開故事。
-- **驗證**：程式 4d706878f81bae6e311cb866fc62c91047f02b3a / [Actions 43284472645](https://github.com/peiyulin0520/VideoClip_2/actions/runs/43284472645)：278 單元、98 Chromium e2e 全過；lint/格式/TypeScript/build/Pages/39 字體檢查成功。
-- **程式**：layout.transform 保持整組框架/格子/文字與光效同步，不能在預覽單獨拉歪格子；cell/source timing 共用預覽與音訊/匯出。來源不足補色、指定色塊暫停來源，選段不重排其他格；重新套用保留匹配格設定及整組位置。系統字體跳過 ensureFont。四種獨立特效與二/三格故事（上下展開/依序加入/三字體切換/暖閃）可調。
-- **截圖**：118 張成功 CI 畫面已保存，最新 story-workspace/；artifact 13973383981，ZIP SHA-256 db4ab8d2c6dce9f972561963f4c36d482262643224c6ea4a7e4773a7f180b7a5 已核對。人工檢視收合/頁尾、整組縮放、明確多組靜音、故事階段與特效，繁中可讀、全自製素材。
-- **PR/發布**：[PR #5](https://github.com/peiyulin0520/VideoClip_2/pull/5) 完成驗收並交使用者自行 Merge；本次未發布、不代合併、不開 auto-merge、不推 main。
-- **下一步/等使用者**：自行 Merge PR #5 → main Actions/Pages → Safari 真機確認收合/雙指、格子選段/補色、密集標記與音訊/匯出。最後文件/截圖 [skip ci]，程式與測試和上述成功 CI 相同。
+- **日期/分支**：2026-11-13 / codex/establish-little-moments；PR #5 已由使用者合併，main 8c10a55。
+- **任務**：修正合併後 Actions #41 的四格相紙漂移驗收失敗；另建 PR 由使用者自行合併。
+- **診斷**：[Actions 43341355922](https://github.com/peiyulin0520/VideoClip_2/actions/runs/43341355922) 的 check/278 單元成功，e2e 97/98，部署未開始。失敗在 usability.spec.ts 舊漂移斷言：重新套用現在保留原起點，3 秒模板在 2.7 秒的左上紅格已上移離開取樣點；先前成功可能讀到尚未重畫的上一幀。
+- **修正**：僅改驗收測試，明確移動至相對原起點的 0/1.5/2.7 秒，用黑/紅/藍三種正向像素斷言及單格匯出確認漂移；連續重新套用三次仍保持原起點/長度，不加重試、不放寬逾時、不跳過測試。產品程式保持 PR #5 相同。
+- **驗證/下一步**：基線與修正 check 均成功（278 單元、lint/格式/TypeScript/build/Pages/39 字體）；完整 98 e2e 待 CI 驗收，成功後整理 PR/截圖。既有 118 張是 #40 成功畫面，尚未以本次失敗畫面替換。
+- **發布**：不推 main、不代合併、不開 auto-merge。main Pages 仍為上一個發布成功版本，待使用者合併修復 PR 後 Actions 發布。iPhone Safari 待真機。
 
 ## 日誌格式（新增一筆時照這個）
 ```
@@ -69,6 +68,12 @@
 - 2026-11-11 找到新字體來源 max32002/pop-gothic（大波浪圓體，含注音）→ 已加入手寫可愛包。問「能不能直接下載到我的 files 下載資料夾」→ 答：網頁在 iPhone 不能自動寫進「檔案」App 資料夾；官方字體存在瀏覽器裡，自己的字體用「匯入字體檔」從檔案 App 選
 
 ## 日誌（最新在最上面）
+
+- 2026-11-13 修正 main #41 的過時漂移驗收
+  - 使用者回報 PR #5 合併後 CI 失敗；讀取 job 131610187477 確認 278 單元/97 of 98 e2e，並以 artifact 13999483508（ZIP SHA-256 02b6ec06888d9f26b4cb914484467bdafa01921924a3fc6efadb4c7c619df623）確認時間 2.7 秒、模板長 3 秒。
+  - 原測試沿用重新套用移到播放頭的舊假設，且未顯式定位/等候時間即可讀上一幀。現用相對模板原起點的 0/1.5/2.7 秒黑/紅/藍，預覽及匯出逐一斷言，三次重新套用皆保持起點與長度。
+  - 僅 e2e 與紀錄變更，產品行為不改；不以 retries/timeout/skip 掩蓋。本機 check 278 單元成功，完整 CI 待驗收；新 PR 交使用者自行 Merge；Safari 待真機。
+
 
 - 2026-11-12 整組模板與故事/特效完整驗收
   - 程式 4d706878f81bae6e311cb866fc62c91047f02b3a / [Actions 43284472645](https://github.com/peiyulin0520/VideoClip_2/actions/runs/43284472645)：278 單元、98 Chromium e2e 全過；lint/格式/TypeScript/build/Pages/39 字體檢查成功。
