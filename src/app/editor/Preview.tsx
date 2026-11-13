@@ -172,9 +172,9 @@ export function Preview({ projectId, width, height }: { projectId: string; width
         };
         installDebugHook(player);
         await player.prepare(player.time, (progress) => {
-          if (!cancelled && useUI.getState().previewLoad?.progress !== 95 + Math.round(progress * 0.05))
+          if (!cancelled && useUI.getState().previewLoad?.progress !== 95 + Math.floor(progress * 0.05))
             useUI.setState({
-              previewLoad: { progress: 95 + Math.round(progress * 0.05), message: '準備預覽畫面' },
+              previewLoad: { progress: 95 + Math.floor(progress * 0.05), message: '準備預覽畫面' },
             });
         });
         if (cancelled) return;

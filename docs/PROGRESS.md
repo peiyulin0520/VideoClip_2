@@ -3,9 +3,9 @@
 規則：每完成一個有意義的步驟，就在同一個 commit 裡 **覆寫「交接快照」** 並 **在「日誌」最上面新增一筆**（規則全文見 `AGENTS.md`「紀錄規則」，背景與架構見 `docs/HANDOFF.md`）。
 
 ## 交接快照（VideoClip_2 最新狀態）
-- 2026-11-13 / codex/establish-little-moments；基線80fbf13，PR #10仍open未合併。
-- 本輪未提交：代表字/單素材與銜接色別、單素材固定B開頭/A結尾單標籤及連動秒數、全站膠囊表單；追加播放不穩/爆音/自動播，已比對VideoClip main，接本機worker proxy/載入100%與inert、分離audio pool/lazyWebAudio/平滑gain/速率變動時才設定/iOS禁速率微調/seek防重複/停示意/非播放guard。
-- 待完成：新增測試、check/CI/成功截圖；本機新check已341單元/格式/lint/TypeScript/build/Pages過；143 e2e尚待CI，不能沿用基線331/138稱本輪瀏覽器已過。詳見plans/2026-11-13-anchored-effects-and-playback.md。
+- 2026-11-13 / codex/establish-little-moments；最新source0cc8eb5，PR #10仍open未合併。
+- 本輪source0cc8eb5（Actions43513918905驗收中）：代表字/單素材與銜接色別、單素材固定B開頭/A結尾單標籤及連動秒數、全站膠囊表單；追加播放不穩/爆音/自動播，已比對VideoClip main，接本機worker proxy/載入100%與inert、分離audio pool/lazyWebAudio/平滑gain/速率變動時才設定/iOS禁速率微調/seek防重複/停示意/非播放guard。
+- 待完成：CI/成功截圖；本機新check已342單元/格式/lint/TypeScript/build/Pages過；144 e2e尚待第二輪CI，不能沿用基線331/138稱本輪瀏覽器已過。詳見plans/2026-11-13-anchored-effects-and-playback.md。
 - 下一步：完整驗收後更新PR #10供使用者Merge；Safari必須真機，不代發布/不推main。
 
 ## 日誌格式（新增一筆時照這個）
@@ -83,6 +83,11 @@
 - 2026-11-11 找到新字體來源 max32002/pop-gothic（大波浪圓體，含注音）→ 已加入手寫可愛包。問「能不能直接下載到我的 files 下載資料夾」→ 答：網頁在 iPhone 不能自動寫進「檔案」App 資料夾；官方字體存在瀏覽器裡，自己的字體用「匯入字體檔」從檔案 App 選
 
 ## 日誌（最新在最上面）
+- 2026-11-13 首輪播放重整CI及生命週期補正（43513918905）
+  - 341單元成功；瀏覽器92過/26失敗/25未執行，20分鐘時限結束。核心特效時長與代表字通過；多個新增影片/版型後舊player cleanup再pause/render，需加destroy guard及等待新預覽真正ready。
+  - 新測試原用不存在.video-pool，已改實際.pool，之前載入閘/速率統計不能作證據；補新增影片→套版→回首頁的生命週期情境與late callback單元。新增快速preview-smoke job可先看到錯誤，完整build仍必跑。另修99→100四捨五入過早。
+  - 下一步：本機check、push、快速及完整CI；不得把首輪截圖當最終成功。
+
 - 2026-11-13 固定單素材/代表字/表單及播放重整（本輪待CI）
   - 已寫：單素材邊界、代表字與顏色（同秒跨作用範圍有選擇窗，不互相遮蓋）、全站膠囊表單；參考VideoClip接真正本機proxy/worker及相容主執行緒、OPFS快取/原檔匯出、載入100%才編輯、seek/速率/自動播guard、lazy音訊平滑/limiter/獨立audio解碼、主播時停特效示意。
   - 本機341單元/check成功，143 e2e待GitHub Actions。新增5個瀏覽器情境及高解析度自製細線素材，真機Safari還需確認。

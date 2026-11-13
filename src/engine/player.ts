@@ -52,6 +52,7 @@ export class Player {
 
   /** Temporary timing-sheet preview; never persisted or exported. */
   setPreviewProject(project: Project | null) {
+    if (this.destroyed) return;
     this.draftProject = project;
     this.scheduleRender();
   }
@@ -168,6 +169,10 @@ export class Player {
     onProgress?.(100);
   }
 
+  get isReady() {
+    return !this.destroyed && this.frameReady;
+  }
+
   get isPlaying() {
     return this.playing;
   }
@@ -191,6 +196,7 @@ export class Player {
   }
 
   seek(t: number) {
+    if (this.destroyed) return;
     this.previewTime = null;
     this.t = Math.min(Math.max(t, 0), this.total());
     if (this.playing) {
@@ -204,12 +210,14 @@ export class Player {
 
   /** 只更新畫面到 t 秒，不移動播放頭（修剪時預覽邊緣畫格用） */
   peek(t: number) {
+    if (this.destroyed) return;
     if (this.playing) return;
     this.previewTime = Math.min(Math.max(t, 0), this.total());
     this.scheduleRender();
   }
 
   play() {
+    if (this.destroyed) return;
     const total = this.total();
     if (total <= 0 || this.playing) return;
     this.previewTime = null;
@@ -227,6 +235,7 @@ export class Player {
   }
 
   pause() {
+    if (this.destroyed) return;
     this.playing = false;
     this.buffering = false;
     cancelAnimationFrame(this.raf);
@@ -243,6 +252,7 @@ export class Player {
 
   /** 專案內容改變後呼叫：修正播放頭並重新對畫面 */
   refresh() {
+    if (this.destroyed) return;
     this.previewTime = null;
     const total = this.total();
     if (this.t > total) this.t = total;
@@ -251,6 +261,7 @@ export class Player {
   }
 
   scheduleRender() {
+    if (this.destroyed) return;
     if (this.playing || this.renderRaf) return;
     this.renderRaf = requestAnimationFrame(() => {
       this.renderRaf = 0;
@@ -370,6 +381,7 @@ export class Player {
   }
 
   private render(t: number) {
+    if (this.destroyed) return;
     const p = this.getProject();
     const { compositor: comp } = this;
     if (!p) {
@@ -551,6 +563,7 @@ export class Player {
   }
 
   destroy() {
+    if (this.destroyed) return;
     this.destroyed = true;
     for (const gif of this.gifs.values()) gif.destroy();
     this.gifs.clear();

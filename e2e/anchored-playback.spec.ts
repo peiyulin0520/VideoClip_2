@@ -1,6 +1,19 @@
 import { expect, test, type Page, type Locator } from '@playwright/test';
-import { createProjectWith, clips, openTab, seekTo, exportFrame, expandAllGroups } from './helpers';
+import {
+  createProjectWith,
+  clips,
+  openTab,
+  seekTo,
+  exportFrame,
+  expandAllGroups,
+  addOverlays,
+  samplePreview,
+  isGreen,
+} from './helpers';
 import type { Project } from '../src/model/types';
+test.beforeEach(({ page }) => {
+  page.on('pageerror', (error) => console.error('Preview page error:', error.stack));
+});
 const current = (page: Page): Promise<Project> =>
   page.evaluate(() =>
     (window as unknown as { __videoclip: { project: () => Project } }).__videoclip.project(),
@@ -15,6 +28,18 @@ async function shot(page: Page, name: string) {
   await expect(page.locator('.toast')).toHaveCount(0);
   await page.screenshot({ path: `docs/screenshots/anchored-playback/${name}.png` });
 }
+
+test('匯入新影片後完成預覽準備，操作與返回首頁不會呼叫已銷毀播放器', async ({ page }) => {
+  await createProjectWith(page, ['solid-red.webm']);
+  await addOverlays(page, ['solid-green.webm']);
+  await ready(page);
+  expect((await current(page)).tracks.flatMap((t) => t.items)).toHaveLength(2);
+  await expect.poll(async () => isGreen(await samplePreview(page, 0.5, 0.5))).toBe(true);
+  await openTab(page, '版型');
+  await page.getByRole('button', { name: '套用多格版型', exact: true }).tap();
+  await page.getByRole('link', { name: '回首頁', exact: true }).tap();
+  await expect(page.getByRole('link', { name: '設定', exact: true })).toBeVisible();
+});
 
 test('時間軸代表字在正確秒數，單素材及銜接不同色，收合仍可見且點字開對應設定', async ({ page }) => {
   test.setTimeout(90000);
@@ -152,14 +177,14 @@ test('真實載入完成前禁止編輯，無自動播放；重播0秒、捲頁�
     Object.defineProperty(proto, 'readyState', {
       configurable: true,
       get: function (this: HTMLMediaElement) {
-        return this.closest('.video-pool') && !w.allowDecode ? 0 : ready.get!.call(this);
+        return this.closest('.pool') && !w.allowDecode ? 0 : ready.get!.call(this);
       },
     });
     Object.defineProperty(proto, 'playbackRate', {
       configurable: true,
       get: rate.get,
       set: function (this: HTMLMediaElement, n: number) {
-        if (this.closest('.video-pool')) w.rateWrites++;
+        if (this.closest('.pool')) w.rateWrites++;
         rate.set!.call(this, n);
       },
     });
@@ -167,7 +192,7 @@ test('真實載入完成前禁止編輯，無自動播放；重播0秒、捲頁�
       configurable: true,
       get: time.get,
       set: function (this: HTMLMediaElement, n: number) {
-        if (this.closest('.video-pool')) w.seekWrites++;
+        if (this.closest('.pool')) w.seekWrites++;
         time.set!.call(this, n);
       },
     });
@@ -187,7 +212,7 @@ test('真實載入完成前禁止編輯，無自動播放；重播0秒、捲頁�
   );
   const active = () =>
     page
-      .locator('.video-pool video')
+      .locator('.pool video')
       .evaluateAll((els) => els.filter((v) => !(v as HTMLVideoElement).paused).length);
   expect(await active()).toBe(0);
   await page.getByRole('button', { name: /^展開時間軸/ }).tap();
@@ -252,7 +277,7 @@ test('分離音訊使用audio元素，連續預覽音量與影片可播放', asy
   await expect
     .poll(() =>
       page
-        .locator('.video-pool audio')
+        .locator('.pool audio')
         .evaluateAll(
           (els) =>
             els.filter((el) => !!(el as HTMLElement).dataset.itemId && !(el as HTMLAudioElement).paused)
@@ -262,7 +287,7 @@ test('分離音訊使用audio元素，連續預覽音量與影片可播放', asy
     .toBe(1);
   expect(
     await page
-      .locator('.video-pool video')
+      .locator('.pool video')
       .evaluateAll((els) => els.filter((el) => !(el as HTMLVideoElement).paused).length),
   ).toBe(1);
   for (let i = 0; i < 5; i++) expect(await energy(page)).toBeGreaterThan(0.005);
@@ -283,7 +308,7 @@ test('大型影片以真正低解析度本機檔預覽，快取重開/切畫質�
   await expect
     .poll(() =>
       page
-        .locator('.video-pool video')
+        .locator('.pool video')
         .evaluateAll((els) => Math.max(0, ...els.map((v) => (v as HTMLVideoElement).videoWidth))),
     )
     .toBe(540);
@@ -313,7 +338,7 @@ test('大型影片以真正低解析度本機檔預覽，快取重開/切畫質�
   await expect
     .poll(() =>
       page
-        .locator('.video-pool video')
+        .locator('.pool video')
         .evaluateAll((els) => Math.max(0, ...els.map((v) => (v as HTMLVideoElement).videoWidth))),
     )
     .toBe(720);

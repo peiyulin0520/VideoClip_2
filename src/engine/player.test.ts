@@ -98,3 +98,31 @@ it('timing-sheet preview uses a transient project and restores the real project 
   expect(vi.mocked(buildScene).mock.calls.at(-1)![0]).toBe(project);
   player.destroy();
 });
+
+it('late UI cleanup and decode callbacks cannot render or restart a destroyed player', async () => {
+  vi.stubGlobal(
+    'requestAnimationFrame',
+    vi.fn(() => 1),
+  );
+  vi.stubGlobal('cancelAnimationFrame', vi.fn());
+  vi.spyOn(HTMLMediaElement.prototype, 'pause').mockImplementation(() => {});
+  vi.spyOn(HTMLMediaElement.prototype, 'load').mockImplementation(() => {});
+  const p = createProject('lifecycle');
+  const player = await Player.create({
+    host: document.createElement('div'),
+    canvas: document.createElement('canvas'),
+    getProject: () => p,
+    urlFor: () => undefined,
+  });
+  player.destroy();
+  vi.mocked(player.compositor.render).mockClear();
+  player.pause();
+  player.seek(0);
+  player.refresh();
+  player.scheduleRender();
+  player.play();
+  player.setPreviewProject(p);
+  expect(player.compositor.render).not.toHaveBeenCalled();
+  expect(player.isPlaying).toBe(false);
+  expect(player.isReady).toBe(false);
+});

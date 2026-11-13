@@ -1,6 +1,8 @@
 # 交接手冊（HANDOFF）
 
 ## VideoClip_2 當前交接（優先於以下來源 repo 的歷史紀錄）
+- 首輪播放43513918905為341單元/92瀏覽器成功，26失敗25未跑且20分時限。補destroyed player全部公開操作/late frame guard，避免ProjectPreview cleanup或舊React閉包render已銷毀compositor；測試須等待新player.ready，池的實際class是.pool。新增branch-only preview-smoke先回報新情境，完整build仍驗所有。第二輪待驗，不能宣稱已順暢。
+
 - 最新未提交待測：plans/2026-11-13-anchored-effects-and-playback.md；source在workspace，PR #10仍未合併。固定單素材邊界優先於上一輪任意；同秒特效marker需合併作用範圍後供選擇，不能彼此蓋住；真正proxy參考VideoClip，urlFor只原檔，previewUrlFor只預覽，勿低畫質匯出。本輪還缺新測試/check/CI，先前331/138是基線。
 
 - 最新特效時長最終：[Actions 43474533667](https://github.com/peiyulin0520/VideoClip_2/actions/runs/43474533667)：版本 8e45a480e2c3818217935f677a2d1047bab19107 的331單元、138 Chromium e2e全過，lint/格式/TypeScript/build/Pages/39字體檢查成功。artifact 14062124542，ZIP SHA-256 8f225265b3f38d07947a1f074098f2d22e3bad37368686a923f18d1b1fc7d50f 已核對；171張成功畫面（effect-timing新增5張）。新5張及混搭已用清單已人工看過。原134及新4全通過；最後文件不改驗收src/e2e/設定。PR #10待使用者自行Merge，Safari仍待真機；以下首輪待CI均為過程。

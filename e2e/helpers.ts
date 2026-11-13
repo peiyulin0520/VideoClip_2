@@ -214,6 +214,10 @@ export async function addOverlays(page: Page, files: string[]) {
       timeout: 20_000,
     })
     .toBe(before + files.length);
+  await expect(page.getByRole('dialog', { name: '正在載入專案', exact: true })).toHaveCount(0);
+  await page.waitForFunction(() =>
+    (window as unknown as { __videoclip: { ready: () => boolean } }).__videoclip.ready(),
+  );
   if (await page.locator('#editor-timeline').isVisible()) await expandAllGroups(page);
 }
 
