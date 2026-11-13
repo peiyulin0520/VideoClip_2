@@ -9,6 +9,8 @@ import {
   addOverlays,
   samplePreview,
   isGreen,
+  isBlue,
+  fixture,
 } from './helpers';
 import type { Project } from '../src/model/types';
 test.beforeEach(({ page }) => {
@@ -52,6 +54,20 @@ test('匯入新影片後完成預覽準備，操作與返回首頁不會呼叫�
   await ready(page);
   expect((await current(page)).tracks.flatMap((t) => t.items)).toHaveLength(2);
   await expect.poll(async () => isGreen(await samplePreview(page, 0.5, 0.5))).toBe(true);
+  await openTab(page, '剪輯');
+  const [chooser] = await Promise.all([
+    page.waitForEvent('filechooser'),
+    page.getByRole('button', { name: '匯入', exact: true }).tap(),
+  ]);
+  await chooser.setFiles([fixture('solid-blue.webm')]);
+  await expect.poll(async () => (await current(page)).tracks.flatMap((t) => t.items).length).toBe(3);
+  await ready(page);
+  await expect
+    .poll(() =>
+      page.evaluate(() => (window as unknown as { __videoclip: { time: () => number } }).__videoclip.time()),
+    )
+    .toBe(4);
+  await expect.poll(async () => isBlue(await samplePreview(page, 0.5, 0.5))).toBe(true);
   await openTab(page, '版型');
   await page.getByRole('button', { name: '套用多格版型', exact: true }).tap();
   await page.getByRole('link', { name: '回首頁', exact: true }).tap();

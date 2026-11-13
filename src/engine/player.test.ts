@@ -126,3 +126,34 @@ it('late UI cleanup and decode callbacks cannot render or restart a destroyed pl
   expect(player.isPlaying).toBe(false);
   expect(player.isReady).toBe(false);
 });
+
+it('a listener replacing its subscription is not revisited within the same playback notification', async () => {
+  vi.stubGlobal(
+    'requestAnimationFrame',
+    vi.fn(() => 1),
+  );
+  vi.stubGlobal('cancelAnimationFrame', vi.fn());
+  vi.spyOn(HTMLMediaElement.prototype, 'pause').mockImplementation(() => {});
+  vi.spyOn(HTMLMediaElement.prototype, 'load').mockImplementation(() => {});
+  const p = createProject('listeners');
+  const player = await Player.create({
+    host: document.createElement('div'),
+    canvas: document.createElement('canvas'),
+    getProject: () => p,
+    urlFor: () => undefined,
+  });
+  const replacement = vi.fn();
+  let armed = false;
+  const unsubscribe = player.subscribe(() => {
+    if (armed) {
+      unsubscribe();
+      player.subscribe(replacement);
+    }
+  });
+  armed = true;
+  player.seek(0);
+  expect(replacement).toHaveBeenCalledTimes(1); // Immediate synchronization, no duplicate during the old emission.
+  player.seek(0);
+  expect(replacement).toHaveBeenCalledTimes(2);
+  player.destroy();
+});

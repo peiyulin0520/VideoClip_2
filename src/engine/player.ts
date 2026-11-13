@@ -187,7 +187,7 @@ export class Player {
     const now = performance.now();
     if (this.playing && now - this.lastEmit < 80) return;
     this.lastEmit = now;
-    for (const l of this.listeners) l(this.t, this.playing);
+    for (const l of [...this.listeners]) l(this.t, this.playing);
   }
 
   private total(): number {

@@ -214,7 +214,6 @@ export function Preview({ projectId, width, height }: { projectId: string; width
     if (!pending.length) return;
     const abort = new AbortController();
     let cancelled = false;
-    const time = player.time;
     player.pause();
     useUI.setState({ previewLoad: { progress: 80, message: '準備新匯入的影片' } });
     void preparePreviews(
@@ -233,7 +232,7 @@ export function Preview({ projectId, width, height }: { projectId: string; width
       .then(async (failed) => {
         if (cancelled) return;
         if (failed) toast('部分影片無法建立輕量預覽，會使用原檔；匯出仍保留原始畫質');
-        await player.prepare(time, (progress) => {
+        await player.prepare(player.time, (progress) => {
           if (!cancelled)
             useUI.setState({
               previewLoad: { progress: 95 + Math.floor(progress * 0.05), message: '準備預覽畫面' },
