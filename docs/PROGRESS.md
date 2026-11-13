@@ -3,13 +3,13 @@
 規則：每完成一個有意義的步驟，就在同一個 commit 裡 **覆寫「交接快照」** 並 **在「日誌」最上面新增一筆**（規則全文見 `AGENTS.md`「紀錄規則」，背景與架構見 `docs/HANDOFF.md`）。
 
 ## 交接快照（VideoClip_2 最新狀態）
-- **日期/分支**：2026-11-12 UTC（使用者 11/13 iPhone 回報）/ codex/establish-little-moments；PR #4 已由使用者合併，基線 main d12b39c。本次 PR #5。
-- **任務**：docs/plans/2026-11-13-template-story-workspace.md 已完成：預設收合、無頁尾保留空白、整組模板/各格片段補時、多組精確靜音、特效頁籤與展開故事。
-- **驗證**：程式 4d706878f81bae6e311cb866fc62c91047f02b3a / [Actions 43284472645](https://github.com/peiyulin0520/VideoClip_2/actions/runs/43284472645)：278 單元、98 Chromium e2e 全過；lint/格式/TypeScript/build/Pages/39 字體檢查成功。
-- **程式**：layout.transform 保持整組框架/格子/文字與光效同步，不能在預覽單獨拉歪格子；cell/source timing 共用預覽與音訊/匯出。來源不足補色、指定色塊暫停來源，選段不重排其他格；重新套用保留匹配格設定及整組位置。系統字體跳過 ensureFont。四種獨立特效與二/三格故事（上下展開/依序加入/三字體切換/暖閃）可調。
-- **截圖**：118 張成功 CI 畫面已保存，最新 story-workspace/；artifact 13973383981，ZIP SHA-256 db4ab8d2c6dce9f972561963f4c36d482262643224c6ea4a7e4773a7f180b7a5 已核對。人工檢視收合/頁尾、整組縮放、明確多組靜音、故事階段與特效，繁中可讀、全自製素材。
-- **PR/發布**：[PR #5](https://github.com/peiyulin0520/VideoClip_2/pull/5) 完成驗收並交使用者自行 Merge；本次未發布、不代合併、不開 auto-merge、不推 main。
-- **下一步/等使用者**：自行 Merge PR #5 → main Actions/Pages → Safari 真機確認收合/雙指、格子選段/補色、密集標記與音訊/匯出。最後文件/截圖 [skip ci]，程式與測試和上述成功 CI 相同。
+- **日期/分支**：2026-11-13 / codex/establish-little-moments；PR #5 已使用者合併，main 8c10a55。
+- **完成**：main Actions #41 被舊四格漂移測試擋住，已修正測試並建立 [PR #6](https://github.com/peiyulin0520/VideoClip_2/pull/6)。產品程式/設定與 main 完全相同。
+- **原因**：重新套用保留原起點是使用者要求，舊測試仍按移到播放頭的假設判斷 2.7 秒紅格；3 秒版型該時上格已漂離。舊畫面尚未重畫也可能假成功。
+- **修正**：顯式定位相對原起點的 0/1.5/2.7 秒，黑/紅/藍正向斷言並比對匯出；連續三次重新套用保持原起點與長度。不加 retry/timeout/skip。
+- **驗證**：[Actions #42](https://github.com/peiyulin0520/VideoClip_2/actions/runs/43342981901) 成功，程式/測試 6b031d249513f765babc00b53973d58faeee2eb6：278 單元、98 Chromium e2e 全過，lint/格式/TypeScript/build/Pages/39 字體檢查成功。 基線/修正本機 check 均成功；最後文件/截圖提交不改 e2e 或 src。
+- **證據**：成功 CI artifact 14000233770，ZIP SHA-256 3ae5ee1f98eda79c73178a33746af026a977408b4f3ac2c3f41e47e143845845 已核對；CI 產生 119 張圖，本次只新增 usability/polaroid-drift.png，保留既有成功截圖，總 119 張。失敗 artifact 僅在 workspace 診斷，不加入 repo。
+- **發布/下一步**：PR #6 由使用者自行 Merge，再由 main Actions 發布；本次未推 main、未代合併、未開 auto-merge。#41 未進部署，公開頁仍是上一成功發布版。Safari 待真機。
 
 ## 日誌格式（新增一筆時照這個）
 ```
@@ -69,6 +69,18 @@
 - 2026-11-11 找到新字體來源 max32002/pop-gothic（大波浪圓體，含注音）→ 已加入手寫可愛包。問「能不能直接下載到我的 files 下載資料夾」→ 答：網頁在 iPhone 不能自動寫進「檔案」App 資料夾；官方字體存在瀏覽器裡，自己的字體用「匯入字體檔」從檔案 App 選
 
 ## 日誌（最新在最上面）
+
+- 2026-11-13 漂移驗收修復完成
+  - [Actions #42](https://github.com/peiyulin0520/VideoClip_2/actions/runs/43342981901) 成功，程式/測試 6b031d249513f765babc00b53973d58faeee2eb6：278 單元、98 Chromium e2e 全過，lint/格式/TypeScript/build/Pages/39 字體檢查成功。
+  - 原有 98 項完整跑完，四格漂移額外連續三次重套，每次三個時間點都比對預覽及單格輸出。產品程式不改，PR #6 交使用者自行 Merge。
+  - 成功 artifact 14000233770 / ZIP SHA-256 3ae5ee1f98eda79c73178a33746af026a977408b4f3ac2c3f41e47e143845845，119 張圖，新增 polaroid-drift.png；來源皆自製。最後文件/截圖 [skip ci]，測試與程式保持上述驗證版本；Safari 待真機。
+
+
+- 2026-11-13 修正 main #41 的過時漂移驗收
+  - 使用者回報 PR #5 合併後 CI 失敗；讀取 job 131610187477 確認 278 單元/97 of 98 e2e，並以 artifact 13999483508（ZIP SHA-256 02b6ec06888d9f26b4cb914484467bdafa01921924a3fc6efadb4c7c619df623）確認時間 2.7 秒、模板長 3 秒。
+  - 原測試沿用重新套用移到播放頭的舊假設，且未顯式定位/等候時間即可讀上一幀。現用相對模板原起點的 0/1.5/2.7 秒黑/紅/藍，預覽及匯出逐一斷言，三次重新套用皆保持起點與長度。
+  - 僅 e2e 與紀錄變更，產品行為不改；不以 retries/timeout/skip 掩蓋。本機 check 278 單元成功，完整 CI 待驗收；新 PR 交使用者自行 Merge；Safari 待真機。
+
 
 - 2026-11-12 整組模板與故事/特效完整驗收
   - 程式 4d706878f81bae6e311cb866fc62c91047f02b3a / [Actions 43284472645](https://github.com/peiyulin0520/VideoClip_2/actions/runs/43284472645)：278 單元、98 Chromium e2e 全過；lint/格式/TypeScript/build/Pages/39 字體檢查成功。

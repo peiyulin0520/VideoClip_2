@@ -1,6 +1,10 @@
 # 交接手冊（HANDOFF）
 
 ## VideoClip_2 當前交接（優先於以下來源 repo 的歷史紀錄）
+- 最終修復驗收：[Actions #42](https://github.com/peiyulin0520/VideoClip_2/actions/runs/43342981901) 成功，程式/測試 6b031d249513f765babc00b53973d58faeee2eb6：278 單元、98 Chromium e2e 全過，lint/格式/TypeScript/build/Pages/39 字體檢查成功。 PR #6 待使用者自行 Merge，119 張成功畫面（新 usability/polaroid-drift.png）；本次最後文件提交不改驗證過的測試與產品。下列待 CI 為過程紀錄。
+
+- 2026-11-13 優先：PR #5 已使用者合併，main 8c10a55 的 Actions #41（43341355922）check 成功，四格漂移 e2e 失敗導致部署跳過。產品重新套用保持原起點是正確需求；3 秒漂移在 2.7 秒上排已離開舊取樣點。舊 e2e 未明確 seek，讀舊紅幀時可能假成功。改以 0/1.5/2.7 秒黑/紅/藍正向像素與匯出逐一驗證，重套三次保持起點/長度。僅測試修改，待新 PR 完整 CI；不能為測試改回跳時間的產品行為。下列 PR #5 待合併為歷史。
+
 - 本次最終：程式 4d706878f81bae6e311cb866fc62c91047f02b3a / [Actions 43284472645](https://github.com/peiyulin0520/VideoClip_2/actions/runs/43284472645)：278 單元、98 Chromium e2e 全過；lint/格式/TypeScript/build/Pages/39 字體檢查成功。 118 張成功截圖保存（artifact 13973383981 / hash db4ab8d2c6dce9f972561963f4c36d482262643224c6ea4a7e4773a7f180b7a5）。PR #5 待使用者自行 Merge，未部署；Safari 仍待真機。下列「待 CI」與 PR #4 待合併均是過程/歷史。
 
 - 首輪 693515a / run 43282652239：277 單元、97/98 e2e；故事失敗因 ensureFont('system') 回 false，系統字體必須跳過載入，載入的是實際字體。新增 carryTemplateEdits：重新套用匹配的格子保留原來源/色塊等設定與 group transform，不把已套用組移到播放頭；群組長度變更同步草稿 seconds。278/98 待下輪 CI，PR #5 仍 draft。
