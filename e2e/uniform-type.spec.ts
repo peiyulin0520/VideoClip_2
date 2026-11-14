@@ -72,7 +72,7 @@ test('操作介面14px、註解11px、時間軸維持較小字；框內距與窄
     const s = getComputedStyle(el);
     return [parseFloat(s.paddingTop), parseFloat(s.paddingLeft)];
   });
-  expect(padding).toEqual([4, 6]);
+  expect(padding).toEqual([12, 10]);
   const chip = page
     .getByRole('tablist', { name: '字卡設定', exact: true })
     .getByRole('tab', { name: '文字', exact: true });

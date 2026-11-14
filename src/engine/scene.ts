@@ -246,6 +246,7 @@ function toLayer(
   provide: SourceProvider,
 ): SceneLayer | null {
   if (item.type === 'audio') return null;
+  const original = item;
   item = evaluatedItem(item, ctx.time ?? item.start);
   if (track.template && track.layout) {
     const values = animationValues(track.layout, (ctx.time ?? item.start) - track.layout.start);
@@ -278,7 +279,24 @@ function toLayer(
           }
         : item.card,
       uiScale(ctx.canvasW, ctx.canvasH),
-      Math.min(4, Math.max(2, Math.ceil(item.transform.scale))),
+      Math.min(
+        4,
+        Math.max(
+          2,
+          Math.ceil(
+            Math.max(
+              original.transform.scale,
+              ...(original.keyframes ?? []).map(
+                (frame) =>
+                  frame.values.scale *
+                  (frame.motion?.kind === 'pop'
+                    ? 1 + 0.15 * Math.max(0, Math.min(3, frame.motion.strength))
+                    : 1),
+              ),
+            ),
+          ),
+        ),
+      ),
     );
     return { ...common, kind: 'text', source: r.canvas, ready: true, srcW: r.w, srcH: r.h, textKey: r.key };
   }
@@ -323,7 +341,25 @@ function toLayer(
             h: item.slot.h * ctx.canvasH,
           }
         : undefined,
-    frameW: base.w * k,
-    frameH: base.h * k,
+    // Template viewports move/scale with the group. Their sampling dimensions must
+    // stay fixed; otherwise pop/zoom creates a new source texture on every frame.
+    frameW: track.template
+      ? cw *
+        (src.srcW / asset.width) *
+        Math.min(
+          1,
+          Math.max(ctx.canvasW, ctx.canvasH) /
+            Math.max(cw * (src.srcW / asset.width), ch * (src.srcH / asset.height)),
+        )
+      : base.w * k,
+    frameH: track.template
+      ? ch *
+        (src.srcH / asset.height) *
+        Math.min(
+          1,
+          Math.max(ctx.canvasW, ctx.canvasH) /
+            Math.max(cw * (src.srcW / asset.width), ch * (src.srcH / asset.height)),
+        )
+      : base.h * k,
   };
 }

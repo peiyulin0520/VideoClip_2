@@ -952,6 +952,19 @@ export function Timeline({
                   }}
                 />
               </label>
+              {menuTrack.template && (
+                <button
+                  className="menu-item"
+                  onClick={() => {
+                    setExpandedTemplates((v) =>
+                      v.includes(menuTrack.id) ? v.filter((id) => id !== menuTrack.id) : [...v, menuTrack.id],
+                    );
+                    setMenuTrackId(null);
+                  }}
+                >
+                  {expandedTemplates.includes(menuTrack.id) ? '收合' : '展開'}版型素材
+                </button>
+              )}
               <button
                 className="menu-item"
                 onClick={() => {

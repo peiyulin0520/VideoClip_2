@@ -83,9 +83,6 @@ export function ConfirmSheet({
     <Sheet open={open} title={title} onClose={onClose}>
       <p className="sheet-msg">{message}</p>
       <div className="sheet-row">
-        <button className="btn" onClick={onClose}>
-          取消
-        </button>
         <button
           className="btn danger"
           onClick={() => {

@@ -118,7 +118,7 @@ export function TextPanel({
               if (run.text === '點兩下編輯文字') e.currentTarget.select();
             }}
             placeholder="點兩下編輯文字"
-            value={card.placeholder ? '' : run.text}
+            value={card.placeholder || run.text === '點兩下編輯文字' ? '' : run.text}
             onChange={(e) =>
               edit((c) => {
                 c.runs[0]!.text = e.target.value;

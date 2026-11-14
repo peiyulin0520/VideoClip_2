@@ -58,6 +58,7 @@ export function TrimEditor({ item, onClose }: { item: VideoItem; onClose: () => 
         }}
       />
       <RangeActions
+        showCursor={false}
         ranges={ranges}
         cursor={cursor}
         duration={asset.duration}

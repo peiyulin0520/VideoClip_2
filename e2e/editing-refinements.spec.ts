@@ -246,3 +246,37 @@ test('裁切雙指縮放不多畫描邊，縮小後保留的原素材位置與�
   expect(isGreen(frame.samples[1]! as [number, number, number, number])).toBe(true);
   expect(isRed(frame.samples[2]! as [number, number, number, number])).toBe(true);
 });
+
+test('音訊未選區預設也能試聽原聲，另可只聽保留片段，秒數位於播放鍵右側', async ({ page }) => {
+  await createProjectWith(page, ['tone-video.webm']);
+  await openTab(page, '音訊');
+  await page.getByRole('button', { name: '片段範圍', exact: true }).tap();
+  const dialog = page.getByRole('dialog', { name: '選擇保留的聲音片段', exact: true });
+  await dialog.getByRole('button', { name: '來源終點標記', exact: true }).press('Home');
+  const strip = dialog.getByRole('slider', { name: '選段白線位置', exact: true });
+  await strip.scrollIntoViewIfNeeded();
+  const b = (await strip.boundingBox())!;
+  await strip.tap({ position: { x: b.width * 0.5, y: b.height / 2 } });
+  await dialog.getByRole('button', { name: '播放選段試聽', exact: true }).tap();
+  await expect
+    .poll(() => dialog.locator('video').evaluate((el: HTMLVideoElement) => !el.paused && !el.muted))
+    .toBe(true);
+  const play = (await dialog.getByRole('button', { name: '暫停選段試聽', exact: true }).boundingBox())!,
+    now = (await dialog.locator('.source-playback-row .source-now').boundingBox())!;
+  expect(now.x).toBeGreaterThanOrEqual(play.x + play.width);
+  expect(Math.abs(now.y + now.height / 2 - play.y - play.height / 2)).toBeLessThan(5);
+  await dialog.getByRole('checkbox', { name: '只聽保留的片段', exact: true }).check();
+  await expect.poll(() => dialog.locator('video').evaluate((v: HTMLVideoElement) => v.muted)).toBe(true);
+  await dialog.getByRole('checkbox', { name: '只聽保留的片段', exact: true }).uncheck();
+  await expect.poll(() => dialog.locator('video').evaluate((v: HTMLVideoElement) => v.muted)).toBe(false);
+  await dialog.getByRole('button', { name: '暫停選段試聽', exact: true }).tap();
+  await expect(page.locator('.toast')).toHaveCount(0);
+  await page.screenshot({ path: 'docs/screenshots/editing/audio-original-audition.png' });
+  await dialog.getByRole('button', { name: '關閉且不儲存', exact: true }).tap();
+  const item = await page.evaluate(
+    () =>
+      (window as unknown as { __videoclip: { project: () => Project } }).__videoclip.project().tracks[0]!
+        .items[0] as import('../src/model/types').VideoItem,
+  );
+  expect(item.audioRanges).toBeUndefined();
+});

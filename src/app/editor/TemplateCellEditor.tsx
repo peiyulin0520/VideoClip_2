@@ -213,7 +213,13 @@ export function TemplateCellEditor({
       </div>
       {item.type === 'video' && (
         <>
-          <RangeActions ranges={ranges} cursor={cursor} duration={asset.duration} onChange={setRanges} />
+          <RangeActions
+            showCursor={false}
+            ranges={ranges}
+            cursor={cursor}
+            duration={asset.duration}
+            onChange={setRanges}
+          />
           <div className="chips">
             <button className="chip" onClick={fitSpeed}>
               自動配合長度（慢／快動作）
