@@ -174,7 +174,7 @@ export function TemplatePanel() {
         },
         { select: plan.tracks[0]!.items[0]!.id },
       );
-      toast(`已套用 ${plan.layout.duration.toFixed(1)} 秒版型，預覽可移動縮放整組，每格另選來源片段`);
+      toast(`已${activeGroup ? '更新' : '新增'}版型 · ${plan.tracks[0]!.layout!.duration.toFixed(1)} 秒`);
     } catch (e) {
       toast((e as Error).message);
     } finally {

@@ -28,6 +28,14 @@ export function TemplatePlaybackSettings({ track }: { track: Track }) {
               useUI.getState().player?.pause();
               try {
                 useProjectStore.getState().apply((d) => setTemplatePlayback(d, track.id, mode));
+                const player = useUI.getState().player,
+                  layout = useProjectStore.getState().project?.tracks.find((t) => t.id === track.id)?.layout;
+                if (
+                  player &&
+                  layout &&
+                  (player.time < layout.start || player.time >= layout.start + layout.duration)
+                )
+                  player.seek(layout.start);
               } catch (e) {
                 toast((e as Error).message);
               }

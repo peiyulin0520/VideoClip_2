@@ -3363,7 +3363,7 @@ html {
   min-width: 0;
 }
 
-/* All editable fields use the same paper capsule, including native Safari selects. */
+/* Editable fields share a light paper surface and rounded rectangles, including Safari selects. */
 :root[data-theme]
   body
   :is(
@@ -3376,11 +3376,11 @@ html {
   -webkit-appearance: none;
   appearance: none;
   border: 0;
-  border-radius: 999px;
+  border-radius: 12px;
   box-shadow: none;
   background-color: #efe5d7;
   color: #30271f;
-  padding: 4px 6px;
+  padding: var(--field-padding, 4px 6px);
   min-height: 44px;
   font-family: inherit;
 }
@@ -3396,7 +3396,7 @@ html {
   color: #30271f;
 }
 :root[data-theme] body textarea {
-  border-radius: 18px;
+  border-radius: 12px;
 }
 :root[data-theme] body :is(input, select, textarea):focus-visible {
   outline: 2px solid #9d674e;
@@ -3468,7 +3468,7 @@ html {
   text-decoration: none;
   color: var(--fg);
   background: var(--control);
-  border-radius: 999px;
+  border-radius: 12px;
 }
 .effect-badge-choices .btn {
   display: flex;
@@ -3533,7 +3533,7 @@ html {
   background: #efe5d7;
   color: #30271f;
   border: 0;
-  border-radius: 999px;
+  border-radius: 12px;
 }
 :root[data-theme] body .font-select svg {
   color: #79533e;
@@ -3951,4 +3951,14 @@ html {
 }
 .sheet-heading .sheet-close {
   background: var(--control);
+}
+
+textarea.text-input.area {
+  --field-padding: 12px 10px;
+}
+.source-range .range-seconds span:first-child {
+  transform: none;
+}
+.source-range .range-seconds span:last-child {
+  transform: translateX(-100%);
 }

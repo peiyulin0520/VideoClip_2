@@ -877,7 +877,9 @@ export function Timeline({
                         <div className="clip-audio">
                           {it.audioEnabled === false || it.volume === 0 || track.muted
                             ? '原音已關閉'
-                            : '♫ 原音'}
+                            : it.name
+                              ? `♫ ${it.name} 原音`
+                              : '♫ 原音'}
                         </div>
                       )}
                       {selected &&

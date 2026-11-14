@@ -18,6 +18,7 @@ export function CropEditor({ item, onClose }: { item: VideoItem; onClose: () => 
   const video = useRef<HTMLVideoElement>(null),
     image = useRef<HTMLImageElement>(null),
     canvas = useRef<HTMLCanvasElement>(null),
+    maskCanvas = useRef<HTMLCanvasElement | null>(null),
     content = useRef<HTMLDivElement>(null);
   const project = useProjectStore((s) => s.project)!,
     asset = project.assets.find((a) => a.id === item.assetId)!;
@@ -56,9 +57,11 @@ export function CropEditor({ item, onClose }: { item: VideoItem; onClose: () => 
       c.width = w;
       c.height = h;
     }
-    const m = document.createElement('canvas');
-    m.width = w;
-    m.height = h;
+    const m = (maskCanvas.current ??= document.createElement('canvas'));
+    if (m.width !== w || m.height !== h) {
+      m.width = w;
+      m.height = h;
+    }
     paintMask(m.getContext('2d')!, mask, w, h);
     const ctx = c.getContext('2d')!;
     let raf = 0,
@@ -208,7 +211,9 @@ export function CropEditor({ item, onClose }: { item: VideoItem; onClose: () => 
         onPointerDown={(e) => {
           pointers.current.set(e.pointerId, { x: e.clientX, y: e.clientY });
           if (pointers.current.size === 2) {
-            finish();
+            drawing.current = false;
+            setAim(null);
+            history.cancel();
             const [a, b] = [...pointers.current.values()];
             gesture.current = {
               distance: Math.hypot(a!.x - b!.x, a!.y - b!.y),
@@ -225,13 +230,18 @@ export function CropEditor({ item, onClose }: { item: VideoItem; onClose: () => 
           if (pointers.current.size === 2 && gesture.current) {
             const [a, b] = [...pointers.current.values()],
               g = gesture.current;
-            setZoom(
-              Math.max(
+            const next = Math.max(
                 1,
                 Math.min(8, (g.zoom * Math.hypot(a!.x - b!.x, a!.y - b!.y)) / Math.max(1, g.distance)),
               ),
-            );
-            setPan({ x: g.pan.x + (a!.x + b!.x) / 2 - g.x, y: g.pan.y + (a!.y + b!.y) / 2 - g.y });
+              bounds = e.currentTarget.getBoundingClientRect();
+            setZoom(next);
+            const limitX = (bounds.width * (next - 1)) / 2,
+              limitY = (bounds.height * (next - 1)) / 2;
+            setPan({
+              x: Math.max(-limitX, Math.min(limitX, g.pan.x + (a!.x + b!.x) / 2 - g.x)),
+              y: Math.max(-limitY, Math.min(limitY, g.pan.y + (a!.y + b!.y) / 2 - g.y)),
+            });
           }
         }}
         onPointerUp={(e) => {
@@ -286,7 +296,7 @@ export function CropEditor({ item, onClose }: { item: VideoItem; onClose: () => 
               viewBox="0 0 1 1"
               preserveAspectRatio="none"
               onPointerDown={(e) => {
-                if (mode === 'crop') return;
+                if (mode === 'crop' || pointers.current.size > 0) return;
                 e.preventDefault();
                 history.begin();
                 e.currentTarget.setPointerCapture(e.pointerId);

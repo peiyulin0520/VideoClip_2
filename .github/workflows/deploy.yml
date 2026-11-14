@@ -54,7 +54,14 @@ jobs:
           name: browser-checks-${{ github.run_id }}
           path: |
             docs/screenshots/
+            !docs/screenshots/refinement/**
             test-results/
+          retention-days: 14
+      - uses: actions/upload-artifact@v4
+        if: always() && steps.browser-tests.outcome != 'skipped' && steps.browser-tests.outcome != ''
+        with:
+          name: browser-refinement-${{ github.run_id }}
+          path: docs/screenshots/refinement/
           retention-days: 14
       - if: github.ref == 'refs/heads/main'
         uses: actions/configure-pages@v5

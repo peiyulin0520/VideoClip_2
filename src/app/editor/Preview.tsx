@@ -113,7 +113,7 @@ export function Preview({ projectId, width, height }: { projectId: string; width
   useEffect(
     () => () => {
       if (holdTimer.current) clearTimeout(holdTimer.current);
-      useUI.setState({ liftedId: null });
+      useUI.setState({ liftedId: null, aspectEditing: false, templateCellId: null });
     },
     [],
   );

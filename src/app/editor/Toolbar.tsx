@@ -417,12 +417,9 @@ function EditTab({
         onClick={() => {
           if (!selected) return toast('請先選取素材');
           setNameDraft(
-            (found?.track.template && useUI.getState().templateCellId !== selected.id
+            found?.track.template && useUI.getState().templateCellId !== selected.id
               ? found.track.name
-              : selected.name) ??
-              (selected.type === 'text'
-                ? (selected.card.runs[0]?.text ?? '')
-                : (project.assets.find((a) => a.id === selected.assetId)?.name ?? '')),
+              : itemName(project, selected),
           );
           setNaming(true);
         }}

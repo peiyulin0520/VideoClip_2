@@ -1,3 +1,5 @@
+> 待新版最後驗收：381單元/check過。e679172完整161/163及快速25+5+3成功，2舊selector行為已改（重開先選既有版型、素材label exact）。canonical表單高specificity原999px壓過round12，已直接改12＋computed-style驗收；SourceRanges首尾刻度收內。Crop maskCanvas持續重用，雙指取消筆畫並限制pan，useDraftHistory.cancel保留redo；新CDP/原UV/匯出測試。templateCellDraft把舊delay/blanks轉可編輯cards且不碰原資料；setAudioEnabled/separateAudio記sequentialAudio避免輪序重開原音。來源binding加duration/cell/ranges（ref變化才序列化）防舊seek。tone資源測試加入motion3秒。最後artifact拆browser-checks與browser-refinement以各<32MiB。新截圖尚未下載，PR12仍draft。以下161/379為較早驗收。
+
 > 最新 F/G：379單元/check過，新瀏覽器待驗。TemplateCellEditor整個VideoItem局部draft，套用才updateTemplateChild/arrangeTemplate；SourceRanges.linkedDuration讓起點越過舊迄並推新迄。cell.cards附本格補色文字，mediaSegments停止來源消耗/音訊，scene畫文字；cell.holdAfter只顯示片尾，聲音仍限item真實區間。layout.playback=sequential/simultaneous。Timeline templateChild虛擬列不改儲存軌道；UI.templateCellId區分刪子片段/整組。carryTemplateEdits保留group/child ID、名稱/時長與物理slot。TemplatePanel無fallbackfirstgroup；Toolbar按group ID key重置新草稿。ToneThumbnail僅靜態96px，暫停/編輯取樣，不逐幀CPU讀影片。ProjectPreview依CSS基地調bitmap防拉扁。PR12仍draft，最新驗收見PROGRESS。
 
 > 新版22項裁切/聲音/定格/ABC原生時間已過（43619159592）；Tone舊測試「改值自動建點後再記錄」會依新規則刪點，改先記錄再改值。check/374成功，完整待最終。

@@ -138,7 +138,10 @@ export function separateAudio(id: string) {
   useProjectStore.getState().apply(
     (d) => {
       const target = d.tracks.flatMap((t) => t.items).find((x) => x.id === id)!;
-      if (target.type !== 'text') target.audioEnabled = false;
+      if (target.type !== 'text') {
+        target.audioEnabled = false;
+        if (target.cell) target.cell.sequentialAudio = false;
+      }
       const track = createTrack('audio', d.tracks);
       track.items = [audio];
       d.tracks.push(track);
@@ -149,7 +152,10 @@ export function separateAudio(id: string) {
 
 export function setAudioEnabled(id: string, enabled: boolean) {
   editItem(id, (it) => {
-    if (it.type !== 'text') it.audioEnabled = enabled;
+    if (it.type !== 'text') {
+      it.audioEnabled = enabled;
+      if (it.cell) it.cell.sequentialAudio = enabled;
+    }
   });
 }
 

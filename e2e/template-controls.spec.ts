@@ -1,4 +1,4 @@
-import { openTemplateCell } from './helpers';
+import { openTemplateCell, expandAllGroups } from './helpers';
 import { waitForPreviewReady } from './helpers';
 import { expect, test, type Page } from '@playwright/test';
 import { createProjectWith, openTab, fixture, clips, addOverlays, exportFrame, seekTo } from './helpers';
@@ -74,6 +74,9 @@ test('版型文字可更改或留空、自訂色彩與框架透明度實際用�
     .toBe('家人的一天');
   await page.reload();
   await expect(page.locator('.editor')).toBeVisible();
+  await expandAllGroups(page);
+  const existing = (await current(page)).tracks.find((t) => t.template)!;
+  await page.locator(`[data-testid=clip][data-item-id="${existing.items[0]!.id}"]`).tap();
   await openTab(page, '版型');
   await expect(page.getByLabel('版型文字', { exact: true })).toHaveValue('家人的一天');
   expect((await current(page)).tracks.find((t) => t.template)?.layout).toMatchObject({

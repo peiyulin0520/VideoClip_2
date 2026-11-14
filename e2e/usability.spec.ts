@@ -203,7 +203,7 @@ test('四格相紙：每格素材、實際滑入與漂移畫面、移除版型',
   await page.getByRole('button', { name: '影像 1 軌道設定', exact: true }).tap();
   await page.getByRole('button', { name: '隱藏這條軌道', exact: true }).tap();
   await page.getByRole('button', { name: '四格相紙', exact: true }).tap();
-  await page.getByLabel('第 4 格素材').selectOption({ index: 5 });
+  await page.getByLabel('第 4 格素材', { exact: true }).selectOption({ index: 5 });
   await page.getByLabel('版型動態效果').selectOption('slide');
   await page.getByRole('button', { name: '套用多格版型', exact: true }).tap();
   const p = await project(page);

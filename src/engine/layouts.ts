@@ -82,6 +82,7 @@ export function collagePlan(
                   : asset!.duration,
               ),
         offset: 0,
+        sequentialAudio: sourceItems?.[i]?.audioEnabled,
         blanks: [],
         background: '#000000',
       },

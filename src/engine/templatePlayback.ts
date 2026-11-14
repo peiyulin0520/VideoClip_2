@@ -61,3 +61,19 @@ export function updateTemplateChild(project: Project, id: string, item: VideoIte
   track.items[index] = { ...item, id: before.id, slot: before.type !== 'text' ? before.slot : undefined };
   arrangeTemplate(track);
 }
+
+/** Expose legacy hidden delays/gaps as editable local colour cards; draft-only until Apply. */
+export function templateCellDraft(item: VideoItem): VideoItem {
+  const draft = structuredClone(item),
+    cell = draft.cell;
+  if (cell && (cell.offset > 0 || cell.blanks.length)) {
+    cell.cards = [
+      ...(cell.cards ?? []),
+      ...(cell.offset > 0 ? [{ start: 0, end: cell.offset, color: cell.background, text: '' }] : []),
+      ...cell.blanks.map(([start, end]) => ({ start, end, color: cell.background, text: '' })),
+    ];
+    cell.offset = 0;
+    cell.blanks = [];
+  }
+  return draft;
+}

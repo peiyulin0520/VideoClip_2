@@ -5,7 +5,7 @@
 ## 交接快照（VideoClip_2 最新狀態）
 
 - 分支 codex/editing-refinements / PR #12 draft，前輪 PR #11 已由使用者合併；本輪仍由使用者自行 Merge，不開auto-merge、不推main。
-- 本機379單元、lint/格式/TypeScript/build/Pages/PWA/39字體已過。定格、裁切、固定基地/自訂比例、命名/placeholder/圓角、多組版型與局部來源popup、輪序停格/子素材時間軸均已實作，新版瀏覽器尚待驗收。
+- 本機381單元、lint/格式/TypeScript/build/Pages/PWA/39字體已過。定格、裁切、固定基地/自訂比例、命名/placeholder/圓角、多組版型與局部來源popup、輪序停格/子素材時間軸均已實作，修後新版瀏覽器尚待驗收。
 - 先前Actions43619748042（source382d54c）152瀏覽器成功/9失敗：3選段undo舊名、1移除reset舊操作、5對比問題。新版已改undo/X操作與灰提示/primary文字；不可引用舊成功截圖冒充新版驗收。
 - 早一輪43619159592的22項裁切/聲音/定格/ABC原生來源時間已過；43619748042色調5、音訊3、自訂比例成功。最新版型、新基地bitmap與全回歸仍需新版Actions。
 - 規格docs/plans/2026-11-14-editing-refinements.md，來源錄影只在/tmp，未放公開repo。下一步：新版Actions→修實際失敗→新截圖與聲畫資源量測→更新PR12/ready。Safari仍PLAN §7待真機，不宣稱手機FPS/爆音已測。
@@ -19,6 +19,14 @@
 - 2026-11-14 E 階段自訂輸出比例：主預覽基地不依輸出比例改高，頂部比例可進入主預覽四邊/角拖曳草稿，X不儲存、套用才寫 width/height/customAspect。內框/框外斜紋分開。ProjectPreview 使用240方形固定基地 contain，不因4:3上下錯位；音訊來源固定160px基地，播放秒數同列。check/374單元成功，新瀏覽器待驗。
 
 ## 本輪日誌
+
+- 2026-11-14 驗收後修整（本機381單元/check過，新版瀏覽器待跑）
+  - Actions43622619091 sourcee679172：161/163完整成功；25新裁切/版型＋5色調＋3音訊成功，快速29/30成功。剩2失敗是重開後需先選現有模板、canvas aria使來源label需exact；已改測試遵守新多版型行為。
+  - 人工看fast截圖發現舊表單高specificity仍覆寫圓角，已直接改canonical表單/font-select/載入按鈕為12px，新增實際computed-style驗收；SourceRanges首尾刻度收在軸內，縮短toast，截圖等toast消失並顯示真正停格預覽。
+  - Crop保留一個mask canvas不逐筆配置；雙指進來取消未完成筆畫，視角pan受邊界限制/縮回100%歸位。新增真實CDP雙指+原UV+匯出像素回歸。
+  - 舊offset/blanks只在來源draft轉成可編輯補色卡，X不改舊專案；明確關閉/分離原音後輪序不重新打開。來源重綁含duration/cell/ranges（巢狀資料ref變化才序列化），舊seek回呼防護包含完整映射。
+  - 色調/柔焦/顆粒量測加入3秒定格震動，確認無新增媒體貼圖/濾鏡、無逐幀seek且原音持續。完整artifact拆出refinement圖庫，避免超過32MiB下載上限。新381與check過，待新版164瀏覽器及新截圖，不以舊161當最終驗收。
+
 
 - 2026-11-14 F/G 版型局部來源與輪序群組（379單元/check過，瀏覽器待驗）
   - 點示意圖直接開有聲來源popup；左右固定基地，同列播放秒數/undo/redo/套用。起點按長度連迄；單格命名/速率/自訂補色文字附在該格，套用才寫專案，X捨棄。

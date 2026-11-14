@@ -2,7 +2,12 @@ import { expect, it } from 'vitest';
 import { createProject } from '../model/defaults';
 import type { Asset, VideoItem } from '../model/types';
 import { collagePlan, carryTemplateEdits } from './layouts';
-import { arrangeTemplate, moveTemplateChild, updateTemplateChild } from './templatePlayback';
+import {
+  arrangeTemplate,
+  moveTemplateChild,
+  updateTemplateChild,
+  templateCellDraft,
+} from './templatePlayback';
 import { cellMediaTime, mediaSegments, templateCardAt } from './templateTiming';
 import { sourceTimeAt, visibleLayers, totalDuration } from './timeline';
 import { audibleClips } from './audio';
@@ -128,4 +133,28 @@ it('reapplying a template preserves group/child identity, individual ranges, dur
   expect(replacement.items.map((i) => i.id)).toEqual(track.items.map((i) => i.id));
   expect(replacement.items.map((i) => i.duration)).toEqual([3, 1.5, 3]);
   expect((replacement.items[1] as VideoItem).trimIn).toBe(5);
+});
+
+it('legacy delay/gaps become visible editable draft cards without mutating source or changing clocks', () => {
+  const { track } = setup(),
+    item = track.items[0] as VideoItem;
+  item.cell!.offset = 0.4;
+  item.cell!.blanks = [[1, 1.5]];
+  const before = structuredClone(item),
+    draft = templateCellDraft(item);
+  expect(item).toEqual(before);
+  expect(draft.cell!.offset).toBe(0);
+  expect(draft.cell!.blanks).toEqual([]);
+  expect(draft.cell!.cards).toHaveLength(2);
+  for (const t of [0.1, 0.5, 1.2, 1.8, 2.8]) expect(cellMediaTime(draft, t)).toEqual(cellMediaTime(item, t));
+});
+it('sequential playback respects explicit muted/detached original audio across mode switches', () => {
+  const { p, track } = setup();
+  const item = track.items[1] as VideoItem;
+  item.cell!.sequentialAudio = false;
+  arrangeTemplate(track, 'sequential');
+  expect(audibleClips(p, 4)).toHaveLength(0);
+  arrangeTemplate(track, 'simultaneous');
+  arrangeTemplate(track, 'sequential');
+  expect(audibleClips(p, 4)).toHaveLength(0);
 });

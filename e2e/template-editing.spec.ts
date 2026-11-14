@@ -45,6 +45,12 @@ test('點版型格子可有聲選段、起點連動終點、局部 undo/redo 與
   const left = (await dialog.locator('.source-preview-base').boundingBox())!,
     right = (await dialog.getByTestId('source-range').boundingBox())!;
   expect(left.x + left.width).toBeLessThanOrEqual(right.x);
+  expect(
+    await dialog
+      .getByLabel('每格素材名稱', { exact: true })
+      .evaluate((el) => getComputedStyle(el).borderRadius),
+  ).toBe('12px');
+  await expect(page.locator('.toast')).toHaveCount(0);
   await page.screenshot({ path: 'docs/screenshots/editing/template-source-popup.png' });
   await dialog.getByRole('button', { name: '關閉且不儲存', exact: true }).tap();
   expect((await current(page)).tracks.find((t) => t.template)!.items).toEqual(original.items);
@@ -94,7 +100,11 @@ test('輪序在同列、同時分列；已播格停最後一幀且靜音，輸�
   expect(isRed(frame.samples[0]! as [number, number, number, number])).toBe(true);
   expect(isGreen(frame.samples[1]! as [number, number, number, number])).toBe(true);
   expect(isBlue(frame.samples[2]! as [number, number, number, number])).toBe(true);
+  await expect(page.locator('.toast')).toHaveCount(0);
+  await page.getByTestId('stage').scrollIntoViewIfNeeded();
   await page.screenshot({ path: 'docs/screenshots/editing/template-sequential-hold.png' });
+  await page.locator('.template-playback-settings').scrollIntoViewIfNeeded();
+  await page.screenshot({ path: 'docs/screenshots/editing/template-sequential-timeline.png' });
   await page.getByRole('button', { name: '同時播放', exact: true }).tap();
   await expect(page.locator(`[data-track-id="${group.id}"][data-template-child=true]`)).toHaveCount(3);
   await page.locator('.template-playback-settings summary').tap();

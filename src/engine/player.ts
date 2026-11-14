@@ -62,6 +62,10 @@ export class Player {
   private bufferSince = 0;
   private lastSeeks = new WeakMap<HTMLMediaElement, { target: number; at: number }>();
   private mediaBindings = new WeakMap<HTMLMediaElement, string>();
+  private sourceMaps = new WeakMap<
+    HTMLMediaElement,
+    { cell: VideoItem['cell']; ranges: VideoItem['sourceRanges']; key: string }
+  >();
   private pendingPlay = new WeakSet<HTMLMediaElement>();
   private requestedSeek = false;
   private readyCount = 0;
@@ -338,7 +342,16 @@ export class Player {
     const s = sourceTimeAt(item, t);
     // A pooled decoder can move from B to C of the same file without changing src.
     // Source edits/rebinding must not inherit the old clip's one-second seek throttle.
-    const binding = `${item.id}:${item.assetId}:${item.trimIn}:${item.start}:${item.speed}`;
+    let sourceMap = this.sourceMaps.get(el);
+    if (!sourceMap || sourceMap.cell !== item.cell || sourceMap.ranges !== item.sourceRanges) {
+      sourceMap = {
+        cell: item.cell,
+        ranges: item.sourceRanges,
+        key: JSON.stringify([item.cell, item.sourceRanges]),
+      };
+      this.sourceMaps.set(el, sourceMap);
+    }
+    const binding = `${item.id}:${item.assetId}:${item.trimIn}:${item.start}:${item.duration}:${item.speed}:${sourceMap.key}`;
     const rebound = this.mediaBindings.get(el) !== binding;
     if (rebound) {
       this.mediaBindings.set(el, binding);

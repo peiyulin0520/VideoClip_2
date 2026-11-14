@@ -202,7 +202,9 @@ test('完整影片匯出會在不同影格套用曝光與黑白漸變，片長�
   await shot(page, 'graded-video-export', '.sheet');
 });
 
-test('漸變色調疊柔焦顆粒仍更新畫面與聲音，播放只改uniform、不重建濾鏡或媒體貼圖', async ({ page }) => {
+test('漸變色調疊柔焦顆粒及定格震動仍更新畫面與聲音，播放只改uniform、不重建濾鏡或媒體貼圖', async ({
+  page,
+}) => {
   await page.addInitScript(() => {
     const desc = Object.getOwnPropertyDescriptor(HTMLMediaElement.prototype, 'currentTime')!;
     const w = window as unknown as { toneSeekWrites: number };
@@ -224,6 +226,10 @@ test('漸變色調疊柔焦顆粒仍更新畫面與聲音，播放只改uniform�
   await at(page, 3);
   await page.getByRole('button', { name: '套用鮮豔', exact: true }).tap();
   await at(page, 0);
+  await page.getByRole('button', { name: '定格細部調整', exact: true }).tap();
+  await page.getByRole('button', { name: '震一下', exact: true }).tap();
+  await slider(page, '短特效長度', 3);
+  await page.getByRole('button', { name: '完成定格', exact: true }).tap();
   await openTab(page, '特效');
   await page.getByRole('tab', { name: '影片特效', exact: true }).tap();
   for (const name of ['柔焦', '底片顆粒']) await page.getByRole('button', { name, exact: true }).tap();
@@ -271,7 +277,10 @@ test('漸變色調疊柔焦顆粒仍更新畫面與聲音，播放只改uniform�
   expect(after.seeks - before.seeks).toBeLessThanOrEqual(1);
   expect(after.energy).toBeGreaterThan(0.005);
   await mkdir('test-results', { recursive: true });
-  await writeFile('test-results/tone-playback-metrics.json', JSON.stringify({ before, after }, null, 2));
+  await writeFile(
+    'test-results/tone-playback-metrics.json',
+    JSON.stringify({ before, after, motion: (await item(page)).keyframes?.[0]?.motion }, null, 2),
+  );
   await page.getByRole('button', { name: '暫停', exact: true }).tap();
   await shot(page, 'graded-effects-preview', '[data-testid="stage"]');
 });

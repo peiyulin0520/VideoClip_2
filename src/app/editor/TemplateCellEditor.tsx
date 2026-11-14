@@ -1,3 +1,4 @@
+import { templateCellDraft } from '../../engine/templatePlayback';
 import { contrastText } from '../../engine/colors';
 import { useEffect, useRef, useState } from 'react';
 import { Undo2, Redo2 } from 'lucide-react';
@@ -27,7 +28,7 @@ export function TemplateCellEditor({
 }) {
   const p = useProjectStore((s) => s.project)!,
     asset = p.assets.find((a) => a.id === item.assetId)!;
-  const history = useDraftHistory<VideoItem>(structuredClone(item)),
+  const history = useDraftHistory<VideoItem>(templateCellDraft(item)),
     draft = history.value;
   const video = useRef<HTMLVideoElement>(null);
   const [cursor, setCursor] = useState(item.trimIn),
@@ -137,7 +138,7 @@ export function TemplateCellEditor({
               playsInline
               style={{ filter: selected ? undefined : 'saturate(0)' }}
               onLoadedMetadata={(e) => {
-                e.currentTarget.currentTime = Math.min(draft.trimIn, asset.duration - 0.001);
+                e.currentTarget.currentTime = Math.max(0.001, Math.min(draft.trimIn, asset.duration - 0.001));
                 useUI.getState().player?.pause();
               }}
             />

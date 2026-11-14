@@ -1,6 +1,15 @@
 import type { Project } from '../src/model/types';
 import { expect, test } from '@playwright/test';
-import { createProjectWith, openTab, setCropOffset, clips } from './helpers';
+import {
+  createProjectWith,
+  openTab,
+  setCropOffset,
+  clips,
+  addOverlays,
+  exportFrame,
+  isGreen,
+  isRed,
+} from './helpers';
 
 test('裁切工具同列、筆刷獨立保留、縮放不丟座標、undo/redo 與 X 捨棄', async ({ page }) => {
   await createProjectWith(page, ['solid-red.webm']);
@@ -174,4 +183,66 @@ test('比例只改框內輸出，固定預覽基地；自訂比例可拖曳且 X
     )
     .toBe(true);
   await page.screenshot({ path: 'docs/screenshots/editing/custom-aspect-fixed-base.png' });
+});
+
+test('裁切雙指縮放不多畫描邊，縮小後保留的原素材位置與輸出一致', async ({ page }) => {
+  await createProjectWith(page, ['solid-red.webm']);
+  await addOverlays(page, ['solid-green.webm']);
+  await openTab(page, '剪輯');
+  await page.getByRole('button', { name: '裁切', exact: true }).tap();
+  await page.getByRole('button', { name: '筆刷', exact: true }).tap();
+  await setCropOffset(page);
+  const stroke = async (x: number, y: number) => {
+    await page.getByTestId('crop-stage').scrollIntoViewIfNeeded();
+    const b = (await page.getByTestId('crop-stage').boundingBox())!;
+    await page.mouse.move(b.x + b.width * x, b.y + b.height * y);
+    await page.mouse.down();
+    await page.mouse.up();
+  };
+  await stroke(0.5, 0.5);
+  const viewport = page.locator('.crop-viewport');
+  await viewport.scrollIntoViewIfNeeded();
+  const b = (await viewport.boundingBox())!,
+    cx = b.x + b.width / 2,
+    cy = b.y + b.height / 2;
+  const session = await page.context().newCDPSession(page);
+  try {
+    await session.send('Input.dispatchTouchEvent', {
+      type: 'touchStart',
+      touchPoints: [
+        { x: cx - 12, y: cy, id: 1 },
+        { x: cx + 12, y: cy, id: 2 },
+      ],
+    });
+    for (let i = 1; i <= 4; i++)
+      await session.send('Input.dispatchTouchEvent', {
+        type: 'touchMove',
+        touchPoints: [
+          { x: cx - 12 - i * 2, y: cy, id: 1 },
+          { x: cx + 12 + i * 2, y: cy, id: 2 },
+        ],
+      });
+    await session.send('Input.dispatchTouchEvent', { type: 'touchEnd', touchPoints: [] });
+  } finally {
+    await session.detach();
+  }
+  await stroke(0.7, 0.5);
+  for (let i = 0; i < 5; i++) await page.getByRole('button', { name: '縮小裁切預覽', exact: true }).tap();
+  await page.getByRole('button', { name: '套用裁切', exact: true }).tap();
+  const item = await page.evaluate(
+    () =>
+      (window as unknown as { __videoclip: { project: () => Project } }).__videoclip.project().tracks[1]!
+        .items[0] as import('../src/model/types').VideoItem,
+  );
+  expect(item.mask!.strokes).toHaveLength(2);
+  expect(item.mask!.strokes![0]!.points[0]![0]).toBeCloseTo(0.5, 2);
+  expect(item.mask!.strokes![1]!.points[0]![0]).toBeCloseTo(0.7, 2);
+  const frame = await exportFrame(page, 0, [
+    [0.5, 0.5],
+    [0.6, 0.5],
+    [0.4, 0.5],
+  ]);
+  expect(isGreen(frame.samples[0]! as [number, number, number, number])).toBe(true);
+  expect(isGreen(frame.samples[1]! as [number, number, number, number])).toBe(true);
+  expect(isRed(frame.samples[2]! as [number, number, number, number])).toBe(true);
 });
