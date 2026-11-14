@@ -3,13 +3,13 @@
 規則：每完成一個有意義的步驟，就在同一個 commit 裡 **覆寫「交接快照」** 並 **在「日誌」最上面新增一筆**（規則全文見 `AGENTS.md`「紀錄規則」，背景與架構見 `docs/HANDOFF.md`）。
 
 ## 交接快照（VideoClip_2 最新狀態）
-- 第二輪736d359/43561500076快速29/30：真正每2秒63張唯一圖/像素、舊cache重建及原生fallback均成功；唯一失敗為新測試在放大到300px/秒後仍以seekTo預設60px/秒定位112，實際跑到22.4。改從可見clip寬度/片長讀真實pps傳入helper，所有來源/像素/覆蓋斷言不減。另將原生快照直接縮到80px高/240px寬內，不逐格配置4K中間canvas。需最後新148/30完整成功。
-- 首輪2cc6411/43560901659快速25/30：找到zoom時DOM scroll先走、React可見桶晚一拍的真實缺圖，已在syncScroll同步更新bucket；3個新情境的63張唯一圖/來源秒數已過，先修正影像內部取樣x（避56px表頭+4px邊距）、VP8不同色矩陣容差24，以及clip-a實際2秒不硬寫[0,2]。所有63圖唯一性/時間戳/覆蓋斷言保留；需新完整驗收。PR #11已開啟，未合併。
-- 2026-11-14 / codex/source-timestamp-thumbnails，基於main7350773（PR #10已由使用者合併）。本輪新PR待建立，不再改已合併PR10。
-- 使用者實機主時間軸58秒同首幀、112秒空白，popup overview有後段畫面；之前只驗鋪滿/紅藍後半不夠。已新增獨立filmstrip timestamp資料，每2秒實際解碼，驗decoded frame覆蓋所求秒數，失敗不沿用前格；原生fallback等seek及實際呈現回呼，靜音不play。8張overview保留給popup/封面，主軸不再取它。
-- 既有專案/僅首幀或舊8張cache在載入閘中自動補建，存filmstrip並更新undo快照不增加編輯；完整cache重用。低畫質proxy準備後產生縮圖，仍用原檔匯出。主時間軸按可見範圍虛擬化，每2秒來源映射trim/speed，不用固定120格截斷或首幀延伸。
-- 待驗收：本機check，預期350單元、148完整瀏覽器與30快速（含新增126秒每2秒標秒換色、舊cache修復及原生fallback）；需新CI/成功截圖/PR，再交使用者Merge。下面343/145屬上一輪。
-- 計畫：docs/plans/2026-11-14-timestamped-thumbnails.md。不代合併、不推main；Safari仍待真機。
+- 2026-11-14 / codex/source-timestamp-thumbnails；基於main7350773（使用者已合併PR10）。本輪驗收程式67c14c9c929a6095927d49c76142b881c6a158c6；PR #11 ready、open未合併，最後提交僅文件/成功截圖。
+- 已修主時間軸每2秒真正來源縮圖：Asset.filmstrip記錄time/src，Mediabunny驗實際幀覆蓋要求時間，原生備援等seek及呈現回呼，不play；缺格null不複製前格。legacy8張overview仍給popup/封面，主軸不再以它冒充每2秒。
+- 開既有專案/只有首幀或8張舊cache會在載入閘中重建保存，不需重匯；完整cache重用並更新undo快照，不改片段/來源/匯出。proxy後建小圖；原生直接縮到80px高/240px寬內，不配置逐格4K中間canvas。
+- 主軸可見範圍虛擬化，按trim/speed映射來源2秒區間；syncScroll在seek/zoom時同步更新可見桶，不等晚到scroll事件而留白。
+- [Actions 43562187791](https://github.com/peiyulin0520/VideoClip_2/actions/runs/43562187791)：驗收程式 `67c14c9c929a6095927d49c76142b881c6a158c6` 的350單元、148 Chromium e2e全過，另30項快速情境全過（完整測試子集）；lint/格式/TypeScript/build/Pages/PWA與39字體檢查成功。artifact `14100619022`，ZIP SHA-256 `ebbfe5f0f370aecbc66d8b34e426eb3fd7a6caf8ac3f65b87c89cea8cda3c2a1` 已核對；184張成功截圖。最後提交僅文件/成功截圖，產品、測試與設定皆與驗收程式一致。PR #11 open未合併，由使用者自行Merge後發布；Safari真機仍待確認。
+- 驗證：126秒自製片每2秒換色/標秒，全部63張唯一圖/time/像素；0/2/4/58/60/112/124、放大可見覆蓋，舊重複首幀cache補建/保存/重開且片段不變，禁WebCodecs的Chromium原生備援亦通過。已人工檢視58、112與放大112共3張。本機最終check與diff檢查成功。
+- 下一步：使用者自行Merge PR11後main Actions發布，更新後重開原專案補建；依PLAN §7真機確認Safari HEVC/HDR長片/原生備援/滑動放大/背景取消。無待修程式，不代Merge、不推main。先前25/30、29/30及舊PR10證據皆歷史。
 
 ## 日誌格式（新增一筆時照這個）
 ```
@@ -91,6 +91,13 @@
 - 2026-11-11 找到新字體來源 max32002/pop-gothic（大波浪圓體，含注音）→ 已加入手寫可愛包。問「能不能直接下載到我的 files 下載資料夾」→ 答：網頁在 iPhone 不能自動寫進「檔案」App 資料夾；官方字體存在瀏覽器裡，自己的字體用「匯入字體檔」從檔案 App 選
 
 ## 日誌（最新在最上面）
+- 2026-11-14 主時間軸每2秒實際縮圖最終驗收（PR #11）
+  - [Actions 43562187791](https://github.com/peiyulin0520/VideoClip_2/actions/runs/43562187791)：驗收程式 `67c14c9c929a6095927d49c76142b881c6a158c6` 的350單元、148 Chromium e2e全過，另30項快速情境全過（完整測試子集）；lint/格式/TypeScript/build/Pages/PWA與39字體檢查成功。artifact `14100619022`，ZIP SHA-256 `ebbfe5f0f370aecbc66d8b34e426eb3fd7a6caf8ac3f65b87c89cea8cda3c2a1` 已核對；184張成功截圖。最後提交僅文件/成功截圖，產品、測試與設定皆與驗收程式一致。PR #11 open未合併，由使用者自行Merge後發布；Safari真機仍待確認。
+  - 完成來源timestamp filmstrip/缺圖不沿用、舊專案載入自修復/快取與undo保存、proxy後的小圖、可見區渲染與zoom同步。既有播放/聲音/特效/左右popup/匯出回歸保留。
+  - 新126秒/63格測試核對每格唯一/time/顏色、58/60/112/片尾/最大放大、舊8張首幀修復與原生備援。Chromium停用WebCodecs不等於Safari真機已驗證。
+  - 184張成功圖已更新，新timestamped-thumbnails三張均人工看過；SHA與錯誤context檢查成功，最終本機check通過。README/USAGE/PLAN/AGENTS/交接與計畫同步。下一步使用者Merge PR11。
+  - 過程：首輪修真正zoom晚更新，第二輪修測試用錯60pps/實際300pps，保留全部63圖及來源斷言；VP8跨路徑色矩陣容差24，不放寬來源time/唯一性。舊失敗不是最終證據。
+
 - 2026-11-14 第二輪快速29/30：每2秒/舊cache/原生路徑已成功；最大放大後新helper仍用60px/秒，112秒被錯誤換成22.4秒，修正測試讀實際DOM寬/片長。產品未改，完整新輪再驗。
 
 - 2026-11-14 首輪快速25/30：虛擬格在zoom後等晚到scroll事件會短暫空白，syncScroll now同步更新bucket。新長片63張唯一/time斷言已過，修正測試取樣點在影像內部、VP8跨解碼器色矩陣容差及短片source duration推導。等待下一輪350/148/30，不以首輪當成功。

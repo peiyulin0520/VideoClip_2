@@ -1,12 +1,13 @@
 # 交接手冊（HANDOFF）
 
 ## VideoClip_2 當前交接（優先於以下來源 repo 的歷史紀錄）
-- 第二輪736d359/43561500076快速29/30，剩最大放大後新testhelper用預設60pps導致112→22.4（實際300pps）。visibleAt改讀clip style.width/item.duration取得pps，保留全部唯一圖/實際像素/來源/覆蓋斷言；無產品修改。需新完整成功，不能以29/30交付。
-- 首輪2cc6411/43560901659快速25/30，已補zoom/seek syncScroll同步setScrollBucket（不等晚到scroll事件）；63張cache唯一與來源time已通過，新e2e需取x64避表頭/邊距，VP8native/WebCodecs色矩陣容差24，短片依實際duration計算。PR11已開，需下一完整成功/新圖，不能用首輪交付。
-- 最新本輪（待CI）：main7350773已含使用者合併PR10，新分支codex/source-timestamp-thumbnails。主軸每2秒真正timestamp cache，舊8張overview不再鋪主軸；載入時proxy後補建並自動保存。7新單元/3新e2e，預期350/148/30。需新PR與成功截圖，下面舊343/145非本輪證據。
-- 根因：前版只用8張overview與120個DOM格鋪滿，不等於每2秒取圖；probe還有缺格複製前格與partial fallback誤當全長的風險。新filmstrip version1/interval2/duration/frames(time,src)，frameCovers校驗decoded時間範圍，缺格null不冒充。native備援只load/seek且校驗呈現mediaTime，不呼叫play。
-- 主軸可見範圍分桶虛擬化，span絕對位置按來源2秒區間/trim/speed映射。既有全片DOM右端覆蓋測試改為真正可見區覆蓋，避免測試要求把全部格留DOM。來源完整cache仍每2秒一張，不截斷。
-- 參見plans/2026-11-14-timestamped-thumbnails.md；對真機Safari修復仍待使用者，不能說已消除所有Safari卡頓或缺圖。
+- 最終（2026-11-14）：[Actions 43562187791](https://github.com/peiyulin0520/VideoClip_2/actions/runs/43562187791)：驗收程式 `67c14c9c929a6095927d49c76142b881c6a158c6` 的350單元、148 Chromium e2e全過，另30項快速情境全過（完整測試子集）；lint/格式/TypeScript/build/Pages/PWA與39字體檢查成功。artifact `14100619022`，ZIP SHA-256 `ebbfe5f0f370aecbc66d8b34e426eb3fd7a6caf8ac3f65b87c89cea8cda3c2a1` 已核對；184張成功截圖。最後提交僅文件/成功截圖，產品、測試與設定皆與驗收程式一致。PR #11 open未合併，由使用者自行Merge後發布；Safari真機仍待確認。
+- 本輪從已合併PR10的main7350773開codex/source-timestamp-thumbnails，交付PR11。使用者主軸58秒重首幀、112秒空白但popup有後段，不能只驗鋪滿/兩色後半。
+- Asset.filmstrip={version:1,interval:2,duration,frames(time,src)}獨立於overview thumbs。hasFilmstrip檢全長/每2秒/非缺格；開啟時proxy後補建並存metadata/undo快照，不增編輯。完整cache重用，個別null下次重開重試，不以首幀填滿。
+- buildFilmstrip校驗CanvasSink的timestamp/duration覆蓋要求秒數；原生load/seek+requestVideoFrameCallback/mediaTime，webkit-playsinline且靜音、不play；直接縮小圖，不先建4Kcanvas。取消/idle timeout清理Input及影片URL。probe overview也不再缺格沿用，native partial不假當全長。
+- Tiles按source2秒區間/trim/speed做可見範圍虛擬化，scrollBucket控制DOM數不截斷來源資料；syncScroll同步set桶，否則zoom後晚到scroll會短暫缺圖。別恢復舊120格固定寬/8張overview的主軸方案。
+- 最終350/148/30已過，126秒63張全唯一/來源time/像素、舊cache補建/重開、原生備援及最大放大均成功。測試讀DOM實際pps，不能用seekTo預設60做最大300pps測試；取樣點x64避表頭+邊框。VP8兩解碼路徑色矩陣容差24，時間與唯一性仍嚴格。58/112/最大放大三圖已人工檢視。
+- 當前無待修程式，最後僅文件/184張成功截圖；使用者Merge PR11後才發布。Safari真機見PLAN §7，不以Chromium原生備援冒充Safari實測。以下舊PR10/待驗僅歷史。
 
 ### 前輪成功（歷史）
 - 最終左右更正（2026-11-14）：[Actions 43555594900](https://github.com/peiyulin0520/VideoClip_2/actions/runs/43555594900)：驗收程式 `91a676fa8d463513617e7b575eb36487b13cddcf` 的343單元、145 Chromium e2e全過，另25項快速情境全過（完整測試子集）；lint/格式/TypeScript/build/Pages/PWA與39字體檢查成功。artifact `14098482215`，ZIP SHA-256 `8fbdbdfb5c89f3c1085b353db822cfc9235d5d2c2920ad99016cfcb71179fd8d` 已核對；181張成功截圖。最後提交僅文件/成功截圖，與驗收程式的產品、測試及設定一致。PR #10保持open未合併，由使用者自行Merge後發布；Safari待真機。

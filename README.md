@@ -22,7 +22,7 @@ npm run check
 npm run e2e -- --trace off
 ```
 
-`check` 包含 lint、343 個單元測試、TypeScript、正式建置及 GitHub Pages 路徑/PWA/字體檔案檢查。145 個瀏覽器測試（含完整影片/音訊解碼、收藏、GIF、手動遮罩、Key 與主題）交由 GitHub Actions 的 Chromium 153 執行，CI 保存截圖 artifact；最新成功狀態見 PROGRESS.md。本次已更新 181 張 CI 畫面（docs/screenshots）中文可讀；iPhone Safari 仍待真機驗證。
+`check` 包含 lint、350 個單元測試、TypeScript、正式建置及 GitHub Pages 路徑/PWA/字體檔案檢查。148 個瀏覽器測試（含完整影片/音訊解碼、收藏、GIF、手動遮罩、Key 與主題）交由 GitHub Actions 的 Chromium 153 執行，CI 保存截圖 artifact；最新成功狀態見 PROGRESS.md。本次已更新 184 張 CI 畫面（docs/screenshots）中文可讀；iPhone Safari 仍待真機驗證。
 
 ## GitHub Pages
 
@@ -163,9 +163,11 @@ GIF 解碼器 gifuct-js 2.1.2 為 MIT，授權位於 public/licenses。輸出含
 單素材僅開頭B進場／結尾A退場，固定一端，只顯示迄或起，秒數與時長連動；兩片銜接仍維持原總長。時間軸代表字區分單素材與銜接，同秒效果可選擇。全頁填寫框及下拉統一淺棕無黑框膠囊。最新驗收見[進度](docs/PROGRESS.md)，Safari播放仍待真機。
 
 
-最新播放、長片縮圖及單素材左右精調驗收：[Actions 43555594900](https://github.com/peiyulin0520/VideoClip_2/actions/runs/43555594900)：驗收程式 `91a676fa8d463513617e7b575eb36487b13cddcf` 的343單元、145 Chromium e2e全過，另25項快速情境全過（完整測試子集）；lint/格式/TypeScript/build/Pages/PWA與39字體檢查成功。artifact `14098482215`，ZIP SHA-256 `8fbdbdfb5c89f3c1085b353db822cfc9235d5d2c2920ad99016cfcb71179fd8d` 已核對；181張成功截圖。最後提交僅文件/成功截圖，與驗收程式的產品、測試及設定一致。PR #10保持open未合併，由使用者自行Merge後發布；Safari待真機。 [320px左右配置](docs/screenshots/effect-timing/side-by-side-single-range-320.png) · [長片與操作畫面](docs/screenshots/anchored-playback/) · [操作說明](docs/USAGE.md#特效代表字及穩定預覽pr-10追加)。
+前輪播放、長片縮圖及單素材左右精調驗收（PR #10）：[Actions 43555594900](https://github.com/peiyulin0520/VideoClip_2/actions/runs/43555594900)：驗收程式 `91a676fa8d463513617e7b575eb36487b13cddcf` 的343單元、145 Chromium e2e全過，另25項快速情境全過（完整測試子集）；lint/格式/TypeScript/build/Pages/PWA與39字體檢查成功。artifact `14098482215`，ZIP SHA-256 `8fbdbdfb5c89f3c1085b353db822cfc9235d5d2c2920ad99016cfcb71179fd8d` 已核對；181張成功截圖。最後提交僅文件/成功截圖，與驗收程式的產品、測試及設定一致。PR #10保持open未合併，由使用者自行Merge後發布；Safari待真機。 [320px左右配置](docs/screenshots/effect-timing/side-by-side-single-range-320.png) · [長片與操作畫面](docs/screenshots/anchored-playback/) · [操作說明](docs/USAGE.md#特效代表字及穩定預覽pr-10追加)。
 
 單素材特效popup採左右並排：左側預覽，右側完整片長時間軸及下方秒數欄位；手機直向窄畫面也保持左右，僅顯示「起／迄」，填秒數會同步定位預覽。載入返回與同秒效果選擇按鈕依文字縮寬，維持44px觸控高度。
 
 ## 主時間軸每兩秒來源縮圖（PR #11）
 主時間軸使用每2秒實際擷取並記錄來源秒數的縮圖，與片段popup的overview分開。舊專案在重新開啟時自動補建/保存，不需重新匯入；完整cache重用。拖移/放大只畫可見範圍附近的圖片，整段影片來源資料仍保留；缺圖不複製前格。最新驗收與Safari真機限制見PROGRESS。
+
+最新主時間軸來源縮圖驗收：[Actions 43562187791](https://github.com/peiyulin0520/VideoClip_2/actions/runs/43562187791)：驗收程式 `67c14c9c929a6095927d49c76142b881c6a158c6` 的350單元、148 Chromium e2e全過，另30項快速情境全過（完整測試子集）；lint/格式/TypeScript/build/Pages/PWA與39字體檢查成功。artifact `14100619022`，ZIP SHA-256 `ebbfe5f0f370aecbc66d8b34e426eb3fd7a6caf8ac3f65b87c89cea8cda3c2a1` 已核對；184張成功截圖。最後提交僅文件/成功截圖，產品、測試與設定皆與驗收程式一致。PR #11 open未合併，由使用者自行Merge後發布；Safari真機仍待確認。 [58秒、112秒與放大畫面](docs/screenshots/timestamped-thumbnails/) · [操作說明](docs/USAGE.md#主時間軸每2秒來源縮圖pr-11)。
