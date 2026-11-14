@@ -1,3 +1,5 @@
+> 新版22項裁切/聲音/定格/ABC原生時間已過（43619159592）；Tone舊測試「改值自動建點後再記錄」會依新規則刪點，改先記錄再改值。check/374成功，完整待最終。
+
 > E：Project.customAspect 與 aspectLabel 顯示自訂像素寬高；Editor 比例自訂啟用 UI.aspectEditing，Preview 原基地上拖 frame，套用才更改輸出尺寸，X 無寫入。ProjectPreview 固定240方形 contain，來源視窗160px基地，框外斜紋。374單元/check過，瀏覽器待驗。
 
 > B/C/D：定格 keyframeAt 以7px/pps 選最近點；editAnimatedValues 選中則改其 time，addKeyframe 明確精確插入，toggleKeyframe 在同點刪除。frame.motion 四解析動作及 elapsed 剪斷續接。itemName 統一命名與原音來源；新文字 card.placeholder 不存提示字。Player mediaBindings 防同來源分段重綁繼承 seek 節流。374單元，待新版瀏覽器。

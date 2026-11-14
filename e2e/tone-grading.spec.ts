@@ -114,8 +114,8 @@ test('色調與菱形定格共用，冷暖中點與匯出一致，重開保留�
   await page.getByRole('button', { name: '套用暖色調', exact: true }).tap();
   await page.getByRole('button', { name: '◇ 定格目前色調', exact: true }).tap();
   await at(page, 2);
-  await page.getByRole('button', { name: '套用冷色調', exact: true }).tap();
   await page.getByRole('button', { name: '◇ 定格目前色調', exact: true }).tap();
+  await page.getByRole('button', { name: '套用冷色調', exact: true }).tap();
   expect((await item(page)).keyframes).toHaveLength(2);
   await at(page, 1);
   const mid = animationValues(await item(page), 1);
