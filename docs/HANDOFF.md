@@ -1,12 +1,12 @@
 # 交接手冊（HANDOFF）
 
 ## VideoClip_2 當前交接（優先於以下來源 repo 的歷史紀錄）
-- 2026-11-14左右更正待驗：前次誤解使用者同頁為上下，實際要求圖三popup左預覽/右時間軸。單素材增加effect-timing-workspace兩欄，右controls含hint/軸/秒數；SourceRanges tickCount預設5，此popup最多3、窄於180px用2。手機320仍左右；強化位置與刻度斷言/320圖。下列7f/435540成功是前版，不代表本輪，需check+CI+新截圖再交PR10。
-- 本輪最終（2026-11-14）：[Actions 43554041782](https://github.com/peiyulin0520/VideoClip_2/actions/runs/43554041782)：驗收程式 `7f94416abd5d2889fe4c997b5cacd1590f1d070f` 的343單元、145 Chromium e2e全過，另25項快速情境全過（完整測試子集）；lint/格式/TypeScript/build/Pages/PWA及39字體檢查成功。artifact `14097094861`，ZIP SHA-256 `58ba0cc5f74d9d18a94e229fa74ca8ff477f0754366d1be56d952f6eb47540ac` 已核對；180張成功截圖，本次anchored-playback有9張。最後提交只更新文件/截圖，與驗收程式的產品、測試及設定完全一致。PR #10保持未合併，由使用者自行Merge後發布；Safari待真機。
-- 單素材EffectTimingEditor使用single-effect-timing Sheet；SourceRanges numberedMarkers預設true，單素材false，editableSides只有一邊時不套crowded。44px高完整軸與依dvh調整的預覽、兩欄膠囊秒數同頁；填秒數seek至可調端點，片尾取duration-0.001避免超出素材而黑畫面。隱藏aria仍保留組名供輔助工具辨識，不影響可見標籤。
-- 載入返回Link明確inline-flex/內容寬/居中/44px高；同秒效果選擇各自一列、內容寬/max100%，長名稱可換行。保持操作字級與其他多組編號。四張最新UI已人工檢視，手機三尺寸及長片82秒實際預覽回歸成功。
-- 播放架構：urlFor原檔、previewUrlFor只供預覽；新素材只準備新proxy、不重建主player，完成讀當下time。destroy忽略舊回呼、listener快照。縮圖120格預算只限制密度，跨來源全長取樣；近時間抽樣不等於每幀截圖，精確定位看預覽。
-- 當前無待修程式。最後提交僅文件/成功截圖；使用者自行Merge PR10後發布。Safari鍵盤、安全區、長片/HEVC/HDR、音畫及背景返回見PLAN §7；以下待驗均歷史。
+- 最終左右更正（2026-11-14）：[Actions 43555594900](https://github.com/peiyulin0520/VideoClip_2/actions/runs/43555594900)：驗收程式 `91a676fa8d463513617e7b575eb36487b13cddcf` 的343單元、145 Chromium e2e全過，另25項快速情境全過（完整測試子集）；lint/格式/TypeScript/build/Pages/PWA與39字體檢查成功。artifact `14098482215`，ZIP SHA-256 `8fbdbdfb5c89f3c1085b353db822cfc9235d5d2c2920ad99016cfcb71179fd8d` 已核對；181張成功截圖。最後提交僅文件/成功截圖，與驗收程式的產品、測試及設定一致。PR #10保持open未合併，由使用者自行Merge後發布；Safari待真機。
+- 使用者說的是前圖三單素材起迄popup的預覽與播放軸分別在左右兩側，不能只做上下同頁。EffectTimingEditor的effect-timing-workspace在single-effect-timing下用兩欄grid，左preview/播放/目前秒數，右effect-timing-controls包含說明/全段軸/膠囊秒數，320px也不折成上下。其他效果/多組及雙素材布局維持原樣。
+- SourceRanges tickCount預設5，單素材傳3且實際軸寬<180用2；首尾刻度文字收在軸內。單素材numberedMarkers=false，editableSides一邊時不加crowded列；保留44px觸控與軸高度。數字seek時片尾取duration-0.001防黑畫面，固定端/時長聯動、取消復原等不變。
+- 重要教訓：同頁測試不能證明左右。三尺寸現在直接驗preview.right < timeline.left、兩者垂直交集、欄位在右、刻度不重疊/不超界；新320圖及390/長片82秒圖已人工看過。這些與原播放/來源/匯出回歸全部通過。
+- 播放架構：urlFor原檔、previewUrlFor只預覽；新素材只準備新proxy，不重建主player，讀當下time；destroy忽略舊回呼、通知走快照。長片縮圖預算只限制密度，跨全來源抽樣，精確定位看預覽。
+- 當前無待修程式，最後提交只文件/成功截圖。使用者自行Merge PR10後發布，Safari鍵盤/安全區/長片/聲音見PLAN §7。以下待驗均歷史，前7f版上下排列已被本輪取代。
 
 ### 先前處理過程（歷史；以下待驗不代表當前狀態）
 - 最新追加7726486/Actions43551904638：快速21全過、完整145執行中；長片8d後追加。需等完整成功/下載新artifact（預期179 PNG）/更新全部圖與文件/最後check/doc commit skip-ci/推PR10；當前未提交舊178圖與README/USAGE需覆寫後交付。勿代Merge。
