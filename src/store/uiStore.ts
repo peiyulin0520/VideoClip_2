@@ -16,6 +16,7 @@ type UI = {
     retry?: () => void;
     canSkip?: boolean;
   } | null;
+  aspectEditing: boolean;
   keyframePps: number;
   player: Player | null;
   liftedId: string | null;
@@ -39,6 +40,7 @@ export const useUI = create<UI>((set, get) => ({
   busy: null,
   setBusy: (busy) => set({ busy }),
   previewLoad: null,
+  aspectEditing: false,
   keyframePps: 60,
   player: null,
   liftedId: null,

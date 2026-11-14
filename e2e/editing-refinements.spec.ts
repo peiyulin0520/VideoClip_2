@@ -134,3 +134,44 @@ test('分割刪除 B 後 A/C 轉場起迄不回復 B，原生預覽仍讀 C 的�
     .toBeCloseTo(7.5, 1);
   await page.screenshot({ path: 'docs/screenshots/editing/ac-transition-source.png' });
 });
+
+test('比例只改框內輸出，固定預覽基地；自訂比例可拖曳且 X 不儲存', async ({ page }) => {
+  await createProjectWith(page, ['solid-red.webm']);
+  const base = page.locator('.stage-wrap'),
+    size = await base.boundingBox();
+  await page.getByRole('button', { name: '畫面比例', exact: true }).tap();
+  await page.getByRole('radio', { name: '橫式 4:3', exact: true }).tap();
+  await expect
+    .poll(async () => Math.round((await base.boundingBox())!.height))
+    .toBe(Math.round(size!.height));
+  const inside = (await page.getByTestId('stage').boundingBox())!;
+  expect(inside.width / inside.height).toBeCloseTo(4 / 3, 1);
+  await page.getByRole('button', { name: '畫面比例', exact: true }).tap();
+  await page.getByRole('button', { name: '在預覽自訂比例', exact: true }).tap();
+  const handle = page.getByRole('button', { name: '自訂比例拖曳 r', exact: true });
+  const b = (await handle.boundingBox())!;
+  await page.mouse.move(b.x + b.width / 2, b.y + b.height / 2);
+  await page.mouse.down();
+  await page.mouse.move(b.x - 45, b.y + b.height / 2, { steps: 4 });
+  await page.mouse.up();
+  await page.getByRole('button', { name: '關閉且不儲存', exact: true }).tap();
+  expect(
+    await page.evaluate(
+      () =>
+        (window as unknown as { __videoclip: { project: () => Project } }).__videoclip.project().customAspect,
+    ),
+  ).toBeUndefined();
+  await page.getByRole('button', { name: '畫面比例', exact: true }).tap();
+  await page.getByRole('button', { name: '在預覽自訂比例', exact: true }).tap();
+  await page.getByRole('button', { name: '套用比例', exact: true }).tap();
+  await expect
+    .poll(() =>
+      page.evaluate(
+        () =>
+          (window as unknown as { __videoclip: { project: () => Project } }).__videoclip.project()
+            .customAspect,
+      ),
+    )
+    .toBe(true);
+  await page.screenshot({ path: 'docs/screenshots/editing/custom-aspect-fixed-base.png' });
+});

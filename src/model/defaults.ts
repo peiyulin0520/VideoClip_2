@@ -43,10 +43,11 @@ export function createMainTrack(): Track {
 
 /** 改專案比例（直接改傳進來的物件，immer 草稿也可以）。auto=true 代表之後仍跟著第一個素材。 */
 export function assignAspect(
-  p: { aspect: Aspect; width: number; height: number; aspectAuto?: boolean },
+  p: { aspect: Aspect; width: number; height: number; aspectAuto?: boolean; customAspect?: boolean },
   aspect: Aspect,
   auto: boolean,
 ): void {
+  delete p.customAspect;
   p.aspect = aspect;
   p.width = ASPECTS[aspect].width;
   p.height = ASPECTS[aspect].height;

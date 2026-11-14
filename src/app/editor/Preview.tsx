@@ -1,7 +1,8 @@
+import { aspectLabel } from '../../engine/itemName';
 import { evaluatedItem } from '../../engine/keyframes';
 import { activeTransitions } from '../../engine/transitions';
 import { groupFrame, groupTransform } from '../../engine/templateGeometry';
-import { Expand, Minimize, ShieldCheck } from 'lucide-react';
+import { Expand, Minimize, ShieldCheck, X } from 'lucide-react';
 import {
   useEffect,
   useLayoutEffect,
@@ -63,6 +64,8 @@ type Gesture =
     };
 
 export function Preview({ projectId, width, height }: { projectId: string; width: number; height: number }) {
+  const aspectEditing = useUI((s) => s.aspectEditing);
+  const [aspectBounds, setAspectBounds] = useState({ l: 0.1, r: 0.1, t: 0.1, b: 0.1 });
   const [retry, setRetry] = useState(0);
   const previewCap = usePreferences((s) => s.preview);
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -317,6 +320,28 @@ export function Preview({ projectId, width, height }: { projectId: string; width
     measure();
     return () => observer.disconnect();
   }, [expanded]);
+  const aspectWidth = Math.max(128, Math.round(((1 - aspectBounds.l - aspectBounds.r) * 1920) / 2) * 2);
+  const aspectHeight = Math.max(
+    128,
+    Math.round(
+      ((1 - aspectBounds.t - aspectBounds.b) * 1920 * viewport.height) / Math.max(1, viewport.width) / 2,
+    ) * 2,
+  );
+  const dragAspect = (corner: string, e: RPointerEvent<HTMLButtonElement>) => {
+    e.stopPropagation();
+    e.preventDefault();
+    e.currentTarget.setPointerCapture(e.pointerId);
+    const box = e.currentTarget.closest('.stage-wrap')!.getBoundingClientRect();
+    const x = Math.max(0, Math.min(1, (e.clientX - box.left) / box.width)),
+      y = Math.max(0, Math.min(1, (e.clientY - box.top) / box.height));
+    setAspectBounds((v) => ({
+      ...v,
+      ...(corner.includes('l') ? { l: Math.min(x, 0.92 - v.r) } : {}),
+      ...(corner.includes('r') ? { r: Math.min(1 - x, 0.92 - v.l) } : {}),
+      ...(corner.includes('t') ? { t: Math.min(y, 0.92 - v.b) } : {}),
+      ...(corner.includes('b') ? { b: Math.min(1 - y, 0.92 - v.t) } : {}),
+    }));
+  };
   const stageWidth = Math.max(1, Math.min(viewport.width, (viewport.height * width) / height));
 
   useEffect(() => {
@@ -586,8 +611,62 @@ export function Preview({ projectId, width, height }: { projectId: string; width
 
   return (
     <div className={`stage-wrap${expanded ? ' expanded-preview' : ''}`}>
+      {aspectEditing && (
+        <div className="aspect-editor" role="dialog" aria-label="在預覽自訂比例">
+          <div className="aspect-editor-actions">
+            <span>
+              自訂 {aspectWidth}：{aspectHeight}
+            </span>
+            <button
+              className="chip primary"
+              onClick={() => {
+                useProjectStore.getState().apply((d) => {
+                  d.width = aspectWidth;
+                  d.height = aspectHeight;
+                  d.customAspect = true;
+                  delete d.aspectAuto;
+                });
+                useUI.setState({ aspectEditing: false });
+              }}
+            >
+              套用比例
+            </button>
+            <button
+              className="icon-btn"
+              aria-label="關閉且不儲存"
+              onClick={() => useUI.setState({ aspectEditing: false })}
+            >
+              <X size={20} />
+            </button>
+          </div>
+          <div
+            className="aspect-crop-frame"
+            style={{
+              left: `${aspectBounds.l * 100}%`,
+              right: `${aspectBounds.r * 100}%`,
+              top: `${aspectBounds.t * 100}%`,
+              bottom: `${aspectBounds.b * 100}%`,
+            }}
+          />
+          {['tl', 'tr', 'bl', 'br', 'l', 'r', 't', 'b'].map((corner) => (
+            <button
+              key={corner}
+              className="crop-handle"
+              aria-label={`自訂比例拖曳 ${corner}`}
+              style={{
+                left: `${(corner.includes('l') ? aspectBounds.l : corner.includes('r') ? 1 - aspectBounds.r : (aspectBounds.l + 1 - aspectBounds.r) / 2) * 100}%`,
+                top: `${(corner.includes('t') ? aspectBounds.t : corner.includes('b') ? 1 - aspectBounds.b : (aspectBounds.t + 1 - aspectBounds.b) / 2) * 100}%`,
+              }}
+              onPointerDown={(e) => dragAspect(corner, e)}
+              onPointerMove={(e) => {
+                if (e.buttons) dragAspect(corner, e);
+              }}
+            />
+          ))}
+        </div>
+      )}
       <span className="export-bounds-label" role="note">
-        框內為影片輸出範圍 · {project.aspect}
+        框內為影片輸出範圍 · {aspectLabel(project)}
       </span>
       <div
         ref={stageRef}
@@ -597,7 +676,7 @@ export function Preview({ projectId, width, height }: { projectId: string; width
           width: stageWidth,
           height: (stageWidth * height) / width,
         }}
-        aria-label={`影片輸出範圍 ${project.aspect}`}
+        aria-label={`影片輸出範圍 ${aspectLabel(project)}`}
         data-testid="stage"
         onContextMenu={(e) => e.preventDefault()}
         onPointerDown={onPointerDown}

@@ -16,3 +16,7 @@ export function itemName(project: Project, item: Item): string {
   }
   return project.assets.find((a) => a.id === item.assetId)?.name ?? '素材';
 }
+
+export function aspectLabel(project: Pick<Project, 'width' | 'height' | 'aspect' | 'customAspect'>) {
+  return project.customAspect ? `${project.width}:${project.height}` : project.aspect;
+}
