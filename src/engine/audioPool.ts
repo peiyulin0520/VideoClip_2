@@ -9,7 +9,7 @@ export class AudioPool {
       for (const event of ['loadeddata', 'canplay', 'seeked', 'loadedmetadata'])
         el.addEventListener(event, onFrame);
       el.addEventListener('playing', () => {
-        if (el.dataset.previewIntent !== 'play') el.pause();
+        if (el.dataset.previewIntent !== 'play' && !el.dataset.audioFading) el.pause();
       });
       host.append(el);
       this.els.push(el);
@@ -40,11 +40,11 @@ export class AudioPool {
     el.dataset.used = String(++this.tick);
     return el;
   }
-  pauseAllExcept(keep: Set<HTMLAudioElement>) {
+  pauseAllExcept(keep: Set<HTMLAudioElement>, pause: (el: HTMLAudioElement) => void = (el) => el.pause()) {
     for (const el of this.els)
       if (!keep.has(el)) {
         el.dataset.previewIntent = 'pause';
-        el.pause();
+        if (!el.paused) pause(el);
       }
   }
   destroy() {

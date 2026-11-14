@@ -1,3 +1,4 @@
+import { TonePanel } from './TonePanel';
 import { KeyframeControl } from './KeyframeControl';
 import { evaluatedItem } from '../../engine/keyframes';
 import { Sheet } from '../../ui/Sheet';
@@ -62,7 +63,7 @@ import { BlankPanel } from './BlankPanel';
 import { TrimEditor } from './TrimEditor';
 import { CropEditor } from './CropEditor';
 
-export type Tab = 'edit' | 'overlay' | 'text' | 'layers' | 'layout' | 'assets' | 'audio' | 'effects';
+export type Tab = 'edit' | 'overlay' | 'text' | 'layers' | 'layout' | 'assets' | 'audio' | 'effects' | 'tone';
 type Panel = 'speed' | 'volume' | 'opening' | null;
 
 const TABS: { id: Tab; label: string }[] = [
@@ -74,6 +75,7 @@ const TABS: { id: Tab; label: string }[] = [
   { id: 'assets', label: '素材' },
   { id: 'audio', label: '音訊' },
   { id: 'effects', label: '特效' },
+  { id: 'tone', label: '色調' },
 ];
 
 function ToolButton({
@@ -164,6 +166,7 @@ export function BottomBar({
       {!collapsed && tab === 'layers' && <LayersTab />}
       {!collapsed && tab === 'layout' && <TemplatePanel />}
       {!collapsed && tab === 'effects' && <EffectsPanel />}
+      {!collapsed && tab === 'tone' && <TonePanel />}
       {!collapsed && tab === 'assets' && <AssetsPanel />}
       {!collapsed && tab === 'audio' && <AudioPanel />}
     </div>

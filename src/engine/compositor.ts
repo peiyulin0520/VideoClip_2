@@ -1,3 +1,5 @@
+import { GradeFilter } from './GradeFilter';
+import { gradeKey, hasGrade } from './grade';
 import {
   Application,
   CanvasSource,
@@ -6,7 +8,6 @@ import {
   Rectangle,
   Sprite,
   Texture,
-  ColorMatrixFilter,
   BlurFilter,
 } from 'pixi.js';
 import 'pixi.js/advanced-blend-modes';
@@ -49,26 +50,36 @@ export type SceneLayer = {
   clipCircle?: { x: number; y: number; r: number };
 };
 
+type FrameResource = {
+  source: LayerSource;
+  contentKey: string;
+  refs: number;
+  canvas: HTMLCanvasElement;
+  ctx: CanvasRenderingContext2D;
+  texture: Texture;
+  textureSource: CanvasSource;
+  hasFrame: boolean;
+  frameKey: string;
+  alphaCanvas?: HTMLCanvasElement;
+  alphaKey?: string;
+};
 type Obj = {
   container: Container;
   sprite: Sprite;
   texture: Texture | null;
   textureSource: CanvasSource | null;
-  frameCanvas: HTMLCanvasElement | null;
-  frameCtx: CanvasRenderingContext2D | null;
+  frame?: FrameResource;
   textKey: string | undefined;
   hasFrame: boolean;
-  lastSource: LayerSource | null;
   continuity?: string;
-  frameKey: string;
   mask: Graphics | null;
   outline: Graphics | null;
   maskKey: string;
-  alphaCanvas?: HTMLCanvasElement;
-  alphaKey?: string;
   outlineKey: string;
-  colorFilter?: ColorMatrixFilter;
+  colorFilter?: GradeFilter;
   blurFilter?: BlurFilter;
+  colorKey?: string;
+  filterKey?: string;
 };
 
 export class Compositor {
@@ -76,10 +87,15 @@ export class Compositor {
   private background = new Graphics();
   private backgroundColor = '';
   private uploads = 0;
+  private allocations = 0;
+  private colorAllocations = 0;
+  private colorUpdates = 0;
+  private maskStrings = new WeakMap<MediaMask, string>();
   private constructor(
     private app: Application,
     readonly width: number,
     readonly height: number,
+    private preview = false,
   ) {
     this.app.stage.addChild(this.background);
   }
@@ -88,6 +104,7 @@ export class Compositor {
     width: number;
     height: number;
     canvas?: HTMLCanvasElement;
+    preview?: boolean;
   }): Promise<Compositor> {
     const app = new Application();
     await app.init({
@@ -103,7 +120,7 @@ export class Compositor {
       preserveDrawingBuffer: true,
     });
     app.ticker.stop();
-    return new Compositor(app, opts.width, opts.height);
+    return new Compositor(app, opts.width, opts.height, opts.preview);
   }
 
   get canvas(): HTMLCanvasElement {
@@ -121,11 +138,12 @@ export class Compositor {
       layers.filter((layer) => !layer.ready && layer.continuity).map((layer) => layer.continuity),
     );
 
+    const frames = new Map<LayerSource, Map<string, FrameResource>>();
     layers.forEach((layer, index) => {
       seen.add(layer.id);
       const o = this.ensure(layer);
       o.continuity = layer.continuity;
-      this.update(o, layer);
+      this.update(o, layer, frames);
       if (stage.children[index + 1] !== o.container)
         stage.addChildAt(o.container, Math.min(index + 1, stage.children.length));
     });
@@ -153,12 +171,10 @@ export class Compositor {
       sprite,
       texture: null,
       textureSource: null,
-      frameCanvas: null,
-      frameCtx: null,
+
       textKey: undefined,
       hasFrame: false,
-      lastSource: null,
-      frameKey: '',
+
       mask: null,
       outline: null,
       maskKey: '',
@@ -169,6 +185,8 @@ export class Compositor {
   }
 
   private setSource(o: Obj, canvas: HTMLCanvasElement) {
+    this.releaseFrame(o);
+    this.allocations++;
     o.texture?.destroy(false);
     o.textureSource?.destroy();
     o.textureSource = new CanvasSource({ resource: canvas, scaleMode: 'linear' });
@@ -176,8 +194,38 @@ export class Compositor {
     o.sprite.texture = o.texture;
   }
 
-  private update(o: Obj, layer: SceneLayer) {
-    // ---- 內容 ----
+  private releaseFrame(o: Obj) {
+    const f = o.frame;
+    if (!f) return;
+    o.frame = undefined;
+    if (--f.refs === 0) {
+      f.texture.destroy(false);
+      f.textureSource.destroy();
+      f.canvas.width = f.canvas.height = 0;
+    }
+  }
+  private bindFrame(o: Obj, frame: FrameResource) {
+    if (o.frame === frame) return;
+    this.releaseFrame(o);
+    o.texture?.destroy(false);
+    o.textureSource?.destroy();
+    o.texture = null;
+    o.textureSource = null;
+    o.textKey = undefined;
+    o.frame = frame;
+    frame.refs++;
+    o.sprite.texture = frame.texture;
+  }
+  private maskString(mask?: MediaMask) {
+    if (!mask) return '';
+    let key = this.maskStrings.get(mask);
+    if (!key) {
+      key = JSON.stringify(mask);
+      this.maskStrings.set(mask, key);
+    }
+    return key;
+  }
+  private update(o: Obj, layer: SceneLayer, frames: Map<LayerSource, Map<string, FrameResource>>) {
     if (layer.kind === 'text') {
       if (o.textKey !== layer.textKey || !o.texture) {
         this.setSource(o, layer.source as HTMLCanvasElement);
@@ -185,72 +233,104 @@ export class Compositor {
         o.hasFrame = true;
       }
     } else {
-      const fw = Math.max(Math.round(layer.frameW ?? layer.box.w), 2);
-      const fh = Math.max(Math.round(layer.frameH ?? layer.box.h), 2);
-      if (!o.frameCanvas || o.frameCanvas.width !== fw || o.frameCanvas.height !== fh) {
-        const c = o.frameCanvas ?? document.createElement('canvas');
-        c.width = fw;
-        c.height = fh;
-        o.frameCanvas = c;
-        o.frameCtx = c.getContext('2d');
-        this.setSource(o, c);
-        o.hasFrame = false;
+      const fw = Math.max(Math.round(layer.frameW ?? layer.box.w), 2),
+        fh = Math.max(Math.round(layer.frameH ?? layer.box.h), 2);
+      const crop = layer.crop ?? { l: 0, t: 0, r: 0, b: 0 },
+        mask = this.maskString(layer.mask);
+      const key = `${fw}|${fh}|${crop.l}|${crop.t}|${crop.r}|${crop.b}|${mask}`;
+      let group = frames.get(layer.source);
+      if (!group) {
+        group = new Map();
+        frames.set(layer.source, group);
       }
-      if (layer.ready && o.frameCtx) {
-        const crop = layer.crop ?? { l: 0, t: 0, r: 0, b: 0 };
+      let frame = group.get(key);
+      if (!frame) {
+        if (
+          o.frame?.contentKey === key &&
+          (o.frame.source === layer.source || o.frame.refs === 1 || !layer.ready)
+        ) {
+          frame = o.frame;
+          if (layer.ready && frame.source !== layer.source) {
+            frame.source = layer.source;
+            frame.frameKey = '';
+          }
+        } else {
+          const canvas = document.createElement('canvas');
+          canvas.width = fw;
+          canvas.height = fh;
+          const textureSource = new CanvasSource({ resource: canvas, scaleMode: 'linear' });
+          frame = {
+            source: layer.source,
+            contentKey: key,
+            refs: 0,
+            canvas,
+            ctx: canvas.getContext('2d')!,
+            textureSource,
+            texture: new Texture({ source: textureSource }),
+            hasFrame: false,
+            frameKey: '',
+          };
+          this.allocations++;
+        }
+        group.set(key, frame);
+      }
+      this.bindFrame(o, frame);
+      if (layer.ready) {
         const video = layer.source instanceof HTMLVideoElement ? layer.source : null;
         const frameKey = [
           layer.srcW,
           layer.srcH,
-          crop.l,
-          crop.t,
-          crop.r,
-          crop.b,
           layer.sourceStamp,
-          JSON.stringify(layer.mask),
           video && !video.requestVideoFrameCallback ? Math.floor(video.currentTime * 30) : undefined,
-          video?.getVideoPlaybackQuality?.().totalVideoFrames,
-          video?.dataset.frameStamp,
+          video?.requestVideoFrameCallback
+            ? video.dataset.frameStamp
+            : video?.getVideoPlaybackQuality?.().totalVideoFrames,
         ].join('|');
-        const sx = layer.srcW * crop.l;
-        const sy = layer.srcH * crop.t;
-        const sw = Math.max(layer.srcW * (1 - crop.l - crop.r), 1);
-        const sh = Math.max(layer.srcH * (1 - crop.t - crop.b), 1);
-        if (!o.hasFrame || o.lastSource !== layer.source || o.frameKey !== frameKey)
+        if (!frame.hasFrame || frame.source !== layer.source || frame.frameKey !== frameKey)
           try {
-            o.frameCtx.clearRect(0, 0, fw, fh);
-            o.frameCtx.drawImage(layer.source, sx, sy, sw, sh, 0, 0, fw, fh);
+            const ctx = frame.ctx;
+            ctx.clearRect(0, 0, fw, fh);
+            ctx.drawImage(
+              layer.source,
+              layer.srcW * crop.l,
+              layer.srcH * crop.t,
+              Math.max(layer.srcW * (1 - crop.l - crop.r), 1),
+              Math.max(layer.srcH * (1 - crop.t - crop.b), 1),
+              0,
+              0,
+              fw,
+              fh,
+            );
             if (layer.mask) {
-              const key = JSON.stringify([layer.mask, fw, fh, crop]);
-              if (o.alphaKey !== key) {
-                const c = o.alphaCanvas ?? document.createElement('canvas');
-                c.width = fw;
-                c.height = fh;
-                const ctx = c.getContext('2d')!;
-                ctx.save();
-                ctx.scale(fw / (1 - crop.l - crop.r), fh / (1 - crop.t - crop.b));
-                ctx.translate(-crop.l, -crop.t);
-                // Draw in source pixel space to keep circular brush geometry.
-                ctx.scale(1 / layer.srcW, 1 / layer.srcH);
-                paintMask(ctx, layer.mask, layer.srcW, layer.srcH);
-                ctx.restore();
-                o.alphaCanvas = c;
-                o.alphaKey = key;
+              if (frame.alphaKey !== key) {
+                const alpha = frame.alphaCanvas ?? document.createElement('canvas');
+                alpha.width = fw;
+                alpha.height = fh;
+                const a = alpha.getContext('2d')!;
+                a.save();
+                a.scale(fw / (1 - crop.l - crop.r), fh / (1 - crop.t - crop.b));
+                a.translate(-crop.l, -crop.t);
+                a.scale(1 / layer.srcW, 1 / layer.srcH);
+                paintMask(a, layer.mask, layer.srcW, layer.srcH);
+                a.restore();
+                frame.alphaCanvas = alpha;
+                frame.alphaKey = key;
               }
-              o.frameCtx.save();
-              o.frameCtx.globalCompositeOperation = 'destination-in';
-              o.frameCtx.drawImage(o.alphaCanvas!, 0, 0);
-              o.frameCtx.restore();
+              ctx.save();
+              ctx.globalCompositeOperation = 'destination-in';
+              ctx.drawImage(frame.alphaCanvas!, 0, 0);
+              ctx.restore();
             }
-            o.textureSource?.update();
+            frame.textureSource.update();
             this.uploads++;
-            o.hasFrame = true;
-            o.lastSource = layer.source;
-            o.frameKey = frameKey;
+            frame.hasFrame = true;
+            frame.source = layer.source;
+            frame.frameKey = frameKey;
           } catch {
-            /* 來源暫時畫不出來（解碼中），保留上一格 */
+            /* Preserve the last drawable frame while decoding. */
           }
       }
+      o.hasFrame = frame.hasFrame;
     }
 
     // ---- 位置、大小、旋轉、透明度、混合 ----
@@ -278,48 +358,33 @@ export class Compositor {
     const adjustment = layer.adjustment;
     o.sprite.tint = adjustment?.tint ?? '#ffffff';
     const filters = [];
-    if (
-      adjustment &&
-      (adjustment.brightness !== 1 || adjustment.saturation !== 1 || adjustment.temperature !== 0)
-    ) {
-      const color = (o.colorFilter ??= new ColorMatrixFilter());
-      const sat = adjustment.saturation,
-        inv = 1 - sat,
-        bright = adjustment.brightness,
-        temp = adjustment.temperature * 0.18;
-      const r = bright * (1 + temp),
-        g = bright,
-        b = bright * (1 - temp);
-      color.matrix = [
-        (0.2126 * inv + sat) * r,
-        0.7152 * inv * r,
-        0.0722 * inv * r,
-        0,
-        0,
-        0.2126 * inv * g,
-        (0.7152 * inv + sat) * g,
-        0.0722 * inv * g,
-        0,
-        0,
-        0.2126 * inv * b,
-        0.7152 * inv * b,
-        (0.0722 * inv + sat) * b,
-        0,
-        0,
-        0,
-        0,
-        0,
-        1,
-        0,
-      ];
-      filters.push(color);
+    if (adjustment && hasGrade(adjustment)) {
+      if (!o.colorFilter) {
+        o.colorFilter = new GradeFilter();
+        this.colorAllocations++;
+      }
+      const colorKey = gradeKey(adjustment);
+      if (o.colorKey !== colorKey) {
+        o.colorFilter.setTone(adjustment);
+        o.colorKey = colorKey;
+        this.colorUpdates++;
+      }
+      filters.push(o.colorFilter);
     }
     if (layer.blur && layer.blur > 0) {
-      const blur = (o.blurFilter ??= new BlurFilter({ strength: 1, quality: 3 }));
-      blur.strength = layer.blur;
+      const blur = (o.blurFilter ??= new BlurFilter({
+        strength: 1,
+        quality: this.preview ? 1 : 3,
+        resolution: this.preview ? 0.5 : 1,
+      }));
+      if (blur.strength !== layer.blur) blur.strength = layer.blur;
       filters.push(blur);
     }
-    o.sprite.filters = filters;
+    const filterKey = `${filters.includes(o.colorFilter!)}|${filters.includes(o.blurFilter!)}`;
+    if (o.filterKey !== filterKey) {
+      o.sprite.filters = filters;
+      o.filterKey = filterKey;
+    }
 
     // ---- 圓角遮罩 ----
     const radius = Math.min(layer.cornerRadius * Math.min(box.w, box.h), Math.min(box.w, box.h) / 2);
@@ -383,6 +448,7 @@ export class Compositor {
   private destroyObj(o: Obj) {
     o.container.parent?.removeChild(o.container);
     o.container.destroy({ children: true });
+    this.releaseFrame(o);
     o.texture?.destroy(false);
     o.textureSource?.destroy();
     o.colorFilter?.destroy();
@@ -415,9 +481,14 @@ export class Compositor {
   mediaStats() {
     return {
       uploads: this.uploads,
+      colorAllocations: this.colorAllocations,
+      colorUpdates: this.colorUpdates,
+      colorPasses: [...this.objs.values()].filter((o) => o.sprite.filters?.includes(o.colorFilter!)).length,
+      allocations: this.allocations,
+      buffers: new Set([...this.objs.values()].flatMap((o) => (o.frame ? [o.frame] : []))).size,
       frames: [...this.objs]
-        .filter(([, o]) => o.frameCanvas)
-        .map(([id, o]) => ({ id, width: o.frameCanvas!.width, height: o.frameCanvas!.height })),
+        .filter(([, o]) => o.frame)
+        .map(([id, o]) => ({ id, width: o.frame!.canvas.width, height: o.frame!.canvas.height })),
     };
   }
 

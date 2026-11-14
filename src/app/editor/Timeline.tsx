@@ -25,6 +25,7 @@ import {
   timelineEffectBadges,
   type TimelineEffectBadge,
 } from '../../engine/timelineEffects';
+import { filmstripSegments } from '../../engine/filmstrip';
 import { transitionPairs } from '../../engine/transitions';
 
 const ROW_H = 44;
@@ -43,47 +44,55 @@ function Tiles({
   item,
   asset,
   pps,
-  h,
+  from,
+  to,
 }: {
   item: VideoItem;
   asset: Asset | undefined;
   pps: number;
-  h: number;
+  from: number;
+  to: number;
 }) {
-  const thumbs = asset?.thumbs ?? [];
-  // 沒有縮圖（例如 iPhone 匯入時產生不出來）：顯示檔名，不要一片灰
-  if (thumbs.length === 0)
+  if (item.type === 'image')
     return (
-      <div className="tiles no-thumb" data-testid="clip-name">
-        {asset?.name ?? ''}
+      <div className="tiles">
+        <span
+          style={{
+            width: '100%',
+            backgroundImage: `url(${asset?.thumbs[0] ?? ''})`,
+            backgroundSize: 'auto 100%',
+            backgroundRepeat: 'repeat-x',
+          }}
+        />
       </div>
     );
-  const aspect = asset && asset.height ? asset.width / asset.height : 0.56;
-  const naturalTileW = Math.min(Math.max(h * aspect, 30), 114);
-  const widthPx = item.duration * pps;
-  const count = Math.max(1, Math.min(Math.ceil(widthPx / naturalTileW), 120));
-  // A DOM budget limits sampling density, never the visible duration of a long clip.
-  const tileW = Math.max(naturalTileW, widthPx / count);
+  const strip = asset?.filmstrip;
+  if (!strip)
+    return (
+      <div className="tiles no-thumb" data-testid="clip-name">
+        {asset?.name ?? ''} · 建立縮圖中
+      </div>
+    );
+  const tiles = filmstripSegments(item, strip, from, to);
   return (
-    <div className="tiles">
-      {Array.from({ length: count }, (_, i) => {
-        const x = (i + 0.5) * tileW;
-        const srcT = item.trimIn + (x / pps) * item.speed;
-        const idx =
-          item.type === 'image' || !asset || asset.duration <= 0
-            ? 0
-            : Math.min(Math.floor((srcT / asset.duration) * thumbs.length), thumbs.length - 1);
-        return (
-          <span
-            key={i}
-            style={{
-              width: tileW,
-              backgroundImage: `url(${thumbs[Math.max(idx, 0)]})`,
-              ...(tileW > naturalTileW ? { backgroundSize: 'auto 100%', backgroundRepeat: 'repeat-x' } : {}),
-            }}
-          />
-        );
-      })}
+    <div className="tiles timestamped-tiles">
+      {tiles.map((frame) => (
+        <span
+          key={frame.time}
+          data-source-time={frame.time}
+          data-missing={!frame.src || undefined}
+          style={{
+            position: 'absolute',
+            left: frame.start * pps,
+            width: frame.duration * pps,
+            backgroundImage: frame.src ? `url(${frame.src})` : undefined,
+            backgroundSize: 'auto 100%',
+            backgroundRepeat: 'repeat-x',
+          }}
+        >
+          {!frame.src && '縮圖未就緒'}
+        </span>
+      ))}
     </div>
   );
 }
@@ -116,6 +125,8 @@ export function Timeline({
   const lastSet = useRef(-100);
   const half = 56;
   const [viewportWidth, setViewportWidth] = useState(360);
+  const [scrollBucket, setScrollBucket] = useState(0);
+  const bucketWidth = Math.max(200, viewportWidth / 2);
   const [drag, setDrag] = useState<Drag | null>(null);
   const [menuTrackId, setMenuTrackId] = useState<string | null>(null);
 
@@ -239,8 +250,10 @@ export function Timeline({
         lastSet.current = target;
         el.scrollLeft = target;
       }
+      // Zoom/seek must refresh the visible images before paint, not a later scroll event.
+      setScrollBucket(Math.floor(el.scrollLeft / bucketWidth));
     },
-    [pps],
+    [pps, bucketWidth],
   );
 
   useLayoutEffect(() => {
@@ -256,6 +269,7 @@ export function Timeline({
 
   const onScroll = () => {
     const el = scrollRef.current!;
+    setScrollBucket(Math.floor(el.scrollLeft / bucketWidth));
     const programmatic = Math.abs(el.scrollLeft - lastSet.current) < 1.5;
     lastSet.current = -100;
     if (drag || programmatic) return;
@@ -711,7 +725,22 @@ export function Timeline({
                       }}
                       onPointerDown={(e) => startItemGesture(e, it, track)}
                     >
-                      {isVideoItem(it) ? <Tiles item={it} asset={asset} pps={pps} h={h - 16} /> : null}
+                      {isVideoItem(it) ? (
+                        <Tiles
+                          item={it}
+                          asset={asset}
+                          pps={pps}
+                          from={(scrollBucket * bucketWidth - half - it.start * pps - viewportWidth) / pps}
+                          to={
+                            (scrollBucket * bucketWidth +
+                              bucketWidth +
+                              2 * viewportWidth -
+                              half -
+                              it.start * pps) /
+                            pps
+                          }
+                        />
+                      ) : null}
                       <div className="clip-label">
                         {it.name
                           ? `${it.name} · ${it.duration.toFixed(1)}s`

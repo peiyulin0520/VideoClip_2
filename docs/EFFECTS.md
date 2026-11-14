@@ -177,3 +177,18 @@ type BrushStroke = {
 最新更正：單素材僅開頭B進/結尾A退，不再任意多組；單一可動迄/起標籤，固定端不顯示控制，時長連動。時間軸代表字/色別與全站膠囊表單見plans/2026-11-13-anchored-effects-and-playback.md；一般畫面特效/銜接及來源配對不受此限制。
 
 2026-11-14更正：單素材特效起迄popup必須左側預覽、右側完整時間軸，秒數欄位在右側軸下方；不是上下排列。320px直向仍維持左右與44px觸控，窄軸減少刻度數但保留完整時間/單一可調起或迄與聯動時長。
+
+
+## 2026-11-14 音訊與特效預覽連續性
+
+真正音訊區間（片頭片尾、來源空隙、留聲範圍）用 AudioContext 預先排 12ms 淡入淡出；原生 pause/seek 等音訊時鐘確認淡出完成再做，避免繞過增益包絡。每次重排先 cancelScheduledValues 並 setValueAtTime 明確錨定目前包絡，不在同一 audio quantum 重複 cancelAndHold 而丟失保持事件；同一次淡出不重排。已接管 WebAudio 的元素不以 native muted 切音，有聲素材不反覆微調播放速率。停止與跳轉回呼須驗證目前意圖和素材，跳回同一留聲區也須重排包絡。原生 play 確認前不開聲，從靜音恢復先保持24ms再12ms淡入，讓首個解碼音訊 block 到位；很短的區間會等比例縮短保持及淡入，不延長片段。混音保留餘裕與削峰保護；音量與留聲範圍仍由使用者設定。
+
+逐格匯出只在真正剪輯邊界漸變，不能在每個解碼 buffer 或輸出 chunk 淡出。每個 GainNode 的 intrinsic 初值也須等於起始包絡值，避免 source.start 與 AudioParam 對小數樣本取整不同，漏出預設 gain=1；200% 音量測試曾在 2.730666 秒抓到這個單樣本突波。匯出混音後使用連續 soft knee 限幅。
+
+Compositor 的同來源/crop/mask/尺寸共享 FrameResource，RGB 重影與故障切片共用影格貼圖與上傳，但各 sprite 的位置、色調、濾鏡和遮罩獨立；refcount 歸零才釋放。依真正呈現 frameStamp 更新，固定濾鏡與粒子 canvas 重用。最高邊長≤720的預覽降低柔焦運算量；高清預覽、逐格與即時匯出保留完整柔焦品質。Chromium 資源計數及波形不等於 iPhone 真實 FPS／硬體聲音驗收，見 PLAN §7。
+
+
+## 2026-11-14 色調本輪實作（優先於§5遠期規劃）
+獨立頁籤「色調」，10參數（亮度、飽和度、曝光EV、高光、對比、黑點、鮮艷度、陰影、色溫、淡化）與13參數組合預設。舊brightness/saturation/temperature/tint保留，新增欄位可缺省中性；所有參數與既有菱形一起數值插值，Preset本身不是跳切屬性。逐格／即時匯出、預覽共享同一GradeFilter；中性跳過，非中性一個GPU pass／uniform更新，不逐幀建立貼圖或示意圖預覽。alpha不變。
+
+未有定格改整段，有定格改當前秒數；還原只重設目前色調，不動transform或其他定格。版型沿用整組定格與色調。10新單元與5新瀏覽器已納入369／156成功CI（Actions43588524060），另5+3+30快速成功；六主題實際控制對比已過。資源JSON見validation/tone-playback-metrics.json，Safari仍待真機。詳細plans/2026-11-14-tone-grading.md。§5中的HSL／LUT／skinProtect／調整圖層等仍為遠期，不能當本輪已完成。

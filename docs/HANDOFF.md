@@ -1,6 +1,36 @@
 # 交接手冊（HANDOFF）
 
+## 色調本輪（優先於下方音訊成功歷史）
+- 最終驗收（2026-11-14）：[Actions43588524060](https://github.com/peiyulin0520/VideoClip_2/actions/runs/43588524060)，驗收source `89872488fe0b866eae873799feca7235a9d4496d`；369單元、156 Chromium瀏覽器全過，另5色調＋3音訊＋30快速全過（156的子集）；lint／格式／TypeScript／build／Pages／PWA及39字體檢查成功。最後僅文件／量測／成功截圖提交，產品、測試與設定和source一致。
+- artifact `14111758046`（browser-checks-43588524060，33416955 bytes），ZIP SHA-256 `a8a766f2770ab6eac6e627b8638cefc674ab6c5e7fcff934c21f4e91f647e2fc`已核對；191張成功截圖，無失敗context，新tone4張人工檢視完成。六主題實際捲到預設／定格按鈕／滑桿對比成功，新增按鈕不是淺底白字。
+- 真實疊加量測（1029.8ms）：影片呈現回呼+25、色調uniform更新+25、上傳+37（影片與顆粒），媒體貼圖配置+0、色調濾鏡配置+0、seek+0；1個色調pass、2buffer（影片＋顆粒）、聲音energy0.11154。原始資料docs/validation/tone-playback-metrics.json；不是iPhone實機FPS保證。
+- PR #11保持open未合併，由使用者自行Merge後發布；目前無待修程式。最後僅文件／量測／191圖，產品、測試及設定與8987248一致。操作USAGE#色調與定格漸變，規格plans/2026-11-14-tone-grading.md。
+- 模型：10新參數展開數值，新增欄位選填中性，動畫返回ResolvedAnimatedValues；evaluatedItem/editAnimatedValues以rest保留全部色調，trim／split／模板共用。未有定格整段，有定格當前點，局部重置只色調不動transform／其他點，Preset不存跳切字串。手動有定格先pause，避免移動白線連續寫點。
+- 渲染：同sprite GradeFilter只一個GPU pass，GlProgram.from／typed uniform原地重用、key改才update；中性無pass。舊飽和先於色溫相容，alpha除後復乘，預覽／逐格／即時匯出同計算；原FrameResource共享／audio流程不變。預設Memo SVG靜態，無額外video／canvas預覽。
+- 踩坑：重開default收合不能直接找clip，測試expandAllGroups後再選。首輪FX插在3秒、量測0.5–1.6曾只測到tone；已改0秒加FX並必須2buffer。快速job也要CJK；tone-record需:root[data-theme] .tone-panel高特異性成對accent/ink，防chip舊底色壓掉。六主題對比必捲到實際preset／record／slider，單看頁籤會漏掉。
+- 色票PNG含透明格與8秒時間碼／正弦影片皆自行生成；像素門檻GPU4、編碼影片14、原片長不變。來源／音訊／縮圖／左右popup等舊151回歸全部保留。Safari硬體聲畫／長片FPS／HDR外觀仍待PLAN §7，不以資源數據說成實機保證。
+
+### 前輪音訊／縮圖成功（歷史）
 ## VideoClip_2 當前交接（優先於以下來源 repo 的歷史紀錄）
+- 最終驗收（2026-11-14）：[Actions 43581659661](https://github.com/peiyulin0520/VideoClip_2/actions/runs/43581659661)；驗收程式 `cdc6195a7917b0acadce7a83c656e6a212379d51`，359單元、151 Chromium e2e全過，另3項音訊/特效＋30項快速回歸全過（完整151的子集）。lint/格式/TypeScript/build/Pages/PWA及39字體檢查成功。最後提交僅文件/量測/成功截圖，與驗收程式的產品、測試及設定一致。
+- artifact `14109275799`（browser-checks-43581659661，32956407 bytes），ZIP SHA-256 `34a8670383bb9e534a557544ba69a50a28cb1b2ce042b454925bc840885ef9e3` 已核對；187張成功截圖，無失敗context。新audio-effects三圖已人工檢視：合成色塊影片／片尾頁面，不能當聲音或真機FPS的視覺證據；實際聲音以波形量測為準。
+- 完整CI量測：100%離線peak0.79999/maxJump0.003982；200%離線peak0.9999998/maxJump0.005799（原診斷0.399）；即時peak0.76850/maxJump0.004122（原診斷0.742），168960個取樣。原始JSON/對照圖見docs/validation；這是本機合成測試素材，不是使用者影片、音量百分比或Safari硬體驗收。
+- PR #11保持open未合併，由使用者自行Merge後發布。程式已驗收，無待修；最後僅文件/187圖/量測，產品、測試及設定與cdc6195一致。
+- 最終音訊：12ms真實邊界預排；cancelScheduledValues+setValueAtTime錨定目前包絡，pause/seek不重排同一次fade且等AudioContext實際到零；play promise完成後24ms靜音保持+12ms淡入，短窗口自動縮短。原生muted/volume統一bus.flush，有聲素材不用rate nudge。paused重新進段以20ms精準seek且不受running 1秒退避，避免先播已靜音來源。export每個GainNode intrinsic初值等包絡，只真正留聲/片頭尾淡入出，softLimit混音。
+- 踩坑/證據：分段intrinsic預設1在200%下漏單樣本，2.730666秒0.9995→0.600→0.9995；初始化後maxJump0.399→0.00580。同量子cancelAndHold重排把預覽包絡切零，Worklet0.742突波先於native動作40ms；明確anchor/不重排後降0.169。剩餘是native輸入block比淡入晚約2ms，需等play完成並短靜音保持。完整151及快速3+30保持原live maxJump<0.08而成功（實測0.004122），未放寬門檻。剪段端點必讀實存audioRanges（觸控不保證精確1.5），不能把正常淡入誤判；舊即時native paused斷言需輪詢短淡出，初始無自動播仍即時檢查。
+- GPU：FrameResource按source/crop/mask/dims共享、refs=0才destroy，sprite box/tint/filter/Graphics mask獨立，未ready保留continuity；frameStamp去重、固定filter及particle canvas快取。≤720 preview blur quality1/resolution0.5，HD/export保留quality3/resolution1。pending seek合併最新closure，Player檢item/asset還相同，舊pause timer檢intent避免停掉重播。
+- 前輪縮圖/左右popup保留。Safari硬體音訊與真實FPS仍待PLAN §7；波形Worklet只debug旗標建立，正常播放不跑worklet、不上傳素材。規格plans/2026-11-14-audio-effect-continuity.md。以下350/148僅歷史基線。
+
+### 縮圖前輪成功（歷史）
+- 最終（2026-11-14）：[Actions 43562187791](https://github.com/peiyulin0520/VideoClip_2/actions/runs/43562187791)：驗收程式 `67c14c9c929a6095927d49c76142b881c6a158c6` 的350單元、148 Chromium e2e全過，另30項快速情境全過（完整測試子集）；lint/格式/TypeScript/build/Pages/PWA與39字體檢查成功。artifact `14100619022`，ZIP SHA-256 `ebbfe5f0f370aecbc66d8b34e426eb3fd7a6caf8ac3f65b87c89cea8cda3c2a1` 已核對；184張成功截圖。最後提交僅文件/成功截圖，產品、測試與設定皆與驗收程式一致。PR #11 open未合併，由使用者自行Merge後發布；Safari真機仍待確認。
+- 本輪從已合併PR10的main7350773開codex/source-timestamp-thumbnails，交付PR11。使用者主軸58秒重首幀、112秒空白但popup有後段，不能只驗鋪滿/兩色後半。
+- Asset.filmstrip={version:1,interval:2,duration,frames(time,src)}獨立於overview thumbs。hasFilmstrip檢全長/每2秒/非缺格；開啟時proxy後補建並存metadata/undo快照，不增編輯。完整cache重用，個別null下次重開重試，不以首幀填滿。
+- buildFilmstrip校驗CanvasSink的timestamp/duration覆蓋要求秒數；原生load/seek+requestVideoFrameCallback/mediaTime，webkit-playsinline且靜音、不play；直接縮小圖，不先建4Kcanvas。取消/idle timeout清理Input及影片URL。probe overview也不再缺格沿用，native partial不假當全長。
+- Tiles按source2秒區間/trim/speed做可見範圍虛擬化，scrollBucket控制DOM數不截斷來源資料；syncScroll同步set桶，否則zoom後晚到scroll會短暫缺圖。別恢復舊120格固定寬/8張overview的主軸方案。
+- 最終350/148/30已過，126秒63張全唯一/來源time/像素、舊cache補建/重開、原生備援及最大放大均成功。測試讀DOM實際pps，不能用seekTo預設60做最大300pps測試；取樣點x64避表頭+邊框。VP8兩解碼路徑色矩陣容差24，時間與唯一性仍嚴格。58/112/最大放大三圖已人工檢視。
+- 當前無待修程式，最後僅文件/184張成功截圖；使用者Merge PR11後才發布。Safari真機見PLAN §7，不以Chromium原生備援冒充Safari實測。以下舊PR10/待驗僅歷史。
+
+### 前輪成功（歷史）
 - 最終左右更正（2026-11-14）：[Actions 43555594900](https://github.com/peiyulin0520/VideoClip_2/actions/runs/43555594900)：驗收程式 `91a676fa8d463513617e7b575eb36487b13cddcf` 的343單元、145 Chromium e2e全過，另25項快速情境全過（完整測試子集）；lint/格式/TypeScript/build/Pages/PWA與39字體檢查成功。artifact `14098482215`，ZIP SHA-256 `8fbdbdfb5c89f3c1085b353db822cfc9235d5d2c2920ad99016cfcb71179fd8d` 已核對；181張成功截圖。最後提交僅文件/成功截圖，與驗收程式的產品、測試及設定一致。PR #10保持open未合併，由使用者自行Merge後發布；Safari待真機。
 - 使用者說的是前圖三單素材起迄popup的預覽與播放軸分別在左右兩側，不能只做上下同頁。EffectTimingEditor的effect-timing-workspace在single-effect-timing下用兩欄grid，左preview/播放/目前秒數，右effect-timing-controls包含說明/全段軸/膠囊秒數，320px也不折成上下。其他效果/多組及雙素材布局維持原樣。
 - SourceRanges tickCount預設5，單素材傳3且實際軸寬<180用2；首尾刻度文字收在軸內。單素材numberedMarkers=false，editableSides一邊時不加crowded列；保留44px觸控與軸高度。數字seek時片尾取duration-0.001防黑畫面，固定端/時長聯動、取消復原等不變。
@@ -39,7 +69,7 @@
 - 九點首輪 e16e7fc / Actions43456433286：321單元、120/134瀏覽器（新增7全過）。7個匯出測試舊getByLabel非exact也匹配新播放label，改控制label為匯出結果；相紙改方形，舊取樣點調整到實際新格內；最底回頂擋工具，升到最後工具列上方且不加空白；安全區底色加深過淺色對比；放大舞台同步量測並等實際resize。第二輪完整驗收待push。
 - 追加三點同任務：layout.size有獨立長寬，layoutDefaultSize長型1080×1920/相紙1080平方；groupFrame/cellViewport不直接伸成畫布。scene框架畫布依自身比例且紋理上限跟輸出，避免巨大自訂框爆記憶體。預覽540預設（preferences previewModeVersion2遷移），頂部quality sheet可調且重建保留秒數/播放；隱藏示意卡不渲染，副預覽只可見30fps。stage父容器量測等比fit，外圍斜紋/邊線/範圍label僅UI，不匯出。321單元已過，134瀏覽器待CI；Safari待真機。
 - 最新六點：PR #9已Merge，main6ac2f13。本次新PR待建。layout.caption/frameColor/captionColor/frameOpacity/animations可存，重套carryTemplateEdits保留；layoutArt快取含caption/color，opacity在scene frame層。singleAnimations對目標或整組在其frame局部座標共用transitionPair，B透明，其他層不動；每段動效不超過片長一半。每格來源只一軸，advanced折疊補色/延後/popup，色塊起迄數字可改。動態預覽明確Play/Pause/active；ProjectPreview複製shared compositor並控制player，Drawing底圖不混入儲存畫作。最底顯示回頂，visualViewport修正實際可見高度；字級390基準及較大手機上限+10%，窄手機不縮小44px觸控。317本機成功，132e2e待驗。見plans/2026-11-13-template-controls.md。
-- 最新時間軸小字最終：[Actions 43422783991](https://github.com/peiyulin0520/VideoClip_2/actions/runs/43422783991)：版本 fc9d5bb813573aeba69889efe37b1ee98e5786f3 的313單元、127 Chromium e2e全過；lint/格式/TypeScript/build/Pages/39字體檢查成功。artifact 14036880124，ZIP SHA-256 6c1ef4fe7a5b5f2dc4ff8b93335c0138ca2b3a7e3c82b8d16897e19bf15423bb 已核對；159張成功畫面，新增uniform-type/small-timeline-labels.png。時間軸11px/9px，其餘介面14px。最後文件/截圖不改驗收版本，以下待CI皆歷史；Safari待真機。
+- 最新時間軸小字最終：[Actions 43422783991](https://github.com/peiyulin0520/VideoClip_2/actions/runs/43422783991)：版本 fc9d5bb813583aeba69889efe37b1ee98e5786f3 的313單元、127 Chromium e2e全過；lint/格式/TypeScript/build/Pages/39字體檢查成功。artifact 14036880124，ZIP SHA-256 6c1ef4fe7a5b5f2dc4ff8b93335c0138ca2b3a7e3c82b8d16897e19bf15423bb 已核對；159張成功畫面，新增uniform-type/small-timeline-labels.png。時間軸11px/9px，其餘介面14px。最後文件/截圖不改驗收版本，以下待CI皆歷史；Safari待真機。
 
 - 最新使用者更正：只有.timeline圖層拖拉軸恢復小字11px，群組計數/原音9px；局部覆寫--ui-font-size，其他頁面/功能/頁籤/播放列仍14px。維持負字距/緊行高/44px觸控。既有uniform-type驗收實際收合與展開分類並留圖，完整CI待本次push。
 - 最新全頁主題對比/小字字距最終：[Actions 43420368856](https://github.com/peiyulin0520/VideoClip_2/actions/runs/43420368856)：版本 8fd2969c77b84352a3cd16c7b4f025ae22177792 的313單元、127 Chromium e2e全過；lint/格式/TypeScript/build/Pages/39字體檢查成功。artifact 14033892743，ZIP SHA-256 f9664009e966a03e9b5ce3199610be1a54cb79a4532e0440f944f241e4906127 已核對；158張成功畫面，其中readability/新增6張。PR #9由使用者自行Merge；最後文件/截圖不改成功版本產品/測試。以下待CI是過程紀錄，Safari仍待真機。

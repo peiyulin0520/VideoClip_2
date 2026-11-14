@@ -99,7 +99,8 @@ export async function mediabunnyThumbs(file: Blob, duration: number, count: numb
         c.getContext('2d')!.drawImage(wrapped.canvas, 0, 0, c.width, c.height);
         last = c.toDataURL('image/jpeg', 0.6);
       }
-      if (last) out.push(last); // 某一格拿不到就沿用前一格
+      if (!wrapped || !last) return [];
+      out.push(last); // Missing timestamps must not silently inherit an earlier picture.
     }
   } catch {
     /* 解碼失敗：交給備用方法 */
@@ -143,7 +144,7 @@ async function videoThumbs(url: string, duration: number, count: number): Promis
     v.removeAttribute('src');
     v.load();
   }
-  return out;
+  return out.length === count ? out : [];
 }
 
 async function imageInfo(file: File, url: string): Promise<{ w: number; h: number; thumb: string } | null> {

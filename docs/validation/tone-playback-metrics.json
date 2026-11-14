@@ -1,0 +1,56 @@
+{
+  "before": {
+    "stats": {
+      "uploads": 39,
+      "colorAllocations": 1,
+      "colorUpdates": 2,
+      "colorPasses": 1,
+      "allocations": 2,
+      "buffers": 2,
+      "frames": [
+        {
+          "id": "i_1c8f9d2e4d2d",
+          "width": 320,
+          "height": 180
+        },
+        {
+          "id": "fx_863274e7443e",
+          "width": 320,
+          "height": 568
+        }
+      ]
+    },
+    "frameStamp": 38,
+    "seeks": 4,
+    "energy": 0.11049552219178181,
+    "wall": 3450.0999999999767,
+    "mediaTime": 0.956
+  },
+  "after": {
+    "stats": {
+      "uploads": 76,
+      "colorAllocations": 1,
+      "colorUpdates": 27,
+      "colorPasses": 1,
+      "allocations": 2,
+      "buffers": 2,
+      "frames": [
+        {
+          "id": "i_1c8f9d2e4d2d",
+          "width": 320,
+          "height": 180
+        },
+        {
+          "id": "fx_863274e7443e",
+          "width": 320,
+          "height": 568
+        }
+      ]
+    },
+    "frameStamp": 63,
+    "seeks": 4,
+    "energy": 0.11154027671177294,
+    "wall": 4479.900000000023,
+    "mediaTime": 1.997045
+  }
+}

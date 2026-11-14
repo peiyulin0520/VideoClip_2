@@ -45,9 +45,17 @@ for (const theme of ['dark', 'mono', 'light', 'fresh', 'warm', 'beige']) {
     await assertUiContrast(page, '.page', theme + ' missing project');
     await createProjectWith(page, ['tone-video.webm']);
     await clips(page).first().tap();
-    for (const tab of ['剪輯', '影像', '圖層', '版型', '素材', '音訊', '特效'] as const) {
+    for (const tab of ['剪輯', '影像', '圖層', '版型', '素材', '音訊', '特效', '色調'] as const) {
       await openTab(page, tab);
       await assertUiContrast(page, '.editor', theme + ' editor ' + tab);
+      if (tab === '色調') {
+        await page.locator('.tone-presets').scrollIntoViewIfNeeded();
+        await assertUiContrast(page, '.tone-panel', theme + ' tone presets');
+        await page.locator('.tone-record').scrollIntoViewIfNeeded();
+        await assertUiContrast(page, '.tone-panel', theme + ' tone actions');
+        await page.getByRole('slider', { name: '淡化', exact: true }).scrollIntoViewIfNeeded();
+        await assertUiContrast(page, '.tone-panel', theme + ' tone controls');
+      }
     }
     const closeSheet = async () => {
       await page.locator('.sheet-backdrop').tap({ position: { x: 2, y: 2 } });

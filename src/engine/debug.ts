@@ -1,3 +1,4 @@
+import { AudioRenderer } from './exportAudio';
 import { getProject } from '../storage/projects';
 import { useProjectStore } from '../store/projectStore';
 import { urlFor } from './assetUrls';
@@ -25,6 +26,40 @@ export function installDebugHook(player: Player) {
     time: () => player.time,
     selected: () => useProjectStore.getState().selectedId,
     audioEnergy: () => player.audioEnergy(),
+    audioProbe: (milliseconds: number) => player.audioProbe(milliseconds),
+    async audioWave(start: number, end: number, times: number[]) {
+      const signal = new AbortController().signal;
+      const renderer = await AudioRenderer.create(useProjectStore.getState().project!, signal);
+      try {
+        const buffer = await renderer.chunk(start, end, signal),
+          data = buffer.getChannelData(0);
+        let peak = 0,
+          maxJump = 0,
+          jumpIndex = 0;
+        for (let i = 0; i < data.length; i++) {
+          peak = Math.max(peak, Math.abs(data[i]!));
+          if (i && Math.abs(data[i]! - data[i - 1]!) > maxJump) {
+            maxJump = Math.abs(data[i]! - data[i - 1]!);
+            jumpIndex = i;
+          }
+        }
+        return {
+          peak,
+          maxJump,
+          jumpTime: start + jumpIndex / buffer.sampleRate,
+          jumpSamples: Array.from(data.slice(Math.max(0, jumpIndex - 3), jumpIndex + 4)),
+          first: data[0],
+          last: data.at(-1),
+          samples: times.map(
+            (t) => data[Math.max(0, Math.min(data.length - 1, Math.round((t - start) * buffer.sampleRate)))],
+          ),
+          frames: data.length,
+          rate: buffer.sampleRate,
+        };
+      } finally {
+        renderer.destroy();
+      }
+    },
     mediaStats: () => player.compositor.mediaStats(),
     async inspectMovie(url: string, t: number, points: [number, number][] = []) {
       if (!url.startsWith('blob:')) throw Error('Only local exported movies');
