@@ -3,6 +3,7 @@
 規則：每完成一個有意義的步驟，就在同一個 commit 裡 **覆寫「交接快照」** 並 **在「日誌」最上面新增一筆**（規則全文見 `AGENTS.md`「紀錄規則」，背景與架構見 `docs/HANDOFF.md`）。
 
 ## 交接快照（VideoClip_2 最新狀態）
+- bdf9276/43581098447即時maxJump從0.742降至0.169，仍未過；新突波在native重播ramp2後約8ms（扣limiter6ms只2ms），輸入block晚於淡入。gain待el.play promise完成，WebAudio先保持靜音24ms再12ms淡入；原生muted/volume只由bus.flush按連接狀態處理，避免連接前先解mute。保留嚴格0.08閾值，待新CI。
 - 另由音訊時序看到留聲第二段恢復時舊media停在前段末尾，1秒seek退避可能先播到已靜音來源；paused重新進段改用20ms精準對齊且不受running drift退避，對齊後才淡入。加入本輪同時驗證。
 - 664e50c/43580593881新3項2/3：即時0.742突波在ramp0後6ms，native pause/seek在46ms後，故不是原生過早停止；同一audio quantum重複cancelAndHold丟失hold並露出intrinsic0。改cancelScheduledValues+setValueAtTime模型當前值明確錨定，且pause/seek共用既有淡出不重排；新增同量子回歸至359單元，保持live maxJump<0.08，待新CI。
 - 5ce7bab/43579799783：離線200%突波已0.399→0.00580、峰值≤1，但Worklet即時量測仍0.742，未通過，繼續修。pause/seek原生動作需等AudioContext實際淡出，不可只等16ms wall timer；加入audio clock守衛/原生操作時序診斷，舊暫停檢查02a822c改等待短淡出。待新CI。

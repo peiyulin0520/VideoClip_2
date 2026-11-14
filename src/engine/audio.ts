@@ -125,18 +125,23 @@ export class AudioBus {
     // in one audio quantum can drop its same-time hold event and expose intrinsic 0.
     param.cancelScheduledValues(now);
     param.setValueAtTime(current, now);
-    const fade = end === undefined ? AUDIO_FADE : Math.max(0, Math.min(AUDIO_FADE, (end - now) / 2));
-    param.linearRampToValueAtTime(target, now + fade);
+    // Native play/seek acknowledgement can precede the first decoded audio block.
+    // Hold silence briefly before a fresh fade-in so a late block cannot enter mid-ramp.
+    const remaining = end === undefined ? Infinity : Math.max(0, end - now);
+    const delay = target > 0 && current <= 0.000001 ? Math.min(AUDIO_FADE * 2, remaining / 3) : 0;
+    const fade = Math.min(AUDIO_FADE, (remaining - delay) / 2);
+    if (delay) param.setValueAtTime(current, now + delay);
+    param.linearRampToValueAtTime(target, now + delay + fade);
     if (end !== undefined && target > 0) {
-      param.setValueAtTime(target, Math.max(now + fade, end - fade));
+      param.setValueAtTime(target, Math.max(now + delay + fade, end - fade));
       param.linearRampToValueAtTime(0, end);
     }
     this.mark('ramp', undefined, target);
     node.envelope = {
-      at: now,
+      at: now + delay,
       from: current,
       to: target,
-      riseEnd: now + fade,
+      riseEnd: now + delay + fade,
       fadeStart: end === undefined ? undefined : end - fade,
       end,
     };

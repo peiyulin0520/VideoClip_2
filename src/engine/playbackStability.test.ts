@@ -60,7 +60,7 @@ it('does not initialize Web Audio on project entry; connects only audible source
   }
   expect(ctx.createMediaElementSource).toHaveBeenCalledTimes(1);
   expect(gain.gain.linearRampToValueAtTime).toHaveBeenCalledTimes(1);
-  expect(gain.gain.linearRampToValueAtTime).toHaveBeenLastCalledWith(1, 1.012);
+  expect(gain.gain.linearRampToValueAtTime).toHaveBeenLastCalledWith(1, 1.036);
   bus.clear();
   bus.flush();
   expect(gain.gain.linearRampToValueAtTime).toHaveBeenLastCalledWith(0, 1.012);
@@ -146,16 +146,16 @@ it('fades before pause and seek, coalesces scrubbing, and cancels a stale pause 
   const bus = new AudioBus([v], ctx as unknown as AudioContext);
   bus.set(v, 1);
   bus.flush();
-  ctx.currentTime = 1.02;
+  ctx.currentTime = 1.06;
   v.dataset.previewIntent = 'pause';
   bus.pause(v);
   expect(pause).not.toHaveBeenCalled();
-  ctx.currentTime = 1.04;
+  ctx.currentTime = 1.08;
   vi.advanceTimersByTime(20);
   expect(pause).toHaveBeenCalledTimes(1);
   bus.set(v, 1);
   bus.flush();
-  ctx.currentTime += 0.02;
+  ctx.currentTime += 0.05;
   v.dataset.previewIntent = 'play';
   const first = vi.fn(),
     last = vi.fn();
@@ -164,14 +164,14 @@ it('fades before pause and seek, coalesces scrubbing, and cancels a stale pause 
   expect(bus.isSeeking(v)).toBe(true);
   vi.advanceTimersByTime(20);
   expect(last).not.toHaveBeenCalled(); // Wall timers can outrun the audio clock under load.
-  ctx.currentTime += 0.02;
+  ctx.currentTime += 0.05;
   vi.advanceTimersByTime(8);
   expect(first).not.toHaveBeenCalled();
   expect(last).toHaveBeenCalledOnce();
   expect(bus.isSeeking(v)).toBe(false);
   bus.set(v, 1);
   bus.flush();
-  ctx.currentTime += 0.02;
+  ctx.currentTime += 0.05;
   v.dataset.previewIntent = 'pause';
   bus.pause(v);
   v.dataset.previewIntent = 'play';

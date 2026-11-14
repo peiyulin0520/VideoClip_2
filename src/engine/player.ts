@@ -337,6 +337,8 @@ export class Player {
     const s = sourceTimeAt(item, t);
     const gain =
       !active ||
+      el.paused ||
+      this.pendingPlay.has(el) ||
       el.seeking ||
       t < item.start ||
       t >= item.start + item.duration ||
@@ -371,7 +373,6 @@ export class Player {
       audioWindowAt(item, t),
       t - delta / item.speed,
     );
-    if (!this.bus.owns(el)) el.muted = !!el.dataset.priming || gain === 0;
     if (!el.preservesPitch) el.preservesPitch = true;
     const rate = active && !asset.hasAudio ? previewPlaybackRate(delta, item.speed) : item.speed;
     if (el.playbackRate !== rate) el.playbackRate = rate;
