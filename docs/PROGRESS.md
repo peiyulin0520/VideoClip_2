@@ -3,10 +3,12 @@
 規則：每完成一個有意義的步驟，就在同一個 commit 裡 **覆寫「交接快照」** 並 **在「日誌」最上面新增一筆**（規則全文見 `AGENTS.md`「紀錄規則」，背景與架構見 `docs/HANDOFF.md`）。
 
 ## 交接快照（VideoClip_2 最新狀態）
-- 2026-11-13 / codex/establish-little-moments；source2877465c1d905d39ce54170f0aac642f7596b5bf；PR #10 open未合併。
-- 已實作：固定單素材B開頭/A結尾及連動秒數、時間軸代表字/作用範圍顏色、全頁膠囊表單；參考VideoClip的真proxy/本機快取、真實載入100%/inert、禁止無操作自動播、音訊平滑/limiter/獨立audio、seek/速率/晚到回呼保護。新增影片另準備、主player不重建，保留追加後秒數；通知走listener快照。
-- 本機343單元及完整check成功；Actions43519974884快速6/6成功、完整140/144；已補兩個版型helper等真實載入閘再fill，產品src不改，待新完整144。成功截圖/artifact待補。先前失敗的92/26及快測5/6是歷史，不當本輪驗收。
-- 下一步：推測試閘補正、完整驗收、更新成功截圖/PR #10。使用者自行Merge，Safari需真機；不推main、不代發布。
+- 2026-11-14追加使用者舊VideoClip長片縮圖回報：本repo Tiles也有120格上限卻沿用固定格寬，後段會留白。正在改成120格分配全段寬度/跨全來源取樣並在格內重複自然比例縮圖；新增121秒自製紅→藍素材/82秒及放大覆蓋回歸。以下8d27981成功是前輪，追加需343單元/145瀏覽器重驗；完整成功後才最後交付。
+
+- 2026-11-13 / codex/establish-little-moments；驗收source 8d27981dc9079b58ffb000798e1e6e4256099861。PR #10 open未合併；本次最後提交僅文件/成功截圖。
+- 已完成：單素材開頭B進/結尾A退、單可動標籤及連動秒數；時間軸代表字與scope色別；全頁膠囊表單。參考VideoClip做真正本機proxy/快取、載入100%與inert、防自動播、audio pool/lazy WebAudio/平滑gain/limiter、seek/速率與晚到回呼保護。匯入保留主player/新播放位置，通知用快照；匯出一律原檔。
+- [Actions 43521756301](https://github.com/peiyulin0520/VideoClip_2/actions/runs/43521756301)：版本 8d27981dc9079b58ffb000798e1e6e4256099861 的343單元、144 Chromium e2e全過，另20項快速情境全過；lint/格式/TypeScript/build/Pages/39字體檢查成功。artifact 14083907571，ZIP SHA-256 8427f0ee5cdcc9a9d9a3021f0b50035f95f9ab6750ec781e0dc9864521b9261d 已核對；178張成功截圖，包含anchored-playback新增7張。新7張及固定單素材/A-B起迄畫面已人工檢視。最後文件/截圖提交不改驗收的產品、測試或設定。PR #10仍由使用者自行Merge，Safari待真機。
+- 下一步：使用者自行Merge後main Actions發布，再依PLAN.md §7用iPhone Safari實測HEVC/HDR長片/背景返回/音畫與手勢。無待補資料；不代Merge、不推main。
 
 ## 日誌格式（新增一筆時照這個）
 ```
@@ -83,6 +85,12 @@
 - 2026-11-11 找到新字體來源 max32002/pop-gothic（大波浪圓體，含注音）→ 已加入手寫可愛包。問「能不能直接下載到我的 files 下載資料夾」→ 答：網頁在 iPhone 不能自動寫進「檔案」App 資料夾；官方字體存在瀏覽器裡，自己的字體用「匯入字體檔」從檔案 App 選
 
 ## 日誌（最新在最上面）
+- 2026-11-14 追加長片縮圖：使用者說VideoClip1分鐘後時間軸空但仍可播，僅參考播放。檢查發現本repo也固定120格×固定寬，現改預算只限制密度、覆蓋整段，不逐幀大量解碼。新增121秒/82秒藍色/放大仍≤120格且無空白的瀏覽器回歸。前輪343/144已過，本輪145待CI。
+
+- 2026-11-13 固定單素材、膠囊表單及穩定預覽最終驗收（PR #10）
+  - [Actions 43521756301](https://github.com/peiyulin0520/VideoClip_2/actions/runs/43521756301)：版本 8d27981dc9079b58ffb000798e1e6e4256099861 的343單元、144 Chromium e2e全過，另20項快速情境全過；lint/格式/TypeScript/build/Pages/39字體檢查成功。artifact 14083907571，ZIP SHA-256 8427f0ee5cdcc9a9d9a3021f0b50035f95f9ab6750ec781e0dc9864521b9261d 已核對；178張成功截圖，包含anchored-playback新增7張。新7張及固定單素材/A-B起迄畫面已人工檢視。最後文件/截圖提交不改驗收的產品、測試或設定。PR #10仍由使用者自行Merge，Safari待真機。
+  - 核心涵蓋實際540/720解碼、快取重開、原檔細線匯出、真實載入閘、0秒/捲頁/popup及音訊、匯入/追加/套版/返回；舊版型helper改等inert/overlay/frameReady才fill，所有原斷言保留。下列失敗/未提交均為歷史過程。
+
 - 2026-11-13 2877465/43519974884：343單元、快速6/6成功、完整140/144；4個版型舊helper只等import busy消失就fill欄位，未等新inert/實際預覽閘，導致文字/長度仍套預設。新增waitForPreviewReady（實際frameReady+無overlay+editor非inert），兩個template helper在fill前等待，所有原文字/時長/像素斷言保留，快測擴至三個檔。本輪source產品不改，需再完整驗收。
 
 - 2026-11-13 c51d72e/43519385506快速6/6過，保留player解決匯入卡住；補追加主軌後保留新seek秒數（prepare時讀現在time，不能預先捕捉）及通知listener快照，避免同步訂閱替換在同一emit被重複走訪。下一輪應343單元/144完整e2e。

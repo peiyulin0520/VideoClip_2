@@ -59,9 +59,11 @@ function Tiles({
       </div>
     );
   const aspect = asset && asset.height ? asset.width / asset.height : 0.56;
-  const tileW = Math.min(Math.max(h * aspect, 30), 114);
+  const naturalTileW = Math.min(Math.max(h * aspect, 30), 114);
   const widthPx = item.duration * pps;
-  const count = Math.min(Math.ceil(widthPx / tileW), 120);
+  const count = Math.max(1, Math.min(Math.ceil(widthPx / naturalTileW), 120));
+  // A DOM budget limits sampling density, never the visible duration of a long clip.
+  const tileW = Math.max(naturalTileW, widthPx / count);
   return (
     <div className="tiles">
       {Array.from({ length: count }, (_, i) => {
@@ -71,7 +73,16 @@ function Tiles({
           item.type === 'image' || !asset || asset.duration <= 0
             ? 0
             : Math.min(Math.floor((srcT / asset.duration) * thumbs.length), thumbs.length - 1);
-        return <span key={i} style={{ width: tileW, backgroundImage: `url(${thumbs[Math.max(idx, 0)]})` }} />;
+        return (
+          <span
+            key={i}
+            style={{
+              width: tileW,
+              backgroundImage: `url(${thumbs[Math.max(idx, 0)]})`,
+              ...(tileW > naturalTileW ? { backgroundSize: 'auto 100%', backgroundRepeat: 'repeat-x' } : {}),
+            }}
+          />
+        );
       })}
     </div>
   );

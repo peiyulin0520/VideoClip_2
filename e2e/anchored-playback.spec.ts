@@ -11,6 +11,7 @@ import {
   isGreen,
   isBlue,
   fixture,
+  waitForPreviewReady,
 } from './helpers';
 import type { Project } from '../src/model/types';
 test.beforeEach(({ page }) => {
@@ -377,4 +378,51 @@ test('大型影片以真正低解析度本機檔預覽，快取重開/切畫質�
     .toBe(720);
   expect((await current(page)).assets[0]!.width).toBe(asset.width);
   await shot(page, 'cached-real-lightweight-preview');
+});
+
+test('兩分鐘影片超過一分鐘後仍鋪滿取樣縮圖，放大時間軸不超過格數預算或留白', async ({ page }) => {
+  await createProjectWith(page, ['timeline-long.webm']);
+  await seekTo(page, 82);
+  await expect
+    .poll(() =>
+      page.evaluate(() => (window as unknown as { __videoclip: { time: () => number } }).__videoclip.time()),
+    )
+    .toBeGreaterThan(81.9);
+  await waitForPreviewReady(page);
+  await expect.poll(async () => isBlue(await samplePreview(page, 0.5, 0.5))).toBe(true);
+  const coverage = async () => {
+    const clip = clips(page).first();
+    const sizes = await clip.evaluate((el) => {
+      const strip = el.querySelector('.tiles')!.getBoundingClientRect();
+      const tiles = Array.from(el.querySelectorAll<HTMLElement>('.tiles span'));
+      const last = tiles.at(-1)!.getBoundingClientRect();
+      return { count: tiles.length, right: last.right, edge: strip.right, width: strip.width };
+    });
+    expect(sizes.count).toBeLessThanOrEqual(120);
+    expect(sizes.right).toBeGreaterThanOrEqual(sizes.edge - 0.5);
+    expect(sizes.width).toBeGreaterThan(7000);
+    const rgb = await clip.evaluate(async (el) => {
+      const viewport = el.closest('[data-testid="timeline-scroll"]')!.getBoundingClientRect();
+      const x = viewport.left + 120;
+      const tile = Array.from(el.querySelectorAll<HTMLElement>('.tiles span')).find((tile) => {
+        const box = tile.getBoundingClientRect();
+        return box.left <= x && box.right > x;
+      });
+      if (!tile) return null;
+      const img = new Image();
+      img.src = getComputedStyle(tile).backgroundImage.slice(5, -2);
+      await img.decode();
+      const canvas = document.createElement('canvas');
+      canvas.width = canvas.height = 1;
+      const context = canvas.getContext('2d')!;
+      context.drawImage(img, 0, 0, 1, 1);
+      return [...context.getImageData(0, 0, 1, 1).data];
+    });
+    expect(isBlue(rgb as [number, number, number, number] | null)).toBe(true);
+  };
+  await coverage();
+  for (let i = 0; i < 4; i++) await page.getByRole('button', { name: '放大時間軸', exact: true }).tap();
+  await coverage();
+  await page.getByTestId('timeline-scroll').scrollIntoViewIfNeeded();
+  await shot(page, 'long-filmstrip-after-minute');
 });

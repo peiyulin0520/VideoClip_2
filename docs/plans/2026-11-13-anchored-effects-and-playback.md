@@ -17,8 +17,10 @@
 參考來源：[VideoClip](https://github.com/peiyulin0520/VideoClip)，主要比對src/engine/player.ts、mediaPool.ts、audio.ts、proxy.ts、proxyQueue.ts、assetUrls.ts、previewQuality.ts；保留VideoClip_2獨立資料庫/OPFS命名。
 
 ## 驗證
-- source 2877465c1d905d39ce54170f0aac642f7596b5bf；本機check343單元、lint/格式/TypeScript/build/Pages/39字體成功。
-- [Actions 43519974884](https://github.com/peiyulin0520/VideoClip_2/actions/runs/43519974884)：快速6/6成功；完整140/144，四個版型helper未等載入閘就fill，已補等待真正就緒，保留原斷言，待重驗144及成功截圖。
-- 快速包括：新增影像/追加主軌後仍可操作、維持新播放位置與返回首頁；同秒不同scope的時間軸代表字；六主題膠囊表單；真實readyState載入閘/inert/無自動播、0秒重播/速率與seek次數/popup/聲音能量；分離音訊只1個audio及1個video；native 540→720尺寸、重開無新增worker及原檔細線匯出。
-- 先前43513918905有92過/26失敗/25未跑，20分鐘時限結束；b7673f5及7c196c0快速5/6。均屬失敗過程，不作最終證據。c51d72e保留player後快速6/6成功，再補主軌定位/通知快照。
-- PR #10仍open未合併，由使用者自行Merge才發布。Safari長片/HEVC/HDR、低記憶體、背景返回與真實聲音仍待真機，不保證所有手機4K順暢。預覽失敗時會提示原檔備援，匯出永遠不取proxy。
+- [Actions 43521756301](https://github.com/peiyulin0520/VideoClip_2/actions/runs/43521756301)：版本 8d27981dc9079b58ffb000798e1e6e4256099861 的343單元、144 Chromium e2e全過，另20項快速情境全過；lint/格式/TypeScript/build/Pages/39字體檢查成功。artifact 14083907571，ZIP SHA-256 8427f0ee5cdcc9a9d9a3021f0b50035f95f9ab6750ec781e0dc9864521b9261d 已核對；178張成功截圖，包含anchored-playback新增7張。新7張及固定單素材/A-B起迄畫面已人工檢視。最後文件/截圖提交不改驗收的產品、測試或設定。PR #10仍由使用者自行Merge，Safari待真機。
+- 六個新情境：匯入/追加主軌/套版/返回與保留定位；同秒多scope代表字；六主題表單；實際readyState閘/無自動播/seek與速率統計/重播0秒/popup/音訊能量；分離只用audio；native540→720/重開無新增worker/原檔細線匯出。來源與模板/手機字級/每格補時/文字色彩的原138回歸仍保留。
+- 先前43513918905（92/26及25未跑）、b7673f5/7c196c0快速5/6、2877465/43519974884完整140/144均是過程，不作最終證據。8d27981的產品src與2877465相同，補正的兩個版型helper等真實載入閘後保留全部原文字/長度/像素斷言。
+- 參考VideoClip版本[0d6df7d](https://github.com/peiyulin0520/VideoClip/commit/0d6df7d0f133fa037fa868dfcc10ab718c87d529)。Safari的長片/HEVC/HDR、低記憶體、背景返回及真實聲音仍需真機，不能以Chromium聲稱全手機皆順暢。
+
+## 2026-11-14 長片縮圖追加
+使用者指定舊VideoClip只參考播放，指出1分鐘後縮圖空白但影片能繼續。本repo也發現固定120格搭固定寬會截斷顯示；120格只作DOM預算，現在按片段全寬分配格寬，來源取樣跨全段，寬格內自然比例repeat-x以免拉扁。影片播放/匯出不改。新增121秒小型自製素材，在82秒及300px/秒放大下檢查縮圖鋪滿且後半取樣藍色，格數不超過120；追加145 e2e待驗。

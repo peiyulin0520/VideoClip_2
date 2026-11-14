@@ -1,6 +1,11 @@
 # 交接手冊（HANDOFF）
 
 ## VideoClip_2 當前交接（優先於以下來源 repo 的歷史紀錄）
+- 2026-11-14追加長片縮圖待CI：Tiles原120格截斷可見長度，改120格分配完整片段寬度/格內重複原比例圖，採樣來源按全長走。121秒自製紅→藍素材/e2e驗82秒與放大覆蓋及≤120。前輪8d成功343/144是追加前，本輪需145新驗收再交付。
+
+- 最新最終：[Actions 43521756301](https://github.com/peiyulin0520/VideoClip_2/actions/runs/43521756301)：版本 8d27981dc9079b58ffb000798e1e6e4256099861 的343單元、144 Chromium e2e全過，另20項快速情境全過；lint/格式/TypeScript/build/Pages/39字體檢查成功。artifact 14083907571，ZIP SHA-256 8427f0ee5cdcc9a9d9a3021f0b50035f95f9ab6750ec781e0dc9864521b9261d 已核對；178張成功截圖，包含anchored-playback新增7張。新7張及固定單素材/A-B起迄畫面已人工檢視。最後文件/截圖提交不改驗收的產品、測試或設定。PR #10仍由使用者自行Merge，Safari待真機。
+- 重要：新增影片不能依assets重建player；只準備新proxy，prepare讀當下time。任何destroy後舊callback都忽略；emit用listener快照。測試填受控欄位前必等真實載入閘解除。以下待CI/未提交/失敗皆是歷史過程。
+
 - 最新source2877465c1d905d39ce54170f0aac642f7596b5bf，本機343單元/check成功；Actions43519974884快速6/6過，完整140/144；已補版型helper等真實inert/overlay/frameReady再fill，不改產品src，待新144。先等完整結果，再更新成功截圖/PR #10，不代Merge。規格見plans/2026-11-13-anchored-effects-and-playback.md。
 - 以下本輪待測/未提交/失敗狀態都是過程紀錄，以最新快照為準。
 
