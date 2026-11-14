@@ -288,7 +288,8 @@ test('真實載入完成前禁止編輯，無自動播放；重播0秒、捲頁�
     'true',
   );
   await page.getByRole('button', { name: '暫停', exact: true }).tap();
-  expect(await active()).toBe(0);
+  // Audible native elements stop after their short anti-click fade.
+  await expect.poll(active, { timeout: 1000, intervals: [20, 40, 80] }).toBe(0);
   const seekBefore = await page.evaluate(() => (window as unknown as { seekWrites: number }).seekWrites);
   await seekTo(page, 0);
   await page.getByRole('button', { name: '播放', exact: true }).tap();
