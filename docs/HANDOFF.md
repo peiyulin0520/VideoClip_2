@@ -1,6 +1,7 @@
 # 交接手冊（HANDOFF）
 
 ## VideoClip_2 當前交接（優先於以下來源 repo 的歷史紀錄）
+- 8cdd65a/43578765221快速32/33：正常音量離線邊界連續（maxJump 0.00398），200%音量量測出0.399突波，GPU兩情境仍成功。追加突波秒數/鄰近樣本診斷，先找出實際來源再修，尚未交付。
 - 首輪196c366/43588015161快速32/33，GPU兩情境已過；音訊新測試需用實存audioRanges端點，觸控不保證精確1.5秒，硬寫值約晚0.2ms會取到正常淡入樣本。嚴格波形斷言保留，下一輪358/151/33後才交付。
 - 最新本輪待CI：使用者追加些微爆音/特效卡跳幀並說繼續；PR11仍open沿codex/source-timestamp-thumbnails追加。音訊12ms真實邊界排程/hold、native pause/seek延後淡出、connected元素不hard mute、有聲素材不nudge rate、media time校正；export實際區間淡入出/soft knee。GPU refcount共享frame resources/固定filter快取/particle canvas重用，低預覽blur輕量、高清export不降。
 - 目前358單元、3新e2e預期151/33，需本輪完整成功/波形JSON/新圖。下面350/148舊縮圖是基線，不能作本輪驗收。規格plans/2026-11-14-audio-effect-continuity.md。不代Merge。

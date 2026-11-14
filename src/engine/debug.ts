@@ -34,14 +34,20 @@ export function installDebugHook(player: Player) {
         const buffer = await renderer.chunk(start, end, signal),
           data = buffer.getChannelData(0);
         let peak = 0,
-          maxJump = 0;
+          maxJump = 0,
+          jumpIndex = 0;
         for (let i = 0; i < data.length; i++) {
           peak = Math.max(peak, Math.abs(data[i]!));
-          if (i) maxJump = Math.max(maxJump, Math.abs(data[i]! - data[i - 1]!));
+          if (i && Math.abs(data[i]! - data[i - 1]!) > maxJump) {
+            maxJump = Math.abs(data[i]! - data[i - 1]!);
+            jumpIndex = i;
+          }
         }
         return {
           peak,
           maxJump,
+          jumpTime: start + jumpIndex / buffer.sampleRate,
+          jumpSamples: Array.from(data.slice(Math.max(0, jumpIndex - 3), jumpIndex + 4)),
           first: data[0],
           last: data.at(-1),
           samples: times.map(

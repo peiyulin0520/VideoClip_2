@@ -81,6 +81,7 @@ test('音訊真實波形在片頭片尾、剪段、暫停重播及跳轉均平�
     input.dispatchEvent(new Event('input', { bubbles: true }));
   });
   const loud = await wave(page);
+  console.info('Loud offline audio envelope', JSON.stringify(loud));
   expect(loud.peak).toBeLessThanOrEqual(1);
   expect(loud.maxJump).toBeLessThan(0.03);
   await page.getByRole('button', { name: '播放', exact: true }).tap();
