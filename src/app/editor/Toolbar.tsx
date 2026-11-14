@@ -129,14 +129,11 @@ export function BottomBar({
   const found = findItem(project, selectedId);
   const items = mainItems(project);
 
-  // 點目前的分頁＝收合/展開下面的面板（讓出空間給預覽畫面）
+  // Re-selecting a tool keeps its controls open.
   const switchTab = (t: Tab) => {
     setPanel(null);
-    if (t === tab) setCollapsed((c) => !c);
-    else {
-      setTab(t);
-      setCollapsed(false);
-    }
+    setTab(t);
+    setCollapsed(false);
   };
 
   return (

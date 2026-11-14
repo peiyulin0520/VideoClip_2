@@ -1,3 +1,5 @@
+> 進行中：2026-11-14 定格及23點需求，依 docs/plans/2026-11-14-editing-refinements.md。前輪369/156是基線。A 階段 check/370單元已過，新瀏覽器驗收待 Actions。CropEditor 改 stable canvas，mask.base empty 讓筆刷可單獨保留；useDraftHistory 支援 redo。Sheet 僅 X/backdrop 回復 project/past/future 快照，正常 apply 呼叫 owner onClose 不回復。
+
 # 交接手冊（HANDOFF）
 
 ## 色調本輪（優先於下方音訊成功歷史）

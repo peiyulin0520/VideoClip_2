@@ -3601,3 +3601,92 @@ html {
     grid-template-columns: repeat(3, minmax(0, 1fr));
   }
 }
+
+/* Editing refinements: consistent rounded rectangles; circles remain for icon/colour controls. */
+:root[data-theme]
+  :is(
+    .chip,
+    .btn,
+    .tab,
+    .color-custom-button,
+    input:not([type='range']):not([type='checkbox']):not([type='radio']),
+    textarea,
+    select
+  ) {
+  border-radius: 12px;
+}
+.sheet-heading .sheet-close {
+  flex: 0 0 44px;
+  border-radius: 50%;
+  background: var(--panel);
+}
+.crop-tools {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 4px;
+  margin-block: 6px;
+}
+.crop-tools .chip {
+  min-width: 0;
+  padding-inline: 3px;
+  white-space: nowrap;
+}
+.crop-actions,
+.source-playback-row,
+.crop-zoom-controls {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  flex-wrap: nowrap;
+  margin-block: 6px;
+}
+.crop-actions .chip {
+  min-width: 0;
+  flex: 1;
+  padding-inline: 3px;
+}
+.crop-actions .icon-btn {
+  flex: 0 0 44px;
+}
+.crop-actions .primary {
+  background: var(--accent);
+  color: var(--accent-fg, #fff);
+}
+.crop-viewport {
+  position: relative;
+  margin: 6px auto;
+  overflow: hidden;
+  touch-action: none;
+  background: repeating-conic-gradient(#888 0% 25%, #bbb 0% 50%) 0 0/16px 16px;
+}
+.crop-viewport .crop-stage {
+  margin: 0;
+  max-width: none;
+  background: none;
+  transform-origin: center;
+}
+.crop-stage .crop-decoder {
+  position: absolute;
+  opacity: 0;
+  pointer-events: none;
+  inset: 0;
+}
+.crop-result {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+.source-playback-row .source-now {
+  margin: 0;
+}
+.custom-color {
+  margin-block: 8px;
+}
+.used-effects .effect-row {
+  justify-content: flex-start;
+  text-align: left;
+}
+.used-effects .effect-row strong {
+  text-align: left;
+  flex: 1;
+}

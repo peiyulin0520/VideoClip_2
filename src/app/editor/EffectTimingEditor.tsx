@@ -223,9 +223,6 @@ export function EffectTimingEditor({
           : '影片會邊播邊套用特效。點縮圖移動白線，新增標籤會同時建立起點與終點；各組可移除或復原。'}
       </p>
       <div className="sheet-row">
-        <button className="btn" onClick={onClose}>
-          取消
-        </button>
         <button
           className="btn primary"
           onClick={() => {

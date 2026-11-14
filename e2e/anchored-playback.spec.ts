@@ -309,7 +309,7 @@ test('真實載入完成前禁止編輯，無自動播放；重播0秒、捲頁�
   await page.getByRole('button', { name: '片段範圍', exact: true }).tap();
   await page.getByRole('button', { name: '播放片段預覽', exact: true }).tap();
   await page.getByRole('button', { name: '暫停片段預覽', exact: true }).tap();
-  await page.getByRole('button', { name: '取消', exact: true }).tap();
+  await page.getByRole('button', { name: '關閉且不儲存', exact: true }).tap();
   expect(await active()).toBe(0);
   await page.getByRole('button', { name: '播放', exact: true }).tap();
   await expect.poll(() => energy(page)).toBeGreaterThan(0.01);

@@ -163,7 +163,7 @@ test('每格來源可獨立選段，共同長度不變，短素材補白且可�
 test('音訊可直接標記多組精確靜音起迄，顯示對應畫面並可移除其中一組', async ({ page }) => {
   await createProjectWith(page, ['tone-video.webm']);
   await openTab(page, '音訊');
-  await page.getByRole('button', { name: '聲音片段範圍', exact: true }).tap();
+  await page.getByRole('button', { name: '片段範圍', exact: true }).tap();
   for (const [a, b] of [
     [0.1, 0.2],
     [0.5, 0.7],

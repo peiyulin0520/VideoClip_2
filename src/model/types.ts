@@ -110,7 +110,7 @@ export type ItemBase = {
 };
 
 export type MaskStroke = { tool: 'keep' | 'erase'; size: number; points: [number, number][] };
-export type MediaMask = { points: [number, number][]; strokes?: MaskStroke[] };
+export type MediaMask = { points: [number, number][]; strokes?: MaskStroke[]; base?: 'full' | 'empty' };
 
 export type VideoItem = ItemBase & {
   type: 'video' | 'image' | 'audio';

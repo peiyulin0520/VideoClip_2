@@ -5,13 +5,17 @@ export function useDraftHistory<T>(initial: T) {
   const [value, render] = useState(initial);
   const current = useRef(initial),
     past = useRef<T[]>([]),
+    future = useRef<T[]>([]),
     gesture = useRef<T | null>(null);
   const [canUndo, setCanUndo] = useState(false);
+  const [canRedo, setCanRedo] = useState(false);
   const different = (a: T, b: T) => JSON.stringify(a) !== JSON.stringify(b);
   const set = (next: T | ((before: T) => T)) => {
     const result = typeof next === 'function' ? (next as (before: T) => T)(current.current) : next;
     if (!different(current.current, result)) return;
     if (gesture.current === null) past.current.push(structuredClone(current.current));
+    future.current = [];
+    setCanRedo(false);
     setCanUndo(past.current.length > 0);
     current.current = result;
     render(result);
@@ -31,10 +35,24 @@ export function useDraftHistory<T>(initial: T) {
     begin,
     end,
     canUndo,
+    canRedo,
+    redo: () => {
+      end();
+      const next = future.current.pop();
+      if (next !== undefined) {
+        past.current.push(current.current);
+        current.current = next;
+        render(next);
+        setCanUndo(true);
+        setCanRedo(future.current.length > 0);
+      }
+    },
     undo: () => {
       end();
       const previous = past.current.pop();
       if (previous !== undefined) {
+        future.current.push(current.current);
+        setCanRedo(true);
         current.current = previous;
         render(previous);
         setCanUndo(past.current.length > 0);

@@ -133,11 +133,11 @@ test('選項及 popup 字級不大於功能列，特效只留小示意與名稱�
   await shot(page, 'compact-effects-and-names');
   await openTab(page, '音訊');
   await compactType(page, '.bottombar');
-  await page.getByRole('button', { name: '聲音片段範圍', exact: true }).first().tap();
+  await page.getByRole('button', { name: '片段範圍', exact: true }).first().tap();
   await compactType(page, '.sheet');
   await expect(page.getByLabel('音訊對應影片')).toBeVisible();
   await shot(page, 'compact-audio-popup');
-  await page.getByRole('button', { name: '取消', exact: true }).tap();
+  await page.getByRole('button', { name: '關閉且不儲存', exact: true }).tap();
   await clips(page).first().tap();
   await openTab(page, '圖層');
   await page.getByRole('button', { name: '定格細部調整', exact: true }).tap();
@@ -201,9 +201,9 @@ test('偏移控制圈瞄準擦除與保留，大小可調，匯出改的是上�
   const toProject = await sourcePoint(page);
   await openTab(page, '剪輯');
   await page.getByRole('button', { name: '裁切', exact: true }).tap();
-  await page.getByRole('button', { name: '裁切橡皮擦', exact: true }).tap();
+  await page.getByRole('button', { name: '橡皮擦', exact: true }).tap();
   await expect(page.getByRole('slider', { name: '瞄準偏移', exact: true })).toHaveValue('56');
-  await slider(page, '裁切橡皮擦粗細', 20);
+  await slider(page, '橡皮擦粗細', 20);
   let contactY = 0;
   await cropStroke(page, [[0.5, 0.4]], async () => {
     const guide = page.getByTestId('crop-offset-guide');
@@ -225,8 +225,8 @@ test('偏移控制圈瞄準擦除與保留，大小可調，匯出改的是上�
   expect(isGreen(erased.samples[0] as [number, number, number, number])).toBe(true);
   expect(isRed(erased.samples[1] as [number, number, number, number])).toBe(true);
   await page.getByRole('button', { name: '裁切', exact: true }).tap();
-  await page.getByRole('button', { name: '保留筆刷', exact: true }).tap();
-  await slider(page, '保留筆刷粗細', 20);
+  await page.getByRole('button', { name: '筆刷', exact: true }).tap();
+  await slider(page, '筆刷粗細', 20);
   await cropStroke(page, [[0.5, 0.4]]);
   await page.getByRole('button', { name: '套用裁切', exact: true }).tap();
   await expect(page.getByRole('dialog', { name: '裁切／手動去背', exact: true })).toHaveCount(0);
@@ -240,7 +240,7 @@ test('自由描邊也用偏移瞄準，逐筆復原及取消不改原片，保�
   const toProject = await sourcePoint(page);
   await openTab(page, '剪輯');
   await page.getByRole('button', { name: '裁切', exact: true }).tap();
-  await page.getByRole('button', { name: '自由描邊保留區域', exact: true }).tap();
+  await page.getByRole('button', { name: '自由裁切', exact: true }).tap();
   const targets: [number, number][] = [
     [0.2, 0.2],
     [0.8, 0.2],
@@ -252,7 +252,7 @@ test('自由描邊也用偏移瞄準，逐筆復原及取消不改原片，保�
     await expect(page.getByTestId('crop-offset-guide')).toBeVisible();
     await shot(page, 'offset-lasso-aiming');
   });
-  await page.getByRole('button', { name: '復原描邊', exact: true }).tap();
+  await page.getByRole('button', { name: 'undo', exact: true }).tap();
   await expect(page.locator('.crop-stage polygon')).toHaveCount(0);
   await cropStroke(page, targets);
   await page.getByRole('button', { name: '套用裁切', exact: true }).tap();
@@ -264,14 +264,14 @@ test('自由描邊也用偏移瞄準，逐筆復原及取消不改原片，保�
     t.items.map((it) => ('mask' in it ? it.mask : undefined)),
   );
   await page.getByRole('button', { name: '裁切', exact: true }).tap();
-  await page.getByRole('button', { name: '自由描邊保留區域', exact: true }).tap();
+  await page.getByRole('button', { name: '自由裁切', exact: true }).tap();
   await cropStroke(page, [
     [0.3, 0.3],
     [0.6, 0.3],
     [0.6, 0.6],
     [0.3, 0.6],
   ]);
-  await page.getByRole('button', { name: '取消', exact: true }).tap();
+  await page.getByRole('button', { name: '關閉且不儲存', exact: true }).tap();
   expect(
     (await current(page)).tracks.map((t) => t.items.map((it) => ('mask' in it ? it.mask : undefined))),
   ).toEqual(masks);

@@ -62,7 +62,7 @@ test('音訊真實波形在片頭片尾、剪段、暫停重播及跳轉均平�
   await openTab(page, '音訊');
   await page.getByTestId('music-files').setInputFiles(fixture('click-dc.wav'));
   const row = page.locator('.audio-row').filter({ hasText: 'click-dc.wav' });
-  await row.getByRole('button', { name: '聲音片段範圍', exact: true }).tap();
+  await row.getByRole('button', { name: '片段範圍', exact: true }).tap();
   await markMuteInterval(page, 1, 1.5, 3);
   await page.getByRole('button', { name: '套用聲音選段', exact: true }).tap();
   const normal = await wave(page);
@@ -187,7 +187,7 @@ test('柔焦與顆粒播放時維持畫面更新，粒子不反覆配置GPU貼�
   await page.getByRole('button', { name: '暫停', exact: true }).tap();
   const row = page.locator('.used-effects .effect-row').filter({ hasText: '柔焦' });
   await row.getByRole('button', { name: '調整特效起迄', exact: true }).tap();
-  await page.getByRole('button', { name: '取消', exact: true }).tap();
+  await page.getByRole('button', { name: '關閉且不儲存', exact: true }).tap();
   await page.getByRole('button', { name: '播放', exact: true }).tap();
   const at = await time(page);
   await expect.poll(() => time(page)).toBeGreaterThan(at + 0.2);

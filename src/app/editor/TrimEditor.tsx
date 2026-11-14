@@ -1,5 +1,5 @@
 import { MediaPlayback } from '../../ui/MediaPlayback';
-import { Undo2 } from 'lucide-react';
+import { Undo2, Redo2 } from 'lucide-react';
 import { useDraftHistory } from '../../ui/useDraftHistory';
 import { RangeActions } from '../../ui/RangeActions';
 import { selectedSourceRanges } from '../../engine/sourceSelections';
@@ -22,32 +22,27 @@ export function TrimEditor({ item, onClose }: { item: VideoItem; onClose: () => 
   const video = useRef<HTMLVideoElement>(null);
   const [cursor, setCursor] = useState(item.trimIn);
   return (
-    <Sheet
-      open
-      title="剪取片段"
-      onClose={onClose}
-      titleAction={
-        <button
-          className="icon-btn"
-          aria-label="復原上一步選段"
-          disabled={!history.canUndo}
-          onClick={history.undo}
-        >
-          <Undo2 />
-        </button>
-      }
-    >
+    <Sheet open title="剪取片段" onClose={onClose}>
       <video
         className="range-preview"
         ref={video}
         src={urlFor(p.id, asset.id)}
         playsInline
-        muted
+        style={{ filter: ranges.some(([a, b]) => cursor >= a && cursor < b) ? undefined : 'saturate(0)' }}
         onLoadedMetadata={(e) => {
           e.currentTarget.currentTime = Math.min(Math.max(cursor, 0.001), asset.duration - 0.001);
         }}
       />
-      <MediaPlayback media={video} label="片段預覽" start={range[0]} end={range[1]} onTime={setCursor} />
+      <div className="source-playback-row">
+        <MediaPlayback media={video} label="片段預覽" start={0} end={asset.duration} onTime={setCursor} />
+        <span>{cursor.toFixed(2)} 秒</span>
+        <button className="icon-btn" aria-label="undo" disabled={!history.canUndo} onClick={history.undo}>
+          <Undo2 size={18} />
+        </button>
+        <button className="icon-btn" aria-label="redo" disabled={!history.canRedo} onClick={history.redo}>
+          <Redo2 size={18} />
+        </button>
+      </div>
       <SourceRanges
         duration={asset.duration}
         minimum={MIN_CLIP_DURATION * item.speed}
@@ -75,12 +70,10 @@ export function TrimEditor({ item, onClose }: { item: VideoItem; onClose: () => 
         {asset.duration.toFixed(1)} 秒
       </p>
       <p className="hint">
-        點縮圖只移動白線與預覽；按新增標記才建立下一組。原色為選取，灰色為不選；中間未選取處保留原時間空白。右上角可復原，取消不套用變更。
+        點縮圖只移動白線與預覽；按新增標記才建立下一組。原色為選取，灰色為不選；中間未選取處保留原時間空白。播放鍵旁可復原、重做，右上
+        X 不套用變更。
       </p>
       <div className="sheet-row">
-        <button className="btn" onClick={onClose}>
-          取消
-        </button>
         <button
           className="btn primary"
           disabled={!ranges.length}

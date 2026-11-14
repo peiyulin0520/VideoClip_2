@@ -115,3 +115,20 @@ describe('retained audio intervals', () => {
     ).toEqual([]);
   });
 });
+
+it('brush-only retention starts empty and erased original starts full; UV coordinates survive zoom', () => {
+  const mask: MediaMask = {
+    points: [],
+    base: 'empty',
+    strokes: [{ tool: 'keep', size: 0.1, points: [[0.5, 0.5]] }],
+  };
+  expect(maskContains(mask, 0.5, 0.5)).toBe(true);
+  expect(maskContains(mask, 0.1, 0.1)).toBe(false);
+  const restored = JSON.parse(JSON.stringify(mask)) as MediaMask;
+  expect(maskContains(restored, 0.5, 0.5)).toBe(true);
+  restored.strokes!.push({ tool: 'erase', size: 0.05, points: [[0.5, 0.5]] });
+  expect(maskContains(restored, 0.5, 0.5)).toBe(false);
+  expect(
+    maskContains({ points: [], strokes: [{ tool: 'erase', size: 0.1, points: [[0.5, 0.5]] }] }, 0.1, 0.1),
+  ).toBe(true);
+});

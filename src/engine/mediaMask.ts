@@ -2,7 +2,7 @@ import type { MediaMask } from '../model/types';
 
 /** Source UV coordinates; brush diameter is a fraction of source width. */
 export function maskContains(mask: MediaMask, x: number, y: number, aspect = 1) {
-  let inside = mask.points.length < 3;
+  let inside = mask.points.length < 3 && mask.base !== 'empty';
   for (let a = 0, b = mask.points.length - 1; a < mask.points.length; b = a++) {
     const [ax, ay] = mask.points[a]!,
       [bx, by] = mask.points[b]!;
@@ -31,8 +31,9 @@ export function maskContains(mask: MediaMask, x: number, y: number, aspect = 1) 
 export function paintMask(ctx: CanvasRenderingContext2D, mask: MediaMask, w: number, h: number) {
   ctx.clearRect(0, 0, w, h);
   ctx.fillStyle = ctx.strokeStyle = '#fff';
-  if (mask.points.length < 3) ctx.fillRect(0, 0, w, h);
-  else {
+  if (mask.points.length < 3) {
+    if (mask.base !== 'empty') ctx.fillRect(0, 0, w, h);
+  } else {
     ctx.beginPath();
     mask.points.forEach(([x, y], i) => (i ? ctx.lineTo(x * w, y * h) : ctx.moveTo(x * w, y * h)));
     ctx.closePath();

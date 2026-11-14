@@ -97,7 +97,7 @@ test('影片多組標記由白線明確新增，可局部復原與取消，保�
   await expect(page.locator('.source-marker')).toHaveCount(4);
   await page.getByRole('button', { name: '復原上一步選段', exact: true }).tap();
   await expect(page.locator('.source-marker')).toHaveCount(2);
-  await page.getByRole('button', { name: '取消', exact: true }).tap();
+  await page.getByRole('button', { name: '關閉且不儲存', exact: true }).tap();
   expect((await current(page)).tracks[0]!.items[0]!.duration).toBeCloseTo(3);
   await page.getByRole('button', { name: '片段範圍', exact: true }).tap();
   await shortFirstRange(page, 0.2);
@@ -136,7 +136,7 @@ test('影片多組標記由白線明確新增，可局部復原與取消，保�
 test('音訊可在白線新增第二組保留範圍，復原與取消不改專案', async ({ page }) => {
   await createProjectWith(page, ['tone-video.webm']);
   await openTab(page, '音訊');
-  await page.getByRole('button', { name: '聲音片段範圍', exact: true }).tap();
+  await page.getByRole('button', { name: '片段範圍', exact: true }).tap();
   await shortFirstRange(page, 0.01);
   await sourcePoint(page, 0.5);
   await expect(page.locator('.source-marker')).toHaveCount(2);
@@ -152,7 +152,7 @@ test('音訊可在白線新增第二組保留範圍，復原與取消不改專�
     .getByRole('button', { name: '在白線位置新增一組起迄標記', exact: true })
     .tap();
   await shot(page, 'multiple-audio-markers');
-  await page.getByRole('button', { name: '取消', exact: true }).tap();
+  await page.getByRole('button', { name: '關閉且不儲存', exact: true }).tap();
   expect(((await current(page)).tracks[0]!.items[0] as VideoItem).audioRanges).toBeUndefined();
 });
 
