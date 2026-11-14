@@ -1,3 +1,4 @@
+import { itemName } from '../../engine/itemName';
 import { useRef, useState } from 'react';
 import { useProjectStore } from '../../store/projectStore';
 import { editItem, removeAnyItem } from '../../store/actions';
@@ -61,12 +62,12 @@ export function AudioPanel() {
             }}
           >
             {asset.thumbs[0] ? (
-              <img src={asset.thumbs[0]} alt={`${item.name?.trim() || asset.name} 素材縮圖`} />
+              <img src={asset.thumbs[0]} alt={`${itemName(project, item)} 素材縮圖`} />
             ) : (
               <span className="audio-note">♫</span>
             )}
             <span>
-              {item.type === 'audio' ? '♫' : '原音'} {item.name?.trim() || asset.name}
+              {item.type === 'audio' ? '♫' : '原音'} {itemName(project, item)}
               <small>
                 {track.name} · 時間軸 {item.start.toFixed(2)}–{(item.start + item.duration).toFixed(2)} 秒
               </small>
@@ -82,7 +83,7 @@ export function AudioPanel() {
             保留音訊{track.muted ? '（軌道靜音中）' : ''}
           </label>
           <Slider
-            label={`音量 ${item.name?.trim() || asset.name}`}
+            label={`音量 ${itemName(project, item)}`}
             value={Math.round(item.volume * 100)}
             min={0}
             max={200}

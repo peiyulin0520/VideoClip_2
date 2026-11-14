@@ -54,6 +54,7 @@ export function buildScene(
   previewLiftedId?: string | null,
 ): SceneLayer[] {
   const ctx = geoCtx(project, canvasW, canvasH, t);
+  ctx.editingHints = previewLiftedId !== undefined;
   let out: SceneLayer[] = [];
   const artAdded = new Set<string>();
   const layers = renderLayers(project, t);
@@ -232,7 +233,12 @@ function toLayer(
   };
   if (item.type === 'text') {
     const r = renderText(
-      item.card,
+      ctx.editingHints && item.card.placeholder
+        ? {
+            ...item.card,
+            runs: item.card.runs.map((r) => ({ ...r, text: '點兩下編輯文字', color: '#aaaaaa' })),
+          }
+        : item.card,
       uiScale(ctx.canvasW, ctx.canvasH),
       Math.min(4, Math.max(2, Math.ceil(item.transform.scale))),
     );

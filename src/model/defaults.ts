@@ -141,7 +141,7 @@ export function createShapeItem(start: number): TextItem {
   return t;
 }
 
-export function createTextItem(start: number, text = '點兩下編輯文字'): TextItem {
+export function createTextItem(start: number, text?: string): TextItem {
   return {
     id: newId('i_'),
     type: 'text',
@@ -149,10 +149,11 @@ export function createTextItem(start: number, text = '點兩下編輯文字'): T
     duration: TEXT_DEFAULT_DURATION,
     transform: { x: 0.5, y: 0.5, scale: 1, rotation: 0, opacity: 1 },
     card: {
+      ...(text === undefined ? { placeholder: true } : {}),
       align: 'center',
       runs: [
         {
-          text,
+          text: text ?? '',
           fontId: 'system',
           size: 96,
           color: '#ffffff',

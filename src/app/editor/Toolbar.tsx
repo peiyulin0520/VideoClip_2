@@ -1,3 +1,4 @@
+import { itemName } from '../../engine/itemName';
 import { TonePanel } from './TonePanel';
 import { KeyframeControl } from './KeyframeControl';
 import { evaluatedItem } from '../../engine/keyframes';
@@ -432,9 +433,6 @@ function EditTab({
             />
           </label>
           <div className="sheet-row">
-            <button className="btn" onClick={() => setNaming(false)}>
-              取消
-            </button>
             <button
               className="btn primary"
               disabled={!nameDraft.trim()}
@@ -547,13 +545,7 @@ function LayersTab() {
       </div>
       <ul className="layer-list" data-testid="layer-list">
         {layers.map(({ item, track, trackIndex }) => {
-          const asset = isVideoItem(item) ? project.assets.find((a) => a.id === item.assetId) : undefined;
-          const label =
-            item.type === 'text'
-              ? item.card.runs[0]?.text === ''
-                ? '圖形'
-                : `文字：${item.card.runs[0]?.text.slice(0, 8) ?? ''}`
-              : (item.name ?? asset?.name ?? '素材');
+          const label = itemName(project, item);
           return (
             <li
               key={item.id}

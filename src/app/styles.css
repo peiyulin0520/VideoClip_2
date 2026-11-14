@@ -3690,3 +3690,46 @@ html {
   text-align: left;
   flex: 1;
 }
+
+.timeline-keyframe {
+  color: #ce714a;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.timeline-keyframe .diamond-shape {
+  width: 12px;
+  height: 12px;
+  background: #dc875b;
+  border: 2px solid #dc875b;
+  transform: rotate(45deg);
+  box-sizing: border-box;
+}
+.timeline-keyframe.selected .diamond-shape {
+  width: 16px;
+  height: 16px;
+  background: #fff;
+  border-color: #d97944;
+}
+.diamond-badge {
+  position: absolute;
+  color: #402318;
+  font-size: 9px;
+  line-height: 1;
+}
+.freeze-button[aria-pressed='true'] svg {
+  stroke: #d97944;
+  fill: #fff;
+}
+
+:root[data-theme] .text-input.area {
+  padding: 12px 10px;
+  line-height: 1.4;
+  min-height: 48px;
+  text-align: left;
+  resize: vertical;
+}
+:root[data-theme] .text-input::placeholder {
+  color: var(--muted);
+  opacity: 0.7;
+}

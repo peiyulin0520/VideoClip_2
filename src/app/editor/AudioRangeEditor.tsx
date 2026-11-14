@@ -1,3 +1,4 @@
+import { itemName } from '../../engine/itemName';
 import { Play, Pause } from 'lucide-react';
 import { Undo2, Redo2 } from 'lucide-react';
 import { useDraftHistory } from '../../ui/useDraftHistory';
@@ -90,7 +91,7 @@ export function AudioRangeEditor({
   };
   return (
     <Sheet open title="選擇保留的聲音片段" onClose={onClose}>
-      <p className="audio-source-name">{item.name?.trim() || asset.name}</p>
+      <p className="audio-source-name">{itemName(project, item)}</p>
       <div className="audio-range-workspace">
         <div className="audio-range-preview">
           {asset.kind === 'video' ? (

@@ -4,9 +4,15 @@
 
 ## 交接快照（VideoClip_2 最新狀態）
 - 分支 codex/editing-refinements，前輪 PR #11 已合併，本輪另開新 PR；前輪色調 source8987248 已369單元/156瀏覽器通過，本輪新增需求尚未驗收。
-- A 階段已實作：裁切穩定 canvas、四工具同列、來源 UV 縮放、undo/redo、有聲來源預覽、X 捨棄；370單元與 check 通過，瀏覽器待本次 Actions。其餘定格＋使用者23點；清單 docs/plans/2026-11-14-editing-refinements.md。先裁切/有聲選段與 A/B/C 來源錯位，再定格、共用介面、版型群組。
+- A 階段已實作：裁切穩定 canvas、四工具同列、來源 UV 縮放、undo/redo、有聲來源預覽、X 捨棄；374單元與 check 通過，瀏覽器待新版 Actions。其餘定格＋使用者23點；清單 docs/plans/2026-11-14-editing-refinements.md。先裁切/有聲選段與 A/B/C 來源錯位，再定格、共用介面、版型群組。
 - 基線 npm run check 已通過；本輪不可引用前輪截圖作新驗收。私有參考錄影只留 /tmp。
 - 不等待使用者批准實作；完成測試後更新 PR，由使用者自行 Merge。Safari 真機仍待 PLAN §7。
+
+## 本輪追加狀態
+
+- PR #12 draft：定格選取／近鄰新增與刪除、四種原地動作、全頁素材名稱／分離原音繼承、真 placeholder 已實作。音訊解碼元素重綁會清舊 seek 節流；ABC 資料回歸保持 C trimIn。
+- 374 單元與 check 通過；Actions43618211529 的舊裁切18項成功，新2項因測試未選素材失敗，已補實際點素材。新增定格及ABC原生時間驗收待新版，不能宣稱23已實機修好。
+- 其餘固定基地/自訂比例、版型來源 popup、多組與輪序群組仍進行中。定格短動作僅解析 transform，播放期間不刷新菱形選取，避免新增逐幀 UI 負擔。
 
 ## 本輪日誌
 

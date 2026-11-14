@@ -126,7 +126,14 @@ export function separateAudio(id: string) {
   if (!item || item.type !== 'video') throw Error('請選擇有原音的影片');
   const asset = p.assets.find((a) => a.id === item.assetId);
   if (!asset?.hasAudio) throw Error('這個素材沒有音訊');
-  const audio: VideoItem = { ...item, type: 'audio', id: newId('i_'), audioEnabled: true };
+  const audio: VideoItem = {
+    ...item,
+    name: undefined,
+    sourceItemId: item.id,
+    type: 'audio',
+    id: newId('i_'),
+    audioEnabled: true,
+  };
   useProjectStore.getState().apply(
     (d) => {
       const target = d.tracks.flatMap((t) => t.items).find((x) => x.id === id)!;

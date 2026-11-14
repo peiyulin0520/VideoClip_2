@@ -476,9 +476,6 @@ function EditorBody() {
           autoFocus
         />
         <div className="sheet-row">
-          <button className="btn" onClick={() => setRenaming(false)}>
-            取消
-          </button>
           <button
             className="btn primary"
             onClick={() => {

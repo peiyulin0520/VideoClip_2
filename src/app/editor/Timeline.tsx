@@ -1,3 +1,4 @@
+import { itemName } from '../../engine/itemName';
 import { itemCategory, laneCategory, LANE_NAMES, type LaneCategory } from '../../engine/batchLayers';
 import { BatchLayerBar } from './BatchLayerBar';
 import { HoldButton } from '../../ui/HoldButton';
@@ -19,6 +20,8 @@ import { toast, useUI } from '../../store/uiStore';
 import { setTimelineItems } from '../../engine/groupTiming';
 import { trackFamily, itemFamily, FAMILY_LABELS, type LayerDrop } from '../../engine/layerEditing';
 import { canPlace, findFreeStart } from '../../engine/timeline';
+import { keyframeAt } from '../../engine/keyframes';
+import { LOCAL_MOTIONS } from '../../engine/keyframeMotion';
 import { Sheet } from '../../ui/Sheet';
 import {
   groupTimelineEffectBadges,
@@ -70,7 +73,7 @@ function Tiles({
   if (!strip)
     return (
       <div className="tiles no-thumb" data-testid="clip-name">
-        {asset?.name ?? ''} · 建立縮圖中
+        {item.name?.trim() || asset?.name || '素材'} · 建立縮圖中
       </div>
     );
   const tiles = filmstripSegments(item, strip, from, to);
@@ -121,6 +124,20 @@ export function Timeline({
   const project = useProjectStore((s) => s.project)!;
   const selectedId = useProjectStore((s) => s.selectedId);
   const player = useUI((s) => s.player);
+  const [playState, setPlayState] = useState({
+    time: player?.time ?? 0,
+    playing: player?.isPlaying ?? false,
+  });
+  useEffect(
+    () =>
+      player?.subscribe((time, playing) =>
+        setPlayState((before) => (playing && before.playing ? before : { time, playing })),
+      ),
+    [player],
+  );
+  useEffect(() => {
+    useUI.setState({ keyframePps: pps });
+  }, [pps]);
   const scrollRef = useRef<HTMLDivElement>(null);
   const lastSet = useRef(-100);
   const half = 56;
@@ -707,7 +724,7 @@ export function Timeline({
                       data-kind={it.type}
                       role="button"
                       tabIndex={0}
-                      aria-label={`選取${it.name ?? (it.type === 'text' ? '文字' : (asset?.name ?? '素材'))}`}
+                      aria-label={`選取${itemName(project, it)}`}
                       onClick={(e) => e.stopPropagation()}
                       onKeyDown={(e) => {
                         if (e.target !== e.currentTarget) return;
@@ -748,7 +765,9 @@ export function Timeline({
                             ? `${track.name} · ${track.items.length} 格`
                             : it.type === 'text'
                               ? it.card.runs[0]?.text === ''
-                                ? '圖形'
+                                ? it.card.placeholder
+                                  ? '文字'
+                                  : '圖形'
                                 : `Aa ${it.card.runs[0]?.text.replace(/\n/g, ' ') ?? ''}`
                               : `${asset?.generated ? '留白' : (asset?.name ?? (it.type === 'audio' ? '♫ 音訊' : '素材'))} ${it.duration.toFixed(1)}s`}
                         {isVideoItem(it) && it.speed !== 1 && ` · ${it.speed}x`}
@@ -757,17 +776,32 @@ export function Timeline({
                       {(track.template ? track.layout?.keyframes : it.keyframes)?.map((frame, i) => (
                         <button
                           key={frame.time}
-                          className="timeline-keyframe"
+                          className={`timeline-keyframe${!playState.playing && selectedId === it.id && keyframeAt({ keyframes: track.template ? track.layout?.keyframes : it.keyframes }, playState.time - (track.layout?.start ?? it.start), 7 / pps) === frame ? ' selected' : ''}`}
+                          aria-pressed={
+                            !playState.playing &&
+                            selectedId === it.id &&
+                            keyframeAt(
+                              { keyframes: track.template ? track.layout?.keyframes : it.keyframes },
+                              playState.time - (track.layout?.start ?? it.start),
+                              7 / pps,
+                            ) === frame
+                          }
                           aria-label={`第${i + 1}個定格 ${frame.time.toFixed(2)}秒`}
                           style={{ left: Math.min(it.duration * pps - 4, frame.time * pps) }}
                           onPointerDown={(e) => e.stopPropagation()}
                           onClick={(e) => {
                             e.stopPropagation();
                             useProjectStore.getState().select(it.id);
+                            player?.pause();
                             player?.seek(it.start + Math.min(it.duration - 0.001, frame.time));
                           }}
                         >
-                          ◆
+                          <span className="diamond-shape" />
+                          {frame.motion && (
+                            <span className="diamond-badge">
+                              {LOCAL_MOTIONS.find((m) => m.kind === frame.motion?.kind)?.badge}
+                            </span>
+                          )}
                         </button>
                       ))}
                       {asset?.hasAudio && it.type === 'video' && (
