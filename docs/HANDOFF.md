@@ -1,10 +1,11 @@
 # 交接手冊（HANDOFF）
 
 ## VideoClip_2 當前交接（優先於以下來源 repo 的歷史紀錄）
-- 2026-11-14新追加待驗：單素材起/迄去序號、compact Sheet及選秒預覽同步；載入返回與同秒效果按鈕按內容寬且44px高。SourceRanges numberedMarkers預設true，其餘多組不變；單端不做crowded讓單一標記無需多留一列。瀏覽器驗三款直向同頁、長片82秒藍色。下列343/145是追加前成功，不能當本輪驗收；需新CI/成功截圖/PR10。
-- 最終狀態（2026-11-14）：[Actions 43551904638](https://github.com/peiyulin0520/VideoClip_2/actions/runs/43551904638)：驗收程式 7726486778f07ce4ea0dd6da44e05c802bfa7639 的343單元、145 Chromium e2e全過，另21項快速情境全過（為完整情境的子集）；lint/格式/TypeScript/build/Pages/39字體檢查成功。artifact 14096564736，ZIP SHA-256 `80c808f6180a5ebd287714f4c06844e17ba27868645557af40a6d6d6a3a4899d` 已核對；179張成功截圖，anchored-playback包含8張。最後文件/截圖提交不改已驗收的程式、測試或設定。PR #10仍由使用者自行Merge，Safari待真機。
-- 架構要點：原檔urlFor與previewUrlFor分離；新素材只準備新proxy、不重建主player，完成讀當下time；destroy忽略舊回呼，listener以快照通知。縮圖120格上限只限制密度，全寬均分並跨全來源取樣，寬格內自然比例重複，不拉扁、不留白。
-- 121秒自製長片的82秒及放大覆蓋測試已成功；主播放、匯出與原來源不變。當前沒有待修程式，最後交付只文件/成功截圖；下一步是使用者Merge後真機確認。
+- 本輪最終（2026-11-14）：[Actions 43554041782](https://github.com/peiyulin0520/VideoClip_2/actions/runs/43554041782)：驗收程式 `7f94416abd5d2889fe4c997b5cacd1590f1d070f` 的343單元、145 Chromium e2e全過，另25項快速情境全過（完整測試子集）；lint/格式/TypeScript/build/Pages/PWA及39字體檢查成功。artifact `14097094861`，ZIP SHA-256 `58ba0cc5f74d9d18a94e229fa74ca8ff477f0754366d1be56d952f6eb47540ac` 已核對；180張成功截圖，本次anchored-playback有9張。最後提交只更新文件/截圖，與驗收程式的產品、測試及設定完全一致。PR #10保持未合併，由使用者自行Merge後發布；Safari待真機。
+- 單素材EffectTimingEditor使用single-effect-timing Sheet；SourceRanges numberedMarkers預設true，單素材false，editableSides只有一邊時不套crowded。44px高完整軸與依dvh調整的預覽、兩欄膠囊秒數同頁；填秒數seek至可調端點，片尾取duration-0.001避免超出素材而黑畫面。隱藏aria仍保留組名供輔助工具辨識，不影響可見標籤。
+- 載入返回Link明確inline-flex/內容寬/居中/44px高；同秒效果選擇各自一列、內容寬/max100%，長名稱可換行。保持操作字級與其他多組編號。四張最新UI已人工檢視，手機三尺寸及長片82秒實際預覽回歸成功。
+- 播放架構：urlFor原檔、previewUrlFor只供預覽；新素材只準備新proxy、不重建主player，完成讀當下time。destroy忽略舊回呼、listener快照。縮圖120格預算只限制密度，跨來源全長取樣；近時間抽樣不等於每幀截圖，精確定位看預覽。
+- 當前無待修程式。最後提交僅文件/成功截圖；使用者自行Merge PR10後發布。Safari鍵盤、安全區、長片/HEVC/HDR、音畫及背景返回見PLAN §7；以下待驗均歷史。
 
 ### 先前處理過程（歷史；以下待驗不代表當前狀態）
 - 最新追加7726486/Actions43551904638：快速21全過、完整145執行中；長片8d後追加。需等完整成功/下載新artifact（預期179 PNG）/更新全部圖與文件/最後check/doc commit skip-ci/推PR10；當前未提交舊178圖與README/USAGE需覆寫後交付。勿代Merge。

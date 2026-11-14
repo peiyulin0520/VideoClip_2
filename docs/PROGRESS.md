@@ -3,13 +3,12 @@
 規則：每完成一個有意義的步驟，就在同一個 commit 裡 **覆寫「交接快照」** 並 **在「日誌」最上面新增一筆**（規則全文見 `AGENTS.md`「紀錄規則」，背景與架構見 `docs/HANDOFF.md`）。
 
 ## 交接快照（VideoClip_2 最新狀態）
-- 最新追加（2026-11-14，待本輪CI）：使用者確認長片縮圖必須跨全來源取樣；縮小載入返回/同秒效果按鈕外形，單素材僅起或迄、緊湊同頁預覽/時間軸/膠囊秒數，輸入秒數即同步預覽。已強化320/375/390直向布局與82秒預覽回歸。下列435519成功是此追加前基線，需等待本輪CI與新截圖再交付。
-- 2026-11-14 / codex/establish-little-moments；驗收程式7726486778f07ce4ea0dd6da44e05c802bfa7639。PR #10已完成驗收，open未合併；最後提交僅文件/成功截圖。
-- 已完成：真正本機540/720等品質proxy與快取、實際載入100%才編輯、防自動播、分離audio pool、lazy WebAudio/平滑gain/limiter、seek/速率/晚到回呼保護。匯入保留主player及當下播放位置；匯出仍用原檔。
-- 單素材開頭B進/結尾A退、單可動標籤與連動秒數、時間軸代表字與scope色別、全頁膠囊表單已完成。長片縮圖預算只限制密度，鋪滿全段；121秒自製素材在82秒及300px/秒放大驗證後段取樣與完整覆蓋，≤120格。
-- [Actions 43551904638](https://github.com/peiyulin0520/VideoClip_2/actions/runs/43551904638)：驗收程式 7726486778f07ce4ea0dd6da44e05c802bfa7639 的343單元、145 Chromium e2e全過，另21項快速情境全過（為完整情境的子集）；lint/格式/TypeScript/build/Pages/39字體檢查成功。artifact 14096564736，ZIP SHA-256 `80c808f6180a5ebd287714f4c06844e17ba27868645557af40a6d6d6a3a4899d` 已核對；179張成功截圖，anchored-playback包含8張。最後文件/截圖提交不改已驗收的程式、測試或設定。PR #10仍由使用者自行Merge，Safari待真機。
-- 已人工檢視新增長片/載入閘/表單/代表字畫面；前輪相同介面另已檢視固定單素材、A/B起迄、快取及分離聲音畫面。最終本機npm run check與git diff --check成功。
-- 下一步：使用者自行Merge PR #10後main Actions才發布，再依PLAN.md §7以iPhone Safari實測HEVC/HDR長片、背景返回、音畫與手勢。無待補資料；不代Merge、不推main。以下舊待CI/失敗紀錄僅為歷史。
+- 2026-11-14 / codex/establish-little-moments；本輪驗收程式7f94416abd5d2889fe4c997b5cacd1590f1d070f。PR #10 ready、open未合併；最後交付僅文件/成功截圖。
+- 本輪已完成：載入返回/同秒特效選擇按鈕依內容縮寬並置中，保留44px觸控；單素材僅「起／迄」不編號，預覽/完整時間軸/秒數與套用控制在手機直向同頁。時間軸44px高，單標籤不留多餘crowded列，填端點或時長同步seek與時間讀值。其他多組保留序號。
+- 長片縮圖跨來源全長取樣，後段用後段畫面，格數預算只限制密度；縮圖是近時間抽樣，精確畫面以預覽為準。121秒素材82秒輸入後，實際主預覽與popup畫面均取到藍色後半段。先前真正proxy/快取、載入100%/防自動播、播放生命週期/音訊、固定B進/A退及膠囊表單均保留。
+- [Actions 43554041782](https://github.com/peiyulin0520/VideoClip_2/actions/runs/43554041782)：驗收程式 `7f94416abd5d2889fe4c997b5cacd1590f1d070f` 的343單元、145 Chromium e2e全過，另25項快速情境全過（完整測試子集）；lint/格式/TypeScript/build/Pages/PWA及39字體檢查成功。artifact `14097094861`，ZIP SHA-256 `58ba0cc5f74d9d18a94e229fa74ca8ff477f0754366d1be56d952f6eb47540ac` 已核對；180張成功截圖，本次anchored-playback有9張。最後提交只更新文件/截圖，與驗收程式的產品、測試及設定完全一致。PR #10保持未合併，由使用者自行Merge後發布；Safari待真機。
+- 已人工檢視本輪載入按鈕、同秒效果按鈕、長片82秒同頁精調及退場起標籤共4張；三款390×844、375×667、320×568直向的預覽/軸/欄位/套用可見且Sheet不捲動，瀏覽器斷言通過。本機最終npm run check及git diff --check成功。
+- 下一步：使用者自行Merge PR #10後main Actions發布，再依PLAN.md §7用iPhone Safari確認安全區/鍵盤、長片HEVC/HDR、背景返回、音畫與手勢。無待修程式，不代Merge、不推main。以下舊待CI/失敗均為歷史。
 
 ## 日誌格式（新增一筆時照這個）
 ```
@@ -89,6 +88,12 @@
 - 2026-11-11 找到新字體來源 max32002/pop-gothic（大波浪圓體，含注音）→ 已加入手寫可愛包。問「能不能直接下載到我的 files 下載資料夾」→ 答：網頁在 iPhone 不能自動寫進「檔案」App 資料夾；官方字體存在瀏覽器裡，自己的字體用「匯入字體檔」從檔案 App 選
 
 ## 日誌（最新在最上面）
+- 2026-11-14 單素材同頁精調與按鈕比例最終驗收（PR #10）
+  - [Actions 43554041782](https://github.com/peiyulin0520/VideoClip_2/actions/runs/43554041782)：驗收程式 `7f94416abd5d2889fe4c997b5cacd1590f1d070f` 的343單元、145 Chromium e2e全過，另25項快速情境全過（完整測試子集）；lint/格式/TypeScript/build/Pages/PWA及39字體檢查成功。artifact `14097094861`，ZIP SHA-256 `58ba0cc5f74d9d18a94e229fa74ca8ff477f0754366d1be56d952f6eb47540ac` 已核對；180張成功截圖，本次anchored-playback有9張。最後提交只更新文件/截圖，與驗收程式的產品、測試及設定完全一致。PR #10保持未合併，由使用者自行Merge後發布；Safari待真機。
+  - 驗證：三款手機直向同頁不捲動、單標籤起/迄無序號、數字秒數/時長聯動與定位、長片82秒主畫面及popup藍色、縮寬按鈕44px高，全部通過。原本播放/匯出/雙素材及其他多組選段回歸保留。
+  - 更新：180張成功畫面、README/USAGE/PLAN/AGENTS、規格計畫及交接；新圖anchored-playback/compact-long-single-effect.png，另3張按鈕/退場圖已人工檢視。
+  - 下一步：由使用者Merge；Safari安全區與鍵盤待真機。下列待驗紀錄為過程。
+
 - 2026-11-14 單素材特效同頁精調與按鈕比例（本輪待CI）
   - 為單素材Sheet加入獨立緊湊樣式與不編號標籤，時間軸44px高、預覽依手機高度調整，填秒數即seek並顯示當下秒數；保留單端固定/時長聯動、取消復原。
   - 載入返回連結改inline-flex/內容寬，同秒效果選擇各自成列/內容寬，仍44px觸控。SourceRanges其他多組功能保留序號。

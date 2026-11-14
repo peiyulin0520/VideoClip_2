@@ -17,13 +17,13 @@
 參考來源：[VideoClip](https://github.com/peiyulin0520/VideoClip)，主要比對src/engine/player.ts、mediaPool.ts、audio.ts、proxy.ts、proxyQueue.ts、assetUrls.ts、previewQuality.ts；保留VideoClip_2獨立資料庫/OPFS命名。
 
 ## 驗證
-- [Actions 43551904638](https://github.com/peiyulin0520/VideoClip_2/actions/runs/43551904638)：驗收程式 7726486778f07ce4ea0dd6da44e05c802bfa7639 的343單元、145 Chromium e2e全過，另21項快速情境全過（為完整情境的子集）；lint/格式/TypeScript/build/Pages/39字體檢查成功。artifact 14096564736，ZIP SHA-256 `80c808f6180a5ebd287714f4c06844e17ba27868645557af40a6d6d6a3a4899d` 已核對；179張成功截圖，anchored-playback包含8張。最後文件/截圖提交不改已驗收的程式、測試或設定。PR #10仍由使用者自行Merge，Safari待真機。
-- 七個新增情境涵蓋：匯入/追加/套版/返回及定位；同秒代表字；六主題表單；真實readyState閘、防自動播、0秒重播/速率/捲頁/popup與音訊能量；分離audio；540→720真proxy/快取/原檔細線匯出；121秒長片82秒及放大後縮圖覆蓋。其餘既有來源、模板、字級及匯出回歸均保留。
-- 先前失敗run及8d27981的343/144成功屬過程；最終證據以7726486與43551904638為準。
-- 參考VideoClip版本[0d6df7d](https://github.com/peiyulin0520/VideoClip/commit/0d6df7d0f133fa037fa868dfcc10ab718c87d529)。Safari長片/HEVC/HDR、低記憶體、背景返回及聲音仍需真機，不能以Chromium聲稱手機皆順暢。
+- [Actions 43554041782](https://github.com/peiyulin0520/VideoClip_2/actions/runs/43554041782)：驗收程式 `7f94416abd5d2889fe4c997b5cacd1590f1d070f` 的343單元、145 Chromium e2e全過，另25項快速情境全過（完整測試子集）；lint/格式/TypeScript/build/Pages/PWA及39字體檢查成功。artifact `14097094861`，ZIP SHA-256 `58ba0cc5f74d9d18a94e229fa74ca8ff477f0754366d1be56d952f6eb47540ac` 已核對；180張成功截圖，本次anchored-playback有9張。最後提交只更新文件/截圖，與驗收程式的產品、測試及設定完全一致。PR #10保持未合併，由使用者自行Merge後發布；Safari待真機。
+- 25項快速情境與完整145情境均成功；在既有情境加強三款手機直向同頁不捲動、縮寬按鈕44px高度、無序號標籤與121秒素材82秒數字定位的主畫面及popup藍色像素。未移除原有播放/音訊/匯出或多組斷言。
+- 已人工檢視載入返回、同秒效果選擇、單素材退場起標籤及長片82秒同頁配置4張；本機最終check及diff檢查成功。43551904638等之前run只作歷史，不能當本輪證據。
+- 參考VideoClip版本[0d6df7d](https://github.com/peiyulin0520/VideoClip/commit/0d6df7d0f133fa037fa868dfcc10ab718c87d529)。Safari真機限制見PLAN §7，不能以Chromium聲稱所有手機皆順暢。
 
 ## 2026-11-14 長片縮圖追加
 使用者指定舊VideoClip只參考播放，指出1分鐘後縮圖空白但影片能繼續。本repo也發現固定120格搭固定寬會截斷顯示；120格只作DOM預算，現在按片段全寬分配格寬，來源取樣跨全段，寬格內自然比例repeat-x以免拉扁。影片播放/匯出不改。新增121秒小型自製素材，在82秒及300px/秒放大下檢查縮圖鋪滿且後半取樣藍色，格數不超過120；已隨完整145 e2e通過，新畫面為anchored-playback/long-filmstrip-after-minute.png。此低fps素材只驗縮圖覆蓋，不當作播放順暢度效能證據。
 
-## 2026-11-14 單素材同頁精調追加（待本輪驗收）
-單素材標籤及欄位只起/迄不編號，完整片長時間軸高度44px，預覽按直向可視高度調整，預覽/軸/秒數在同頁。填秒數與拖標籤同步實際預覽及時間讀值，長片仍可精調。載入返回與同秒特效選擇按鈕內容寬/44px高。既有瀏覽器情境加320×568、375×667、390×844布局與82秒藍色畫面驗證；等待本輪CI，上一驗收只作基線。
+## 2026-11-14 單素材同頁精調追加（已驗收）
+單素材標籤及欄位只起/迄不編號，完整片長時間軸高度44px，預覽按直向可視高度調整，預覽/軸/秒數在同頁。填秒數與拖標籤同步實際預覽及時間讀值，長片仍可精調。載入返回與同秒特效選擇按鈕內容寬/44px高。既有瀏覽器情境加320×568、375×667、390×844布局與82秒藍色畫面驗證；本輪343單元/145瀏覽器/25快速驗收全過，最新畫面已保存；上一驗收只作歷史。
