@@ -22,7 +22,7 @@ npm run check
 npm run e2e -- --trace off
 ```
 
-`check` 包含 lint、331 個單元測試、TypeScript、正式建置及 GitHub Pages 路徑/PWA/字體檔案檢查。138 個瀏覽器測試（含完整影片/音訊解碼、收藏、GIF、手動遮罩、Key 與主題）交由 GitHub Actions 的 Chromium 153 執行，CI 保存截圖 artifact；最新成功狀態見 PROGRESS.md。本次已更新 171 張 CI 畫面（docs/screenshots）中文可讀；iPhone Safari 仍待真機驗證。
+`check` 包含 lint、343 個單元測試、TypeScript、正式建置及 GitHub Pages 路徑/PWA/字體檔案檢查。145 個瀏覽器測試（含完整影片/音訊解碼、收藏、GIF、手動遮罩、Key 與主題）交由 GitHub Actions 的 Chromium 153 執行，CI 保存截圖 artifact；最新成功狀態見 PROGRESS.md。本次已更新 179 張 CI 畫面（docs/screenshots）中文可讀；iPhone Safari 仍待真機驗證。
 
 ## GitHub Pages
 
@@ -161,3 +161,6 @@ GIF 解碼器 gifuct-js 2.1.2 為 MIT，授權位於 public/licenses。輸出含
 依VideoClip的播放方式加入真正本機輕量預覽檔與快取，載入進度完成後才開放編輯，禁止無操作自動播放；減少重複seek/速率更新，分離聲音使用audio元素，音量平滑切換並限制混音峰值。原始檔與匯出畫質保留。
 
 單素材僅開頭B進場／結尾A退場，固定一端，只顯示1迄或1起，秒數與時長連動；兩片銜接仍維持原總長。時間軸代表字區分單素材與銜接，同秒效果可選擇。全頁填寫框及下拉統一淺棕無黑框膠囊。最新驗收見[進度](docs/PROGRESS.md)，Safari播放仍待真機。
+
+
+最新播放/表單/固定單素材及長片縮圖驗收：[Actions 43551904638](https://github.com/peiyulin0520/VideoClip_2/actions/runs/43551904638)：驗收程式 7726486778f07ce4ea0dd6da44e05c802bfa7639 的343單元、145 Chromium e2e全過，另21項快速情境全過（為完整情境的子集）；lint/格式/TypeScript/build/Pages/39字體檢查成功。artifact 14096564736，ZIP SHA-256 `80c808f6180a5ebd287714f4c06844e17ba27868645557af40a6d6d6a3a4899d` 已核對；179張成功截圖，anchored-playback包含8張。最後文件/截圖提交不改已驗收的程式、測試或設定。PR #10仍由使用者自行Merge，Safari待真機。 [本次8張操作畫面](docs/screenshots/anchored-playback/) · [操作說明](docs/USAGE.md#特效代表字及穩定預覽pr-10追加)。

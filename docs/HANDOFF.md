@@ -1,6 +1,13 @@
 # 交接手冊（HANDOFF）
 
 ## VideoClip_2 當前交接（優先於以下來源 repo 的歷史紀錄）
+- 最終狀態（2026-11-14）：[Actions 43551904638](https://github.com/peiyulin0520/VideoClip_2/actions/runs/43551904638)：驗收程式 7726486778f07ce4ea0dd6da44e05c802bfa7639 的343單元、145 Chromium e2e全過，另21項快速情境全過（為完整情境的子集）；lint/格式/TypeScript/build/Pages/39字體檢查成功。artifact 14096564736，ZIP SHA-256 `80c808f6180a5ebd287714f4c06844e17ba27868645557af40a6d6d6a3a4899d` 已核對；179張成功截圖，anchored-playback包含8張。最後文件/截圖提交不改已驗收的程式、測試或設定。PR #10仍由使用者自行Merge，Safari待真機。
+- 架構要點：原檔urlFor與previewUrlFor分離；新素材只準備新proxy、不重建主player，完成讀當下time；destroy忽略舊回呼，listener以快照通知。縮圖120格上限只限制密度，全寬均分並跨全來源取樣，寬格內自然比例重複，不拉扁、不留白。
+- 121秒自製長片的82秒及放大覆蓋測試已成功；主播放、匯出與原來源不變。當前沒有待修程式，最後交付只文件/成功截圖；下一步是使用者Merge後真機確認。
+
+### 先前處理過程（歷史；以下待驗不代表當前狀態）
+- 最新追加7726486/Actions43551904638：快速21全過、完整145執行中；長片8d後追加。需等完整成功/下載新artifact（預期179 PNG）/更新全部圖與文件/最後check/doc commit skip-ci/推PR10；當前未提交舊178圖與README/USAGE需覆寫後交付。勿代Merge。
+
 - 2026-11-14追加長片縮圖待CI：Tiles原120格截斷可見長度，改120格分配完整片段寬度/格內重複原比例圖，採樣來源按全長走。121秒自製紅→藍素材/e2e驗82秒與放大覆蓋及≤120。前輪8d成功343/144是追加前，本輪需145新驗收再交付。
 
 - 最新最終：[Actions 43521756301](https://github.com/peiyulin0520/VideoClip_2/actions/runs/43521756301)：版本 8d27981dc9079b58ffb000798e1e6e4256099861 的343單元、144 Chromium e2e全過，另20項快速情境全過；lint/格式/TypeScript/build/Pages/39字體檢查成功。artifact 14083907571，ZIP SHA-256 8427f0ee5cdcc9a9d9a3021f0b50035f95f9ab6750ec781e0dc9864521b9261d 已核對；178張成功截圖，包含anchored-playback新增7張。新7張及固定單素材/A-B起迄畫面已人工檢視。最後文件/截圖提交不改驗收的產品、測試或設定。PR #10仍由使用者自行Merge，Safari待真機。
