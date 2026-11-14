@@ -8,18 +8,20 @@ export function Sheet({
   onClose,
   children,
   titleAction,
+  className = '',
 }: {
   open: boolean;
   title: string;
   onClose: () => void;
   children: ReactNode;
   titleAction?: ReactNode;
+  className?: string;
 }) {
   if (!open) return null;
   return createPortal(
     <div className="sheet-backdrop" onClick={onClose}>
       <div
-        className="sheet"
+        className={`sheet${className ? ` ${className}` : ''}`}
         role="dialog"
         aria-label={title}
         aria-modal="true"

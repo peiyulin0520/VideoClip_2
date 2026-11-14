@@ -3459,10 +3459,50 @@ html {
   margin: 4px 0;
 }
 .preview-loading-card .btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  justify-self: start;
+  min-height: 44px;
+  flex: none;
   text-decoration: none;
   color: var(--fg);
   background: var(--control);
   border-radius: 999px;
+}
+.effect-badge-choices .btn {
+  display: flex;
+  width: fit-content;
+  max-width: 100%;
+  min-height: 44px;
+  margin-block: 4px;
+  text-align: start;
+  flex: none;
+}
+/* A single edge needs one marker, so the preview and complete strip fit together. */
+.single-effect-timing .project-preview {
+  justify-content: center;
+  margin-block: 0;
+}
+.single-effect-timing .project-preview canvas {
+  width: auto;
+  height: clamp(64px, calc(100dvh - 520px - var(--safe-top) - var(--safe-bottom)), 160px);
+  max-width: calc(100% - 54px);
+}
+.single-effect-timing .effect-timing-cursor {
+  margin: 4px 0;
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+}
+.single-effect-timing .hint {
+  margin-block: 4px;
+}
+.single-effect-timing .source-range.marker-range {
+  height: 44px;
+  margin-block: 54px 8px;
+}
+.single-effect-timing .source-marker {
+  top: -64px;
 }
 .preview-loading-card .primary {
   background: var(--accent);

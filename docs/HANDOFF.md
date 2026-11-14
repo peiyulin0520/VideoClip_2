@@ -1,6 +1,7 @@
 # 交接手冊（HANDOFF）
 
 ## VideoClip_2 當前交接（優先於以下來源 repo 的歷史紀錄）
+- 2026-11-14新追加待驗：單素材起/迄去序號、compact Sheet及選秒預覽同步；載入返回與同秒效果按鈕按內容寬且44px高。SourceRanges numberedMarkers預設true，其餘多組不變；單端不做crowded讓單一標記無需多留一列。瀏覽器驗三款直向同頁、長片82秒藍色。下列343/145是追加前成功，不能當本輪驗收；需新CI/成功截圖/PR10。
 - 最終狀態（2026-11-14）：[Actions 43551904638](https://github.com/peiyulin0520/VideoClip_2/actions/runs/43551904638)：驗收程式 7726486778f07ce4ea0dd6da44e05c802bfa7639 的343單元、145 Chromium e2e全過，另21項快速情境全過（為完整情境的子集）；lint/格式/TypeScript/build/Pages/39字體檢查成功。artifact 14096564736，ZIP SHA-256 `80c808f6180a5ebd287714f4c06844e17ba27868645557af40a6d6d6a3a4899d` 已核對；179張成功截圖，anchored-playback包含8張。最後文件/截圖提交不改已驗收的程式、測試或設定。PR #10仍由使用者自行Merge，Safari待真機。
 - 架構要點：原檔urlFor與previewUrlFor分離；新素材只準備新proxy、不重建主player，完成讀當下time；destroy忽略舊回呼，listener以快照通知。縮圖120格上限只限制密度，全寬均分並跨全來源取樣，寬格內自然比例重複，不拉扁、不留白。
 - 121秒自製長片的82秒及放大覆蓋測試已成功；主播放、匯出與原來源不變。當前沒有待修程式，最後交付只文件/成功截圖；下一步是使用者Merge後真機確認。

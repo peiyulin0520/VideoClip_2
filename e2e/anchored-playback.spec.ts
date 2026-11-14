@@ -134,6 +134,16 @@ test('時間軸代表字在正確秒數，單素材及銜接不同色，收合�
   await mixed.tap();
   const chooser = page.getByRole('dialog', { name: '此秒數的特效', exact: true });
   await expect(chooser).toBeVisible();
+  const choices = await chooser.locator('button').evaluateAll((buttons) =>
+    buttons.map((button) => {
+      const b = button.getBoundingClientRect();
+      return { height: b.height, width: b.width, row: button.parentElement!.clientWidth };
+    }),
+  );
+  for (const b of choices) {
+    expect(b.height).toBe(44);
+    expect(b.width).toBeLessThan(b.row - 20);
+  }
   await shot(page, 'same-time-effect-choices');
   await chooser.getByRole('button', { name: /單素材特效.*solid-green/ }).tap();
   await expect(page.getByRole('button', { name: '進場', exact: true })).toHaveAttribute(
@@ -237,6 +247,10 @@ test('真實載入完成前禁止編輯，無自動播放；重播0秒、捲頁�
   await expect(page.locator('.editor')).toHaveAttribute('inert', '');
   const progress = await loading.getByRole('progressbar').getAttribute('value');
   expect(Number(progress)).toBeLessThan(100);
+  const back = await loading.getByRole('link', { name: '返回專案列表', exact: true }).boundingBox();
+  const card = await loading.locator('.preview-loading-card').boundingBox();
+  expect(back!.height).toBe(44);
+  expect(back!.width).toBeLessThan(card!.width * 0.6);
   await shot(page, 'loading-before-ready');
   await page.evaluate(() => ((window as unknown as { allowDecode: boolean }).allowDecode = true));
   await ready(page);
@@ -425,4 +439,24 @@ test('兩分鐘影片超過一分鐘後仍鋪滿取樣縮圖，放大時間軸�
   await coverage();
   await page.getByTestId('timeline-scroll').scrollIntoViewIfNeeded();
   await shot(page, 'long-filmstrip-after-minute');
+  await openTab(page, '特效');
+  await page.getByRole('button', { name: '單一素材', exact: true }).tap();
+  await page.getByRole('button', { name: '進場：疊化', exact: true }).tap();
+  await page.getByRole('button', { name: '調整特效起迄', exact: true }).tap();
+  const timing = page.getByRole('dialog', { name: '特效起迄', exact: true });
+  await expect(timing.locator('.source-marker')).toHaveText('▼迄');
+  await timing.getByLabel('第1組特效終點', { exact: true }).fill('82');
+  await expect(timing.getByLabel('目前特效預覽時間')).toHaveText(/82.00/);
+  await expect(timing.getByLabel('第1組特效時長', { exact: true })).toHaveValue('82');
+  await expect.poll(async () => isBlue(await samplePreview(page, 0.5, 0.5))).toBe(true);
+  await expect
+    .poll(() =>
+      timing.getByLabel('特效結果畫面', { exact: true }).evaluate((el) => {
+        const canvas = el as HTMLCanvasElement;
+        const c = canvas.getContext('2d')!.getImageData(canvas.width / 2, canvas.height / 2, 1, 1).data;
+        return c[2]! > 100 && c[0]! < 40;
+      }),
+    )
+    .toBe(true);
+  await shot(page, 'compact-long-single-effect');
 });

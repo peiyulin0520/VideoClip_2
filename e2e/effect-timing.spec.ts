@@ -100,7 +100,7 @@ test('單素材固定開頭B進或結尾A退，僅一個可調標籤、時長連
   await createProjectWith(page, ['timing-video.webm']);
   await single(page);
   await expect(sheet(page).locator('.source-marker')).toHaveCount(1);
-  await expect(sheet(page).locator('.source-marker')).toHaveText('▼1迄');
+  await expect(sheet(page).locator('.source-marker')).toHaveText('▼迄');
   await expect(
     sheet(page).getByRole('button', { name: '在白線位置新增一組起迄標記', exact: true }),
   ).toHaveCount(0);
@@ -134,7 +134,7 @@ test('單素材固定開頭B進或結尾A退，僅一個可調標籤、時長連
   await page.getByRole('button', { name: '出場：向左推移', exact: true }).tap();
   await page.getByRole('button', { name: '調整特效起迄', exact: true }).tap();
   await expect(sheet(page).locator('.source-marker')).toHaveCount(1);
-  await expect(sheet(page).locator('.source-marker')).toHaveText('▼1起');
+  await expect(sheet(page).locator('.source-marker')).toHaveText('▼起');
   await expect(sheet(page).getByLabel('第1組特效終點', { exact: true })).toHaveCount(0);
   await sheet(page).getByLabel('第1組特效時長', { exact: true }).fill('3');
   const duration = (await current(page)).tracks[0]!.items[0]!.duration;
@@ -145,6 +145,30 @@ test('單素材固定開頭B進或結尾A退，僅一個可調標籤、時長連
   await expect(sheet(page).getByLabel('第1組特效時長', { exact: true })).toHaveValue(
     String(Number((duration - 8).toFixed(2))),
   );
+  await expect(sheet(page).getByLabel('目前特效預覽時間')).toHaveText(`8.00 / ${duration.toFixed(2)} 秒`);
+  // Preview, marker strip and fine fields must all fit without scrolling a portrait phone.
+  for (const viewport of [
+    { width: 390, height: 844 },
+    { width: 375, height: 667 },
+    { width: 320, height: 568 },
+  ]) {
+    await page.setViewportSize(viewport);
+    const layout = await sheet(page).evaluate((el) => {
+      const visible = ['canvas', '.source-range', '.single-edge-fields', '.sheet-row'].map((selector) => {
+        const b = el.querySelector(selector)!.getBoundingClientRect();
+        return b.top >= 0 && b.bottom <= innerHeight && b.left >= 0 && b.right <= innerWidth;
+      });
+      return {
+        visible,
+        scroll: el.scrollHeight - el.clientHeight,
+        strip: el.querySelector('.source-range')!.clientHeight,
+      };
+    });
+    expect(layout.visible).toEqual([true, true, true, true]);
+    expect(layout.scroll).toBeLessThanOrEqual(1);
+    expect(layout.strip).toBe(44);
+  }
+  await page.setViewportSize({ width: 390, height: 844 });
   await shot(page, 'anchored-single-range-and-undo');
 });
 

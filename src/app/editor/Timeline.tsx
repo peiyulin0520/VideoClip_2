@@ -506,7 +506,12 @@ export function Timeline({
 
   return (
     <>
-      <Sheet open={!!badgeChoice} title="此秒數的特效" onClose={() => setBadgeChoice(null)}>
+      <Sheet
+        open={!!badgeChoice}
+        title="此秒數的特效"
+        className="effect-badge-choices"
+        onClose={() => setBadgeChoice(null)}
+      >
         {badgeChoice?.map((b) => {
           const item = project.tracks.flatMap((t) => t.items).find((it) => it.id === b.itemId);
           const name =

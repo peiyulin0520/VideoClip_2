@@ -15,6 +15,7 @@ export function SourceRanges({
   onEditStart,
   onEditEnd,
   editableSides = [0, 1],
+  numberedMarkers = true,
 }: {
   duration: number;
   ranges: [number, number][];
@@ -29,6 +30,7 @@ export function SourceRanges({
   onEditStart?: () => void;
   onEditEnd?: () => void;
   editableSides?: number[];
+  numberedMarkers?: boolean;
 }) {
   const markers = markerRanges ?? ranges;
   const bar = useRef<HTMLDivElement>(null);
@@ -164,7 +166,7 @@ export function SourceRanges({
             : [
                 <button
                   key={`${index}-${side}`}
-                  className={`source-marker ${side ? 'end' : 'start'}${side && (((r[1] - r[0]) / duration) * width < 44 || (markers[index + 1] && ((markers[index + 1]![0] - r[1]) / duration) * width < 44)) ? ' crowded' : ''}`}
+                  className={`source-marker ${side ? 'end' : 'start'}${editableSides.length > 1 && side && (((r[1] - r[0]) / duration) * width < 44 || (markers[index + 1] && ((markers[index + 1]![0] - r[1]) / duration) * width < 44)) ? ' crowded' : ''}`}
                   aria-label={`${markerLabel ? `第${index + 1}組${markerLabel}` : markers.length > 1 ? `第${index + 1}段` : '來源'}${side ? '終點' : '起點'}標記`}
                   title={`${side ? '終點' : '起點'} ${v.toFixed(2)} 秒`}
                   style={{ left: `${(v / duration) * 100}%` }}
@@ -182,7 +184,7 @@ export function SourceRanges({
                 >
                   <span aria-hidden="true">▼</span>
                   <small>
-                    {index + 1}
+                    {numberedMarkers ? index + 1 : ''}
                     {side ? '迄' : '起'}
                   </small>
                 </button>,

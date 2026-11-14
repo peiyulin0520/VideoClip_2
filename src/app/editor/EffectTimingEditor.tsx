@@ -66,6 +66,7 @@ export function EffectTimingEditor({
     <Sheet
       open
       title={label}
+      className={singleEdge ? 'single-effect-timing' : undefined}
       onClose={onClose}
       titleAction={
         <button
@@ -81,7 +82,14 @@ export function EffectTimingEditor({
       {joinAt !== undefined && (
         <p className="hint">總長不變。交接前由 A 退場，交接後由 B 進場；交接位置 {joinAt.toFixed(2)} 秒。</p>
       )}
-      <ProjectPreview start={start} duration={duration} label="特效結果" />
+      <div className="effect-timing-preview">
+        <ProjectPreview start={start} duration={duration} label="特效結果" />
+        {singleEdge && (
+          <p className="effect-timing-cursor" aria-label="目前特效預覽時間">
+            {cursor.toFixed(2)} / {duration.toFixed(2)} 秒
+          </p>
+        )}
+      </div>
       {singleEdge && (
         <p className="hint">
           {singleEdge === 'enter'
@@ -121,6 +129,7 @@ export function EffectTimingEditor({
         thumbs={thumbs}
         cursor={cursor}
         markerLabel="特效"
+        numberedMarkers={!singleEdge}
         editableSides={singleEdge ? [singleEdge === 'enter' ? 1 : 0] : undefined}
         onChange={(r) => {
           history.set(r);
@@ -157,7 +166,9 @@ export function EffectTimingEditor({
                     {singleEdge
                       ? name === '時長'
                         ? '時長'
-                        : `${i + 1}${name === '起點' ? '起' : '迄'}`
+                        : name === '起點'
+                          ? '起'
+                          : '迄'
                       : `第 ${i + 1} 組${name}`}
                     （秒）
                     <input
@@ -176,6 +187,12 @@ export function EffectTimingEditor({
                             Math.min(duration, j === 2 ? n : singleEdge === 'enter' ? n : duration - n),
                           );
                           history.set([singleEdge === 'enter' ? [0, span] : [duration - span, duration]]);
+                          seek(
+                            Math.min(
+                              singleEdge === 'enter' ? span : duration - span,
+                              Math.max(0, duration - 0.001),
+                            ),
+                          );
                           return;
                         }
                         const low = history.value[i - 1]?.[1] ?? 0,
