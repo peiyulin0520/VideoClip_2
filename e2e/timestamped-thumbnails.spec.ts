@@ -41,8 +41,13 @@ async function assertEverySecondPair(page: Page) {
   }
 }
 async function visibleAt(page: Page, time: number) {
-  await seekTo(page, time);
   const clip = clips(page).first();
+  const duration = (await current(page)).tracks[0]!.items[0]!.duration;
+  const pps = await clip.evaluate(
+    (el, seconds) => Number.parseFloat((el as HTMLElement).style.width) / seconds,
+    duration,
+  );
+  await seekTo(page, time, pps);
   await expect
     .poll(() =>
       clip.evaluate((el) => {

@@ -1,6 +1,7 @@
 # 交接手冊（HANDOFF）
 
 ## VideoClip_2 當前交接（優先於以下來源 repo 的歷史紀錄）
+- 第二輪736d359/43561500076快速29/30，剩最大放大後新testhelper用預設60pps導致112→22.4（實際300pps）。visibleAt改讀clip style.width/item.duration取得pps，保留全部唯一圖/實際像素/來源/覆蓋斷言；無產品修改。需新完整成功，不能以29/30交付。
 - 首輪2cc6411/43560901659快速25/30，已補zoom/seek syncScroll同步setScrollBucket（不等晚到scroll事件）；63張cache唯一與來源time已通過，新e2e需取x64避表頭/邊距，VP8native/WebCodecs色矩陣容差24，短片依實際duration計算。PR11已開，需下一完整成功/新圖，不能用首輪交付。
 - 最新本輪（待CI）：main7350773已含使用者合併PR10，新分支codex/source-timestamp-thumbnails。主軸每2秒真正timestamp cache，舊8張overview不再鋪主軸；載入時proxy後補建並自動保存。7新單元/3新e2e，預期350/148/30。需新PR與成功截圖，下面舊343/145非本輪證據。
 - 根因：前版只用8張overview與120個DOM格鋪滿，不等於每2秒取圖；probe還有缺格複製前格與partial fallback誤當全長的風險。新filmstrip version1/interval2/duration/frames(time,src)，frameCovers校驗decoded時間範圍，缺格null不冒充。native備援只load/seek且校驗呈現mediaTime，不呼叫play。

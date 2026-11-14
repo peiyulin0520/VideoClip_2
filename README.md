@@ -8,7 +8,7 @@
 
 已具備多專案、多素材拼接、修剪/分割/變速、多軌疊加、拖移縮放旋轉、字卡排版/描邊/陰影、13 種裝飾、33 種圖形、字體下載/快取/本機匯入、首次使用精靈與 PWA。
 
-仍在規劃中：Fluent Emoji 內建貼圖、雲朵字與完整字卡模板、完整動畫/轉場目錄與調色、進階動態遮罩追蹤、專案備份/Google Drive、IG 音樂推薦。本次新增完整逐格影片與音訊混音、相容即時匯出；格式依瀏覽器編碼能力明示 MP4 或 WebM。先前匯出與第二輪回饋已發布；PR #4 已由使用者合併；最新 PR #10 驗收見 PROGRESS，細節見 PROGRESS。Google Drive 選項目前只是規劃入口。
+仍在規劃中：Fluent Emoji 內建貼圖、雲朵字與完整字卡模板、完整動畫/轉場目錄與調色、進階動態遮罩追蹤、專案備份/Google Drive、IG 音樂推薦。本次新增完整逐格影片與音訊混音、相容即時匯出；格式依瀏覽器編碼能力明示 MP4 或 WebM。先前匯出與第二輪回饋已發布；PR #4 已由使用者合併；最新 PR #11 驗收見 PROGRESS，細節見 PROGRESS。Google Drive 選項目前只是規劃入口。
 
 原 Sites 的 Little Moments 是另一個版本；這個建立工作不修改原 Sites。兩套模型不同，目前沒有自動轉換專案或素材庫 ZIP，請保留舊資料與原始影片。
 
@@ -166,3 +166,6 @@ GIF 解碼器 gifuct-js 2.1.2 為 MIT，授權位於 public/licenses。輸出含
 最新播放、長片縮圖及單素材左右精調驗收：[Actions 43555594900](https://github.com/peiyulin0520/VideoClip_2/actions/runs/43555594900)：驗收程式 `91a676fa8d463513617e7b575eb36487b13cddcf` 的343單元、145 Chromium e2e全過，另25項快速情境全過（完整測試子集）；lint/格式/TypeScript/build/Pages/PWA與39字體檢查成功。artifact `14098482215`，ZIP SHA-256 `8fbdbdfb5c89f3c1085b353db822cfc9235d5d2c2920ad99016cfcb71179fd8d` 已核對；181張成功截圖。最後提交僅文件/成功截圖，與驗收程式的產品、測試及設定一致。PR #10保持open未合併，由使用者自行Merge後發布；Safari待真機。 [320px左右配置](docs/screenshots/effect-timing/side-by-side-single-range-320.png) · [長片與操作畫面](docs/screenshots/anchored-playback/) · [操作說明](docs/USAGE.md#特效代表字及穩定預覽pr-10追加)。
 
 單素材特效popup採左右並排：左側預覽，右側完整片長時間軸及下方秒數欄位；手機直向窄畫面也保持左右，僅顯示「起／迄」，填秒數會同步定位預覽。載入返回與同秒效果選擇按鈕依文字縮寬，維持44px觸控高度。
+
+## 主時間軸每兩秒來源縮圖（PR #11）
+主時間軸使用每2秒實際擷取並記錄來源秒數的縮圖，與片段popup的overview分開。舊專案在重新開啟時自動補建/保存，不需重新匯入；完整cache重用。拖移/放大只畫可見範圍附近的圖片，整段影片來源資料仍保留；缺圖不複製前格。最新驗收與Safari真機限制見PROGRESS。

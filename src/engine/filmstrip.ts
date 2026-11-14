@@ -43,13 +43,15 @@ export function filmstripSegments(
   }
   return out;
 }
-function snapshot(canvas: HTMLCanvasElement | OffscreenCanvas) {
+function snapshot(source: CanvasImageSource, width: number, height: number) {
   const c = document.createElement('canvas');
-  c.height = 80;
-  c.width = Math.max(1, Math.min(240, Math.round((80 * canvas.width) / Math.max(1, canvas.height))));
-  c.getContext('2d')!.drawImage(canvas, 0, 0, c.width, c.height);
+  const scale = Math.min(80 / Math.max(1, height), 240 / Math.max(1, width));
+  c.width = Math.max(1, Math.round(width * scale));
+  c.height = Math.max(1, Math.round(height * scale));
+  c.getContext('2d')!.drawImage(source, 0, 0, c.width, c.height);
   return c.toDataURL('image/jpeg', 0.65);
 }
+
 async function nativeFrames(
   file: Blob,
   frames: Filmstrip['frames'],
@@ -119,11 +121,8 @@ async function nativeFrames(
       const fresh = presented ? await presented : decoded;
       signal.throwIfAborted();
       if (decoded && fresh && v.readyState >= 2 && !v.seeking && Math.abs(v.currentTime - t) < 0.05) {
-        const c = document.createElement('canvas');
-        c.width = v.videoWidth;
-        c.height = v.videoHeight;
-        c.getContext('2d')!.drawImage(v, 0, 0);
-        frame.src = snapshot(c);
+        // Scale directly from the decoded video, never allocate a 4K canvas per thumbnail.
+        frame.src = snapshot(v, v.videoWidth, v.videoHeight);
       }
       progress();
       if (frame.src) failures = 0;
@@ -162,7 +161,7 @@ export async function buildFilmstrip(
         const frame = frames[done++];
         if (!frame) break;
         if (wrapped && frameCovers(frame.time, wrapped.timestamp, wrapped.duration))
-          frame.src = snapshot(wrapped.canvas);
+          frame.src = snapshot(wrapped.canvas, wrapped.canvas.width, wrapped.canvas.height);
         onProgress((0.85 * done) / Math.max(1, frames.length));
         if (done % 8 === 0) await new Promise((r) => setTimeout(r, 0));
       }
