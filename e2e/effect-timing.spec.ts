@@ -146,7 +146,7 @@ test('單素材固定開頭B進或結尾A退，僅一個可調標籤、時長連
     String(Number((duration - 8).toFixed(2))),
   );
   await expect(sheet(page).getByLabel('目前特效預覽時間')).toHaveText(`8.00 / ${duration.toFixed(2)} 秒`);
-  // Preview, marker strip and fine fields must all fit without scrolling a portrait phone.
+  // Preview must be LEFT of the timeline and numeric controls, including the narrowest phone.
   for (const viewport of [
     { width: 390, height: 844 },
     { width: 375, height: 667 },
@@ -162,11 +162,36 @@ test('單素材固定開頭B進或結尾A退，僅一個可調標籤、時長連
         visible,
         scroll: el.scrollHeight - el.clientHeight,
         strip: el.querySelector('.source-range')!.clientHeight,
+        preview: (() => {
+          const r = el.querySelector('canvas')!.getBoundingClientRect();
+          return { left: r.left, right: r.right, top: r.top, bottom: r.bottom };
+        })(),
+        timeline: (() => {
+          const r = el.querySelector('.source-range')!.getBoundingClientRect();
+          return { left: r.left, right: r.right, top: r.top, bottom: r.bottom };
+        })(),
+        fieldsLeft: el.querySelector('.single-edge-fields')!.getBoundingClientRect().left,
+        ticks: Array.from(el.querySelectorAll('.range-seconds span')).map((tick) => {
+          const r = tick.getBoundingClientRect();
+          return { left: r.left, right: r.right };
+        }),
       };
     });
     expect(layout.visible).toEqual([true, true, true, true]);
     expect(layout.scroll).toBeLessThanOrEqual(1);
     expect(layout.strip).toBe(44);
+    expect(layout.preview.right).toBeLessThan(layout.timeline.left);
+    expect(layout.preview.right).toBeLessThan(layout.fieldsLeft);
+    expect(layout.timeline.top).toBeLessThan(layout.preview.bottom);
+    expect(layout.timeline.bottom).toBeGreaterThan(layout.preview.top);
+    expect(layout.timeline.right - layout.timeline.left).toBeGreaterThan(100);
+    for (const tick of layout.ticks) {
+      expect(tick.left).toBeGreaterThanOrEqual(0);
+      expect(tick.right).toBeLessThanOrEqual(viewport.width);
+    }
+    for (let i = 1; i < layout.ticks.length; i++)
+      expect(layout.ticks[i]!.left).toBeGreaterThanOrEqual(layout.ticks[i - 1]!.right);
+    if (viewport.width === 320) await shot(page, 'side-by-side-single-range-320');
   }
   await page.setViewportSize({ width: 390, height: 844 });
   await shot(page, 'anchored-single-range-and-undo');

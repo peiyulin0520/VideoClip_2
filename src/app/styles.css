@@ -3479,15 +3479,26 @@ html {
   text-align: start;
   flex: none;
 }
-/* A single edge needs one marker, so the preview and complete strip fit together. */
+/* In the single-effect popup, preview stays left of the timeline at phone widths. */
+.single-effect-timing .effect-timing-workspace {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1.6fr);
+  gap: 8px;
+  align-items: center;
+}
+.single-effect-timing :is(.effect-timing-preview, .effect-timing-controls) {
+  min-width: 0;
+}
 .single-effect-timing .project-preview {
-  justify-content: center;
+  flex-direction: column;
+  align-items: center;
   margin-block: 0;
 }
 .single-effect-timing .project-preview canvas {
-  width: auto;
-  height: clamp(64px, calc(100dvh - 520px - var(--safe-top) - var(--safe-bottom)), 160px);
-  max-width: calc(100% - 54px);
+  width: 100%;
+  height: auto;
+  max-height: clamp(96px, 36dvh, 240px);
+  max-width: 100%;
 }
 .single-effect-timing .effect-timing-cursor {
   margin: 4px 0;
@@ -3499,10 +3510,16 @@ html {
 }
 .single-effect-timing .source-range.marker-range {
   height: 44px;
-  margin-block: 54px 8px;
+  margin: 54px 16px 8px;
 }
 .single-effect-timing .source-marker {
   top: -64px;
+}
+.single-effect-timing .range-seconds span:first-child {
+  transform: none;
+}
+.single-effect-timing .range-seconds span:last-child {
+  transform: translateX(-100%);
 }
 .preview-loading-card .primary {
   background: var(--accent);

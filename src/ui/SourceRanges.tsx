@@ -16,6 +16,7 @@ export function SourceRanges({
   onEditEnd,
   editableSides = [0, 1],
   numberedMarkers = true,
+  tickCount = 5,
 }: {
   duration: number;
   ranges: [number, number][];
@@ -31,10 +32,12 @@ export function SourceRanges({
   onEditEnd?: () => void;
   editableSides?: number[];
   numberedMarkers?: boolean;
+  tickCount?: number;
 }) {
   const markers = markerRanges ?? ranges;
   const bar = useRef<HTMLDivElement>(null);
   const [width, setWidth] = useState(300);
+  const ticks = tickCount === 3 && width < 180 ? 2 : tickCount;
   useLayoutEffect(() => {
     const el = bar.current!,
       observer = new ResizeObserver(() => setWidth(el.clientWidth));
@@ -81,9 +84,9 @@ export function SourceRanges({
   return (
     <div ref={bar} className="source-range marker-range" data-testid="source-range">
       <div className="range-seconds">
-        {Array.from({ length: 5 }, (_, i) => (
-          <span key={i} style={{ left: `${i * 25}%` }}>
-            {((duration * i) / 4).toFixed(2)}s
+        {Array.from({ length: ticks }, (_, i) => (
+          <span key={i} style={{ left: `${(i / (ticks - 1)) * 100}%` }}>
+            {((duration * i) / (ticks - 1)).toFixed(2)}s
           </span>
         ))}
       </div>

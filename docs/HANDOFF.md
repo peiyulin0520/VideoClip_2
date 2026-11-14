@@ -1,6 +1,7 @@
 # 交接手冊（HANDOFF）
 
 ## VideoClip_2 當前交接（優先於以下來源 repo 的歷史紀錄）
+- 2026-11-14左右更正待驗：前次誤解使用者同頁為上下，實際要求圖三popup左預覽/右時間軸。單素材增加effect-timing-workspace兩欄，右controls含hint/軸/秒數；SourceRanges tickCount預設5，此popup最多3、窄於180px用2。手機320仍左右；強化位置與刻度斷言/320圖。下列7f/435540成功是前版，不代表本輪，需check+CI+新截圖再交PR10。
 - 本輪最終（2026-11-14）：[Actions 43554041782](https://github.com/peiyulin0520/VideoClip_2/actions/runs/43554041782)：驗收程式 `7f94416abd5d2889fe4c997b5cacd1590f1d070f` 的343單元、145 Chromium e2e全過，另25項快速情境全過（完整測試子集）；lint/格式/TypeScript/build/Pages/PWA及39字體檢查成功。artifact `14097094861`，ZIP SHA-256 `58ba0cc5f74d9d18a94e229fa74ca8ff477f0754366d1be56d952f6eb47540ac` 已核對；180張成功截圖，本次anchored-playback有9張。最後提交只更新文件/截圖，與驗收程式的產品、測試及設定完全一致。PR #10保持未合併，由使用者自行Merge後發布；Safari待真機。
 - 單素材EffectTimingEditor使用single-effect-timing Sheet；SourceRanges numberedMarkers預設true，單素材false，editableSides只有一邊時不套crowded。44px高完整軸與依dvh調整的預覽、兩欄膠囊秒數同頁；填秒數seek至可調端點，片尾取duration-0.001避免超出素材而黑畫面。隱藏aria仍保留組名供輔助工具辨識，不影響可見標籤。
 - 載入返回Link明確inline-flex/內容寬/居中/44px高；同秒效果選擇各自一列、內容寬/max100%，長名稱可換行。保持操作字級與其他多組編號。四張最新UI已人工檢視，手機三尺寸及長片82秒實際預覽回歸成功。
