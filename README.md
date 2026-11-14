@@ -4,11 +4,13 @@
 
 ## 目前版本
 
-最新 PR #10 追加可調特效時長與任意多組起迄，影片及聲音按原時間繼續。單素材進場B、退場A；兩支10秒保留總長20秒，轉場在交接前後分配。來源/音訊/模板/特效共用白線與成對標籤，可新增、移除、復原、預覽暫停。詳見[操作說明](docs/USAGE.md#特效時長與成對起迄)及[本輪規格](docs/plans/2026-11-13-effect-timing.md)。
+PR #11 修正主時間軸每2秒來源縮圖與舊快取重建，並處理音訊分段、暫停/重播/跳轉的突波。重影、故障及粒子重用影格與貼圖；540/720預覽降低柔焦運算量，高清預覽與匯出保留完整品質。使用者自行合併後發布，完整驗收見[最新進度](docs/PROGRESS.md)。
+
+已合併 PR #10 提供可調特效時長與任意多組起迄，影片及聲音按原時間繼續。單素材進場B、退場A；兩支10秒保留總長20秒，轉場在交接前後分配。來源/音訊/模板/特效共用白線與成對標籤，可新增、移除、復原、預覽暫停。詳見[操作說明](docs/USAGE.md#特效時長與成對起迄)及[本輪規格](docs/plans/2026-11-13-effect-timing.md)。
 
 已具備多專案、多素材拼接、修剪/分割/變速、多軌疊加、拖移縮放旋轉、字卡排版/描邊/陰影、13 種裝飾、33 種圖形、字體下載/快取/本機匯入、首次使用精靈與 PWA。
 
-仍在規劃中：Fluent Emoji 內建貼圖、雲朵字與完整字卡模板、完整動畫/轉場目錄與調色、進階動態遮罩追蹤、專案備份/Google Drive、IG 音樂推薦。本次新增完整逐格影片與音訊混音、相容即時匯出；格式依瀏覽器編碼能力明示 MP4 或 WebM。先前匯出與第二輪回饋已發布；PR #4 已由使用者合併；最新 PR #11 驗收見 PROGRESS，細節見 PROGRESS。Google Drive 選項目前只是規劃入口。
+仍在規劃中：Fluent Emoji 內建貼圖、雲朵字與完整字卡模板、完整動畫/轉場目錄與調色、進階動態遮罩追蹤、專案備份/Google Drive、IG 音樂推薦。本次新增完整逐格影片與音訊混音、相容即時匯出；格式依瀏覽器編碼能力明示 MP4 或 WebM。先前匯出與第二輪回饋已發布；PR #4 已由使用者合併；最新 PR #11 驗收見 PROGRESS。Google Drive 選項目前只是規劃入口。
 
 原 Sites 的 Little Moments 是另一個版本；這個建立工作不修改原 Sites。兩套模型不同，目前沒有自動轉換專案或素材庫 ZIP，請保留舊資料與原始影片。
 
@@ -22,7 +24,7 @@ npm run check
 npm run e2e -- --trace off
 ```
 
-`check` 包含 lint、350 個單元測試、TypeScript、正式建置及 GitHub Pages 路徑/PWA/字體檔案檢查。148 個瀏覽器測試（含完整影片/音訊解碼、收藏、GIF、手動遮罩、Key 與主題）交由 GitHub Actions 的 Chromium 153 執行，CI 保存截圖 artifact；最新成功狀態見 PROGRESS.md。本次已更新 184 張 CI 畫面（docs/screenshots）中文可讀；iPhone Safari 仍待真機驗證。
+`check` 包含 lint、359 個單元測試、TypeScript、正式建置及 GitHub Pages 路徑/PWA/字體檔案檢查。151 個瀏覽器測試（含完整影片/音訊解碼、收藏、GIF、手動遮罩、Key 與主題）交由 GitHub Actions 的 Chromium 153 執行，CI 保存截圖 artifact；最新成功狀態見 PROGRESS.md。本次已更新 187 張 CI 畫面（docs/screenshots）中文可讀；iPhone Safari 仍待真機驗證。
 
 ## GitHub Pages
 
@@ -170,4 +172,15 @@ GIF 解碼器 gifuct-js 2.1.2 為 MIT，授權位於 public/licenses。輸出含
 ## 主時間軸每兩秒來源縮圖（PR #11）
 主時間軸使用每2秒實際擷取並記錄來源秒數的縮圖，與片段popup的overview分開。舊專案在重新開啟時自動補建/保存，不需重新匯入；完整cache重用。拖移/放大只畫可見範圍附近的圖片，整段影片來源資料仍保留；缺圖不複製前格。最新驗收與Safari真機限制見PROGRESS。
 
-最新主時間軸來源縮圖驗收：[Actions 43562187791](https://github.com/peiyulin0520/VideoClip_2/actions/runs/43562187791)：驗收程式 `67c14c9c929a6095927d49c76142b881c6a158c6` 的350單元、148 Chromium e2e全過，另30項快速情境全過（完整測試子集）；lint/格式/TypeScript/build/Pages/PWA與39字體檢查成功。artifact `14100619022`，ZIP SHA-256 `ebbfe5f0f370aecbc66d8b34e426eb3fd7a6caf8ac3f65b87c89cea8cda3c2a1` 已核對；184張成功截圖。最後提交僅文件/成功截圖，產品、測試與設定皆與驗收程式一致。PR #11 open未合併，由使用者自行Merge後發布；Safari真機仍待確認。 [58秒、112秒與放大畫面](docs/screenshots/timestamped-thumbnails/) · [操作說明](docs/USAGE.md#主時間軸每2秒來源縮圖pr-11)。
+前輪主時間軸來源縮圖驗收（最新音訊/特效見下方與PROGRESS）：[Actions 43562187791](https://github.com/peiyulin0520/VideoClip_2/actions/runs/43562187791)：驗收程式 `67c14c9c929a6095927d49c76142b881c6a158c6` 的350單元、148 Chromium e2e全過，另30項快速情境全過（完整測試子集）；lint/格式/TypeScript/build/Pages/PWA與39字體檢查成功。artifact `14100619022`，ZIP SHA-256 `ebbfe5f0f370aecbc66d8b34e426eb3fd7a6caf8ac3f65b87c89cea8cda3c2a1` 已核對；184張成功截圖。最後提交僅文件/成功截圖，產品、測試與設定皆與驗收程式一致。PR #11 open未合併，由使用者自行Merge後發布；Safari真機仍待確認。 [58秒、112秒與放大畫面](docs/screenshots/timestamped-thumbnails/) · [操作說明](docs/USAGE.md#主時間軸每2秒來源縮圖pr-11)。
+
+
+## 音訊與特效連續性（PR #11）
+
+暫停、重播、跳轉與真正剪段邊界自動短淡入淡出；修正重排包絡及分段音量初值造成的突波，混音有過峰保護。重影/故障共用來源影格，固定濾鏡與粒子canvas重用；540/720預覽柔焦低負擔，高清與匯出保留完整品質。原音量、留聲範圍及素材不需重設。
+
+- 最終驗收（2026-11-14）：[Actions 43581659661](https://github.com/peiyulin0520/VideoClip_2/actions/runs/43581659661)；驗收程式 `cdc6195a7917b0acadce7a83c656e6a212379d51`，359單元、151 Chromium e2e全過，另3項音訊/特效＋30項快速回歸全過（完整151的子集）。lint/格式/TypeScript/build/Pages/PWA及39字體檢查成功。最後提交僅文件/量測/成功截圖，與驗收程式的產品、測試及設定一致。
+- artifact `14109275799`（browser-checks-43581659661，32956407 bytes），ZIP SHA-256 `34a8670383bb9e534a557544ba69a50a28cb1b2ce042b454925bc840885ef9e3` 已核對；187張成功截圖，無失敗context。新audio-effects三圖已人工檢視：合成色塊影片／片尾頁面，不能當聲音或真機FPS的視覺證據；實際聲音以波形量測為準。
+- 完整CI量測：100%離線peak0.79999/maxJump0.003982；200%離線peak0.9999998/maxJump0.005799（原診斷0.399）；即時peak0.76850/maxJump0.004122（原診斷0.742），168960個取樣。原始JSON/對照圖見docs/validation；這是本機合成測試素材，不是使用者影片、音量百分比或Safari硬體驗收。
+
+[音訊量測對照](docs/validation/audio-jump-comparison.png) · [原始量測JSON](docs/validation/audio-wave-metrics.json) · [驗收頁面](docs/screenshots/audio-effects/) · [操作說明](docs/USAGE.md#音訊與特效預覽)。iPhone Safari聲音與長片真實FPS仍需真機，PR由使用者自行合併後發布。

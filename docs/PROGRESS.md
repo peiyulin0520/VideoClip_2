@@ -3,19 +3,13 @@
 規則：每完成一個有意義的步驟，就在同一個 commit 裡 **覆寫「交接快照」** 並 **在「日誌」最上面新增一筆**（規則全文見 `AGENTS.md`「紀錄規則」，背景與架構見 `docs/HANDOFF.md`）。
 
 ## 交接快照（VideoClip_2 最新狀態）
-- bdf9276/43581098447即時maxJump從0.742降至0.169，仍未過；新突波在native重播ramp2後約8ms（扣limiter6ms只2ms），輸入block晚於淡入。gain待el.play promise完成，WebAudio先保持靜音24ms再12ms淡入；原生muted/volume只由bus.flush按連接狀態處理，避免連接前先解mute。保留嚴格0.08閾值，待新CI。
-- 另由音訊時序看到留聲第二段恢復時舊media停在前段末尾，1秒seek退避可能先播到已靜音來源；paused重新進段改用20ms精準對齊且不受running drift退避，對齊後才淡入。加入本輪同時驗證。
-- 664e50c/43580593881新3項2/3：即時0.742突波在ramp0後6ms，native pause/seek在46ms後，故不是原生過早停止；同一audio quantum重複cancelAndHold丟失hold並露出intrinsic0。改cancelScheduledValues+setValueAtTime模型當前值明確錨定，且pause/seek共用既有淡出不重排；新增同量子回歸至359單元，保持live maxJump<0.08，待新CI。
-- 5ce7bab/43579799783：離線200%突波已0.399→0.00580、峰值≤1，但Worklet即時量測仍0.742，未通過，繼續修。pause/seek原生動作需等AudioContext實際淡出，不可只等16ms wall timer；加入audio clock守衛/原生操作時序診斷，舊暫停檢查02a822c改等待短淡出。待新CI。
-- 診斷輪0fcfc8e/43579445961快速31/33：突波在2.730666秒單樣本跌至0.600、鄰近為0.9995，對應分段預設gain1漏入2倍增益；5ce7bab已初始化包絡初值。另舊暫停斷言需等16ms原生停止（實際音量12ms淡出），改輪詢至停止而保留初始無自動播即時檢查，待新CI。
-- 修正Offline GainNode初值：source.start與AudioParam事件在非整數樣本邊界可能不同取整，不能讓預設gain=1漏入200%或淡入第一樣本；設intrinsic gain為同一包絡初值。0fcfc8e診斷輪仍在跑，保留嚴格量測，待結果。
-- 8cdd65a/43578765221快速32/33：正常音量離線邊界連續（maxJump 0.00398），200%音量量測出0.399突波，GPU兩情境仍成功。追加突波秒數/鄰近樣本診斷，先找出實際來源再修，尚未交付。
-- 首輪196c366/43588015161快速32/33，兩個特效播放/一次上傳/無新配置檢查已過。音訊離線first/last/maxJump通過，唯硬寫1.5秒取樣點比觸控實存端點晚約0.2ms而落進淡入，改從專案audioRanges讀實際端點；保留嚴格突波/削峰與預覽Worklet量測，需新完整151/33。
-- 2026-11-14 / codex/source-timestamp-thumbnails；PR11尚未合併，追加使用者「音訊些微爆音、加特效卡頓跳幀，先解決」，沿同PR整合。本輪待CI，不能以先前350/148當本輪證據。
-- 已改：AudioBus真實邊界AudioContext預排12ms線性漸變，hold當前值再改音量；connected元素不native硬mute。pause/seek等淡出再動作，合併多次seek/防舊asset回呼；音訊不做速率微調、邊界對齊實際media time，limiter/master留headroom。匯出真正聲音區間淡入出及softLimit，沒有每chunk淡出。
-- 已改：Compositor同來源/crop/mask/尺寸共用FrameResource，refcount清理，按呈現frameStamp只上傳一次；固定matrix/filterchain不每幀重設，grain/snow等每個effect重用canvas。≤720流暢/標準預覽blur低負擔，高清/匯出保留原品質。
-- 本機首輪check358單元成功；最新畫質條件待最終check。新增3e2e實際波形/重影故障共用上傳/柔焦顆粒連續與popup回播，預期151完整及33快速。要等CI成功、量測JSON與新截圖，再更新PR11，不代Merge。
-- 計畫docs/plans/2026-11-14-audio-effect-continuity.md；Safari聲音硬體/長片FPS仍待真機。
+- codex/source-timestamp-thumbnails / PR #11 open未合併，由使用者自行Merge後才發布，不開auto-merge、不推main。
+- 最終驗收（2026-11-14）：[Actions 43581659661](https://github.com/peiyulin0520/VideoClip_2/actions/runs/43581659661)；驗收程式 `cdc6195a7917b0acadce7a83c656e6a212379d51`，359單元、151 Chromium e2e全過，另3項音訊/特效＋30項快速回歸全過（完整151的子集）。lint/格式/TypeScript/build/Pages/PWA及39字體檢查成功。最後提交僅文件/量測/成功截圖，與驗收程式的產品、測試及設定一致。
+- artifact `14109275799`（browser-checks-43581659661，32956407 bytes），ZIP SHA-256 `34a8670383bb9e534a557544ba69a50a28cb1b2ce042b454925bc840885ef9e3` 已核對；187張成功截圖，無失敗context。新audio-effects三圖已人工檢視：合成色塊影片／片尾頁面，不能當聲音或真機FPS的視覺證據；實際聲音以波形量測為準。
+- 完整CI量測：100%離線peak0.79999/maxJump0.003982；200%離線peak0.9999998/maxJump0.005799（原診斷0.399）；即時peak0.76850/maxJump0.004122（原診斷0.742），168960個取樣。原始JSON/對照圖見docs/validation；這是本機合成測試素材，不是使用者影片、音量百分比或Safari硬體驗收。
+- 音訊：真實邊界12ms排程；重排明確setValue錨定，pause/seek共用既有淡出且等音訊時鐘到零；play確認後24ms靜音保持再12ms淡入（短區間自動縮短）。原生muted/volume統一bus.flush；有聲素材不nudge，paused重新進段精準seek。離線GainNode初值等包絡，真正邊界fade及softLimit，不淡每個chunk。
+- 特效：同來源/crop/mask/尺寸FrameResource共享與refcount、frameStamp去重、固定濾鏡/粒子canvas重用；≤720預覽輕量blur，高清預覽/匯出完整品質。18重影1buffer、上傳≤呈現幀+6、播放期無新配置/反覆seek、移除釋放及柔焦顆粒捲頁/popup續播均通過。
+- 每2秒來源縮圖、舊cache修復、左右popup等前輪回歸保留；目前無待修程式。規格docs/plans/2026-11-14-audio-effect-continuity.md；Safari喇叭/耳機/長片真實FPS仍待PLAN §7，不能以Chromium冒充。
 
 ## 日誌格式（新增一筆時照這個）
 ```
@@ -98,6 +92,13 @@
 - 2026-11-11 找到新字體來源 max32002/pop-gothic（大波浪圓體，含注音）→ 已加入手寫可愛包。問「能不能直接下載到我的 files 下載資料夾」→ 答：網頁在 iPhone 不能自動寫進「檔案」App 資料夾；官方字體存在瀏覽器裡，自己的字體用「匯入字體檔」從檔案 App 選
 
 ## 日誌（最新在最上面）
+- 2026-11-14 音訊突波與特效效能完成（PR #11，驗收source cdc6195）
+  - 做了什麼：修正GainNode分段預設音量單樣本漏入、同量子重排淡出與native解碼晚到；音訊時鐘排程/保留區恢復精準對齊、匯出真邊界fade與過峰保護。GPU同來源多sprite共用一次copy/upload，固定濾鏡與粒子canvas重用、預覽blur減負擔，HD/匯出不降。
+  - 驗證：✅ 359單元、151 Chromium、3+30快速全部成功；Actions43581659661、artifact14109275799、187圖與波形JSON核對。離線200% maxJump0.005799、即時0.004122。新3圖已人工看；聲音證據是Waveform，不以靜態截圖代替。測試素材為合成，Safari硬體聲音/FPS仍待真機。
+  - 使用者的決定：音訊些微爆音、加特效卡/跳幀需優先解決並繼續；仍要保留聲音剪輯，不只建議降畫質。
+  - 踩坑：詳見HANDOFF當前交接。門檻未放寬；剪段讀實存端點，暫停檢查等待短fade，保留初始無自動播檢查。
+  - 下一步：使用者自行Merge PR11後發布，再以原iPhone/原專案測硬體聲音與長片。最後文件/圖片提交不改已驗收產品、測試、設定。
+
 - 2026-11-14 音效/特效第一輪快速32/33：18重影共用、柔焦顆粒/捲頁/popup續播成功。新音訊離線波形端點樣本取硬寫1.5秒，與觸控儲存值微差而實在淡入內，改讀audioRanges實際邊界，不放寬first/last/maxJump/peak斷言。尚需完整成功，不能以本輪交付。
 
 - 2026-11-14 音訊爆音與特效播放連續性（待CI）
@@ -107,7 +108,7 @@
   - 本機358單元，新增3e2e待CI。先前縮圖350/148/30成功保留，本輪需358/151/33新證據。PR11未合併，使用者自行Merge。
 
 - 2026-11-14 主時間軸每2秒實際縮圖最終驗收（PR #11）
-  - [Actions 43582187791](https://github.com/peiyulin0520/VideoClip_2/actions/runs/43582187791)：驗收程式 `67c14c9c929a6095927d49c76142b881c6a158c6` 的350單元、148 Chromium e2e全過，另30項快速情境全過（完整測試子集）；lint/格式/TypeScript/build/Pages/PWA與39字體檢查成功。artifact `14100619022`，ZIP SHA-256 `ebbfe5f0f370aecbc66d8b34e426eb3fd7a6caf8ac3f65b87c89cea8cda3c2a1` 已核對；184張成功截圖。最後提交僅文件/成功截圖，產品、測試與設定皆與驗收程式一致。PR #11 open未合併，由使用者自行Merge後發布；Safari真機仍待確認。
+  - [Actions 43562187791](https://github.com/peiyulin0520/VideoClip_2/actions/runs/43562187791)：驗收程式 `67c14c9c929a6095927d49c76142b881c6a158c6` 的350單元、148 Chromium e2e全過，另30項快速情境全過（完整測試子集）；lint/格式/TypeScript/build/Pages/PWA與39字體檢查成功。artifact `14100619022`，ZIP SHA-256 `ebbfe5f0f370aecbc66d8b34e426eb3fd7a6caf8ac3f65b87c89cea8cda3c2a1` 已核對；184張成功截圖。最後提交僅文件/成功截圖，產品、測試與設定皆與驗收程式一致。PR #11 open未合併，由使用者自行Merge後發布；Safari真機仍待確認。
   - 完成來源timestamp filmstrip/缺圖不沿用、舊專案載入自修復/快取與undo保存、proxy後的小圖、可見區渲染與zoom同步。既有播放/聲音/特效/左右popup/匯出回歸保留。
   - 新126秒/63格測試核對每格唯一/time/顏色、58/60/112/片尾/最大放大、舊8張首幀修復與原生備援。Chromium停用WebCodecs不等於Safari真機已驗證。
   - 184張成功圖已更新，新timestamped-thumbnails三張均人工看過；SHA與錯誤context檢查成功，最終本機check通過。README/USAGE/PLAN/AGENTS/交接與計畫同步。下一步使用者Merge PR11。

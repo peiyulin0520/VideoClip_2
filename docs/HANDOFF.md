@@ -1,20 +1,17 @@
 # 交接手冊（HANDOFF）
 
 ## VideoClip_2 當前交接（優先於以下來源 repo 的歷史紀錄）
-- bdf9276/43581098447即時maxJump從0.742降至0.169，仍未過；新突波在native重播ramp2後約8ms（扣limiter6ms只2ms），輸入block晚於淡入。gain待el.play promise完成，WebAudio先保持靜音24ms再12ms淡入；原生muted/volume只由bus.flush按連接狀態處理，避免連接前先解mute。保留嚴格0.08閾值，待新CI。
-- 另由音訊時序看到留聲第二段恢復時舊media停在前段末尾，1秒seek退避可能先播到已靜音來源；paused重新進段改用20ms精準對齊且不受running drift退避，對齊後才淡入。加入本輪同時驗證。
-- 664e50c/43580593881新3項2/3：即時0.742突波在ramp0後6ms，native pause/seek在46ms後，故不是原生過早停止；同一audio quantum重複cancelAndHold丟失hold並露出intrinsic0。改cancelScheduledValues+setValueAtTime模型當前值明確錨定，且pause/seek共用既有淡出不重排；新增同量子回歸至359單元，保持live maxJump<0.08，待新CI。
-- 5ce7bab/43579799783：離線200%突波已0.399→0.00580、峰值≤1，但Worklet即時量測仍0.742，未通過，繼續修。pause/seek原生動作需等AudioContext實際淡出，不可只等16ms wall timer；加入audio clock守衛/原生操作時序診斷，舊暫停檢查02a822c改等待短淡出。待新CI。
-- 診斷輪0fcfc8e/43579445961快速31/33：突波在2.730666秒單樣本跌至0.600、鄰近為0.9995，對應分段預設gain1漏入2倍增益；5ce7bab已初始化包絡初值。另舊暫停斷言需等16ms原生停止（實際音量12ms淡出），改輪詢至停止而保留初始無自動播即時檢查，待新CI。
-- 修正Offline GainNode初值：source.start與AudioParam事件在非整數樣本邊界可能不同取整，不能讓預設gain=1漏入200%或淡入第一樣本；設intrinsic gain為同一包絡初值。0fcfc8e診斷輪仍在跑，保留嚴格量測，待結果。
-- 8cdd65a/43578765221快速32/33：正常音量離線邊界連續（maxJump 0.00398），200%音量量測出0.399突波，GPU兩情境仍成功。追加突波秒數/鄰近樣本診斷，先找出實際來源再修，尚未交付。
-- 首輪196c366/43588015161快速32/33，GPU兩情境已過；音訊新測試需用實存audioRanges端點，觸控不保證精確1.5秒，硬寫值約晚0.2ms會取到正常淡入樣本。嚴格波形斷言保留，下一輪358/151/33後才交付。
-- 最新本輪待CI：使用者追加些微爆音/特效卡跳幀並說繼續；PR11仍open沿codex/source-timestamp-thumbnails追加。音訊12ms真實邊界排程/hold、native pause/seek延後淡出、connected元素不hard mute、有聲素材不nudge rate、media time校正；export實際區間淡入出/soft knee。GPU refcount共享frame resources/固定filter快取/particle canvas重用，低預覽blur輕量、高清export不降。
-- 目前358單元、3新e2e預期151/33，需本輪完整成功/波形JSON/新圖。下面350/148舊縮圖是基線，不能作本輪驗收。規格plans/2026-11-14-audio-effect-continuity.md。不代Merge。
-- 關鍵：FrameResource可共享但每個sprite的box/tint/filter/maskGraphics仍獨立；同crop/mask/dims才共享，refcount=0才destroy，保留未ready continuity。AudioBus pending seek合併最新closure且Player檢item/asset還相同；pause回呼檢intent避免重播後被舊timer停掉。
+- 最終驗收（2026-11-14）：[Actions 43581659661](https://github.com/peiyulin0520/VideoClip_2/actions/runs/43581659661)；驗收程式 `cdc6195a7917b0acadce7a83c656e6a212379d51`，359單元、151 Chromium e2e全過，另3項音訊/特效＋30項快速回歸全過（完整151的子集）。lint/格式/TypeScript/build/Pages/PWA及39字體檢查成功。最後提交僅文件/量測/成功截圖，與驗收程式的產品、測試及設定一致。
+- artifact `14109275799`（browser-checks-43581659661，32956407 bytes），ZIP SHA-256 `34a8670383bb9e534a557544ba69a50a28cb1b2ce042b454925bc840885ef9e3` 已核對；187張成功截圖，無失敗context。新audio-effects三圖已人工檢視：合成色塊影片／片尾頁面，不能當聲音或真機FPS的視覺證據；實際聲音以波形量測為準。
+- 完整CI量測：100%離線peak0.79999/maxJump0.003982；200%離線peak0.9999998/maxJump0.005799（原診斷0.399）；即時peak0.76850/maxJump0.004122（原診斷0.742），168960個取樣。原始JSON/對照圖見docs/validation；這是本機合成測試素材，不是使用者影片、音量百分比或Safari硬體驗收。
+- PR #11保持open未合併，由使用者自行Merge後發布。程式已驗收，無待修；最後僅文件/187圖/量測，產品、測試及設定與cdc6195一致。
+- 最終音訊：12ms真實邊界預排；cancelScheduledValues+setValueAtTime錨定目前包絡，pause/seek不重排同一次fade且等AudioContext實際到零；play promise完成後24ms靜音保持+12ms淡入，短窗口自動縮短。原生muted/volume統一bus.flush，有聲素材不用rate nudge。paused重新進段以20ms精準seek且不受running 1秒退避，避免先播已靜音來源。export每個GainNode intrinsic初值等包絡，只真正留聲/片頭尾淡入出，softLimit混音。
+- 踩坑/證據：分段intrinsic預設1在200%下漏單樣本，2.730666秒0.9995→0.600→0.9995；初始化後maxJump0.399→0.00580。同量子cancelAndHold重排把預覽包絡切零，Worklet0.742突波先於native動作40ms；明確anchor/不重排後降0.169。剩餘是native輸入block比淡入晚約2ms，需等play完成並短靜音保持。完整151及快速3+30保持原live maxJump<0.08而成功（實測0.004122），未放寬門檻。剪段端點必讀實存audioRanges（觸控不保證精確1.5），不能把正常淡入誤判；舊即時native paused斷言需輪詢短淡出，初始無自動播仍即時檢查。
+- GPU：FrameResource按source/crop/mask/dims共享、refs=0才destroy，sprite box/tint/filter/Graphics mask獨立，未ready保留continuity；frameStamp去重、固定filter及particle canvas快取。≤720 preview blur quality1/resolution0.5，HD/export保留quality3/resolution1。pending seek合併最新closure，Player檢item/asset還相同，舊pause timer檢intent避免停掉重播。
+- 前輪縮圖/左右popup保留。Safari硬體音訊與真實FPS仍待PLAN §7；波形Worklet只debug旗標建立，正常播放不跑worklet、不上傳素材。規格plans/2026-11-14-audio-effect-continuity.md。以下350/148僅歷史基線。
 
 ### 縮圖前輪成功（歷史）
-- 最終（2026-11-14）：[Actions 43582187791](https://github.com/peiyulin0520/VideoClip_2/actions/runs/43582187791)：驗收程式 `67c14c9c929a6095927d49c76142b881c6a158c6` 的350單元、148 Chromium e2e全過，另30項快速情境全過（完整測試子集）；lint/格式/TypeScript/build/Pages/PWA與39字體檢查成功。artifact `14100619022`，ZIP SHA-256 `ebbfe5f0f370aecbc66d8b34e426eb3fd7a6caf8ac3f65b87c89cea8cda3c2a1` 已核對；184張成功截圖。最後提交僅文件/成功截圖，產品、測試與設定皆與驗收程式一致。PR #11 open未合併，由使用者自行Merge後發布；Safari真機仍待確認。
+- 最終（2026-11-14）：[Actions 43562187791](https://github.com/peiyulin0520/VideoClip_2/actions/runs/43562187791)：驗收程式 `67c14c9c929a6095927d49c76142b881c6a158c6` 的350單元、148 Chromium e2e全過，另30項快速情境全過（完整測試子集）；lint/格式/TypeScript/build/Pages/PWA與39字體檢查成功。artifact `14100619022`，ZIP SHA-256 `ebbfe5f0f370aecbc66d8b34e426eb3fd7a6caf8ac3f65b87c89cea8cda3c2a1` 已核對；184張成功截圖。最後提交僅文件/成功截圖，產品、測試與設定皆與驗收程式一致。PR #11 open未合併，由使用者自行Merge後發布；Safari真機仍待確認。
 - 本輪從已合併PR10的main7350773開codex/source-timestamp-thumbnails，交付PR11。使用者主軸58秒重首幀、112秒空白但popup有後段，不能只驗鋪滿/兩色後半。
 - Asset.filmstrip={version:1,interval:2,duration,frames(time,src)}獨立於overview thumbs。hasFilmstrip檢全長/每2秒/非缺格；開啟時proxy後補建並存metadata/undo快照，不增編輯。完整cache重用，個別null下次重開重試，不以首幀填滿。
 - buildFilmstrip校驗CanvasSink的timestamp/duration覆蓋要求秒數；原生load/seek+requestVideoFrameCallback/mediaTime，webkit-playsinline且靜音、不play；直接縮小圖，不先建4Kcanvas。取消/idle timeout清理Input及影片URL。probe overview也不再缺格沿用，native partial不假當全長。
