@@ -3794,3 +3794,161 @@ html {
 .aspect-editor {
   overflow: hidden;
 }
+
+.cell-range-workspace {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1.6fr);
+  gap: 8px;
+  align-items: center;
+}
+.source-preview-base {
+  height: 180px;
+  background: repeating-linear-gradient(45deg, #303238 0 8px, #27292f 8px 16px);
+  display: flex;
+  align-items: center;
+  min-width: 0;
+  overflow: hidden;
+}
+.source-preview-base :is(img, video.range-preview) {
+  width: 100%;
+  height: 100%;
+  max-height: 100%;
+  object-fit: contain;
+  margin: 0;
+  background: transparent;
+}
+.cell-range-controls {
+  min-width: 0;
+}
+.cell-range-controls .source-range.marker-range {
+  margin-inline: 8px;
+}
+.cell-range-fields {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 6px;
+}
+.cell-range-fields .field {
+  min-width: 0;
+}
+.cell-range-fields input {
+  width: 100%;
+  min-width: 0;
+}
+.template-child-list {
+  display: grid;
+  gap: 6px;
+}
+.template-child-entry {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+.template-child-entry > .chip {
+  flex: 1;
+  min-width: 0;
+  text-align: left;
+  overflow-wrap: anywhere;
+}
+.blank-card {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+  margin-block: 8px;
+}
+.blank-card label {
+  min-width: 0;
+  flex: 1;
+}
+.blank-card input {
+  width: 100%;
+}
+.slot-map .tone-thumbnail {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.template-cell-editor .source-playback-row .primary {
+  margin-left: auto;
+  background: var(--accent);
+  color: var(--accent-ink);
+}
+
+.template-summary-thumbs {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  gap: 2px;
+  opacity: 0.8;
+}
+.template-summary-thumbs span {
+  flex: 1;
+  background-size: auto 100%;
+  background-position: center;
+  background-repeat: repeat-x;
+}
+.template-group-toggle {
+  position: absolute;
+  right: 0;
+  top: 0;
+  width: 44px;
+  height: 44px;
+  background: #0008;
+  color: #fff;
+  z-index: 9;
+  border: 0;
+  border-radius: 8px;
+}
+.template-playback-settings {
+  padding: 6px;
+  margin-bottom: 8px;
+  background: var(--control);
+  border-radius: 12px;
+}
+.template-playback-settings .template-child-entry > span {
+  flex: 1;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+:root[data-theme] .color-custom-button {
+  border: 0;
+}
+.crop-actions .chip {
+  white-space: normal;
+  line-height: 1.15;
+  min-height: 44px;
+}
+.crop-actions .preview-toggle {
+  flex: 0 0 44px;
+  min-width: 44px;
+}
+:root[data-theme] .chip.primary {
+  background: var(--accent);
+  color: var(--accent-ink);
+}
+
+/* A real placeholder remains grey but legible against the light input surface in every theme. */
+:root[data-theme] :is(#root, .sheet) .text-input::placeholder {
+  color: #6b635a;
+  opacity: 1;
+}
+
+.blank-card > span {
+  border-radius: 8px;
+  padding: 6px;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.used-effects .effect-name {
+  text-align: left;
+  justify-content: flex-start;
+  padding-inline: 0;
+  min-width: 0;
+}
+.sheet-heading .sheet-close {
+  background: var(--control);
+}

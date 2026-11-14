@@ -1,3 +1,4 @@
+import { openTemplateCell } from './helpers';
 import { expandAllGroups } from './helpers';
 import { test, expect, type Page, type Locator } from '@playwright/test';
 import type { Project, VideoItem } from '../src/model/types';
@@ -95,7 +96,7 @@ test('影片多組標記由白線明確新增，可局部復原與取消，保�
     .getByRole('button', { name: '在白線位置新增一組起迄標記', exact: true })
     .tap();
   await expect(page.locator('.source-marker')).toHaveCount(4);
-  await page.getByRole('button', { name: '復原上一步選段', exact: true }).tap();
+  await page.getByRole('button', { name: 'undo', exact: true }).tap();
   await expect(page.locator('.source-marker')).toHaveCount(2);
   await page.getByRole('button', { name: '關閉且不儲存', exact: true }).tap();
   expect((await current(page)).tracks[0]!.items[0]!.duration).toBeCloseTo(3);
@@ -145,7 +146,7 @@ test('音訊可在白線新增第二組保留範圍，復原與取消不改專�
     .getByRole('button', { name: '在白線位置新增一組起迄標記', exact: true })
     .tap();
   await expect(page.locator('.source-marker')).toHaveCount(4);
-  await page.getByRole('button', { name: '復原上一步選段', exact: true }).tap();
+  await page.getByRole('button', { name: 'undo', exact: true }).tap();
   await expect(page.locator('.source-marker')).toHaveCount(2);
   await page
     .getByRole('dialog')
@@ -346,18 +347,17 @@ test('膠卷多組來源的中間未選時段保留白色補時與框架，之�
     .setInputFiles(['tone-video.webm', 'solid-green.webm', 'solid-blue.webm'].map(fixture));
   await expect(page.locator('.busy')).toHaveCount(0);
   await page.getByRole('button', { name: '套用多格版型', exact: true }).tap();
-  const cell = page.locator('.template-cell').first();
-  await cell.getByRole('button', { name: '進階設定', exact: true }).tap();
+  const cell = await openTemplateCell(page, 0);
+  await cell.locator('summary').filter({ hasText: '補色與文字' }).tap();
   await cell.getByRole('button', { name: '補白', exact: true }).tap();
-  await cell.getByRole('button', { name: '選取第 1 格片段範圍', exact: true }).tap();
   await shortFirstRange(page, 0.2);
   await sourcePoint(page, 0.5);
   await page
     .getByRole('dialog')
     .getByRole('button', { name: '在白線位置新增一組起迄標記', exact: true })
     .tap();
-  await page.getByRole('button', { name: '套用片段範圍', exact: true }).tap();
   await cell.getByRole('button', { name: '第2段終點標記', exact: true }).press('ArrowRight');
+  await page.getByRole('button', { name: '套用片段範圍', exact: true }).tap();
   const group = (await current(page)).tracks.find((t) => t.template)!;
   expect((group.items[0] as VideoItem).sourceRanges?.[1]?.[1]).toBeCloseTo(2.05, 2);
   expect((group.items[0] as VideoItem).cell?.sourceEnd).toBeCloseTo(2.05, 2);

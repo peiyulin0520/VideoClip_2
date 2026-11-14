@@ -1,3 +1,4 @@
+import { arrangeTemplate } from './templatePlayback';
 import { createClip, createTrack, newId } from '../model/defaults';
 import type { Asset, VideoItem } from '../model/types';
 import { useProjectStore } from '../store/projectStore';
@@ -150,4 +151,30 @@ export function setAudioEnabled(id: string, enabled: boolean) {
   editItem(id, (it) => {
     if (it.type !== 'text') it.audioEnabled = enabled;
   });
+}
+
+export async function addTemplateSolid(trackId: string, color: string) {
+  const p = useProjectStore.getState().project;
+  if (!p) return;
+  const track = p.tracks.find((t) => t.id === trackId);
+  if (!track?.template || track.locked) throw Error('請先選擇可編輯版型');
+  const asset = await solidAsset(p.id, color);
+  await ensureUrls(p.id, [asset]);
+  if (useProjectStore.getState().project?.id !== p.id) return;
+  const clip = {
+    ...createClip(asset),
+    start: track.layout?.start ?? 0,
+    duration: 1,
+    slot: { x: 0.1, y: 0.8, w: 0.8, h: 0.1 },
+  };
+  useProjectStore.getState().apply(
+    (d) => {
+      const group = d.tracks.find((t) => t.id === trackId);
+      if (!group) return;
+      d.assets.push(asset);
+      group.items.push(clip);
+      arrangeTemplate(group);
+    },
+    { select: clip.id },
+  );
 }

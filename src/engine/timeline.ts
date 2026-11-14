@@ -70,7 +70,14 @@ export function layersAt(p: Project, t: number, includeHidden: boolean): Layer[]
       if (hit) out.push({ item: hit.item, track, trackIndex });
       return;
     }
-    const active = track.items.filter((x) => t >= x.start && t < x.start + x.duration);
+    const active = track.items.filter(
+      (x) =>
+        t >= x.start &&
+        (t < x.start + x.duration ||
+          (track.template &&
+            track.layout?.playback === 'sequential' &&
+            t < track.layout.start + track.layout.duration)),
+    );
     for (const item of track.template ? active : active.slice(0, 1)) out.push({ item, track, trackIndex });
   });
   return out;

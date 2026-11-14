@@ -430,3 +430,9 @@ docs/
 
 
 九點最終驗收：[Actions 43463065085](https://github.com/peiyulin0520/VideoClip_2/actions/runs/43463065085)：版本 6819c42e27914328f4ba183d493842903333f7f7 的321單元、134 Chromium e2e全過，lint/格式/TypeScript/build/Pages/39字體檢查成功。artifact 14058125854，ZIP SHA-256 be6d93e48b635a6ff142f6c6d2c05a8344a57c23b9c2b91a463f582826baad58 已核對；166張成功畫面（template-controls新增7張）。PR #10由使用者自行Merge；Safari待真機。
+
+### 2026-11-14 編輯流程真機待驗（§7 補充）
+
+- iPhone Safari：裁切四工具同列、雙指縮放移動後原UV保留與無閃爍；有聲選段及X關閉不殘留播放。
+- 自訂比例只改內框，固定預覽基地/斜紋框外，4:3來源popup左右等基地。
+- 多版型輪序停格、當前原音、子圖層觸控/重排/來源選段、長片多組流暢度；Chromium不能代替真機FPS/爆音驗證。

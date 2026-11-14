@@ -1,3 +1,5 @@
+import { TemplateCellEditor } from './TemplateCellEditor';
+import { updateTemplateChild } from '../../engine/templatePlayback';
 import { itemName } from '../../engine/itemName';
 import { TonePanel } from './TonePanel';
 import { KeyframeControl } from './KeyframeControl';
@@ -162,7 +164,9 @@ export function BottomBar({
         <KeyframeControl detailsOnly />
       )}
       {!collapsed && tab === 'layers' && <LayersTab />}
-      {!collapsed && tab === 'layout' && <TemplatePanel />}
+      {!collapsed && tab === 'layout' && (
+        <TemplatePanel key={found?.track.template ? found.track.id : 'new'} />
+      )}
       {!collapsed && tab === 'effects' && <EffectsPanel />}
       {!collapsed && tab === 'tone' && <TonePanel />}
       {!collapsed && tab === 'assets' && <AssetsPanel />}
@@ -413,7 +417,9 @@ function EditTab({
         onClick={() => {
           if (!selected) return toast('請先選取素材');
           setNameDraft(
-            selected.name ??
+            (found?.track.template && useUI.getState().templateCellId !== selected.id
+              ? found.track.name
+              : selected.name) ??
               (selected.type === 'text'
                 ? (selected.card.runs[0]?.text ?? '')
                 : (project.assets.find((a) => a.id === selected.assetId)?.name ?? '')),
@@ -437,9 +443,14 @@ function EditTab({
               className="btn primary"
               disabled={!nameDraft.trim()}
               onClick={() => {
-                editItem(selected.id, (it) => {
-                  it.name = nameDraft.trim();
-                });
+                if (found?.track.template && useUI.getState().templateCellId !== selected.id)
+                  useProjectStore.getState().apply((d) => {
+                    d.tracks.find((t) => t.id === found.track.id)!.name = nameDraft.trim();
+                  });
+                else
+                  editItem(selected.id, (it) => {
+                    it.name = nameDraft.trim();
+                  });
                 setNaming(false);
               }}
             >
@@ -459,9 +470,22 @@ function EditTab({
           setTrimming(true);
         }}
       />
-      {trimming && selected && selected.type !== 'text' && selected.type !== 'image' && (
-        <TrimEditor item={selected} onClose={() => setTrimming(false)} />
-      )}
+      {trimming &&
+        selected &&
+        selected.type !== 'text' &&
+        selected.type !== 'image' &&
+        (found?.track.template ? (
+          <TemplateCellEditor
+            item={selected}
+            index={found.track.items.findIndex((i) => i.id === selected.id)}
+            onApply={(draft) =>
+              useProjectStore.getState().apply((d) => updateTemplateChild(d, selected.id, draft))
+            }
+            onClose={() => setTrimming(false)}
+          />
+        ) : (
+          <TrimEditor item={selected} onClose={() => setTrimming(false)} />
+        ))}
       <ToolButton
         icon={Maximize}
         label="裁切"

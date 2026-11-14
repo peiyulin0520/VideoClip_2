@@ -1,3 +1,4 @@
+import { arrangeTemplate } from '../engine/templatePlayback';
 import { laneCategory } from '../engine/batchLayers';
 import { editAnimatedValues, trimKeyframes } from '../engine/keyframes';
 import { useUI } from './uiStore';
@@ -127,6 +128,11 @@ export function removeAnyItem(id: string): boolean {
       );
       const tr = d.tracks[f.trackIndex]!;
       if (tr.template) {
+        if (useUI.getState().templateCellId === id && tr.items.length > 1) {
+          tr.items = tr.items.filter((i) => i.id !== id);
+          arrangeTemplate(tr);
+          return;
+        }
         d.tracks = d.tracks.filter((t) => t.id !== tr.id);
         if (!d.tracks.some((t) => t.template)) delete d.layout;
         return;

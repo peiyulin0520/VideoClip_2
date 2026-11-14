@@ -30,6 +30,14 @@ export function ProjectPreview({
       if (surface && now - last > 32) {
         const rect = surface.getBoundingClientRect();
         if (rect.width && rect.height && rect.bottom > 0 && rect.top < innerHeight) {
+          if (!targetCanvas) {
+            const width = Math.max(240, Math.round(rect.width * 2)),
+              height = Math.round((width * rect.height) / rect.width);
+            if (surface.width !== width || surface.height !== height) {
+              surface.width = width;
+              surface.height = height;
+            }
+          }
           const ctx = surface.getContext('2d')!,
             source = player.compositor.canvas;
           ctx.clearRect(0, 0, surface.width, surface.height);

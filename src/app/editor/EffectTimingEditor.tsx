@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { Undo2 } from 'lucide-react';
+import { Undo2, Redo2 } from 'lucide-react';
 import type { Project } from '../../model/types';
 import { resizeTimeRange, type TimeRange } from '../../engine/animationTiming';
 import { SourceRanges } from '../../ui/SourceRanges';
@@ -69,14 +69,14 @@ export function EffectTimingEditor({
       className={singleEdge ? 'single-effect-timing' : undefined}
       onClose={onClose}
       titleAction={
-        <button
-          className="icon-btn"
-          aria-label="復原上一步選段"
-          disabled={!history.canUndo}
-          onClick={history.undo}
-        >
-          <Undo2 />
-        </button>
+        <div className="source-playback-row">
+          <button className="icon-btn" aria-label="undo" disabled={!history.canUndo} onClick={history.undo}>
+            <Undo2 />
+          </button>
+          <button className="icon-btn" aria-label="redo" disabled={!history.canRedo} onClick={history.redo}>
+            <Redo2 />
+          </button>
+        </div>
       }
     >
       {joinAt !== undefined && (

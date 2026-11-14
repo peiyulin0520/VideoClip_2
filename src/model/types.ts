@@ -130,7 +130,16 @@ export type VideoItem = ItemBase & {
   /** Retained source intervals for picture and its sound; omitted = continuous. */
   sourceRanges?: [number, number][];
   /** Source selection is independent from the common template frame interval. */
-  cell?: { sourceEnd: number; offset: number; blanks: [number, number][]; background: '#000000' | '#ffffff' };
+  cell?: {
+    sourceEnd: number;
+    offset: number;
+    blanks: [number, number][];
+    background: string;
+    holdAfter?: boolean;
+    parallelAudio?: boolean;
+    sequentialAudio?: boolean;
+    cards?: { start: number; end: number; color: string; text: string }[];
+  };
   fit: 'cover' | 'contain';
   /** 多格版型的固定視窗（畫面比例座標）；素材可在視窗內拖移/縮放。 */
   slot?: { x: number; y: number; w: number; h: number };
@@ -269,6 +278,7 @@ export type Project = {
   layout?: {
     style: 'photobooth' | 'filmstrip' | 'polaroid' | 'story';
     motion: 'none' | 'slide' | 'drift';
+    playback?: 'simultaneous' | 'sequential';
     size?: { width: number; height: number };
     caption?: string;
     frameColor?: string;

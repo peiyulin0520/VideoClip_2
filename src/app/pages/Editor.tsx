@@ -289,7 +289,7 @@ function EditorBody() {
           {project.name}
         </button>
         <button className="ratio-btn" aria-label="畫面比例" onClick={() => setRatioOpen(true)}>
-          {aspectLabel(project)}
+          {project.customAspect ? '自訂' : aspectLabel(project)}
         </button>
         <button className="quality-button" aria-label="預覽畫質" onClick={() => setQualityOpen(true)}>
           {previewQuality <= 540

@@ -17,6 +17,7 @@ export function SourceRanges({
   editableSides = [0, 1],
   numberedMarkers = true,
   tickCount = 5,
+  linkedDuration,
 }: {
   duration: number;
   ranges: [number, number][];
@@ -33,6 +34,7 @@ export function SourceRanges({
   editableSides?: number[];
   numberedMarkers?: boolean;
   tickCount?: number;
+  linkedDuration?: number;
 }) {
   const markers = markerRanges ?? ranges;
   const bar = useRef<HTMLDivElement>(null);
@@ -50,8 +52,14 @@ export function SourceRanges({
     const r = next[index]!;
     const span = Math.min(minimum, r[1] - r[0]);
     const low = side ? r[0] + span : (next[index - 1]?.[1] ?? 0);
-    const high = side ? (next[index + 1]?.[0] ?? duration) : r[1] - span;
+    const high = side
+      ? (next[index + 1]?.[0] ?? duration)
+      : linkedDuration !== undefined
+        ? (next[index + 1]?.[0] ?? duration) - minimum
+        : r[1] - span;
     r[side] = Math.max(low, Math.min(high, value));
+    if (side === 0 && linkedDuration !== undefined)
+      r[1] = Math.min(next[index + 1]?.[0] ?? duration, r[0] + linkedDuration);
     (onMarkerChange ?? onChange)(next);
     onSeek(r[side]!);
   };

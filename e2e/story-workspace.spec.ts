@@ -1,3 +1,4 @@
+import { openTemplateCell } from './helpers';
 import { waitForPreviewReady } from './helpers';
 import { expandAllGroups } from './helpers';
 import { expect, test, type Page } from '@playwright/test';
@@ -117,37 +118,38 @@ test('每格來源可獨立選段，共同長度不變，短素材補白且可�
       return c && c[0]! < 8 && c[1]! < 8;
     })
     .toBe(true);
-  const first = page.locator('.template-cell').nth(0);
-  await first.getByRole('button', { name: '進階設定', exact: true }).tap();
+  const first = await openTemplateCell(page, 0);
+  await first.locator('summary').filter({ hasText: '補色與文字' }).tap();
   await first.getByRole('button', { name: '補白', exact: true }).tap();
+  const marker = first.getByRole('button', { name: '來源起點標記', exact: true });
+  await marker.press('ArrowRight');
+  await first.getByRole('button', { name: '套用片段範圍', exact: true }).tap();
   await expect
     .poll(async () => {
       const c = await samplePreview(page, 0.5, 0.18);
       return c && c[0]! > 240 && c[1]! > 240;
     })
     .toBe(true);
-  await first.getByRole('button', { name: '選取第 1 格片段範圍', exact: true }).tap();
-  const marker = page
-    .getByRole('dialog', { name: '剪取片段' })
-    .getByRole('button', { name: '來源起點標記', exact: true });
-  await marker.focus();
-  await page.keyboard.press('ArrowRight');
-  await page.getByRole('button', { name: '套用片段範圍', exact: true }).tap();
   let g = (await current(page)).tracks.find((t) => t.template)!;
   expect(g.items.map((i) => i.duration)).toEqual([4, 4, 4]);
   expect((g.items[0] as VideoItem).trimIn).toBeCloseTo(0.05);
-  const second = page.locator('.template-cell').nth(1);
-  await second.locator('summary').tap();
-  await seekTo(page, 1);
-  await second.getByRole('button', { name: '進階設定', exact: true }).tap();
-  await second.getByRole('button', { name: '在此格目前秒數插入色塊', exact: true }).tap();
+  const second = await openTemplateCell(page, 1);
+  await second.locator('summary').filter({ hasText: '補色與文字' }).tap();
+  await second.getByRole('slider', { name: '選段白線位置', exact: true }).press('Home');
+  await second.getByRole('button', { name: '在目前位置插入空白', exact: true }).tap();
+  await second.getByLabel('空白1終點', { exact: true }).fill('2');
+  await second.getByLabel('空白1起點', { exact: true }).fill('1');
+  await second.getByRole('button', { name: '套用片段範圍', exact: true }).tap();
   await seekTo(page, 1.5);
   const blank = await exportFrame(page, 1.5, [[0.5, 0.48]]);
   expect(blank.samples[0]![1]).toBeLessThan(8);
   await seekTo(page, 2.5);
   await expect.poll(async () => isGreen(await samplePreview(page, 0.5, 0.48))).toBe(true);
   await shot(page, 'cell-source-and-color-gaps');
-  await second.getByRole('button', { name: '移除此色塊', exact: true }).tap();
+  const reopen = await openTemplateCell(page, 1);
+  await reopen.locator('summary').filter({ hasText: '補色與文字' }).tap();
+  await reopen.getByRole('button', { name: '移除此空白', exact: true }).tap();
+  await reopen.getByRole('button', { name: '套用片段範圍', exact: true }).tap();
   g = (await current(page)).tracks.find((t) => t.template)!;
   expect((g.items[1] as VideoItem).cell!.blanks).toEqual([]);
   await page.getByRole('button', { name: '套用多格版型', exact: true }).tap();
@@ -259,10 +261,12 @@ test('模板色塊期間音訊也靜音，後續畫面及聲音接續並完整�
   test.setTimeout(120000);
   await createProjectWith(page, ['solid-blue.webm']);
   await template(page, '直式膠卷', ['tone-video.webm', 'solid-green.webm', 'solid-red.webm'], 4);
-  const first = page.locator('.template-cell').first();
-  await seekTo(page, 1);
-  await first.getByRole('button', { name: '進階設定', exact: true }).tap();
-  await first.getByRole('button', { name: '在此格目前秒數插入色塊', exact: true }).tap();
+  const first = await openTemplateCell(page, 0);
+  await first.locator('summary').filter({ hasText: '補色與文字' }).tap();
+  await first.getByRole('button', { name: '在目前位置插入空白', exact: true }).tap();
+  await first.getByLabel('空白1終點', { exact: true }).fill('2');
+  await first.getByLabel('空白1起點', { exact: true }).fill('1');
+  await first.getByRole('button', { name: '套用片段範圍', exact: true }).tap();
   await page.getByRole('button', { name: '匯出影片', exact: true }).tap();
   await page.getByLabel('匯出解析度').selectOption('360');
   await page.getByLabel('匯出影格率').selectOption('24');

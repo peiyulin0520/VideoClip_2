@@ -113,7 +113,7 @@ export function TextPanel({
           <textarea
             className="text-input area"
             aria-label="文字內容"
-            rows={2}
+            rows={1}
             onFocus={(e) => {
               if (run.text === '點兩下編輯文字') e.currentTarget.select();
             }}

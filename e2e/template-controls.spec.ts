@@ -1,3 +1,4 @@
+import { openTemplateCell } from './helpers';
 import { waitForPreviewReady } from './helpers';
 import { expect, test, type Page } from '@playwright/test';
 import { createProjectWith, openTab, fixture, clips, addOverlays, exportFrame, seekTo } from './helpers';
@@ -124,40 +125,26 @@ test('單一素材進出場使用A與透明側，其他素材保持，進出與�
   await shot(page, 'single-entry-exit');
 });
 
-test('版型進階設定預設收合、只有一條來源軸，預覽與popup皆可播放暫停', async ({ page }) => {
+test('版型從格子開啟局部來源視窗、undo/redo、補色與播放，移除重複的下方預覽', async ({ page }) => {
   await createProjectWith(page, ['solid-blue.webm']);
   await template(page);
-  const cell = page.locator('.template-cell').first();
-  await expect(cell.getByRole('button', { name: '補白', exact: true })).toBeHidden();
+  await expect(page.locator('.template-cells video')).toHaveCount(0);
+  const cell = await openTemplateCell(page, 0);
   await expect(cell.getByTestId('source-range')).toHaveCount(1);
   await cell.getByRole('button', { name: '移除第 1 組片段', exact: true }).tap();
   await expect(cell.locator('.source-marker')).toHaveCount(0);
-  await cell.getByRole('button', { name: '復原第 1 格選段', exact: true }).tap();
+  await cell.getByRole('button', { name: 'undo', exact: true }).tap();
   await expect(cell.locator('.source-marker')).toHaveCount(2);
-
-  await cell.getByRole('button', { name: '播放第 1 格預覽', exact: true }).tap();
-  await expect(cell.getByRole('button', { name: '暫停第 1 格預覽', exact: true })).toHaveAttribute(
-    'aria-pressed',
-    'true',
-  );
+  await cell.getByRole('button', { name: '播放片段預覽', exact: true }).tap();
   await expect
-    .poll(async () =>
-      Number(await cell.locator('video').evaluate((v) => (v as HTMLVideoElement).currentTime)),
-    )
+    .poll(() => cell.locator('video').evaluate((v: HTMLVideoElement) => v.currentTime))
     .toBeGreaterThan(0.1);
-  await cell.getByRole('button', { name: '暫停第 1 格預覽', exact: true }).tap();
-  await cell.getByRole('button', { name: '進階設定', exact: true }).tap();
+  await cell.getByRole('button', { name: '暫停片段預覽', exact: true }).tap();
+  await cell.locator('summary').filter({ hasText: '補色與文字' }).tap();
   await cell.getByRole('button', { name: '補白', exact: true }).tap();
-  await cell.getByRole('button', { name: '選取第 1 格片段範圍', exact: true }).tap();
-  await page.getByRole('button', { name: '播放片段預覽', exact: true }).tap();
-  await expect(page.getByRole('button', { name: '暫停片段預覽', exact: true })).toBeVisible();
-  await page.getByRole('button', { name: '暫停片段預覽', exact: true }).tap();
-  await page.getByRole('button', { name: '關閉且不儲存', exact: true }).tap();
-  await cell.scrollIntoViewIfNeeded();
-  await shot(page, 'cell-advanced-and-playback');
-  await page.getByRole('button', { name: '播放版型結果', exact: true }).tap();
-  await expect(page.getByRole('button', { name: '暫停版型結果', exact: true })).toBeVisible();
-  await page.getByRole('button', { name: '暫停版型結果', exact: true }).tap();
+  await shot(page, 'cell-popup-playback-and-history');
+  await cell.getByRole('button', { name: '套用片段範圍', exact: true }).tap();
+  await expect(page.getByRole('button', { name: '播放版型結果', exact: true })).toHaveCount(0);
   await page.getByLabel('版型動態效果', { exact: true }).selectOption('slide');
   expect((await current(page)).tracks.find((t) => t.template)?.layout?.motion).toBe('slide');
   await page.getByText('進出場動畫', { exact: true }).tap();

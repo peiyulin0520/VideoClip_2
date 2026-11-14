@@ -1,3 +1,4 @@
+import { arrangeTemplate } from './templatePlayback';
 import { createOverlayClip, createTrack } from '../model/defaults';
 import type { Project, VideoItem } from '../model/types';
 export type LayoutStyle = NonNullable<Project['layout']>['style'];
@@ -177,7 +178,10 @@ export function mergeLegacyTemplate(project: Project): Project {
 export function carryTemplateEdits(
   next: import('../model/types').Track,
   previous: import('../model/types').Track,
+  preserveTiming = false,
 ) {
+  next.id = previous.id;
+  next.name = previous.name;
   if (next.layout && previous.layout?.transform)
     next.layout.transform = structuredClone(previous.layout.transform);
   if (next.layout && previous.layout) {
@@ -186,6 +190,7 @@ export function carryTemplateEdits(
       : undefined;
     next.layout.adjustment = previous.layout.adjustment ? { ...previous.layout.adjustment } : undefined;
     next.layout.opacity = previous.layout.opacity;
+    next.layout.playback = previous.layout.playback;
     for (const key of [
       'size',
       'caption',
@@ -203,11 +208,12 @@ export function carryTemplateEdits(
     if (item.type === 'text' || !old || old.type === 'text' || old.assetId !== item.assetId) return item;
     return {
       ...structuredClone(old),
-      id: item.id,
+      id: old.id,
       start: item.start,
-      duration: item.duration,
-      slot: item.slot,
-      transform: item.transform,
+      duration: preserveTiming ? old.duration : item.duration,
+      slot: previous.layout?.style === next.layout?.style ? old.slot : item.slot,
+      transform: previous.layout?.style === next.layout?.style ? old.transform : item.transform,
     };
   });
+  arrangeTemplate(next);
 }

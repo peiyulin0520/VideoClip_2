@@ -1,21 +1,14 @@
-import { MediaPlayback } from '../../ui/MediaPlayback';
-import { MIN_CLIP_DURATION } from '../../model/defaults';
-import { useRef, useState } from 'react';
+import { useState } from 'react';
 import type { Track, VideoItem } from '../../model/types';
 import { useProjectStore } from '../../store/projectStore';
-import { editItem, setTransform } from '../../store/actions';
-import { RangeActions } from '../../ui/RangeActions';
-import { SourceRanges } from '../../ui/SourceRanges';
-import { Slider } from '../../ui/Slider';
-import { includeAudio } from '../../engine/audioRanges';
+import { setTransform } from '../../store/actions';
 import { groupTransform } from '../../engine/templateGeometry';
-import { previewUrlFor as urlFor } from '../../engine/assetUrls';
-import { useUI } from '../../store/uiStore';
+import { arrangeTemplate, moveTemplateChild, updateTemplateChild } from '../../engine/templatePlayback';
+import { Slider } from '../../ui/Slider';
 import { FontSelect } from '../fonts/FontSelect';
-import { TrimEditor } from './TrimEditor';
+import { TemplateCellEditor } from './TemplateCellEditor';
 
 export function TemplateCells({ track }: { track: Track }) {
-  const selected = useProjectStore((s) => s.selectedId);
   const [editing, setEditing] = useState<VideoItem | null>(null);
   const tf = groupTransform(track),
     duration = track.items[0]?.duration ?? 3,
@@ -27,10 +20,34 @@ export function TemplateCells({ track }: { track: Track }) {
     });
   return (
     <section className="template-cells" aria-label="模板整組與每格片段">
-      {editing && <TrimEditor item={editing} onClose={() => setEditing(null)} />}
+      {editing && (
+        <TemplateCellEditor
+          item={editing}
+          index={track.items.findIndex((i) => i.id === editing.id)}
+          onApply={(draft) =>
+            useProjectStore.getState().apply((d) => updateTemplateChild(d, editing.id, draft))
+          }
+          onClose={() => setEditing(null)}
+        />
+      )}
       <h3>整組模板</h3>
+      <label className="field">
+        群組名稱
+        <input
+          aria-label="版型群組名稱"
+          value={track.name}
+          onChange={(e) =>
+            useProjectStore.getState().apply(
+              (d) => {
+                d.tracks.find((t) => t.id === track.id)!.name = e.target.value;
+              },
+              { coalesce: `template-name:${track.id}` },
+            )
+          }
+        />
+      </label>
       <p className="hint">
-        在預覽點選任一格後，拖移與雙指縮放都作用於整組框架和影片；每格來源在下方選段，不會個別拉歪。
+        在預覽點選任一格後，拖移與雙指縮放都作用於整組框架和影片；點版型示意圖的素材可開啟選段，不會個別拉歪。
       </p>
       <Slider
         label="模板整組大小"
@@ -56,7 +73,7 @@ export function TemplateCells({ track }: { track: Track }) {
             (d) => {
               const group = d.tracks.find((x) => x.id === track.id)!;
               for (const it of group.items) it.duration = v;
-              if (group.layout) group.layout.duration = v;
+              arrangeTemplate(group);
             },
             { coalesce: `group-length:${track.id}` },
           )
@@ -121,245 +138,42 @@ export function TemplateCells({ track }: { track: Track }) {
           </label>
         </div>
       )}
-      <h3>每格來源與補時</h3>
-      {track.items.map((it, i) =>
-        it.type === 'text' ? null : (
-          <Cell
-            key={it.id}
-            item={it}
-            index={i}
-            open={it.id === selected}
-            onSelect={() => useProjectStore.getState().select(it.id)}
-            onEdit={() => {
-              useUI.getState().player?.pause();
-              setEditing(it);
-            }}
-          />
-        ),
-      )}
-    </section>
-  );
-}
-function Cell({
-  item,
-  index,
-  open,
-  onSelect,
-  onEdit,
-}: {
-  item: VideoItem;
-  index: number;
-  open: boolean;
-  onSelect: () => void;
-  onEdit: () => void;
-}) {
-  const p = useProjectStore((s) => s.project)!,
-    asset = p.assets.find((a) => a.id === item.assetId)!,
-    video = useRef<HTMLVideoElement>(null);
-  const cell = item.cell ?? {
-    sourceEnd: asset.duration || 600,
-    offset: 0,
-    blanks: [],
-    background: '#000000',
-  };
-  const update = (patch: Partial<typeof cell>) =>
-    editItem(
-      item.id,
-      (it) => {
-        if (it.type !== 'text') it.cell = { ...cell, ...patch };
-      },
-      { coalesce: `cell:${item.id}` },
-    );
-  const [advanced, setAdvanced] = useState(false);
-  const [cursor, setCursor] = useState(item.trimIn);
-  const selectedEnd = Math.min(asset.duration, cell.sourceEnd);
-  const sourceRanges = item.sourceRanges ?? [[item.trimIn, selectedEnd] as [number, number]];
-  const changeRanges = (ranges: [number, number][]) =>
-    editItem(
-      item.id,
-      (it) => {
-        if (it.type === 'text') return;
-        it.sourceRanges = ranges;
-        if (ranges.length) {
-          it.trimIn = ranges[0]![0];
-          it.cell = { ...cell, sourceEnd: ranges.at(-1)![1] };
-        }
-      },
-      { coalesce: `cell-source:${item.id}` },
-    );
-  return (
-    <details className="template-cell" open={open}>
-      <summary
-        onClick={(e) => {
-          e.preventDefault();
-          if (!open) onSelect();
-          else useProjectStore.getState().select(null);
-        }}
-      >
-        {asset.thumbs[0] && <img src={asset.thumbs[0]} alt="" />}
-        <span>
-          第 {index + 1} 格 · {item.name || asset.name}
-          <small>
-            共 {item.duration.toFixed(2)} 秒 · 來源 {item.trimIn.toFixed(2)}–{selectedEnd.toFixed(2)} 秒
-          </small>
-        </span>
-      </summary>
-      {asset.kind === 'video' && (
-        <>
-          <video
-            ref={video}
-            src={urlFor(p.id, asset.id)}
-            muted
-            playsInline
-            preload="metadata"
-            className="cell-preview"
-            onLoadedMetadata={(e) => {
-              e.currentTarget.currentTime = Math.max(0.001, item.trimIn);
-            }}
-          />
-          <MediaPlayback
-            media={video}
-            label={`第 ${index + 1} 格預覽`}
-            start={item.trimIn}
-            end={selectedEnd}
-            onTime={setCursor}
-          />
-          <SourceRanges
-            cursor={cursor}
-            duration={asset.duration}
-            minimum={Math.min(asset.duration, MIN_CLIP_DURATION * item.speed)}
-            ranges={sourceRanges}
-            thumbs={asset.thumbs}
-            onChange={changeRanges}
-            onSeek={(t) => {
-              setCursor(t);
-              if (video.current) video.current.currentTime = Math.min(t, asset.duration - 0.001);
-            }}
-          />
-          <RangeActions
-            ranges={sourceRanges}
-            cursor={cursor}
-            duration={asset.duration}
-            minimum={MIN_CLIP_DURATION * item.speed}
-            onChange={changeRanges}
-          />
-          <button
-            className="chip"
-            disabled={!useProjectStore.getState().past.length}
-            onClick={() => useProjectStore.getState().undo()}
-          >
-            復原第 {index + 1} 格選段
-          </button>
-        </>
-      )}
-      <button
-        className={`chip${advanced ? ' active' : ''}`}
-        aria-expanded={advanced}
-        onClick={() => setAdvanced((v) => !v)}
-      >
-        進階設定
-      </button>
-      {advanced && (
-        <div className="cell-advanced">
-          {asset.kind === 'video' && (
-            <button
-              className="chip"
-              onClick={() => {
-                video.current?.pause();
-                onEdit();
-              }}
-            >
-              選取第 {index + 1} 格片段範圍
-            </button>
-          )}
-          <Slider
-            label={`第 ${index + 1} 格影片延後出現`}
-            value={cell.offset}
-            min={0}
-            max={item.duration}
-            step={0.05}
-            format={(v) => `${v.toFixed(2)} 秒`}
-            onChange={(v) => update({ offset: v })}
-          />
-          <div className="chips">
-            {(['#000000', '#ffffff'] as const).map((c) => (
-              <button
-                className={`chip${cell.background === c ? ' active' : ''}`}
-                key={c}
-                aria-pressed={cell.background === c}
-                onClick={() => update({ background: c })}
-              >
-                {c === '#000000' ? '補黑' : '補白'}
-              </button>
-            ))}
-            <button
-              className="chip"
-              onClick={() => {
-                const local = Math.max(
-                  0,
-                  Math.min(item.duration - 0.01, (useUI.getState().player?.time ?? item.start) - item.start),
-                );
-                update({ blanks: includeAudio(cell.blanks, local, Math.min(item.duration, local + 1)) });
-              }}
-            >
-              在此格目前秒數插入色塊
-            </button>
-          </div>
-          <p className="hint">
-            來源不足會自動補色。指定色塊會暫停來源播放，之後接續影片；每格總長相同。色塊起迄可在下方輸入秒數。
-          </p>
-          {cell.blanks.map(([a, b], i) => (
-            <div className="chips" key={i}>
-              <span>
-                <label>
-                  色塊起點
-                  <input
-                    type="number"
-                    aria-label={`色塊 ${i + 1} 起點`}
-                    value={a}
-                    min={0}
-                    max={b - 0.01}
-                    step={0.05}
-                    onChange={(e) =>
-                      update({
-                        blanks: cell.blanks.map((r, j) =>
-                          j === i ? [Math.max(0, Math.min(b - 0.01, Number(e.target.value))), b] : r,
-                        ),
-                      })
-                    }
-                  />
-                </label>
-                <label>
-                  色塊終點
-                  <input
-                    type="number"
-                    aria-label={`色塊 ${i + 1} 終點`}
-                    value={b}
-                    min={a + 0.01}
-                    max={item.duration}
-                    step={0.05}
-                    onChange={(e) =>
-                      update({
-                        blanks: cell.blanks.map((r, j) =>
-                          j === i
-                            ? [a, Math.max(a + 0.01, Math.min(item.duration, Number(e.target.value)))]
-                            : r,
-                        ),
-                      })
-                    }
-                  />
-                </label>
-              </span>
+      <h3>素材片段</h3>
+      <div className="template-child-list">
+        {track.items.map((it, i) =>
+          it.type === 'text' ? null : (
+            <div key={it.id} className="template-child-entry">
               <button
                 className="chip"
-                onClick={() => update({ blanks: cell.blanks.filter((_, j) => j !== i) })}
+                onClick={() => {
+                  useProjectStore.getState().select(it.id);
+                  setEditing(it);
+                }}
               >
-                移除此色塊
+                第 {i + 1} 格 · {it.name || '片段範圍'}
+              </button>
+              <button
+                className="icon-btn"
+                aria-label={`第${i + 1}格提前播放`}
+                onClick={() =>
+                  useProjectStore.getState().apply((d) => moveTemplateChild(d, track.id, it.id, -1))
+                }
+              >
+                ←
+              </button>
+              <button
+                className="icon-btn"
+                aria-label={`第${i + 1}格延後播放`}
+                onClick={() =>
+                  useProjectStore.getState().apply((d) => moveTemplateChild(d, track.id, it.id, 1))
+                }
+              >
+                →
               </button>
             </div>
-          ))}
-        </div>
-      )}
-    </details>
+          ),
+        )}
+      </div>
+    </section>
   );
 }

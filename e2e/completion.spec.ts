@@ -235,8 +235,8 @@ test('手動描邊與拖曳四邊裁切真的在畫面留下透明區域', async
   await expect.poll(async () => isGreen(await samplePreview(page, 0.4, 0.5))).toBe(true);
   await expect.poll(async () => isRed(await samplePreview(page, 0.6, 0.5))).toBe(true);
   await page.screenshot({ path: `${shots}/lasso-mask.png` });
+  await page.getByRole('button', { name: '復原', exact: true }).tap();
   await page.getByRole('button', { name: '裁切', exact: true }).tap();
-  await page.getByRole('button', { name: '重設裁切', exact: true }).tap();
   await page.getByRole('button', { name: '一般裁切', exact: true }).tap();
   const stage = (await page.getByTestId('crop-stage').boundingBox())!,
     handle = (await page.getByRole('button', { name: '裁切拖曳 l', exact: true }).boundingBox())!;

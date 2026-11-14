@@ -159,7 +159,7 @@ describe('group template geometry and source timing', () => {
       trimIn: 0.2,
       cell: { sourceEnd: 0.8, blanks: [[0.3, 0.6]] },
     });
-    expect(next.id).not.toBe(first.id);
+    expect(next.id).toBe(first.id);
     expect(first.duration).toBe(4);
     expect(plan.tracks[0]!.layout!.transform).toEqual(old.layout!.transform);
   });

@@ -38,6 +38,10 @@ export function AudioRangeEditor({
   const sceneCanvas = useRef<HTMLCanvasElement>(null);
   const media = useRef<HTMLVideoElement | HTMLAudioElement | null>(null);
   useEffect(() => {
+    const element = media.current;
+    return () => element?.pause();
+  }, []);
+  useEffect(() => {
     if (!playing) return;
     let frame = 0;
     const tick = () => {

@@ -3,12 +3,14 @@
 規則：每完成一個有意義的步驟，就在同一個 commit 裡 **覆寫「交接快照」** 並 **在「日誌」最上面新增一筆**（規則全文見 `AGENTS.md`「紀錄規則」，背景與架構見 `docs/HANDOFF.md`）。
 
 ## 交接快照（VideoClip_2 最新狀態）
-- 分支 codex/editing-refinements，前輪 PR #11 已合併，本輪另開新 PR；前輪色調 source8987248 已369單元/156瀏覽器通過，本輪新增需求尚未驗收。
-- A 階段已實作：裁切穩定 canvas、四工具同列、來源 UV 縮放、undo/redo、有聲來源預覽、X 捨棄；374單元與 check 通過，瀏覽器待新版 Actions。其餘定格＋使用者23點；清單 docs/plans/2026-11-14-editing-refinements.md。先裁切/有聲選段與 A/B/C 來源錯位，再定格、共用介面、版型群組。
-- 基線 npm run check 已通過；本輪不可引用前輪截圖作新驗收。私有參考錄影只留 /tmp。
-- 不等待使用者批准實作；完成測試後更新 PR，由使用者自行 Merge。Safari 真機仍待 PLAN §7。
 
-## 本輪追加狀態
+- 分支 codex/editing-refinements / PR #12 draft，前輪 PR #11 已由使用者合併；本輪仍由使用者自行 Merge，不開auto-merge、不推main。
+- 本機379單元、lint/格式/TypeScript/build/Pages/PWA/39字體已過。定格、裁切、固定基地/自訂比例、命名/placeholder/圓角、多組版型與局部來源popup、輪序停格/子素材時間軸均已實作，新版瀏覽器尚待驗收。
+- 先前Actions43619748042（source382d54c）152瀏覽器成功/9失敗：3選段undo舊名、1移除reset舊操作、5對比問題。新版已改undo/X操作與灰提示/primary文字；不可引用舊成功截圖冒充新版驗收。
+- 早一輪43619159592的22項裁切/聲音/定格/ABC原生來源時間已過；43619748042色調5、音訊3、自訂比例成功。最新版型、新基地bitmap與全回歸仍需新版Actions。
+- 規格docs/plans/2026-11-14-editing-refinements.md，來源錄影只在/tmp，未放公開repo。下一步：新版Actions→修實際失敗→新截圖與聲畫資源量測→更新PR12/ready。Safari仍PLAN §7待真機，不宣稱手機FPS/爆音已測。
+
+## 本輪較早狀態（歷史）
 
 - PR #12 draft：定格選取／近鄰新增與刪除、四種原地動作、全頁素材名稱／分離原音繼承、真 placeholder 已實作。音訊解碼元素重綁會清舊 seek 節流；ABC 資料回歸保持 C trimIn。
 - 374 單元與 check 通過；Actions43618211529 的舊裁切18項成功，新2項因測試未選素材失敗，已補實際點素材。新版 Actions43619159592 已22項裁切/聲音/定格/ABC原生時間通過；舊色調測試需先新增再改值，避免按新的刪除切換鈕刪點，已更新操作順序，check/374過。完整瀏覽器仍待最終新版，不能宣稱23已實機修好。
@@ -17,6 +19,13 @@
 - 2026-11-14 E 階段自訂輸出比例：主預覽基地不依輸出比例改高，頂部比例可進入主預覽四邊/角拖曳草稿，X不儲存、套用才寫 width/height/customAspect。內框/框外斜紋分開。ProjectPreview 使用240方形固定基地 contain，不因4:3上下錯位；音訊來源固定160px基地，播放秒數同列。check/374單元成功，新瀏覽器待驗。
 
 ## 本輪日誌
+
+- 2026-11-14 F/G 版型局部來源與輪序群組（379單元/check過，瀏覽器待驗）
+  - 點示意圖直接開有聲來源popup；左右固定基地，同列播放秒數/undo/redo/套用。起點按長度連迄；單格命名/速率/自訂補色文字附在該格，套用才寫專案，X捨棄。
+  - 移除inline多video及重複整組小預覽；未選群組可新增，多組獨立，重套保存group/child identity、名稱、來源與個別時長。小示意只靜態96px調色，不讀正在播放的影片或逐幀CPU調色。
+  - 特效頁設定輪序，子素材獨立start/duration，已播格停最後幀且停止其音訊；時間軸群組預設收合，同時分列/輪序同列，可重排、命名與增群組色塊。
+  - Crop暫停不持續繪圖，保留UV縮放；ProjectPreview依CSS基地調bitmap避免拉扁。新測局部X/undo/redo、來源秒數、組間隔離、停格native/像素/匯出；舊inline測試改popup。379單元/check過，新版瀏覽器待Actions。
+
 
 - 2026-11-14 A 階段裁切與來源預覽（codex/editing-refinements）
   - 持續 canvas 取代每筆 toDataURL/CSS mask，原素材 UV 記錄筆刷、雙指縮放移動；空底保留筆刷與原圖橡皮擦獨立可用。

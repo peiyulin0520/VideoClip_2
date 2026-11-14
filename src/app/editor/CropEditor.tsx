@@ -49,7 +49,8 @@ export function CropEditor({ item, onClose }: { item: VideoItem; onClose: () => 
   useEffect(() => {
     const c = canvas.current;
     if (!c) return;
-    const w = Math.min(asset.width, 720),
+    const cap = 720 * Math.min(zoom, 3);
+    const w = Math.min(asset.width, cap, cap * ratio),
       h = Math.max(1, Math.round(w / ratio));
     if (c.width !== w || c.height !== h) {
       c.width = w;
@@ -85,11 +86,25 @@ export function CropEditor({ item, onClose }: { item: VideoItem; onClose: () => 
           }
         }
       }
+      if (video.current && !video.current.paused) raf = requestAnimationFrame(draw);
+    };
+    const element = video.current;
+    const schedule = () => {
+      cancelAnimationFrame(raf);
+      last = -Infinity;
       raf = requestAnimationFrame(draw);
     };
-    raf = requestAnimationFrame(draw);
-    return () => cancelAnimationFrame(raf);
-  }, [mask, crop, preview, ready, asset.width, ratio]);
+    element?.addEventListener('play', schedule);
+    element?.addEventListener('seeked', schedule);
+    element?.addEventListener('loadeddata', schedule);
+    schedule();
+    return () => {
+      cancelAnimationFrame(raf);
+      element?.removeEventListener('play', schedule);
+      element?.removeEventListener('seeked', schedule);
+      element?.removeEventListener('loadeddata', schedule);
+    };
+  }, [mask, crop, preview, ready, asset.width, ratio, zoom]);
   const point = (e: PointerEvent<HTMLElement | SVGSVGElement>): [number, number] =>
     cropPointer(
       e.clientX,
@@ -169,7 +184,11 @@ export function CropEditor({ item, onClose }: { item: VideoItem; onClose: () => 
         <button
           className="icon-btn"
           aria-label="縮小裁切預覽"
-          onClick={() => setZoom((v) => Math.max(1, v / 1.25))}
+          onClick={() => {
+            const next = Math.max(1, zoom / 1.25);
+            setZoom(next);
+            if (next === 1) setPan({ x: 0, y: 0 });
+          }}
         >
           <ZoomOut size={18} />
         </button>

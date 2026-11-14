@@ -84,7 +84,7 @@ jobs:
           fc-cache -f "$HOME/.local/share/fonts/little-moments"
       - name: Editing refinement regression tests
         timeout-minutes: 5
-        run: npm run e2e -- e2e/editing-refinements.spec.ts e2e/refinement.spec.ts e2e/compact-workspace.spec.ts --trace off --workers=1
+        run: npm run e2e -- e2e/editing-refinements.spec.ts e2e/template-editing.spec.ts e2e/refinement.spec.ts e2e/compact-workspace.spec.ts --trace off --workers=1
       - name: Tone grading and diamond interpolation tests
         timeout-minutes: 5
         run: npm run e2e -- e2e/tone-grading.spec.ts --trace off --workers=1

@@ -1,10 +1,16 @@
-import { ProjectPreview } from './ProjectPreview';
+import { animationValues } from '../../engine/keyframes';
+import { TemplateCellEditor } from './TemplateCellEditor';
+import { ToneThumbnail } from './ToneThumbnail';
+import { createOverlayClip } from '../../model/defaults';
+import { itemName } from '../../engine/itemName';
+import { updateTemplateChild } from '../../engine/templatePlayback';
+import { gradeRGB, resolveAdjustment } from '../../engine/grade';
 import { AnimationSettings } from './AnimationSettings';
 import { ColorPicker } from '../../ui/ColorPicker';
 import { Slider } from '../../ui/Slider';
 import { TemplateCells } from './TemplateCells';
 import { ensureFont } from '../../fonts/fontStore';
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import {
   collagePlan,
   carryTemplateEdits,
@@ -23,10 +29,22 @@ import { toast, useUI } from '../../store/uiStore';
 
 export function TemplatePanel() {
   const project = useProjectStore((s) => s.project)!;
+  const player = useUI((s) => s.player);
+  const [miniTime, setMiniTime] = useState(player?.time ?? 0);
+  useEffect(
+    () =>
+      player?.subscribe((time, playing) => {
+        if (!playing) setMiniTime(time);
+      }),
+    [player],
+  );
   const selectedId = useProjectStore((s) => s.selectedId);
-  const activeGroup =
-    project.tracks.find((t) => t.template && t.items.some((it) => it.id === selectedId)) ??
-    project.tracks.find((t) => t.template);
+  const activeGroup = project.tracks.find((t) => t.template && t.items.some((it) => it.id === selectedId));
+  const miniatureTone = activeGroup?.layout
+    ? animationValues(activeGroup.layout, miniTime - activeGroup.layout.start)
+    : undefined;
+  const [editingCell, setEditingCell] = useState<{ item: VideoItem; index: number } | null>(null);
+  const [cellDrafts, setCellDrafts] = useState<Record<number, VideoItem>>({});
   const [style, setStyle] = useState<LayoutStyle>(
       activeGroup?.layout?.style ?? project.layout?.style ?? 'photobooth',
     ),
@@ -73,9 +91,12 @@ export function TemplatePanel() {
     ?.map((id) => existing.find((it) => it.id === id))
     .filter((it): it is VideoItem => !!it);
   const assetLabel = (id: string) => {
-    const a = media.find((a) => a.id === id);
+    const a = media.find((a) => a.id === id),
+      named =
+        activeGroup?.items.find((it) => it.type !== 'text' && it.assetId === id) ??
+        existing.find((it) => it.assetId === id);
     return a
-      ? `${a.attribution?.title || a.name} · ${a.kind === 'video' ? `${a.duration.toFixed(1)} 秒` : '照片／貼圖'}`
+      ? `${named ? itemName(project, named) : a.attribution?.title || a.name} · ${a.kind === 'video' ? `${a.duration.toFixed(1)} 秒` : '照片／貼圖'}`
       : '選擇素材';
   };
   const input = useRef<HTMLInputElement>(null),
@@ -116,7 +137,23 @@ export function TemplatePanel() {
         seconds,
         sources,
       );
-      if (activeGroup && !sourceIds) carryTemplateEdits(plan.tracks[0]!, activeGroup);
+      if (activeGroup && !sourceIds)
+        carryTemplateEdits(
+          plan.tracks[0]!,
+          activeGroup,
+          !lengthDraft || lengthDraft.value === lengthDraft.baseline,
+        );
+      for (const [key, draft] of Object.entries(cellDrafts)) {
+        const i = Number(key),
+          before = plan.tracks[0]!.items[i];
+        if (before && before.type !== 'text' && before.assetId === draft.assetId)
+          Object.assign(before, draft, {
+            id: before.id,
+            start: before.start,
+            slot: before.slot,
+            transform: before.transform,
+          });
+      }
       Object.assign(plan.layout, appearance);
       Object.assign(plan.tracks[0]!.layout!, appearance);
       if (plan.layout.story) {
@@ -146,6 +183,23 @@ export function TemplatePanel() {
   };
   return (
     <div className="panel scroll" aria-label="多格影片版型">
+      {editingCell && (
+        <TemplateCellEditor
+          item={editingCell.item}
+          index={editingCell.index}
+          onClose={() => setEditingCell(null)}
+          onApply={(draft) => {
+            if (activeGroup)
+              useProjectStore.getState().apply((d) => updateTemplateChild(d, editingCell.item.id, draft));
+            else setCellDrafts((v) => ({ ...v, [editingCell.index]: draft }));
+          }}
+        />
+      )}
+      {activeGroup && (
+        <button className="btn primary" onClick={() => useProjectStore.getState().select(null)}>
+          ＋ 新增另一組版型
+        </button>
+      )}
       <div className="template-grid">
         {LAYOUTS.map((l) => (
           <button
@@ -285,16 +339,50 @@ export function TemplatePanel() {
           aria-label="版型格子位置對照"
           style={{
             aspectRatio: `${appearance.size?.width ?? 1080} / ${appearance.size?.height ?? layoutDefaultSize(style).height}`,
+            opacity: miniatureTone?.opacity ?? 1,
+            background: (() => {
+              const hex = appearance.frameColor ?? '#fff5df',
+                rgb = [1, 3, 5].map((i) => parseInt(hex.slice(i, i + 2), 16) / 255),
+                color = gradeRGB(rgb, resolveAdjustment(miniatureTone));
+              return `rgba(${color.map((v) => Math.round(v * 255)).join(',')},${appearance.frameOpacity ?? 1})`;
+            })(),
           }}
         >
           {layoutSlots(style, count).map((slot, i) => {
-            const a = media.find((a) => a.id === ids[i]);
+            const a = media.find((a) => a.id === ids[i]),
+              cell = activeGroup?.items[i] ?? cellDrafts[i];
+            const thumb =
+              a?.filmstrip?.frames.findLast((f) => f.time <= (cell && cell.type !== 'text' ? cell.trimIn : 0))
+                ?.src ?? a?.thumbs[0];
             return (
               <button
                 key={i}
                 className={focusSlot === i ? 'active' : ''}
                 aria-label={`選擇第 ${i + 1} 格 ${slotLabel(style, i, count)}`}
-                onClick={() => setFocusSlot(i)}
+                onClick={() => {
+                  setFocusSlot(i);
+                  useUI.getState().player?.pause();
+                  if (!a) return;
+                  const current = activeGroup?.items[i];
+                  const source =
+                    current && current.type !== 'text'
+                      ? current
+                      : (cellDrafts[i] ?? {
+                          ...createOverlayClip(a, 0),
+                          duration: seconds,
+                          cell: {
+                            sourceEnd: a.kind === 'image' ? 3600 : Math.min(a.duration, seconds),
+                            offset: 0,
+                            blanks: [],
+                            background: '#000000',
+                          },
+                        });
+                  if (current) {
+                    useUI.setState({ templateCellId: current.id });
+                    useProjectStore.getState().select(current.id);
+                  }
+                  setEditingCell({ item: source, index: i });
+                }}
                 style={{
                   left: `${slot.x * 100}%`,
                   top: `${slot.y * 100}%`,
@@ -302,9 +390,19 @@ export function TemplatePanel() {
                   height: `${slot.h * 100}%`,
                 }}
               >
-                {a?.thumbs[0] && <img src={a.thumbs[0]} alt={`第 ${i + 1} 格素材縮圖`} />}
+                {thumb && (
+                  <ToneThumbnail
+                    src={thumb}
+                    aspect={
+                      (slot.w * (appearance.size?.width ?? 1080)) /
+                      (slot.h * (appearance.size?.height ?? layoutDefaultSize(style).height))
+                    }
+                    adjustment={miniatureTone}
+                    label={`第 ${i + 1} 格素材縮圖`}
+                  />
+                )}
                 <strong>
-                  {i + 1} · {slotLabel(style, i, count)}
+                  {i + 1} · {activeGroup?.items[i]?.name ?? slotLabel(style, i, count)}
                 </strong>
               </button>
             );
@@ -332,7 +430,10 @@ export function TemplatePanel() {
                   .filter((a) => a.kind !== 'audio')
                   .map((a) => (
                     <option key={a.id} value={a.id}>
-                      {assetLabel(a.id)}
+                      {activeGroup?.items[i]?.type !== 'text' &&
+                      (activeGroup?.items[i] as VideoItem | undefined)?.assetId === a.id
+                        ? itemName(project, activeGroup!.items[i]!)
+                        : assetLabel(a.id)}
                     </option>
                   ))}
               </select>
@@ -441,7 +542,6 @@ export function TemplatePanel() {
       )}
       {activeGroup && (
         <>
-          <ProjectPreview start={activeGroup.items[0]!.start} duration={activeGroup.items[0]!.duration} />
           <TemplateCells track={activeGroup} />
         </>
       )}

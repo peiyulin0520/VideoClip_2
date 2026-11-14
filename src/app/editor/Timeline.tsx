@@ -1,3 +1,4 @@
+import { arrangeTemplate } from '../../engine/templatePlayback';
 import { itemName } from '../../engine/itemName';
 import { itemCategory, laneCategory, LANE_NAMES, type LaneCategory } from '../../engine/batchLayers';
 import { BatchLayerBar } from './BatchLayerBar';
@@ -147,6 +148,7 @@ export function Timeline({
   const [drag, setDrag] = useState<Drag | null>(null);
   const [menuTrackId, setMenuTrackId] = useState<string | null>(null);
 
+  const [expandedTemplates, setExpandedTemplates] = useState<string[]>([]);
   const [batch, setBatch] = useState<string[]>([]);
   const [collapsed, setCollapsed] = useState<LaneCategory[]>(['visual', 'text', 'sticker', 'audio']);
   useEffect(
@@ -228,7 +230,7 @@ export function Timeline({
 
   // Track array is bottom-to-top; every media lane can occupy any stack position.
   const rowLayout = useMemo(() => {
-    const rows: { track: Track; index: number; top: number; h: number }[] = [];
+    const rows: { track: Track; index: number; top: number; h: number; templateChild?: boolean }[] = [];
     const groups: { category: LaneCategory; top: number; tracks: Track[] }[] = [];
     let top = RULER_H + ROW_GAP;
     for (const { track, index } of project.tracks.map((track, index) => ({ track, index })).reverse()) {
@@ -244,10 +246,20 @@ export function Timeline({
       if (!collapsed.includes(category)) {
         rows.push({ track, index, top, h: ROW_H });
         top += ROW_H + ROW_GAP;
+        if (track.template && expandedTemplates.includes(track.id)) {
+          const children =
+            track.layout?.playback === 'sequential'
+              ? [track]
+              : track.items.map((item) => ({ ...track, items: [item] }));
+          for (const child of children) {
+            rows.push({ track: child, index, top, h: ROW_H, templateChild: true });
+            top += ROW_H + ROW_GAP;
+          }
+        }
       }
     }
     return { rows, groups, contentH: top + 24 };
-  }, [project, collapsed]);
+  }, [project, collapsed, expandedTemplates]);
   const { rows, groups, contentH } = rowLayout;
 
   useLayoutEffect(() => {
@@ -496,7 +508,13 @@ export function Timeline({
   };
 
   // ---- 修剪把手 ----
-  const startTrim = (e: RPointerEvent, item: Item, track: Track, side: 'start' | 'end') => {
+  const startTrim = (
+    e: RPointerEvent,
+    item: Item,
+    track: Track,
+    side: 'start' | 'end',
+    templateChild = false,
+  ) => {
     e.stopPropagation();
     e.preventDefault();
     player?.pause();
@@ -512,7 +530,17 @@ export function Timeline({
         side === 'start'
           ? trimStartFree(startItems, item.id, delta)
           : trimEndFree(startItems, item.id, item.duration + delta, asset);
-      useProjectStore.getState().apply((d) => setTimelineItems(d, track.id, next), { coalesce: trimKey });
+      useProjectStore.getState().apply(
+        (d) => {
+          if (templateChild) {
+            const group = d.tracks.find((t) => t.id === track.id)!;
+            const changed = next.find((i) => i.id === item.id)!;
+            group.items = group.items.map((i) => (i.id === item.id ? changed : i));
+            arrangeTemplate(group);
+          } else setTimelineItems(d, track.id, next);
+        },
+        { coalesce: trimKey },
+      );
       const cur = next.find((x) => x.id === item.id)!;
       player?.peek(side === 'start' ? cur.start : cur.start + cur.duration - 0.05);
     };
@@ -625,13 +653,14 @@ export function Timeline({
                   )}
               </div>
             ))}
-            {rows.map(({ track, top, h }) => (
+            {rows.map(({ track, top, h, templateChild }) => (
               <div
-                key={track.id}
+                key={`${track.id}:${templateChild ? track.items.map((i) => i.id).join(',') : 'group'}`}
                 className={`track${track.hidden ? ' off' : ''}${drag?.targetId === track.id ? (drag.invalid ? ' drop-invalid' : ' layer-drop') : ''}`}
                 data-testid="track"
                 data-kind={track.kind}
                 data-track-id={track.id}
+                data-template-child={templateChild || undefined}
                 data-bg="1"
                 style={{ top, height: h }}
               >
@@ -707,11 +736,14 @@ export function Timeline({
                       <Plus size={14} />
                     </button>
                   ))}
-                {(track.template ? track.items.slice(0, 1) : track.items).map((it) => {
+                {(track.template && !templateChild ? track.items.slice(0, 1) : track.items).map((it) => {
+                  const groupSummary = track.template && !templateChild;
+                  const displayDuration = groupSummary
+                    ? (track.layout?.duration ?? it.duration)
+                    : it.duration;
                   const asset = isVideoItem(it) ? project.assets.find((a) => a.id === it.assetId) : undefined;
                   const selected =
-                    it.id === selectedId ||
-                    !!(track.template && track.items.some((x) => x.id === selectedId));
+                    it.id === selectedId || !!(groupSummary && track.items.some((x) => x.id === selectedId));
                   const dragging = drag?.id === it.id;
                   const dx = dragging ? drag!.dx : 0;
                   return (
@@ -737,12 +769,33 @@ export function Timeline({
                       }}
                       style={{
                         left: half + it.start * pps,
-                        width: Math.max(it.duration * pps, 4),
+                        width: Math.max(displayDuration * pps, 4),
                         transform: dragging ? `translate(${dx}px, ${drag!.dy}px)` : undefined,
                       }}
-                      onPointerDown={(e) => startItemGesture(e, it, track)}
+                      onPointerDown={(e) => {
+                        useUI.setState({ templateCellId: templateChild ? it.id : null });
+                        if (templateChild) {
+                          e.stopPropagation();
+                          useProjectStore.getState().select(it.id);
+                          player?.pause();
+                          player?.seek(Math.max(it.start, Math.min(player.time, itemEnd(it) - 0.001)));
+                        } else startItemGesture(e, it, track);
+                      }}
                     >
-                      {isVideoItem(it) ? (
+                      {groupSummary ? (
+                        <div className="template-summary-thumbs">
+                          {track.items.map((child) =>
+                            child.type === 'text' ? null : (
+                              <span
+                                key={child.id}
+                                style={{
+                                  backgroundImage: `url(${project.assets.find((a) => a.id === child.assetId)?.thumbs[0] ?? ''})`,
+                                }}
+                              />
+                            ),
+                          )}
+                        </div>
+                      ) : isVideoItem(it) ? (
                         <Tiles
                           item={it}
                           asset={asset}
@@ -758,42 +811,58 @@ export function Timeline({
                           }
                         />
                       ) : null}
+                      {groupSummary && (
+                        <button
+                          className="template-group-toggle"
+                          aria-label={`${expandedTemplates.includes(track.id) ? '收合' : '展開'}版型素材`}
+                          aria-expanded={expandedTemplates.includes(track.id)}
+                          onPointerDown={(e) => e.stopPropagation()}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setExpandedTemplates((v) =>
+                              v.includes(track.id) ? v.filter((id) => id !== track.id) : [...v, track.id],
+                            );
+                          }}
+                        >
+                          {expandedTemplates.includes(track.id) ? '▾' : '▸'}
+                        </button>
+                      )}
                       <div className="clip-label">
-                        {it.name
-                          ? `${it.name} · ${it.duration.toFixed(1)}s`
-                          : track.template
-                            ? `${track.name} · ${track.items.length} 格`
+                        {groupSummary
+                          ? `${track.name} · ${track.items.length} 格`
+                          : it.name
+                            ? `${it.name} · ${it.duration.toFixed(1)}s`
                             : it.type === 'text'
-                              ? it.card.runs[0]?.text === ''
-                                ? it.card.placeholder
-                                  ? '文字'
-                                  : '圖形'
-                                : `Aa ${it.card.runs[0]?.text.replace(/\n/g, ' ') ?? ''}`
-                              : `${asset?.generated ? '留白' : (asset?.name ?? (it.type === 'audio' ? '♫ 音訊' : '素材'))} ${it.duration.toFixed(1)}s`}
+                              ? it.card.placeholder
+                                ? '文字'
+                                : it.card.runs[0]?.text === ''
+                                  ? '圖形'
+                                  : `Aa ${it.card.runs[0]?.text.replace(/\n/g, ' ') ?? ''}`
+                              : `${itemName(project, it)} ${it.duration.toFixed(1)}s`}
                         {isVideoItem(it) && it.speed !== 1 && ` · ${it.speed}x`}
                         {isVideoItem(it) && it.type === 'video' && it.volume === 0 && ' · 靜音'}
                       </div>
-                      {(track.template ? track.layout?.keyframes : it.keyframes)?.map((frame, i) => (
+                      {(groupSummary ? track.layout?.keyframes : it.keyframes)?.map((frame, i) => (
                         <button
                           key={frame.time}
-                          className={`timeline-keyframe${!playState.playing && selectedId === it.id && keyframeAt({ keyframes: track.template ? track.layout?.keyframes : it.keyframes }, playState.time - (track.layout?.start ?? it.start), 7 / pps) === frame ? ' selected' : ''}`}
+                          className={`timeline-keyframe${!playState.playing && selected && keyframeAt({ keyframes: groupSummary ? track.layout?.keyframes : it.keyframes }, playState.time - (track.layout?.start ?? it.start), 7 / pps) === frame ? ' selected' : ''}`}
                           aria-pressed={
                             !playState.playing &&
-                            selectedId === it.id &&
+                            selected &&
                             keyframeAt(
-                              { keyframes: track.template ? track.layout?.keyframes : it.keyframes },
+                              { keyframes: groupSummary ? track.layout?.keyframes : it.keyframes },
                               playState.time - (track.layout?.start ?? it.start),
                               7 / pps,
                             ) === frame
                           }
                           aria-label={`第${i + 1}個定格 ${frame.time.toFixed(2)}秒`}
-                          style={{ left: Math.min(it.duration * pps - 4, frame.time * pps) }}
+                          style={{ left: Math.min(displayDuration * pps - 4, frame.time * pps) }}
                           onPointerDown={(e) => e.stopPropagation()}
                           onClick={(e) => {
                             e.stopPropagation();
                             useProjectStore.getState().select(it.id);
                             player?.pause();
-                            player?.seek(it.start + Math.min(it.duration - 0.001, frame.time));
+                            player?.seek(it.start + Math.min(displayDuration - 0.001, frame.time));
                           }}
                         >
                           <span className="diamond-shape" />
@@ -811,20 +880,23 @@ export function Timeline({
                             : '♫ 原音'}
                         </div>
                       )}
-                      {selected && !dragging && !track.locked && (
-                        <>
-                          <div
-                            className="handle left"
-                            data-testid="trim-start"
-                            onPointerDown={(e) => startTrim(e, it, track, 'start')}
-                          />
-                          <div
-                            className="handle right"
-                            data-testid="trim-end"
-                            onPointerDown={(e) => startTrim(e, it, track, 'end')}
-                          />
-                        </>
-                      )}
+                      {selected &&
+                        !dragging &&
+                        !track.locked &&
+                        !(groupSummary && track.layout?.playback === 'sequential') && (
+                          <>
+                            <div
+                              className="handle left"
+                              data-testid="trim-start"
+                              onPointerDown={(e) => startTrim(e, it, track, 'start', templateChild)}
+                            />
+                            <div
+                              className="handle right"
+                              data-testid="trim-end"
+                              onPointerDown={(e) => startTrim(e, it, track, 'end', templateChild)}
+                            />
+                          </>
+                        )}
                     </div>
                   );
                 })}

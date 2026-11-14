@@ -1,3 +1,5 @@
+> 最新 F/G：379單元/check過，新瀏覽器待驗。TemplateCellEditor整個VideoItem局部draft，套用才updateTemplateChild/arrangeTemplate；SourceRanges.linkedDuration讓起點越過舊迄並推新迄。cell.cards附本格補色文字，mediaSegments停止來源消耗/音訊，scene畫文字；cell.holdAfter只顯示片尾，聲音仍限item真實區間。layout.playback=sequential/simultaneous。Timeline templateChild虛擬列不改儲存軌道；UI.templateCellId區分刪子片段/整組。carryTemplateEdits保留group/child ID、名稱/時長與物理slot。TemplatePanel無fallbackfirstgroup；Toolbar按group ID key重置新草稿。ToneThumbnail僅靜態96px，暫停/編輯取樣，不逐幀CPU讀影片。ProjectPreview依CSS基地調bitmap防拉扁。PR12仍draft，最新驗收見PROGRESS。
+
 > 新版22項裁切/聲音/定格/ABC原生時間已過（43619159592）；Tone舊測試「改值自動建點後再記錄」會依新規則刪點，改先記錄再改值。check/374成功，完整待最終。
 
 > E：Project.customAspect 與 aspectLabel 顯示自訂像素寬高；Editor 比例自訂啟用 UI.aspectEditing，Preview 原基地上拖 frame，套用才更改輸出尺寸，X 無寫入。ProjectPreview 固定240方形 contain，來源視窗160px基地，框外斜紋。374單元/check過，瀏覽器待驗。

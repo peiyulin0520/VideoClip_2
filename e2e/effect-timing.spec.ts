@@ -107,7 +107,7 @@ test('單素材固定開頭B進或結尾A退，僅一個可調標籤、時長連
   await sheet(page).getByLabel('第1組特效終點', { exact: true }).fill('3');
   await sheet(page).getByLabel('第1組特效時長', { exact: true }).fill('4');
   await expect(sheet(page).getByLabel('第1組特效終點', { exact: true })).toHaveValue('4');
-  await sheet(page).getByRole('button', { name: '復原上一步選段', exact: true }).tap();
+  await sheet(page).getByRole('button', { name: 'undo', exact: true }).tap();
   await expect(sheet(page).getByLabel('第1組特效時長', { exact: true })).toHaveValue('3');
   await sheet(page).getByRole('button', { name: '關閉且不儲存', exact: true }).tap();
   expect((await current(page)).tracks[0]!.items[0]!.animations?.enter?.duration).toBeCloseTo(0.6);
@@ -248,7 +248,7 @@ test('影片特效也共用多組標記，來源修剪可移除最後一組但�
   await trim.getByRole('button', { name: '移除第 1 組片段', exact: true }).tap();
   await expect(trim.locator('.source-marker')).toHaveCount(0);
   await expect(trim.getByRole('button', { name: '套用片段範圍', exact: true })).toBeDisabled();
-  await trim.getByRole('button', { name: '復原上一步選段', exact: true }).tap();
+  await trim.getByRole('button', { name: 'undo', exact: true }).tap();
   await expect(trim.locator('.source-marker')).toHaveCount(2);
   await shot(page, 'shared-trim-pair-removal');
   await trim.getByRole('button', { name: '關閉且不儲存', exact: true }).tap();
