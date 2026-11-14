@@ -3,10 +3,11 @@
 規則：每完成一個有意義的步驟，就在同一個 commit 裡 **覆寫「交接快照」** 並 **在「日誌」最上面新增一筆**（規則全文見 `AGENTS.md`「紀錄規則」，背景與架構見 `docs/HANDOFF.md`）。
 
 ## 交接快照（VideoClip_2 最新狀態）
+- eb6d734/43587823092快速5+3+30全過。人工看CJK成功截圖發現tone-record未active時受:root .chip舊底色蓋過，留下淺底白字；補:root[data-theme] .tone-panel .tone-record成對accent/ink。六主題測試原只看到頁籤，補捲到預設／定格按鈕／底部滑桿分段對比，不以未入畫面冒充通過。需新source完整156驗收。
 - 人工檢視首輪fast截圖發現快速job未裝CJK，補與完整job相同Noto字型；另首輪播放統計只有media1buffer，效果原在3秒加入但量測0.5–1.6，補0秒插入FX並斷言media+grain必須2buffer，避免以未啟用特效冒充疊加驗收。產品src不變，下一輪需新5/156。
 - 首輪色調3f7c733/43587368211快速4/5：全13預設／10滑桿GPU像素／alpha、完整影片多影格、uniform資源重用及窄手機已過。冷暖定格首末／中點／局部重設／保存也過；重開後預設群組收合（使用者要求）令clip locator不存在，補expandAllGroups後選片，不改產品或放寬斷言，待新CI。
 - 新任務（2026-11-14）：獨立「色調」頁籤＋亮度／飽和度／曝光／高光／對比／黑點／鮮艷度等10調整、13預設；兩個菱形定格的色調平滑漸變，不能拖累播放。
-- 當前分支codex/source-timestamp-thumbnails，PR11先前仍open，基線e76d133/cdc6195的359/151成功；本輪check全過（369單元／型別／建置／Pages）；156新完整／5+3+30快速待CI。不能拿前輪音訊結果當本輪色調驗收。
+- 當前分支codex/source-timestamp-thumbnails，PR11先前仍open，基線e76d133/cdc6195的359/151成功；本輪check全過（369單元／型別／建置／Pages）；eb6d734/Actions43587823092新5項色調已過，156完整與3+30快速執行中。不能拿前輪音訊結果當本輪色調驗收。
 - 已寫：ColorAdjustment新欄位選填相容舊專案，所有tone數值插值／trim／group；GradeFilter單一GPU pass、uniform重用、不額外解碼或讀像素；預設靜態SVG／調整同字級。未有定格改整段，有定格改當前秒數並可局部重設。
 - 計畫docs/plans/2026-11-14-tone-grading.md。需成功CI／截圖／資源JSON後交付；PR由使用者Merge，不代合併或開auto-merge；Safari真機聲畫／色調效能仍待PLAN §7。
 

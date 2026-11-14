@@ -1,6 +1,7 @@
 # 交接手冊（HANDOFF）
 
 ## 色調本輪（優先於下方音訊成功歷史）
+- eb6d734/43587823092快速5+3+30全過。人工看CJK成功截圖發現tone-record未active時受:root .chip舊底色蓋過，留下淺底白字；補:root[data-theme] .tone-panel .tone-record成對accent/ink。六主題測試原只看到頁籤，補捲到預設／定格按鈕／底部滑桿分段對比，不以未入畫面冒充通過。需新source完整156驗收。
 - 人工檢視首輪fast截圖發現快速job未裝CJK，補與完整job相同Noto字型；另首輪播放統計只有media1buffer，效果原在3秒加入但量測0.5–1.6，補0秒插入FX並斷言media+grain必須2buffer，避免以未啟用特效冒充疊加驗收。產品src不變，下一輪需新5/156。
 - 首輪色調3f7c733/43587368211快速4/5：全13預設／10滑桿GPU像素／alpha、完整影片多影格、uniform資源重用及窄手機已過。冷暖定格首末／中點／局部重設／保存也過；重開後預設群組收合（使用者要求）令clip locator不存在，補expandAllGroups後選片，不改產品或放寬斷言，待新CI。
 - 規格plans/2026-11-14-tone-grading.md；新獨立色調頁，不能放剪輯。10參數13預設；菱形共享全部數值插值，未定格全片，有定格當前點，不動其他定格／transform。舊Keyframe.values新欄位缺省中性，animatedItem/trim/group都要保留全部色調。

@@ -3580,7 +3580,7 @@ html {
 .tone-controls:disabled {
   opacity: 0.55;
 }
-.tone-record {
+:root[data-theme] .tone-panel .tone-record {
   background: var(--accent);
   color: var(--accent-ink);
 }
