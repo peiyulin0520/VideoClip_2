@@ -90,7 +90,10 @@ export class AudioRenderer {
             source.playbackRate.value = item.speed;
             const window = audioWindowAt(item, (l + r) / 2)!;
             const fade = Math.min(AUDIO_FADE, (window.end - window.start) / 2);
-            gain.gain.setValueAtTime(windowGain(window, l, volume), l - start);
+            // Source starts and AudioParam events may round a fractional sample differently.
+            // Match the intrinsic gain too: its default 1 must never leak into a 0/2x boundary.
+            gain.gain.value = windowGain(window, l, volume);
+            gain.gain.setValueAtTime(gain.gain.value, l - start);
             for (const at of [window.start + fade, window.end - fade, r]
               .filter((t) => t > l && t <= r)
               .sort((a, b) => a - b))
