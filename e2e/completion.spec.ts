@@ -222,7 +222,7 @@ test('手動描邊與拖曳四邊裁切真的在畫面留下透明區域', async
   await expect(clips(page)).toHaveCount(2);
   await openTab(page, '剪輯');
   await page.getByRole('button', { name: '裁切', exact: true }).tap();
-  await page.getByRole('button', { name: '自由描邊保留區域', exact: true }).tap();
+  await page.getByRole('button', { name: '自由裁切', exact: true }).tap();
   await setCropOffset(page);
   const box = (await page.getByTestId('crop-stage').boundingBox())!;
   await page.mouse.move(box.x + box.width * 0.05, box.y + box.height * 0.05);
@@ -237,7 +237,7 @@ test('手動描邊與拖曳四邊裁切真的在畫面留下透明區域', async
   await page.screenshot({ path: `${shots}/lasso-mask.png` });
   await page.getByRole('button', { name: '裁切', exact: true }).tap();
   await page.getByRole('button', { name: '重設裁切', exact: true }).tap();
-  await page.getByRole('button', { name: '四邊與角落裁切', exact: true }).tap();
+  await page.getByRole('button', { name: '一般裁切', exact: true }).tap();
   const stage = (await page.getByTestId('crop-stage').boundingBox())!,
     handle = (await page.getByRole('button', { name: '裁切拖曳 l', exact: true }).boundingBox())!;
   await page.mouse.move(handle.x + handle.width / 2, handle.y + handle.height / 2);

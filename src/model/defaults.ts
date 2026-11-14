@@ -43,10 +43,11 @@ export function createMainTrack(): Track {
 
 /** 改專案比例（直接改傳進來的物件，immer 草稿也可以）。auto=true 代表之後仍跟著第一個素材。 */
 export function assignAspect(
-  p: { aspect: Aspect; width: number; height: number; aspectAuto?: boolean },
+  p: { aspect: Aspect; width: number; height: number; aspectAuto?: boolean; customAspect?: boolean },
   aspect: Aspect,
   auto: boolean,
 ): void {
+  delete p.customAspect;
   p.aspect = aspect;
   p.width = ASPECTS[aspect].width;
   p.height = ASPECTS[aspect].height;
@@ -141,7 +142,7 @@ export function createShapeItem(start: number): TextItem {
   return t;
 }
 
-export function createTextItem(start: number, text = '點兩下編輯文字'): TextItem {
+export function createTextItem(start: number, text?: string): TextItem {
   return {
     id: newId('i_'),
     type: 'text',
@@ -149,10 +150,11 @@ export function createTextItem(start: number, text = '點兩下編輯文字'): T
     duration: TEXT_DEFAULT_DURATION,
     transform: { x: 0.5, y: 0.5, scale: 1, rotation: 0, opacity: 1 },
     card: {
+      ...(text === undefined ? { placeholder: true } : {}),
       align: 'center',
       runs: [
         {
-          text,
+          text: text ?? '',
           fontId: 'system',
           size: 96,
           color: '#ffffff',

@@ -61,6 +61,7 @@ export class Player {
   private buffering = false;
   private bufferSince = 0;
   private lastSeeks = new WeakMap<HTMLMediaElement, { target: number; at: number }>();
+  private mediaBindings = new WeakMap<HTMLMediaElement, string>();
   private pendingPlay = new WeakSet<HTMLMediaElement>();
   private requestedSeek = false;
   private readyCount = 0;
@@ -335,6 +336,14 @@ export class Player {
     const active = this.playing && !this.buffering && t >= item.start && t < item.start + item.duration;
     el.dataset.previewIntent = active ? 'play' : 'pause';
     const s = sourceTimeAt(item, t);
+    // A pooled decoder can move from B to C of the same file without changing src.
+    // Source edits/rebinding must not inherit the old clip's one-second seek throttle.
+    const binding = `${item.id}:${item.assetId}:${item.trimIn}:${item.start}:${item.speed}`;
+    const rebound = this.mediaBindings.get(el) !== binding;
+    if (rebound) {
+      this.mediaBindings.set(el, binding);
+      this.lastSeeks.delete(el);
+    }
     const gain =
       !active ||
       el.paused ||
@@ -356,12 +365,17 @@ export class Player {
     if (
       el.readyState >= 1 &&
       !el.seeking &&
-      Math.abs(delta) > (active && !el.paused && !this.requestedSeek ? DRIFT : 0.02) &&
+      Math.abs(delta) > (active && !el.paused && !this.requestedSeek && !rebound ? DRIFT : 0.02) &&
       (!active || el.paused || this.requestedSeek || !last || now - last.at > 1000)
     ) {
       this.lastSeeks.set(el, { target: s, at: now });
       this.bus.deferSeek(el, () => {
-        if (!this.destroyed && el.dataset.itemId === item.id && el.dataset.assetId === asset.id) {
+        if (
+          !this.destroyed &&
+          this.mediaBindings.get(el) === binding &&
+          el.dataset.itemId === item.id &&
+          el.dataset.assetId === asset.id
+        ) {
           el.currentTime = Math.max(0, Math.min(s, Math.max(0, asset.duration - 0.001)));
           this.scheduleRender();
         }

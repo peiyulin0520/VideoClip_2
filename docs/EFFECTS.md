@@ -192,3 +192,7 @@ Compositor 的同來源/crop/mask/尺寸共享 FrameResource，RGB 重影與故�
 獨立頁籤「色調」，10參數（亮度、飽和度、曝光EV、高光、對比、黑點、鮮艷度、陰影、色溫、淡化）與13參數組合預設。舊brightness/saturation/temperature/tint保留，新增欄位可缺省中性；所有參數與既有菱形一起數值插值，Preset本身不是跳切屬性。逐格／即時匯出、預覽共享同一GradeFilter；中性跳過，非中性一個GPU pass／uniform更新，不逐幀建立貼圖或示意圖預覽。alpha不變。
 
 未有定格改整段，有定格改當前秒數；還原只重設目前色調，不動transform或其他定格。版型沿用整組定格與色調。10新單元與5新瀏覽器已納入369／156成功CI（Actions43588524060），另5+3+30快速成功；六主題實際控制對比已過。資源JSON見validation/tone-playback-metrics.json，Safari仍待真機。詳細plans/2026-11-14-tone-grading.md。§5中的HSL／LUT／skinProtect／調整圖層等仍為遠期，不能當本輪已完成。
+
+## 2026-11-14 定格追加規則
+
+暫停播放線碰到最近菱形即選取，白底橘框稍大；播放中橘色不換選。停留調整只改所選；明確按定格可新增近鄰，點菱形再按定格則刪除。短動作只有震一下／彈一下／晃一下／跳一下，長度與力道可調，菱形標代表字。解析 transform 與預覽匯出共用，不加逐幀貼圖／濾鏡／解碼器；進出場與AB轉場不進定格。

@@ -152,7 +152,7 @@ test('版型進階設定預設收合、只有一條來源軸，預覽與popup皆
   await page.getByRole('button', { name: '播放片段預覽', exact: true }).tap();
   await expect(page.getByRole('button', { name: '暫停片段預覽', exact: true })).toBeVisible();
   await page.getByRole('button', { name: '暫停片段預覽', exact: true }).tap();
-  await page.getByRole('button', { name: '取消', exact: true }).tap();
+  await page.getByRole('button', { name: '關閉且不儲存', exact: true }).tap();
   await cell.scrollIntoViewIfNeeded();
   await shot(page, 'cell-advanced-and-playback');
   await page.getByRole('button', { name: '播放版型結果', exact: true }).tap();

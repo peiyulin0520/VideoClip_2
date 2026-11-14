@@ -99,9 +99,6 @@ export function ColorPicker({
         </div>
         <div className="color-preview" style={{ background: draft }} aria-label="所選顏色預覽" />
         <div className="sheet-row">
-          <button className="btn" onClick={() => setOpen(false)}>
-            取消
-          </button>
           <button
             className="btn primary"
             onClick={() => {

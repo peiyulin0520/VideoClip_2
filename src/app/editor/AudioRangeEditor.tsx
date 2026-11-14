@@ -1,5 +1,6 @@
+import { itemName } from '../../engine/itemName';
 import { Play, Pause } from 'lucide-react';
-import { Undo2 } from 'lucide-react';
+import { Undo2, Redo2 } from 'lucide-react';
 import { useDraftHistory } from '../../ui/useDraftHistory';
 import { SelectionAddButton } from '../../ui/SelectionAddButton';
 import { useEffect, useRef, useState } from 'react';
@@ -89,22 +90,8 @@ export function AudioRangeEditor({
     onLoadedMetadata: () => seek(cursor),
   };
   return (
-    <Sheet
-      open
-      title="選擇保留的聲音片段"
-      onClose={onClose}
-      titleAction={
-        <button
-          className="icon-btn"
-          aria-label="復原上一步選段"
-          disabled={!history.canUndo}
-          onClick={history.undo}
-        >
-          <Undo2 />
-        </button>
-      }
-    >
-      <p className="audio-source-name">{asset.name}</p>
+    <Sheet open title="選擇保留的聲音片段" onClose={onClose}>
+      <p className="audio-source-name">{itemName(project, item)}</p>
       <div className="audio-range-workspace">
         <div className="audio-range-preview">
           {asset.kind === 'video' ? (
@@ -136,31 +123,39 @@ export function AudioRangeEditor({
           )}
         </div>
         <div className="audio-range-timeline">
-          <button
-            className={`btn${playing ? ' active' : ''}`}
-            aria-pressed={playing}
-            aria-label={playing ? '暫停選段試聽' : '播放選段試聽'}
-            onClick={() => {
-              if (playing) {
-                media.current?.pause();
-                setPlaying(false);
-              } else {
-                useUI.getState().player?.pause();
-                if (media.current) {
-                  media.current.muted = !ranges.some(([a, b]) => cursor >= a && cursor < b);
-                  void media.current
-                    .play()
-                    .then(() => setPlaying(true))
-                    .catch(() => toast('此音訊暫時無法試聽，請重新點選播放或使用相容的音檔。'));
+          <div className="source-playback-row">
+            <button
+              className={`btn${playing ? ' active' : ''}`}
+              aria-pressed={playing}
+              aria-label={playing ? '暫停選段試聽' : '播放選段試聽'}
+              onClick={() => {
+                if (playing) {
+                  media.current?.pause();
+                  setPlaying(false);
+                } else {
+                  useUI.getState().player?.pause();
+                  if (media.current) {
+                    media.current.muted = !ranges.some(([a, b]) => cursor >= a && cursor < b);
+                    void media.current
+                      .play()
+                      .then(() => setPlaying(true))
+                      .catch(() => toast('此音訊暫時無法試聽，請重新點選播放或使用相容的音檔。'));
+                  }
                 }
-              }
-            }}
-          >
-            {playing ? <Pause size={18} /> : <Play size={18} />}
-          </button>
-          <p className="source-now">
-            目前：{cursor.toFixed(2)} 秒 {markStart !== null && `· 靜音起點 ${markStart.toFixed(2)} 秒`}
-          </p>
+              }}
+            >
+              {playing ? <Pause size={18} /> : <Play size={18} />}
+            </button>
+            <p className="source-now">
+              目前：{cursor.toFixed(2)} 秒 {markStart !== null && `· 靜音起點 ${markStart.toFixed(2)} 秒`}
+            </p>
+            <button className="icon-btn" aria-label="undo" disabled={!history.canUndo} onClick={history.undo}>
+              <Undo2 size={18} />
+            </button>
+            <button className="icon-btn" aria-label="redo" disabled={!history.canRedo} onClick={history.redo}>
+              <Redo2 size={18} />
+            </button>
+          </div>
           <SourceRanges
             onEditStart={history.begin}
             onEditEnd={history.end}
@@ -285,9 +280,6 @@ export function AudioRangeEditor({
         {!ranges.length && <p>目前全部靜音；將白線移到起點，再新增保留聲音標記。</p>}
       </div>
       <div className="sheet-row">
-        <button className="btn" onClick={onClose}>
-          取消
-        </button>
         <button
           className="btn primary"
           onClick={() => {

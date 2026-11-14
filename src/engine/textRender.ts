@@ -194,6 +194,14 @@ export function uiScale(canvasW: number, canvasH: number): number {
 }
 
 export function measureTextItem(item: TextItem, canvasW: number, canvasH: number): { w: number; h: number } {
-  const r = renderText(item.card, uiScale(canvasW, canvasH));
+  const r = renderText(
+    item.card.placeholder
+      ? {
+          ...item.card,
+          runs: item.card.runs.map((r) => ({ ...r, text: '點兩下編輯文字', color: '#aaaaaa' })),
+        }
+      : item.card,
+    uiScale(canvasW, canvasH),
+  );
   return { w: r.w, h: r.h };
 }

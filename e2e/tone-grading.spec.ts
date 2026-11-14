@@ -276,7 +276,7 @@ test('漸變色調疊柔焦顆粒仍更新畫面與聲音，播放只改uniform�
   await shot(page, 'graded-effects-preview', '[data-testid="stage"]');
 });
 
-test('色調卡片與控制在窄手機保持同字級、緊湊內距與44px觸控，色調可獨立收合', async ({ page }) => {
+test('色調卡片與控制在窄手機保持同字級、緊湊內距與44px觸控，再次點選色調保持開啟', async ({ page }) => {
   await page.setViewportSize({ width: 320, height: 720 });
   await createProjectWith(page, ['tone-chart.png']);
   await clips(page).first().tap();
@@ -300,7 +300,7 @@ test('色調卡片與控制在窄手機保持同字級、緊湊內距與44px觸�
   }
   await openTab(page, '色調');
   await page.getByRole('tab', { name: '色調', exact: true }).tap();
-  await expect(page.getByRole('region', { name: '色調設定' })).toHaveCount(0);
+  await expect(page.getByRole('region', { name: '色調設定' })).toBeVisible();
   await page.getByRole('tab', { name: '色調', exact: true }).tap();
   await expect(page.getByRole('region', { name: '色調設定' })).toBeVisible();
 });

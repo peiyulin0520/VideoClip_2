@@ -1,3 +1,4 @@
+import { aspectLabel } from '../../engine/itemName';
 import { usePreferences } from '../../store/preferences';
 import { KeyframeControl } from '../editor/KeyframeControl';
 import { ensureFont } from '../../fonts/fontStore';
@@ -288,7 +289,7 @@ function EditorBody() {
           {project.name}
         </button>
         <button className="ratio-btn" aria-label="畫面比例" onClick={() => setRatioOpen(true)}>
-          {project.aspect}
+          {aspectLabel(project)}
         </button>
         <button className="quality-button" aria-label="預覽畫質" onClick={() => setQualityOpen(true)}>
           {previewQuality <= 540
@@ -435,7 +436,17 @@ function EditorBody() {
       />
 
       <Sheet open={ratioOpen} title="畫面比例" onClose={() => setRatioOpen(false)}>
-        <p className="hint">改了之後，影片和文字的位置、大小會跟著新的畫面。可以按「復原」改回來。</p>
+        <p className="hint">只調整框內影片輸出範圍，預覽基地大小固定；版型維持自身比例。</p>
+        <button
+          className="btn primary"
+          onClick={() => {
+            setRatioOpen(false);
+            useUI.getState().player?.pause();
+            useUI.setState({ aspectEditing: true });
+          }}
+        >
+          在預覽自訂比例
+        </button>
         <div className="chips" role="radiogroup" aria-label="選擇畫面比例">
           <button
             role="radio"
@@ -453,8 +464,8 @@ function EditorBody() {
             <button
               key={a}
               role="radio"
-              aria-checked={!project.aspectAuto && project.aspect === a}
-              className={`chip${!project.aspectAuto && project.aspect === a ? ' active' : ''}`}
+              aria-checked={!project.aspectAuto && !project.customAspect && project.aspect === a}
+              className={`chip${!project.aspectAuto && !project.customAspect && project.aspect === a ? ' active' : ''}`}
               onClick={() => {
                 setProjectAspect(a);
                 setRatioOpen(false);
@@ -476,9 +487,6 @@ function EditorBody() {
           autoFocus
         />
         <div className="sheet-row">
-          <button className="btn" onClick={() => setRenaming(false)}>
-            取消
-          </button>
           <button
             className="btn primary"
             onClick={() => {

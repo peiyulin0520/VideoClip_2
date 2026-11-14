@@ -58,7 +58,7 @@ export function setTransform(id: string, patch: Partial<Transform>, coalesce = `
     (d) => {
       const f = findItem(d, id);
       if (!f) return;
-      editAnimatedValues(d, id, time ?? f.item.start, patch);
+      editAnimatedValues(d, id, time ?? f.item.start, patch, false, 7 / useUI.getState().keyframePps);
     },
     { coalesce: `${coalesce}:${time ?? 0}` },
   );

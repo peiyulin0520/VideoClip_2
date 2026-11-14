@@ -82,6 +82,9 @@ jobs:
           cp tests/fixtures/ui-noto-sans-tc.ttf "$HOME/.local/share/fonts/little-moments/"
           cp tests/fixtures/ui-fontconfig.conf "$HOME/.config/fontconfig/conf.d/99-little-moments.conf"
           fc-cache -f "$HOME/.local/share/fonts/little-moments"
+      - name: Editing refinement regression tests
+        timeout-minutes: 5
+        run: npm run e2e -- e2e/editing-refinements.spec.ts e2e/refinement.spec.ts e2e/compact-workspace.spec.ts --trace off --workers=1
       - name: Tone grading and diamond interpolation tests
         timeout-minutes: 5
         run: npm run e2e -- e2e/tone-grading.spec.ts --trace off --workers=1
@@ -98,6 +101,7 @@ jobs:
           path: |
             test-results/
             docs/screenshots/tone/
+            docs/screenshots/editing/
           retention-days: 7
 
   deploy:

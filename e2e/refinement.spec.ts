@@ -40,12 +40,12 @@ async function stroke(page: Page, testid: string, points: [number, number][]) {
   await page.mouse.up();
 }
 
-test('裁切後保留筆刷補缺角，橡皮擦去多餘區域，重開與輸出一致', async ({ page }) => {
+test('裁切後筆刷補缺角，橡皮擦去多餘區域，重開與輸出一致', async ({ page }) => {
   await createProjectWith(page, ['solid-red.webm']);
   await addOverlays(page, ['solid-green.webm']);
   await openTab(page, '剪輯');
   await page.getByRole('button', { name: '裁切', exact: true }).tap();
-  await page.getByRole('button', { name: '自由描邊保留區域', exact: true }).tap();
+  await page.getByRole('button', { name: '自由裁切', exact: true }).tap();
   await setCropOffset(page);
   await stroke(page, 'crop-stage', [
     [0.05, 0.05],
@@ -54,14 +54,14 @@ test('裁切後保留筆刷補缺角，橡皮擦去多餘區域，重開與輸�
     [0.05, 0.95],
     [0.05, 0.05],
   ]);
-  await page.getByRole('button', { name: '保留筆刷', exact: true }).tap();
-  await slider(page, '保留筆刷粗細', 20);
+  await page.getByRole('button', { name: '筆刷', exact: true }).tap();
+  await slider(page, '筆刷粗細', 20);
   await stroke(page, 'crop-stage', [
     [0.45, 0.5],
     [0.8, 0.5],
   ]);
-  await page.getByRole('button', { name: '裁切橡皮擦', exact: true }).tap();
-  await slider(page, '裁切橡皮擦粗細', 12);
+  await page.getByRole('button', { name: '橡皮擦', exact: true }).tap();
+  await slider(page, '橡皮擦粗細', 12);
   await stroke(page, 'crop-stage', [
     [0.3, 0.3],
     [0.3, 0.7],
@@ -166,7 +166,7 @@ test('音訊來源有縮圖，多組倒三角排除中間聲音但影片不縮�
   await openTab(page, '音訊');
   await expect(page.locator('.audio-source img')).toBeVisible();
   const original = (await current(page)).tracks[0]!.items[0]!;
-  await page.getByRole('button', { name: '聲音片段範圍', exact: true }).tap();
+  await page.getByRole('button', { name: '片段範圍', exact: true }).tap();
   const video = page.getByLabel('音訊對應影片');
   await expect(video).toBeVisible();
   const strip = page.locator('.source-thumbs');
@@ -185,7 +185,7 @@ test('音訊來源有縮圖，多組倒三角排除中間聲音但影片不縮�
   expect(after.start).toBe(original.start);
   expect(after.duration).toBe(original.duration);
   expect(after.trimIn).toBe((original as VideoItem).trimIn);
-  await page.getByRole('button', { name: '聲音片段範圍', exact: true }).tap();
+  await page.getByRole('button', { name: '片段範圍', exact: true }).tap();
   await page.getByRole('button', { name: '移除第1段聲音', exact: true }).tap();
   await expect(page.locator('.source-marker')).toHaveCount(4);
   await page.getByRole('button', { name: /調整靜音標記/ }).tap();
@@ -203,7 +203,7 @@ test('音訊來源有縮圖，多組倒三角排除中間聲音但影片不縮�
   await page.getByRole('button', { name: '播放選段試聽', exact: true }).tap();
   await expect.poll(() => video.evaluate((el) => (el as HTMLVideoElement).paused)).toBe(false);
   await page.getByRole('button', { name: '暫停選段試聽', exact: true }).tap();
-  await page.getByRole('button', { name: '取消', exact: true }).tap();
+  await page.getByRole('button', { name: '關閉且不儲存', exact: true }).tap();
   await page.getByRole('link', { name: '回首頁', exact: true }).tap();
   await page.goBack();
   await expandAllGroups(page);
@@ -318,7 +318,7 @@ test('匯出保留兩側聲音與中間靜音，畫面長度不變', async ({ pa
   test.setTimeout(120000);
   await createProjectWith(page, ['tone-video.webm']);
   await openTab(page, '音訊');
-  await page.getByRole('button', { name: '聲音片段範圍', exact: true }).tap();
+  await page.getByRole('button', { name: '片段範圍', exact: true }).tap();
   const strip = page.locator('.source-thumbs');
   await strip.tap({ position: { x: (await strip.boundingBox())!.width / 2, y: 30 } });
   await markMuteInterval(page, 1.25, 1.75);

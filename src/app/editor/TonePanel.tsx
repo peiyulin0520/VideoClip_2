@@ -1,5 +1,12 @@
+import { itemName } from '../../engine/itemName';
 import { memo, useEffect, useState } from 'react';
-import { addKeyframe, animationTarget, animationValues, editAnimatedValues } from '../../engine/keyframes';
+import {
+  toggleKeyframe,
+  keyframeAt,
+  animationTarget,
+  animationValues,
+  editAnimatedValues,
+} from '../../engine/keyframes';
 import {
   DEFAULT_ADJUSTMENT,
   gradeRGB,
@@ -58,7 +65,13 @@ export function TonePanel() {
   const selectedId = useProjectStore((s) => s.selectedId);
   const player = useUI((s) => s.player);
   const [time, setTime] = useState(player?.time ?? 0);
-  useEffect(() => player?.subscribe((t) => setTime(t)), [player]);
+  useEffect(
+    () =>
+      player?.subscribe((t, playing) => {
+        if (!playing) setTime(t);
+      }),
+    [player],
+  );
   const found = selectedId
     ? (() => {
         try {
@@ -72,7 +85,11 @@ export function TonePanel() {
   const local = found ? time - found.start : 0;
   const inRange = !!found && local >= -0.01 && local <= found.duration + 0.01;
   const enabled = visual && inRange && !found!.track.locked;
-  const values = found ? animationValues(found.target, local) : null;
+  const selectedFrame =
+    found && !player?.isPlaying
+      ? keyframeAt(found.target, local, 7 / useUI.getState().keyframePps)
+      : undefined;
+  const values = found ? animationValues(found.target, selectedFrame?.time ?? local) : null;
   const frames = found?.target.keyframes ?? [];
   const active =
     values &&
@@ -89,7 +106,7 @@ export function TonePanel() {
       useProjectStore
         .getState()
         .apply(
-          (d) => editAnimatedValues(d, selectedId, at, patch),
+          (d) => editAnimatedValues(d, selectedId, at, patch, false, 7 / useUI.getState().keyframePps),
           coalesce
             ? { coalesce: `tone:${selectedId}:${frames.length ? at : 'clip'}:${coalesce}` }
             : undefined,
@@ -121,11 +138,7 @@ export function TonePanel() {
               .filter((it) => it.type !== 'audio')
               .map((it) => (
                 <option key={it.id} value={it.id}>
-                  {it.name ??
-                    (it.type === 'text'
-                      ? it.card.runs[0]?.text
-                      : project.assets.find((a) => a.id === it.assetId)?.name) ??
-                    '素材'}
+                  {itemName(project, it)}
                   {track.template ? ' · 整組版型' : ''}
                 </option>
               )),
@@ -162,7 +175,7 @@ export function TonePanel() {
               if (!selectedId) return;
               player?.pause();
               try {
-                useProjectStore.getState().apply((d) => addKeyframe(d, selectedId, player?.time ?? time));
+                useProjectStore.getState().apply((d) => toggleKeyframe(d, selectedId, player?.time ?? time));
               } catch (e) {
                 toast((e as Error).message);
               }

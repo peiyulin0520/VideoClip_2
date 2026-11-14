@@ -49,7 +49,11 @@ export type ColorAdjustment = {
 };
 export type ResolvedAnimatedValues = Transform & Required<ColorAdjustment>;
 export type AnimatedValues = Transform & ColorAdjustment;
-export type Keyframe = { time: number; values: AnimatedValues };
+export type Keyframe = {
+  time: number;
+  values: AnimatedValues;
+  motion?: { kind: 'shake' | 'pop' | 'sway' | 'jump'; duration: number; strength: number; elapsed?: number };
+};
 export type TransitionPreset =
   | 'crossfade'
   | 'push-left'
@@ -110,11 +114,12 @@ export type ItemBase = {
 };
 
 export type MaskStroke = { tool: 'keep' | 'erase'; size: number; points: [number, number][] };
-export type MediaMask = { points: [number, number][]; strokes?: MaskStroke[] };
+export type MediaMask = { points: [number, number][]; strokes?: MaskStroke[]; base?: 'full' | 'empty' };
 
 export type VideoItem = ItemBase & {
   type: 'video' | 'image' | 'audio';
   assetId: string;
+  sourceItemId?: string;
   trimIn: number; // 素材內的起點（秒）
   speed: number; // 0.25–4；照片固定 1
   volume: number; // 0–1
@@ -218,6 +223,7 @@ export type CardBox = {
   depth?: number; // 0–1，凹槽深度；舊資料預設 1
 };
 export type TextCard = {
+  placeholder?: boolean;
   runs: TextRun[];
   align: 'left' | 'center' | 'right';
   /** 文字區寬度 px（1080 基準），超過自動換行；沒有＝依文字長度 */
@@ -250,6 +256,7 @@ export type Project = {
   createdAt: number;
   updatedAt: number;
   aspect: Aspect;
+  customAspect?: boolean;
   /** true = 比例跟著第一個素材自動決定（使用者手動改過比例就變 false）；舊專案沒有這個欄位＝false */
   aspectAuto?: boolean;
   width: number;

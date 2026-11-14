@@ -1,3 +1,4 @@
+import { itemName } from '../../engine/itemName';
 import { TonePanel } from './TonePanel';
 import { KeyframeControl } from './KeyframeControl';
 import { evaluatedItem } from '../../engine/keyframes';
@@ -129,14 +130,11 @@ export function BottomBar({
   const found = findItem(project, selectedId);
   const items = mainItems(project);
 
-  // 點目前的分頁＝收合/展開下面的面板（讓出空間給預覽畫面）
+  // Re-selecting a tool keeps its controls open.
   const switchTab = (t: Tab) => {
     setPanel(null);
-    if (t === tab) setCollapsed((c) => !c);
-    else {
-      setTab(t);
-      setCollapsed(false);
-    }
+    setTab(t);
+    setCollapsed(false);
   };
 
   return (
@@ -435,9 +433,6 @@ function EditTab({
             />
           </label>
           <div className="sheet-row">
-            <button className="btn" onClick={() => setNaming(false)}>
-              取消
-            </button>
             <button
               className="btn primary"
               disabled={!nameDraft.trim()}
@@ -550,13 +545,7 @@ function LayersTab() {
       </div>
       <ul className="layer-list" data-testid="layer-list">
         {layers.map(({ item, track, trackIndex }) => {
-          const asset = isVideoItem(item) ? project.assets.find((a) => a.id === item.assetId) : undefined;
-          const label =
-            item.type === 'text'
-              ? item.card.runs[0]?.text === ''
-                ? '圖形'
-                : `文字：${item.card.runs[0]?.text.slice(0, 8) ?? ''}`
-              : (item.name ?? asset?.name ?? '素材');
+          const label = itemName(project, item);
           return (
             <li
               key={item.id}

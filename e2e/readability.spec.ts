@@ -73,7 +73,7 @@ for (const theme of ['dark', 'mono', 'light', 'fresh', 'warm', 'beige']) {
       await closeSheet();
     }
     await openTab(page, '音訊');
-    await page.getByRole('button', { name: '聲音片段範圍', exact: true }).first().tap();
+    await page.getByRole('button', { name: '片段範圍', exact: true }).first().tap();
     await assertUiContrast(page, '.sheet', theme + ' audio range');
     await closeSheet();
     await openTab(page, '素材');

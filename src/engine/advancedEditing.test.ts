@@ -233,11 +233,11 @@ describe('linear keyframes', () => {
     expect(v.tint).toBe('#8080ff');
     expect(animationValues(animationTarget(p, 'a').target, 3).scale).toBe(0.5);
   });
-  it('updates an existing diamond instead of making duplicates and rejects out-of-clip insertion', () => {
+  it('explicitly adds nearby diamonds and rejects out-of-clip insertion', () => {
     const p = project();
     addKeyframe(p, 'a', 0);
     addKeyframe(p, 'a', 0.005);
-    expect(p.tracks[0]!.items[0]!.keyframes).toHaveLength(1);
+    expect(p.tracks[0]!.items[0]!.keyframes).toHaveLength(2);
     expect(() => addKeyframe(p, 'a', 8)).toThrow('時間範圍');
   });
   it('splitting preserves the curve on either side using sampled boundary keys', () => {

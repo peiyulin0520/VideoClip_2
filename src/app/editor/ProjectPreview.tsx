@@ -1,7 +1,6 @@
 import { Play, Pause } from 'lucide-react';
 import { useEffect, useRef, useState, type RefObject } from 'react';
 import { useUI } from '../../store/uiStore';
-import { useProjectStore } from '../../store/projectStore';
 
 /** Copy the shared composed scene, including template frame, masks and animation. */
 export function ProjectPreview({
@@ -16,7 +15,6 @@ export function ProjectPreview({
   targetCanvas?: RefObject<HTMLCanvasElement>;
 }) {
   const player = useUI((s) => s.player);
-  const p = useProjectStore((s) => s.project)!;
   const canvas = useRef<HTMLCanvasElement>(null);
   const [playing, setPlaying] = useState(false);
   useEffect(() => {
@@ -32,7 +30,13 @@ export function ProjectPreview({
       if (surface && now - last > 32) {
         const rect = surface.getBoundingClientRect();
         if (rect.width && rect.height && rect.bottom > 0 && rect.top < innerHeight) {
-          surface.getContext('2d')?.drawImage(player.compositor.canvas, 0, 0, surface.width, surface.height);
+          const ctx = surface.getContext('2d')!,
+            source = player.compositor.canvas;
+          ctx.clearRect(0, 0, surface.width, surface.height);
+          const k = Math.min(surface.width / source.width, surface.height / source.height),
+            w = source.width * k,
+            h = source.height * k;
+          ctx.drawImage(source, (surface.width - w) / 2, (surface.height - h) / 2, w, h);
           last = now;
         }
       }
@@ -47,14 +51,7 @@ export function ProjectPreview({
   }, [player, start, duration, targetCanvas]);
   return (
     <div className="project-preview" aria-label={`${label}預覽`}>
-      {!targetCanvas && (
-        <canvas
-          ref={canvas}
-          width={240}
-          height={Math.round((240 * p.height) / p.width)}
-          aria-label={`${label}畫面`}
-        />
-      )}
+      {!targetCanvas && <canvas ref={canvas} width={240} height={240} aria-label={`${label}畫面`} />}
       <button
         className={`chip preview-toggle${playing ? ' active' : ''}`}
         aria-label={`${playing ? '暫停' : '播放'}${label}`}
