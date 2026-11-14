@@ -1,4 +1,5 @@
 import { test, expect, type Page } from '@playwright/test';
+import type { Project, VideoItem } from '../src/model/types';
 import { writeFile, mkdir } from 'node:fs/promises';
 import { createProjectWith, openTab, fixture, markMuteInterval, seekTo, samplePreview } from './helpers';
 type Stats = {
@@ -21,10 +22,11 @@ async function shot(page: Page, name: string) {
   await page.screenshot({ path: `docs/screenshots/audio-effects/${name}.png` });
 }
 async function wave(page: Page) {
-  return page.evaluate(() =>
-    (
+  return page.evaluate(() => {
+    const hook = (
       window as unknown as {
         __videoclip: {
+          project: () => Project;
           audioWave: (
             a: number,
             b: number,
@@ -32,8 +34,27 @@ async function wave(page: Page) {
           ) => Promise<{ peak: number; maxJump: number; first: number; last: number; samples: number[] }>;
         };
       }
-    ).__videoclip.audioWave(0, 3, [0, 0.006, 0.02, 0.995, 1, 1.25, 1.5, 1.506, 1.52, 2.999]),
-  );
+    ).__videoclip;
+    const item = hook
+      .project()
+      .tracks.flatMap((t) => t.items)
+      .find((it) => it.type === 'audio') as VideoItem;
+    const ranges = item.audioRanges!,
+      end = ranges[0]![1],
+      next = ranges[1]![0];
+    return hook.audioWave(0, 3, [
+      0,
+      0.006,
+      0.02,
+      end - 0.005,
+      end + 0.002,
+      (end + next) / 2,
+      next,
+      next + 0.006,
+      next + 0.02,
+      2.999,
+    ]);
+  });
 }
 test('音訊真實波形在片頭片尾、剪段、暫停重播及跳轉均平滑且混音不超峰', async ({ page }) => {
   test.setTimeout(120000);
@@ -45,6 +66,7 @@ test('音訊真實波形在片頭片尾、剪段、暫停重播及跳轉均平�
   await markMuteInterval(page, 1, 1.5, 3);
   await page.getByRole('button', { name: '套用聲音選段', exact: true }).tap();
   const normal = await wave(page);
+  console.info('Offline audio envelope', JSON.stringify(normal));
   expect(Math.abs(normal.first)).toBeLessThan(0.0001);
   expect(Math.abs(normal.last)).toBeLessThan(0.005);
   expect(normal.maxJump).toBeLessThan(0.03);
@@ -82,6 +104,7 @@ test('音訊真實波形在片頭片尾、剪段、暫停重播及跳轉均平�
         window as unknown as { probeResult: Promise<{ peak: number; maxJump: number; samples: number }> }
       ).probeResult,
   );
+  console.info('Live preview audio envelope', JSON.stringify(live));
   expect(live.samples).toBeGreaterThan(48000);
   expect(live.peak).toBeGreaterThan(0.05);
   expect(live.peak).toBeLessThanOrEqual(1);

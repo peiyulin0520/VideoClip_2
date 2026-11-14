@@ -146,13 +146,16 @@ export class AudioBus {
   pause(el: HTMLMediaElement) {
     if (this.stops.has(el) || this.seeks.has(el)) return;
     const node = this.nodes.get(el);
-    if (!node || !this.ctx || el.paused || this.value(node, this.ctx.currentTime) <= 0.000001) {
+    const audible = node && this.ctx && !el.paused && this.value(node, this.ctx.currentTime) > 0.000001;
+    if (node && this.ctx) {
+      this.ramp(node, 0);
+      node.windowKey = undefined;
+    }
+    if (!audible) {
       if (!el.paused) el.pause();
       return;
     }
-    this.ramp(node, 0);
     el.dataset.audioFading = '1';
-    node.windowKey = undefined;
     this.stops.set(
       el,
       setTimeout(
@@ -172,13 +175,17 @@ export class AudioBus {
       return;
     }
     const node = this.nodes.get(el);
-    if (!node || !this.ctx || el.paused || this.value(node, this.ctx.currentTime) <= 0.000001) {
+    const audible = node && this.ctx && !el.paused && this.value(node, this.ctx.currentTime) > 0.000001;
+    // A silent seek must invalidate an expired fade-out too, or seeking back stays silent.
+    if (node && this.ctx) {
+      this.ramp(node, 0);
+      node.windowKey = undefined;
+    }
+    if (!audible) {
       apply();
       return;
     }
-    this.ramp(node, 0);
     el.dataset.audioFading = '1';
-    node.windowKey = undefined;
     const task = {
       apply,
       timer: setTimeout(

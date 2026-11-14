@@ -198,3 +198,20 @@ it('native playing guards allow the intentional short fade but still stop uninte
     pool.destroy();
   }
 });
+
+it('seeking back inside the same window after its scheduled fade-out re-arms audible gain', () => {
+  const { ctx, gain } = context();
+  const v = document.createElement('video');
+  vi.spyOn(v, 'paused', 'get').mockReturnValue(false);
+  const bus = new AudioBus([v], ctx as unknown as AudioContext);
+  bus.set(v, 1, { start: 0, end: 2 }, 0);
+  bus.flush();
+  ctx.currentTime = 4;
+  const apply = vi.fn();
+  bus.deferSeek(v, apply);
+  expect(apply).toHaveBeenCalledOnce();
+  bus.set(v, 1, { start: 0, end: 2 }, 0);
+  bus.flush();
+  expect(gain.gain.linearRampToValueAtTime).toHaveBeenLastCalledWith(0, 6);
+  bus.destroy();
+});

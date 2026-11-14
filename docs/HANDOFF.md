@@ -1,12 +1,13 @@
 # 交接手冊（HANDOFF）
 
 ## VideoClip_2 當前交接（優先於以下來源 repo 的歷史紀錄）
+- 首輪196c366/43588015161快速32/33，GPU兩情境已過；音訊新測試需用實存audioRanges端點，觸控不保證精確1.5秒，硬寫值約晚0.2ms會取到正常淡入樣本。嚴格波形斷言保留，下一輪358/151/33後才交付。
 - 最新本輪待CI：使用者追加些微爆音/特效卡跳幀並說繼續；PR11仍open沿codex/source-timestamp-thumbnails追加。音訊12ms真實邊界排程/hold、native pause/seek延後淡出、connected元素不hard mute、有聲素材不nudge rate、media time校正；export實際區間淡入出/soft knee。GPU refcount共享frame resources/固定filter快取/particle canvas重用，低預覽blur輕量、高清export不降。
-- 目前357單元、3新e2e預期151/33，需本輪完整成功/波形JSON/新圖。下面350/148舊縮圖是基線，不能作本輪驗收。規格plans/2026-11-14-audio-effect-continuity.md。不代Merge。
+- 目前358單元、3新e2e預期151/33，需本輪完整成功/波形JSON/新圖。下面350/148舊縮圖是基線，不能作本輪驗收。規格plans/2026-11-14-audio-effect-continuity.md。不代Merge。
 - 關鍵：FrameResource可共享但每個sprite的box/tint/filter/maskGraphics仍獨立；同crop/mask/dims才共享，refcount=0才destroy，保留未ready continuity。AudioBus pending seek合併最新closure且Player檢item/asset還相同；pause回呼檢intent避免重播後被舊timer停掉。
 
 ### 縮圖前輪成功（歷史）
-- 最終（2026-11-14）：[Actions 43572187791](https://github.com/peiyulin0520/VideoClip_2/actions/runs/43572187791)：驗收程式 `67c14c9c929a6095927d49c76142b881c6a158c6` 的350單元、148 Chromium e2e全過，另30項快速情境全過（完整測試子集）；lint/格式/TypeScript/build/Pages/PWA與39字體檢查成功。artifact `14100619022`，ZIP SHA-256 `ebbfe5f0f370aecbc66d8b34e426eb3fd7a6caf8ac3f65b87c89cea8cda3c2a1` 已核對；184張成功截圖。最後提交僅文件/成功截圖，產品、測試與設定皆與驗收程式一致。PR #11 open未合併，由使用者自行Merge後發布；Safari真機仍待確認。
+- 最終（2026-11-14）：[Actions 43582187791](https://github.com/peiyulin0520/VideoClip_2/actions/runs/43582187791)：驗收程式 `67c14c9c929a6095927d49c76142b881c6a158c6` 的350單元、148 Chromium e2e全過，另30項快速情境全過（完整測試子集）；lint/格式/TypeScript/build/Pages/PWA與39字體檢查成功。artifact `14100619022`，ZIP SHA-256 `ebbfe5f0f370aecbc66d8b34e426eb3fd7a6caf8ac3f65b87c89cea8cda3c2a1` 已核對；184張成功截圖。最後提交僅文件/成功截圖，產品、測試與設定皆與驗收程式一致。PR #11 open未合併，由使用者自行Merge後發布；Safari真機仍待確認。
 - 本輪從已合併PR10的main7350773開codex/source-timestamp-thumbnails，交付PR11。使用者主軸58秒重首幀、112秒空白但popup有後段，不能只驗鋪滿/兩色後半。
 - Asset.filmstrip={version:1,interval:2,duration,frames(time,src)}獨立於overview thumbs。hasFilmstrip檢全長/每2秒/非缺格；開啟時proxy後補建並存metadata/undo快照，不增編輯。完整cache重用，個別null下次重開重試，不以首幀填滿。
 - buildFilmstrip校驗CanvasSink的timestamp/duration覆蓋要求秒數；原生load/seek+requestVideoFrameCallback/mediaTime，webkit-playsinline且靜音、不play；直接縮小圖，不先建4Kcanvas。取消/idle timeout清理Input及影片URL。probe overview也不再缺格沿用，native partial不假當全長。
@@ -53,7 +54,7 @@
 - 九點首輪 e16e7fc / Actions43456433286：321單元、120/134瀏覽器（新增7全過）。7個匯出測試舊getByLabel非exact也匹配新播放label，改控制label為匯出結果；相紙改方形，舊取樣點調整到實際新格內；最底回頂擋工具，升到最後工具列上方且不加空白；安全區底色加深過淺色對比；放大舞台同步量測並等實際resize。第二輪完整驗收待push。
 - 追加三點同任務：layout.size有獨立長寬，layoutDefaultSize長型1080×1920/相紙1080平方；groupFrame/cellViewport不直接伸成畫布。scene框架畫布依自身比例且紋理上限跟輸出，避免巨大自訂框爆記憶體。預覽540預設（preferences previewModeVersion2遷移），頂部quality sheet可調且重建保留秒數/播放；隱藏示意卡不渲染，副預覽只可見30fps。stage父容器量測等比fit，外圍斜紋/邊線/範圍label僅UI，不匯出。321單元已過，134瀏覽器待CI；Safari待真機。
 - 最新六點：PR #9已Merge，main6ac2f13。本次新PR待建。layout.caption/frameColor/captionColor/frameOpacity/animations可存，重套carryTemplateEdits保留；layoutArt快取含caption/color，opacity在scene frame層。singleAnimations對目標或整組在其frame局部座標共用transitionPair，B透明，其他層不動；每段動效不超過片長一半。每格來源只一軸，advanced折疊補色/延後/popup，色塊起迄數字可改。動態預覽明確Play/Pause/active；ProjectPreview複製shared compositor並控制player，Drawing底圖不混入儲存畫作。最底顯示回頂，visualViewport修正實際可見高度；字級390基準及較大手機上限+10%，窄手機不縮小44px觸控。317本機成功，132e2e待驗。見plans/2026-11-13-template-controls.md。
-- 最新時間軸小字最終：[Actions 43422783991](https://github.com/peiyulin0520/VideoClip_2/actions/runs/43422783991)：版本 fc9d5bb813573aeba69889efe37b1ee98e5786f3 的313單元、127 Chromium e2e全過；lint/格式/TypeScript/build/Pages/39字體檢查成功。artifact 14036880124，ZIP SHA-256 6c1ef4fe7a5b5f2dc4ff8b93335c0138ca2b3a7e3c82b8d16897e19bf15423bb 已核對；159張成功畫面，新增uniform-type/small-timeline-labels.png。時間軸11px/9px，其餘介面14px。最後文件/截圖不改驗收版本，以下待CI皆歷史；Safari待真機。
+- 最新時間軸小字最終：[Actions 43422783991](https://github.com/peiyulin0520/VideoClip_2/actions/runs/43422783991)：版本 fc9d5bb813583aeba69889efe37b1ee98e5786f3 的313單元、127 Chromium e2e全過；lint/格式/TypeScript/build/Pages/39字體檢查成功。artifact 14036880124，ZIP SHA-256 6c1ef4fe7a5b5f2dc4ff8b93335c0138ca2b3a7e3c82b8d16897e19bf15423bb 已核對；159張成功畫面，新增uniform-type/small-timeline-labels.png。時間軸11px/9px，其餘介面14px。最後文件/截圖不改驗收版本，以下待CI皆歷史；Safari待真機。
 
 - 最新使用者更正：只有.timeline圖層拖拉軸恢復小字11px，群組計數/原音9px；局部覆寫--ui-font-size，其他頁面/功能/頁籤/播放列仍14px。維持負字距/緊行高/44px觸控。既有uniform-type驗收實際收合與展開分類並留圖，完整CI待本次push。
 - 最新全頁主題對比/小字字距最終：[Actions 43420368856](https://github.com/peiyulin0520/VideoClip_2/actions/runs/43420368856)：版本 8fd2969c77b84352a3cd16c7b4f025ae22177792 的313單元、127 Chromium e2e全過；lint/格式/TypeScript/build/Pages/39字體檢查成功。artifact 14033892743，ZIP SHA-256 f9664009e966a03e9b5ce3199610be1a54cb79a4532e0440f944f241e4906127 已核對；158張成功畫面，其中readability/新增6張。PR #9由使用者自行Merge；最後文件/截圖不改成功版本產品/測試。以下待CI是過程紀錄，Safari仍待真機。
