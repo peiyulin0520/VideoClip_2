@@ -63,7 +63,7 @@ export class VideoPool {
         }, finish);
       });
       v.addEventListener('playing', () => {
-        if (v.dataset.previewIntent !== 'play' && !v.dataset.priming) v.pause();
+        if (v.dataset.previewIntent !== 'play' && !v.dataset.priming && !v.dataset.audioFading) v.pause();
       });
       host.appendChild(v);
       this.els.push(v);
@@ -137,11 +137,11 @@ export class VideoPool {
     return el;
   }
 
-  pauseAllExcept(keep: Set<HTMLVideoElement>) {
+  pauseAllExcept(keep: Set<HTMLVideoElement>, pause: (el: HTMLVideoElement) => void = (el) => el.pause()) {
     for (const v of this.els)
       if (!keep.has(v)) {
         v.dataset.previewIntent = 'pause';
-        if (!v.paused) v.pause();
+        if (!v.paused) pause(v);
       }
   }
 

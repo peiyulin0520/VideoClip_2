@@ -8,8 +8,15 @@ afterEach(() => {
   vi.useRealTimers();
 });
 function context() {
-  const parameter = () => ({ value: 0, cancelScheduledValues: vi.fn(), setTargetAtTime: vi.fn() });
+  const parameter = () => ({
+    value: 0,
+    cancelScheduledValues: vi.fn(),
+    cancelAndHoldAtTime: vi.fn(),
+    setValueAtTime: vi.fn(),
+    linearRampToValueAtTime: vi.fn(),
+  });
   const gain = { gain: parameter(), connect: vi.fn().mockReturnThis(), disconnect: vi.fn() };
+  const master = { gain: parameter(), connect: vi.fn().mockReturnThis(), disconnect: vi.fn() };
   const limiter = {
     threshold: parameter(),
     knee: parameter(),
@@ -23,14 +30,14 @@ function context() {
     state: 'running',
     currentTime: 1,
     destination: {},
-    createGain: vi.fn(() => gain),
+    createGain: vi.fn().mockReturnValueOnce(master).mockReturnValue(gain),
     createDynamicsCompressor: vi.fn(() => limiter),
     createAnalyser: vi.fn(() => ({ fftSize: 1024, getFloatTimeDomainData: vi.fn(), disconnect: vi.fn() })),
     createMediaElementSource: vi.fn(() => ({ connect: vi.fn(() => gain), disconnect: vi.fn() })),
     resume: vi.fn(async () => {}),
     close: vi.fn(async () => {}),
   };
-  return { ctx, gain, limiter };
+  return { ctx, gain, limiter, master };
 }
 it('does not initialize Web Audio on project entry; connects only audible sources after a gesture', () => {
   const { ctx, gain, limiter } = context(),
@@ -52,12 +59,12 @@ it('does not initialize Web Audio on project entry; connects only audible source
     bus.flush();
   }
   expect(ctx.createMediaElementSource).toHaveBeenCalledTimes(1);
-  expect(gain.gain.setTargetAtTime).toHaveBeenCalledTimes(1);
-  expect(gain.gain.setTargetAtTime).toHaveBeenLastCalledWith(1, 1, 0.008);
+  expect(gain.gain.linearRampToValueAtTime).toHaveBeenCalledTimes(1);
+  expect(gain.gain.linearRampToValueAtTime).toHaveBeenLastCalledWith(1, 1.012);
   bus.clear();
   bus.flush();
-  expect(gain.gain.setTargetAtTime).toHaveBeenLastCalledWith(0, 1, 0.008);
-  expect(limiter.threshold.value).toBe(-1);
+  expect(gain.gain.linearRampToValueAtTime).toHaveBeenLastCalledWith(0, 1.012);
+  expect(limiter.threshold.value).toBe(-6);
   expect(limiter.ratio.value).toBe(20);
   bus.destroy();
 });
@@ -110,4 +117,84 @@ it('separated sound uses audio elements and stays paused unless explicitly reque
   expect(host.querySelector('video')).toBeNull();
   expect(el?.dataset.previewIntent).toBe('pause');
   pool.destroy();
+});
+
+it('schedules an edit boundary in the audio clock once and keeps zero-gain sources unmuted for the ramp', () => {
+  const { ctx, gain } = context();
+  const v = document.createElement('video');
+  const bus = new AudioBus([v], ctx as unknown as AudioContext);
+  for (let i = 0; i < 30; i++) {
+    bus.clear();
+    bus.set(v, 1, { start: 0, end: 2 }, 0);
+    bus.flush();
+  }
+  expect(gain.gain.linearRampToValueAtTime).toHaveBeenCalledTimes(2);
+  expect(gain.gain.linearRampToValueAtTime).toHaveBeenLastCalledWith(0, 3);
+  bus.clear();
+  bus.set(v, 0);
+  bus.flush();
+  expect(v.muted).toBe(false);
+  expect(gain.gain.cancelAndHoldAtTime).toHaveBeenCalled();
+  bus.destroy();
+});
+it('fades before pause and seek, coalesces scrubbing, and cancels a stale pause when resumed', () => {
+  vi.useFakeTimers();
+  const { ctx, gain } = context();
+  const v = document.createElement('video');
+  vi.spyOn(v, 'paused', 'get').mockReturnValue(false);
+  const pause = vi.spyOn(v, 'pause').mockImplementation(() => {});
+  const bus = new AudioBus([v], ctx as unknown as AudioContext);
+  bus.set(v, 1);
+  bus.flush();
+  ctx.currentTime = 1.02;
+  v.dataset.previewIntent = 'pause';
+  bus.pause(v);
+  expect(pause).not.toHaveBeenCalled();
+  ctx.currentTime = 1.04;
+  vi.advanceTimersByTime(20);
+  expect(pause).toHaveBeenCalledTimes(1);
+  bus.set(v, 1);
+  bus.flush();
+  ctx.currentTime += 0.02;
+  v.dataset.previewIntent = 'play';
+  const first = vi.fn(),
+    last = vi.fn();
+  bus.deferSeek(v, first);
+  bus.deferSeek(v, last);
+  expect(bus.isSeeking(v)).toBe(true);
+  vi.advanceTimersByTime(20);
+  expect(first).not.toHaveBeenCalled();
+  expect(last).toHaveBeenCalledOnce();
+  expect(bus.isSeeking(v)).toBe(false);
+  bus.set(v, 1);
+  bus.flush();
+  v.dataset.previewIntent = 'pause';
+  bus.pause(v);
+  v.dataset.previewIntent = 'play';
+  bus.set(v, 1);
+  bus.flush();
+  vi.advanceTimersByTime(20);
+  expect(pause).toHaveBeenCalledTimes(1);
+  expect(gain.gain.linearRampToValueAtTime).toHaveBeenCalled();
+  bus.destroy();
+});
+
+it('native playing guards allow the intentional short fade but still stop unintended autoplay', () => {
+  vi.spyOn(HTMLMediaElement.prototype, 'load').mockImplementation(() => {});
+  const pause = vi.spyOn(HTMLMediaElement.prototype, 'pause').mockImplementation(() => {});
+  for (const pool of [
+    new VideoPool(document.createElement('div'), 1, () => {}),
+    new AudioPool(document.createElement('div'), 1, () => {}),
+  ]) {
+    const el = pool.els[0]!;
+    el.dataset.previewIntent = 'pause';
+    el.dataset.audioFading = '1';
+    pause.mockClear();
+    el.dispatchEvent(new Event('playing'));
+    expect(pause).not.toHaveBeenCalled();
+    delete el.dataset.audioFading;
+    el.dispatchEvent(new Event('playing'));
+    expect(pause).toHaveBeenCalledOnce();
+    pool.destroy();
+  }
 });

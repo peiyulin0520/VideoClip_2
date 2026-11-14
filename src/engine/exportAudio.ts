@@ -1,3 +1,4 @@
+import { AUDIO_FADE, audioWindowAt, windowGain, softLimit } from './audioEnvelope';
 import { mediaSegments } from './templateTiming';
 import { ALL_FORMATS, AudioBufferSink, BlobSource, Input } from 'mediabunny';
 import type { Project, VideoItem, Track, Asset } from '../model/types';
@@ -87,7 +88,13 @@ export class AudioRenderer {
               gain = ctx.createGain();
             source.buffer = wrapped.buffer;
             source.playbackRate.value = item.speed;
-            gain.gain.value = volume;
+            const window = audioWindowAt(item, (l + r) / 2)!;
+            const fade = Math.min(AUDIO_FADE, (window.end - window.start) / 2);
+            gain.gain.setValueAtTime(windowGain(window, l, volume), l - start);
+            for (const at of [window.start + fade, window.end - fade, r]
+              .filter((t) => t > l && t <= r)
+              .sort((a, b) => a - b))
+              gain.gain.linearRampToValueAtTime(windowGain(window, at, volume), at - start);
             source.connect(gain).connect(ctx.destination);
             source.start(l - start, Math.max(0, (l - at) * item.speed), (r - l) * item.speed);
           }
@@ -95,7 +102,12 @@ export class AudioRenderer {
       }
     }
     signal.throwIfAborted();
-    return ctx.startRendering();
+    const mixed = await ctx.startRendering();
+    for (let channel = 0; channel < mixed.numberOfChannels; channel++) {
+      const samples = mixed.getChannelData(channel);
+      for (let i = 0; i < samples.length; i++) samples[i] = softLimit(samples[i]!);
+    }
+    return mixed;
   }
   destroy() {
     for (const input of this.inputs.values()) input.dispose();

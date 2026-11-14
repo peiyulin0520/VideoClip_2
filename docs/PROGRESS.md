@@ -3,13 +3,11 @@
 規則：每完成一個有意義的步驟，就在同一個 commit 裡 **覆寫「交接快照」** 並 **在「日誌」最上面新增一筆**（規則全文見 `AGENTS.md`「紀錄規則」，背景與架構見 `docs/HANDOFF.md`）。
 
 ## 交接快照（VideoClip_2 最新狀態）
-- 2026-11-14 / codex/source-timestamp-thumbnails；基於main7350773（使用者已合併PR10）。本輪驗收程式67c14c9c929a6095927d49c76142b881c6a158c6；PR #11 ready、open未合併，最後提交僅文件/成功截圖。
-- 已修主時間軸每2秒真正來源縮圖：Asset.filmstrip記錄time/src，Mediabunny驗實際幀覆蓋要求時間，原生備援等seek及呈現回呼，不play；缺格null不複製前格。legacy8張overview仍給popup/封面，主軸不再以它冒充每2秒。
-- 開既有專案/只有首幀或8張舊cache會在載入閘中重建保存，不需重匯；完整cache重用並更新undo快照，不改片段/來源/匯出。proxy後建小圖；原生直接縮到80px高/240px寬內，不配置逐格4K中間canvas。
-- 主軸可見範圍虛擬化，按trim/speed映射來源2秒區間；syncScroll在seek/zoom時同步更新可見桶，不等晚到scroll事件而留白。
-- [Actions 43562187791](https://github.com/peiyulin0520/VideoClip_2/actions/runs/43562187791)：驗收程式 `67c14c9c929a6095927d49c76142b881c6a158c6` 的350單元、148 Chromium e2e全過，另30項快速情境全過（完整測試子集）；lint/格式/TypeScript/build/Pages/PWA與39字體檢查成功。artifact `14100619022`，ZIP SHA-256 `ebbfe5f0f370aecbc66d8b34e426eb3fd7a6caf8ac3f65b87c89cea8cda3c2a1` 已核對；184張成功截圖。最後提交僅文件/成功截圖，產品、測試與設定皆與驗收程式一致。PR #11 open未合併，由使用者自行Merge後發布；Safari真機仍待確認。
-- 驗證：126秒自製片每2秒換色/標秒，全部63張唯一圖/time/像素；0/2/4/58/60/112/124、放大可見覆蓋，舊重複首幀cache補建/保存/重開且片段不變，禁WebCodecs的Chromium原生備援亦通過。已人工檢視58、112與放大112共3張。本機最終check與diff檢查成功。
-- 下一步：使用者自行Merge PR11後main Actions發布，更新後重開原專案補建；依PLAN §7真機確認Safari HEVC/HDR長片/原生備援/滑動放大/背景取消。無待修程式，不代Merge、不推main。先前25/30、29/30及舊PR10證據皆歷史。
+- 2026-11-14 / codex/source-timestamp-thumbnails；PR11尚未合併，追加使用者「音訊些微爆音、加特效卡頓跳幀，先解決」，沿同PR整合。本輪待CI，不能以先前350/148當本輪證據。
+- 已改：AudioBus真實邊界AudioContext預排12ms線性漸變，hold當前值再改音量；connected元素不native硬mute。pause/seek等淡出再動作，合併多次seek/防舊asset回呼；音訊不做速率微調、邊界對齊實際media time，limiter/master留headroom。匯出真正聲音區間淡入出及softLimit，沒有每chunk淡出。
+- 已改：Compositor同來源/crop/mask/尺寸共用FrameResource，refcount清理，按呈現frameStamp只上傳一次；固定matrix/filterchain不每幀重設，grain/snow等每個effect重用canvas。≤720流暢/標準預覽blur低負擔，高清/匯出保留原品質。
+- 本機首輪check357單元成功；最新畫質條件待最終check。新增3e2e實際波形/重影故障共用上傳/柔焦顆粒連續與popup回播，預期151完整及33快速。要等CI成功、量測JSON與新截圖，再更新PR11，不代Merge。
+- 計畫docs/plans/2026-11-14-audio-effect-continuity.md；Safari聲音硬體/長片FPS仍待真機。
 
 ## 日誌格式（新增一筆時照這個）
 ```
@@ -23,6 +21,7 @@
 ```
 
 ## 使用者已確認的偏好
+- 2026-11-14追加並要求繼續：目前聲音音訊有些微爆音；套特效可能卡/跳幀，需先確認並解決。不要只建議使用者再降畫質，保留可剪輯聲音與匯出品質。
 - 2026-11-14最新實機：主播放軸每2秒應有對應來源畫面，全片要能看，不能整排首幀或1分鐘後留白；popup選段畫面已正確，需修主時間軸及舊專案cache，不是只鋪滿。
 - 2026-11-14更正：不是上下同頁，特別是前圖三的特效起迄popup，預覽畫面與播放軸必須在左右兩側。實作左預覽、右時間軸，下方右側膠囊精調；不能因窄手機退回上下。
 - 2026-11-14追加：長片後段必須用後段來源縮圖，不能重複前段造成錯位。載入返回及同秒特效按鈕比例縮緊；單素材不用序號，只起/迄，預覽與時間軸及膠囊精調在同頁，長片依選秒同步預覽。
@@ -91,8 +90,14 @@
 - 2026-11-11 找到新字體來源 max32002/pop-gothic（大波浪圓體，含注音）→ 已加入手寫可愛包。問「能不能直接下載到我的 files 下載資料夾」→ 答：網頁在 iPhone 不能自動寫進「檔案」App 資料夾；官方字體存在瀏覽器裡，自己的字體用「匯入字體檔」從檔案 App 選
 
 ## 日誌（最新在最上面）
+- 2026-11-14 音訊爆音與特效播放連續性（待CI）
+  - 查到gain雖漸變仍native mute/pause切斷；native硬seek、速率微調及邊界在RAF上切音會出突波。加Context預排真實邊界、hold/linear fade、defer pause/seek、native時鐘校正與mix headroom，匯出同步真正邊界/soft knee。
+  - RGB/故障/多格每個clone原本重畫同源並上傳；改refcount共享FrameResource、呈現frameStamp去重、濾鏡參數快取、粒子canvas原地重繪。≤720預覽blur quality1/resolution0.5，高清與匯出quality3/resolution1。
+  - 新音源click-dc.wav是3秒非零邊界測試信號；新debug-only AudioWorklet量測實際預覽peak/maxJump，離線聲音量測剪段/片頭尾/200%音量。另測18重影僅1buffer/一次上傳/無新配置及seek、移除釋放，柔焦顆粒播放/捲頁/popup後續播。
+  - 本機357單元，新增3e2e待CI。先前縮圖350/148/30成功保留，本輪需357/151/33新證據。PR11未合併，使用者自行Merge。
+
 - 2026-11-14 主時間軸每2秒實際縮圖最終驗收（PR #11）
-  - [Actions 43562187791](https://github.com/peiyulin0520/VideoClip_2/actions/runs/43562187791)：驗收程式 `67c14c9c929a6095927d49c76142b881c6a158c6` 的350單元、148 Chromium e2e全過，另30項快速情境全過（完整測試子集）；lint/格式/TypeScript/build/Pages/PWA與39字體檢查成功。artifact `14100619022`，ZIP SHA-256 `ebbfe5f0f370aecbc66d8b34e426eb3fd7a6caf8ac3f65b87c89cea8cda3c2a1` 已核對；184張成功截圖。最後提交僅文件/成功截圖，產品、測試與設定皆與驗收程式一致。PR #11 open未合併，由使用者自行Merge後發布；Safari真機仍待確認。
+  - [Actions 43572187791](https://github.com/peiyulin0520/VideoClip_2/actions/runs/43572187791)：驗收程式 `67c14c9c929a6095927d49c76142b881c6a158c6` 的350單元、148 Chromium e2e全過，另30項快速情境全過（完整測試子集）；lint/格式/TypeScript/build/Pages/PWA與39字體檢查成功。artifact `14100619022`，ZIP SHA-256 `ebbfe5f0f370aecbc66d8b34e426eb3fd7a6caf8ac3f65b87c89cea8cda3c2a1` 已核對；184張成功截圖。最後提交僅文件/成功截圖，產品、測試與設定皆與驗收程式一致。PR #11 open未合併，由使用者自行Merge後發布；Safari真機仍待確認。
   - 完成來源timestamp filmstrip/缺圖不沿用、舊專案載入自修復/快取與undo保存、proxy後的小圖、可見區渲染與zoom同步。既有播放/聲音/特效/左右popup/匯出回歸保留。
   - 新126秒/63格測試核對每格唯一/time/顏色、58/60/112/片尾/最大放大、舊8張首幀修復與原生備援。Chromium停用WebCodecs不等於Safari真機已驗證。
   - 184張成功圖已更新，新timestamped-thumbnails三張均人工看過；SHA與錯誤context檢查成功，最終本機check通過。README/USAGE/PLAN/AGENTS/交接與計畫同步。下一步使用者Merge PR11。

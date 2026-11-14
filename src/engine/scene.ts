@@ -179,7 +179,9 @@ export function buildScene(
   out = applySingleAnimations(out, project, t, canvasW, canvasH);
   out = applyVideoEffects(applyTransitions(out, project, t, canvasW, canvasH), project, t, canvasW, canvasH);
   for (const effect of project.effects ?? []) {
-    const layer = effectLayer(effect, t, canvasW, canvasH) ?? videoEffectOverlay(effect, t, canvasW, canvasH);
+    const layer =
+      effectLayer(effect, t, canvasW, canvasH) ??
+      videoEffectOverlay(effect, t, canvasW, canvasH, `${project.id}:${effect.id}`);
     if (layer) out.push(layer);
   }
   if (previewLiftedId) {

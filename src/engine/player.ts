@@ -2,6 +2,7 @@ import { cellMediaTime } from './templateTiming';
 import type { Asset, Project, Track, VideoItem } from '../model/types';
 import { Compositor, type SceneLayer } from './compositor';
 import { toLocal } from './geometry';
+import { audioWindowAt } from './audioEnvelope';
 import { AudioPool } from './audioPool';
 import { VideoPool } from './mediaPool';
 import { captureThumb } from './probe';
@@ -103,7 +104,11 @@ export class Player {
   ): Promise<Player> {
     const p = opts.getProject();
     const size = p ? previewSize(p, opts.maxSize) : { width: 540, height: 960 };
-    const compositor = await Compositor.create({ ...size, canvas: opts.canvas });
+    const compositor = await Compositor.create({
+      ...size,
+      canvas: opts.canvas,
+      preview: opts.clock !== 'wall' && Math.max(size.width, size.height) <= 720,
+    });
     let player: Player | null = null;
     const pool = new VideoPool(opts.host, POOL_SIZE, () => player?.scheduleRender());
     player = new Player(compositor, pool, opts, opts.audioContext);
@@ -239,8 +244,8 @@ export class Player {
     this.playing = false;
     this.buffering = false;
     cancelAnimationFrame(this.raf);
-    this.pool.pauseAllExcept(new Set());
-    this.audioPool.pauseAllExcept(new Set());
+    this.pool.pauseAllExcept(new Set(), (el) => this.bus.pause(el));
+    this.audioPool.pauseAllExcept(new Set(), (el) => this.bus.pause(el));
     this.render(this.t);
     this.emit();
   }
@@ -353,12 +358,22 @@ export class Player {
       (!active || this.requestedSeek || !last || now - last.at > 1000)
     ) {
       this.lastSeeks.set(el, { target: s, at: now });
-      el.currentTime = Math.max(0, Math.min(s, Math.max(0, asset.duration - 0.001)));
+      this.bus.deferSeek(el, () => {
+        if (!this.destroyed && el.dataset.itemId === item.id && el.dataset.assetId === asset.id) {
+          el.currentTime = Math.max(0, Math.min(s, Math.max(0, asset.duration - 0.001)));
+          this.scheduleRender();
+        }
+      });
     }
-    this.bus.set(el, el.seeking ? 0 : gain);
-    el.muted = !!el.dataset.priming || gain === 0;
+    this.bus.set(
+      el,
+      el.seeking || this.bus.isSeeking(el) ? 0 : gain,
+      audioWindowAt(item, t),
+      t - delta / item.speed,
+    );
+    if (!this.bus.owns(el)) el.muted = !!el.dataset.priming || gain === 0;
     if (!el.preservesPitch) el.preservesPitch = true;
-    const rate = active ? previewPlaybackRate(delta, item.speed) : item.speed;
+    const rate = active && !asset.hasAudio ? previewPlaybackRate(delta, item.speed) : item.speed;
     if (el.playbackRate !== rate) el.playbackRate = rate;
     if (active) {
       if (el.paused && !this.pendingPlay.has(el)) {
@@ -366,7 +381,8 @@ export class Player {
         void el.play().then(
           () => {
             this.pendingPlay.delete(el);
-            if (this.destroyed || !this.playing || el.dataset.previewIntent !== 'play') el.pause();
+            if (this.destroyed) el.pause();
+            else if (!this.playing || el.dataset.previewIntent !== 'play') this.bus.pause(el);
           },
           () => {
             this.pendingPlay.delete(el);
@@ -377,7 +393,7 @@ export class Player {
           },
         );
       }
-    } else if (!el.paused && !el.dataset.priming) el.pause();
+    } else if (!el.paused && !el.dataset.priming) this.bus.pause(el);
   }
 
   private render(t: number) {
@@ -443,7 +459,8 @@ export class Player {
         if (!el) return null; // 同時疊的影片超過上限，多的不畫
         used.add(el);
         this.syncVideo(el, item, asset, track, t);
-        if (el.readyState >= 2 && !el.seeking && !el.dataset.priming) this.readyCount++;
+        if (el.readyState >= 2 && !el.seeking && !this.bus.isSeeking(el) && !el.dataset.priming)
+          this.readyCount++;
         if (
           track.kind === 'main' &&
           !p.flexibleLayers &&
@@ -456,7 +473,7 @@ export class Player {
         this.maybeCaptureThumb(el, asset);
         return {
           source: el,
-          ready: el.readyState >= 2 && !el.seeking && el.videoWidth > 0,
+          ready: el.readyState >= 2 && !el.seeking && !this.bus.isSeeking(el) && el.videoWidth > 0,
           srcW: el.videoWidth || asset.width,
           srcH: el.videoHeight || asset.height,
         };
@@ -473,13 +490,15 @@ export class Player {
       if (!el) continue;
       usedAudio.add(el);
       this.syncVideo(el, item, asset, track, t);
-      if (el.readyState >= 2 && !el.seeking) this.readyCount++;
+      if (el.readyState >= 2 && !el.seeking && !this.bus.isSeeking(el)) this.readyCount++;
     }
 
     this.frameReady =
       this.readyCount === this.expectedCount &&
       scene.every((layer) => layer.ready) &&
-      [...used, ...usedAudio].every((el) => el.readyState >= 2 && !el.seeking && !el.dataset.priming);
+      [...used, ...usedAudio].every(
+        (el) => el.readyState >= 2 && !el.seeking && !this.bus.isSeeking(el) && !el.dataset.priming,
+      );
 
     // 預載：下一個主軌片段、1 秒內要開始的疊加影片
     for (const { item, asset } of this.upcoming(p, t)) {
@@ -496,10 +515,10 @@ export class Player {
       if (!el.paused) el.pause();
     }
     this.preloadReady = [...used, ...usedAudio].every(
-      (el) => el.readyState >= 2 && !el.seeking && !el.dataset.priming,
+      (el) => el.readyState >= 2 && !el.seeking && !this.bus.isSeeking(el) && !el.dataset.priming,
     );
-    this.pool.pauseAllExcept(used);
-    this.audioPool.pauseAllExcept(usedAudio);
+    this.pool.pauseAllExcept(used, (el) => this.bus.pause(el));
+    this.audioPool.pauseAllExcept(usedAudio, (el) => this.bus.pause(el));
     this.bus.flush();
     this.requestedSeek = false;
     this.lastScene = scene;
@@ -545,6 +564,10 @@ export class Player {
       }
     }
     return out;
+  }
+
+  audioProbe(milliseconds: number) {
+    return this.bus.probe(milliseconds);
   }
 
   audioEnergy() {

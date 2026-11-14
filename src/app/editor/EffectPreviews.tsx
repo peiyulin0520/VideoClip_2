@@ -103,7 +103,7 @@ export function EffectPreviews({
         return { key: value, preset: { id: id!, type: type as PreviewPreset['type'] } };
       });
     const projects = new Map(entries.map((e) => [e.key, demoProject(e.preset, single)]));
-    void Compositor.create({ width: W, height: H }).then((created) => {
+    void Compositor.create({ width: W, height: H, preview: true }).then((created) => {
       if (stopped) {
         created.destroy();
         return;

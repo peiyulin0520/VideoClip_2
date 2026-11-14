@@ -3,15 +3,21 @@ import type { Project } from '../model/types';
 import type { SceneLayer } from './compositor';
 import { DEFAULT_ADJUSTMENT } from './keyframes';
 export { VIDEO_EFFECTS } from './effectCatalog';
-const canvases = new Map<string, HTMLCanvasElement>();
-function particles(preset: string, t: number) {
-  const frame = Math.floor(t * 12),
-    key = preset === 'vignette' ? preset : `${preset}:${frame}`;
-  if (canvases.has(key)) return canvases.get(key)!;
-  const c = document.createElement('canvas');
-  c.width = 320;
-  c.height = 568;
+const canvases = new Map<string, { canvas: HTMLCanvasElement; frame: number }>();
+function particles(preset: string, t: number, identity: string) {
+  const frame = preset === 'vignette' ? 0 : Math.floor(t * 12),
+    key = `${identity}:${preset}`;
+  let entry = canvases.get(key);
+  if (entry?.frame === frame) return entry.canvas;
+  const c = entry?.canvas ?? document.createElement('canvas');
+  if (!entry) {
+    c.width = 320;
+    c.height = 568;
+    entry = { canvas: c, frame };
+  }
   const ctx = c.getContext('2d')!;
+  ctx.clearRect(0, 0, 320, 568);
+  ctx.globalAlpha = 1;
   const random = (n: number) => {
     const x = Math.sin(n * 127.1 + 19.17) * 43758.5453;
     return x - Math.floor(x);
@@ -49,8 +55,10 @@ function particles(preset: string, t: number) {
       }
       ctx.fill();
     }
-  if (canvases.size > 8) canvases.delete(canvases.keys().next().value!);
-  canvases.set(key, c);
+  entry.frame = frame;
+  canvases.delete(key);
+  canvases.set(key, entry);
+  if (canvases.size > 12) canvases.delete(canvases.keys().next().value!);
   return c;
 }
 export function videoEffectOverlay(
@@ -58,6 +66,7 @@ export function videoEffectOverlay(
   t: number,
   w: number,
   h: number,
+  identity = effect.id,
 ): SceneLayer | null {
   const active = effectAtTime(effect, t);
   if (!active) return null;
@@ -68,7 +77,7 @@ export function videoEffectOverlay(
     t >= effect.start + effect.duration
   )
     return null;
-  const c = particles(effect.preset, t - effect.start);
+  const c = particles(effect.preset, t - effect.start, identity);
   return {
     id: effect.id,
     kind: 'image',

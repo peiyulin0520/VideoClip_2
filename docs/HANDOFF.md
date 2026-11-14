@@ -1,7 +1,12 @@
 # 交接手冊（HANDOFF）
 
 ## VideoClip_2 當前交接（優先於以下來源 repo 的歷史紀錄）
-- 最終（2026-11-14）：[Actions 43562187791](https://github.com/peiyulin0520/VideoClip_2/actions/runs/43562187791)：驗收程式 `67c14c9c929a6095927d49c76142b881c6a158c6` 的350單元、148 Chromium e2e全過，另30項快速情境全過（完整測試子集）；lint/格式/TypeScript/build/Pages/PWA與39字體檢查成功。artifact `14100619022`，ZIP SHA-256 `ebbfe5f0f370aecbc66d8b34e426eb3fd7a6caf8ac3f65b87c89cea8cda3c2a1` 已核對；184張成功截圖。最後提交僅文件/成功截圖，產品、測試與設定皆與驗收程式一致。PR #11 open未合併，由使用者自行Merge後發布；Safari真機仍待確認。
+- 最新本輪待CI：使用者追加些微爆音/特效卡跳幀並說繼續；PR11仍open沿codex/source-timestamp-thumbnails追加。音訊12ms真實邊界排程/hold、native pause/seek延後淡出、connected元素不hard mute、有聲素材不nudge rate、media time校正；export實際區間淡入出/soft knee。GPU refcount共享frame resources/固定filter快取/particle canvas重用，低預覽blur輕量、高清export不降。
+- 目前357單元、3新e2e預期151/33，需本輪完整成功/波形JSON/新圖。下面350/148舊縮圖是基線，不能作本輪驗收。規格plans/2026-11-14-audio-effect-continuity.md。不代Merge。
+- 關鍵：FrameResource可共享但每個sprite的box/tint/filter/maskGraphics仍獨立；同crop/mask/dims才共享，refcount=0才destroy，保留未ready continuity。AudioBus pending seek合併最新closure且Player檢item/asset還相同；pause回呼檢intent避免重播後被舊timer停掉。
+
+### 縮圖前輪成功（歷史）
+- 最終（2026-11-14）：[Actions 43572187791](https://github.com/peiyulin0520/VideoClip_2/actions/runs/43572187791)：驗收程式 `67c14c9c929a6095927d49c76142b881c6a158c6` 的350單元、148 Chromium e2e全過，另30項快速情境全過（完整測試子集）；lint/格式/TypeScript/build/Pages/PWA與39字體檢查成功。artifact `14100619022`，ZIP SHA-256 `ebbfe5f0f370aecbc66d8b34e426eb3fd7a6caf8ac3f65b87c89cea8cda3c2a1` 已核對；184張成功截圖。最後提交僅文件/成功截圖，產品、測試與設定皆與驗收程式一致。PR #11 open未合併，由使用者自行Merge後發布；Safari真機仍待確認。
 - 本輪從已合併PR10的main7350773開codex/source-timestamp-thumbnails，交付PR11。使用者主軸58秒重首幀、112秒空白但popup有後段，不能只驗鋪滿/兩色後半。
 - Asset.filmstrip={version:1,interval:2,duration,frames(time,src)}獨立於overview thumbs。hasFilmstrip檢全長/每2秒/非缺格；開啟時proxy後補建並存metadata/undo快照，不增編輯。完整cache重用，個別null下次重開重試，不以首幀填滿。
 - buildFilmstrip校驗CanvasSink的timestamp/duration覆蓋要求秒數；原生load/seek+requestVideoFrameCallback/mediaTime，webkit-playsinline且靜音、不play；直接縮小圖，不先建4Kcanvas。取消/idle timeout清理Input及影片URL。probe overview也不再缺格沿用，native partial不假當全長。
