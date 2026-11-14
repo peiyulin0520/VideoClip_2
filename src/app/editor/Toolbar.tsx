@@ -112,8 +112,9 @@ export function BottomBar({
   const [panel, setPanel] = useState<Panel>(null);
   const [collapsed, setCollapsed] = useState(false);
   const join = useUI((s) => s.effectsJoin);
+  const single = useUI((s) => s.effectsSingle);
   useEffect(() => {
-    if (!join) return;
+    if (!join && !single) return;
     const frame = requestAnimationFrame(() => {
       setTab('effects');
       setCollapsed(false);
@@ -121,7 +122,7 @@ export function BottomBar({
       requestAnimationFrame(() => document.querySelector('.bottombar')?.scrollIntoView({ block: 'start' }));
     });
     return () => cancelAnimationFrame(frame);
-  }, [join]);
+  }, [join, single]);
 
   const found = findItem(project, selectedId);
   const items = mainItems(project);

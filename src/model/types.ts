@@ -4,6 +4,10 @@
 export type Aspect = '9:16' | '16:9' | '1:1' | '3:4' | '4:3';
 
 export type Asset = {
+  previewFiles?: Record<
+    string,
+    { status: 'ready' | 'none'; mime?: string; width?: number; height?: number; version: 1 }
+  >;
   id: string;
   kind: 'video' | 'image' | 'audio';
   name: string;
@@ -70,7 +74,11 @@ export type VideoEffectPreset =
   | 'snow'
   | 'sparkle';
 
+export type ClipAnimation = { preset: TransitionPreset; duration: number; ranges?: [number, number][] };
+export type ClipAnimations = { enter?: ClipAnimation; exit?: ClipAnimation };
+
 export type ItemBase = {
+  animations?: ClipAnimations;
   id: string;
   name?: string;
   keyframes?: Keyframe[];
@@ -238,6 +246,12 @@ export type Project = {
   layout?: {
     style: 'photobooth' | 'filmstrip' | 'polaroid' | 'story';
     motion: 'none' | 'slide' | 'drift';
+    size?: { width: number; height: number };
+    caption?: string;
+    frameColor?: string;
+    captionColor?: string;
+    frameOpacity?: number;
+    animations?: ClipAnimations;
     transform?: Pick<Transform, 'x' | 'y' | 'scale'>;
     keyframes?: Keyframe[];
     adjustment?: ColorAdjustment;
@@ -260,11 +274,20 @@ export type Project = {
     start: number;
     duration: number;
     strength: number;
+    ranges?: [number, number][];
     targetId?: string;
     transitionFromId?: string;
     transitionToId?: string;
   }[];
-  transitions?: { id: string; preset: TransitionPreset; fromId: string; toId: string; duration: number }[];
+  transitions?: {
+    id: string;
+    preset: TransitionPreset;
+    fromId: string;
+    toId: string;
+    duration: number;
+    ranges?: [number, number][];
+    anchor?: number;
+  }[];
   assets: Asset[];
   tracks: Track[];
   thumbnail?: string;

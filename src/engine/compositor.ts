@@ -22,6 +22,7 @@ export type LayerSource =
 export type SceneLayer = {
   id: string;
   continuity?: string;
+  animationTransform?: { x: number; y: number; scaleX: number; scaleY: number; rotation: number };
   kind: 'video' | 'image' | 'text';
   source: LayerSource;
   /** 來源目前能不能取到畫面（影片正在 seek / 還沒載入就是 false，保留上一格） */
@@ -258,6 +259,18 @@ export class Compositor {
     o.container.position.set(box.cx, box.cy);
     o.container.rotation = layer.viewport ? 0 : (box.rotation * Math.PI) / 180;
     o.sprite.rotation = layer.viewport ? (box.rotation * Math.PI) / 180 : 0;
+    const animation = layer.animationTransform;
+    o.container.scale.set(animation?.scaleX ?? 1, animation?.scaleY ?? 1);
+    if (animation) {
+      const angle = (animation.rotation * Math.PI) / 180;
+      const x = (box.cx - animation.x) * animation.scaleX;
+      const y = (box.cy - animation.y) * animation.scaleY;
+      o.container.position.set(
+        animation.x + x * Math.cos(angle) - y * Math.sin(angle),
+        animation.y + x * Math.sin(angle) + y * Math.cos(angle),
+      );
+      o.container.rotation += angle;
+    }
     o.container.alpha = layer.opacity;
     o.sprite.width = box.w;
     o.sprite.height = box.h;

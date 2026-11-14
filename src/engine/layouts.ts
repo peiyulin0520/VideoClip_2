@@ -8,6 +8,9 @@ export const LAYOUTS: { id: LayoutStyle; label: string; count: number }[] = [
   { id: 'polaroid', label: '四格相紙', count: 4 },
   { id: 'story', label: '展開故事', count: 3 },
 ];
+export function layoutDefaultSize(style: LayoutStyle) {
+  return { width: 1080, height: style === 'polaroid' ? 1080 : 1920 };
+}
 export function slotLabel(style: LayoutStyle, index: number, count = 3) {
   if (style === 'story' && count === 2) return ['上方', '下方'][index]!;
   return style === 'polaroid' ? ['左上', '右上', '左下', '右下'][index]! : ['上方', '中間', '下方'][index]!;
@@ -115,15 +118,17 @@ export function collagePlan(
   return { tracks, layout };
 }
 const artCache = new Map<string, HTMLCanvasElement>();
-export function layoutArt(style: LayoutStyle, w: number, h: number) {
-  const key = `${style}:${w}:${h}`,
+export function layoutArt(style: LayoutStyle, w: number, h: number, appearance?: Project['layout']) {
+  const caption = appearance?.caption ?? 'LITTLE MOMENTS';
+  const key = `${style}:${w}:${h}:${caption}:${appearance?.frameColor}:${appearance?.captionColor}`,
     cached = artCache.get(key);
   if (cached) return cached;
   const canvas = document.createElement('canvas');
   canvas.width = w;
   canvas.height = h;
   const c = canvas.getContext('2d')!;
-  c.fillStyle = style === 'filmstrip' || style === 'story' ? '#17171b' : '#fff5df';
+  c.fillStyle =
+    appearance?.frameColor ?? (style === 'filmstrip' || style === 'story' ? '#17171b' : '#fff5df');
   c.fillRect(0, 0, w, h);
   if (style === 'filmstrip') {
     c.fillStyle = '#eee6d6';
@@ -134,10 +139,10 @@ export function layoutArt(style: LayoutStyle, w: number, h: number) {
         c.fill();
       }
   }
-  c.fillStyle = style === 'filmstrip' ? '#e3d4bc' : '#7e6c5b';
+  c.fillStyle = appearance?.captionColor ?? (style === 'filmstrip' ? '#e3d4bc' : '#7e6c5b');
   c.textAlign = 'center';
   c.font = `${w * 0.035}px sans-serif`;
-  if (style !== 'story') c.fillText('LITTLE MOMENTS', w / 2, h * 0.96);
+  if (style !== 'story') c.fillText(caption, w / 2, h * 0.96, w * 0.9);
   if (artCache.size >= 4) artCache.delete(artCache.keys().next().value!);
   artCache.set(key, canvas);
   return canvas;
@@ -181,6 +186,15 @@ export function carryTemplateEdits(
       : undefined;
     next.layout.adjustment = previous.layout.adjustment ? { ...previous.layout.adjustment } : undefined;
     next.layout.opacity = previous.layout.opacity;
+    for (const key of [
+      'size',
+      'caption',
+      'frameColor',
+      'captionColor',
+      'frameOpacity',
+      'animations',
+    ] as const)
+      Object.assign(next.layout, { [key]: structuredClone(previous.layout[key]) });
   }
   if (next.layout?.story && previous.layout?.story)
     next.layout.story = structuredClone(previous.layout.story);

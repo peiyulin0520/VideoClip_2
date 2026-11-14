@@ -21,6 +21,7 @@ export function installDebugHook(player: Player) {
   const hook = {
     project: () => JSON.parse(JSON.stringify(useProjectStore.getState().project)),
     savedProject: () => getProject(useProjectStore.getState().project!.id),
+    ready: () => player.isReady,
     time: () => player.time,
     selected: () => useProjectStore.getState().selectedId,
     audioEnergy: () => player.audioEnergy(),
@@ -79,6 +80,7 @@ export function installDebugHook(player: Player) {
       nx1: number,
       ny1: number,
     ) {
+      if (!player.isReady) return 0;
       const c = player.compositor;
       const px = c.readRegion(nx0 * c.width, ny0 * c.height, (nx1 - nx0) * c.width, (ny1 - ny0) * c.height);
       let n = 0;
@@ -93,6 +95,7 @@ export function installDebugHook(player: Player) {
     },
     /** 預覽畫面上某一點的顏色，座標用 0–1 的比例 */
     samplePreview(nx: number, ny: number) {
+      if (!player.isReady) return null;
       const c = player.compositor;
       return c.samplePixel(nx * c.width, ny * c.height);
     },

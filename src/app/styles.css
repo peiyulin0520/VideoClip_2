@@ -3157,3 +3157,384 @@ button:focus-visible {
 :root[data-theme] #root .editor .timeline :is(.family-toggle small, .clip-audio) {
   --ui-font-size: 9px;
 }
+
+/* Preview controls share explicit, visible playing state. */
+.preview-toggle[aria-pressed='true'],
+.playbar button[data-playing='true'] {
+  background: var(--accent);
+  color: var(--accent-ink);
+}
+.project-preview {
+  position: relative;
+  margin-block: 8px;
+  display: flex;
+  align-items: end;
+  gap: 6px;
+}
+.project-preview canvas {
+  max-width: 50%;
+  max-height: 160px;
+  object-fit: contain;
+  background: #000;
+}
+.template-appearance {
+  display: grid;
+  gap: 4px;
+  margin-block: 8px;
+}
+.template-appearance details > summary {
+  min-height: 44px;
+  padding-block: 8px;
+  cursor: pointer;
+}
+.cell-advanced {
+  margin-top: 6px;
+}
+.cell-advanced input[type='number'] {
+  max-width: 80px;
+  min-height: 44px;
+}
+.effect-previews > .preview-toggle {
+  margin-block: 4px;
+}
+:root[data-theme] .effect-modes.option-primary {
+  background: transparent;
+  border: 0;
+  padding: 0;
+  box-shadow: none;
+}
+/* Viewport-driven preview size, without globally scaling fonts or touch targets. */
+html {
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+}
+.editor {
+  height: 100dvh;
+}
+.editor > .stage-wrap:not(.expanded-preview) {
+  height: clamp(220px, 58dvh, 600px);
+  min-height: 220px;
+}
+.back-to-preview {
+  bottom: calc(12px + env(safe-area-inset-bottom));
+  right: max(10px, env(safe-area-inset-right));
+}
+.editor .bottombar > :last-child {
+  margin-bottom: 0;
+}
+.drawing-stage {
+  position: relative;
+}
+.drawing-stage canvas.drawing-backdrop {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+.drawing-stage canvas[data-testid='drawing-canvas'] {
+  position: relative;
+}
+/* 390px is the reference iPhone width. Larger phones scale type up together,
+   capped at 10%; smaller phones retain readable type and 44px touch targets. */
+:root {
+  --ui-font-size: clamp(14px, 3.5897435897vw, 15.4px);
+  --ui-note-font-size: clamp(11px, 2.8205128205vw, 12.1px);
+}
+:root[data-theme] #root .editor .timeline {
+  --ui-font-size: clamp(11px, 2.8205128205vw, 12.1px);
+}
+:root[data-theme] #root .editor .timeline :is(.family-toggle small, .clip-audio) {
+  --ui-font-size: clamp(9px, 2.3076923076vw, 9.9px);
+}
+.editor {
+  height: var(--app-viewport-height, 100dvh);
+}
+.back-to-preview {
+  bottom: calc(12px + env(safe-area-inset-bottom) + var(--visible-bottom-inset, 0px));
+}
+.template-dimensions {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 6px;
+}
+.template-dimensions input {
+  width: 100%;
+  min-width: 0;
+  min-height: 44px;
+}
+:root[data-theme] .ed-top .quality-button {
+  min-width: 44px;
+  padding: 2px 4px;
+  background: var(--control);
+  color: var(--fg);
+}
+.editor .ed-top {
+  gap: 2px;
+  padding-inline: 4px;
+}
+.editor .ed-top .ratio-btn {
+  min-width: 44px;
+  padding-inline: 4px;
+}
+.stage-wrap {
+  background: repeating-linear-gradient(45deg, #303238 0 8px, #27292f 8px 16px);
+}
+.stage {
+  outline: 1px solid #b9bdc5;
+}
+.export-bounds-label {
+  position: absolute;
+  top: 4px;
+  left: 4px;
+  z-index: 7;
+  color: #fff;
+  background: #17171bd9;
+  padding: 3px 5px;
+  border-radius: 4px;
+  pointer-events: none;
+}
+.template-grid .template-art {
+  width: 30.375px;
+}
+.template-grid .template-art.polaroid {
+  width: 54px;
+}
+.ed-top .name-btn {
+  min-width: 44px;
+}
+@media (max-width: 359px) {
+  .editor .ed-top {
+    gap: 0;
+    padding-inline: 0;
+  }
+}
+/* The return button clears the last tool row without reserving footer space. */
+.back-to-preview {
+  bottom: calc(76px + env(safe-area-inset-bottom) + var(--visible-bottom-inset, 0px));
+}
+.editor .safe-toggle,
+.editor .preview-expand,
+.editor .preview-layers {
+  background: #17171bf2;
+  color: #fff;
+}
+.editor .safe-toggle.on {
+  background: var(--accent);
+  color: var(--accent-ink);
+}
+/* Keep both tabs and the final tool row clear; apply the bottom safe area once. */
+.editor {
+  padding-bottom: 0;
+}
+.editor .bottombar {
+  padding-bottom: var(--safe-bottom);
+}
+.editor .bottombar .toolbar {
+  padding-bottom: 6px;
+}
+.editor .panel {
+  padding-bottom: 8px;
+}
+.back-to-preview {
+  bottom: calc(124px + var(--safe-bottom) + var(--visible-bottom-inset, 0px));
+}
+
+/* Paired timing controls share compact typography and retain touch-sized buttons. */
+.range-pair-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px;
+  margin-block: 4px;
+}
+.effect-range-fields {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 4px;
+}
+.effect-range-fields .field {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 2px;
+}
+.effect-range-fields input {
+  width: 100%;
+  min-width: 0;
+}
+
+/* All editable fields use the same paper capsule, including native Safari selects. */
+:root[data-theme]
+  body
+  :is(
+    input:not([type='range']):not([type='checkbox']):not([type='radio']):not([type='file']):not(
+        [type='color']
+      ):not([type='hidden']):not([type='button']):not([type='submit']):not([type='reset']),
+    select,
+    textarea
+  ) {
+  -webkit-appearance: none;
+  appearance: none;
+  border: 0;
+  border-radius: 999px;
+  box-shadow: none;
+  background-color: #efe5d7;
+  color: #30271f;
+  padding: 4px 6px;
+  min-height: 44px;
+  font-family: inherit;
+}
+:root[data-theme] body select {
+  padding-right: 30px;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%2379533e' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 8px center;
+  background-size: 16px;
+}
+:root[data-theme] body select option {
+  background: #efe5d7;
+  color: #30271f;
+}
+:root[data-theme] body textarea {
+  border-radius: 18px;
+}
+:root[data-theme] body :is(input, select, textarea):focus-visible {
+  outline: 2px solid #9d674e;
+  outline-offset: 2px;
+}
+:root[data-theme] body :is(input, textarea)::placeholder {
+  color: #73604f;
+  opacity: 1;
+}
+.effect-range-fields.single-edge-fields {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+.timeline-effect-badge {
+  position: absolute;
+  top: -22px;
+  transform: translateX(-50%);
+  z-index: 9;
+  height: 44px;
+  min-width: 44px;
+  padding: 0;
+  gap: 1px;
+  background: transparent;
+}
+.timeline-effect-badge span {
+  display: grid;
+  place-items: center;
+  min-width: 18px;
+  height: 18px;
+  padding-inline: 2px;
+  border-radius: 50%;
+  background: #306773;
+  color: #fff;
+  font-size: var(--timeline-font-size, 11px);
+}
+.timeline-effect-badge span[data-scope='pair'] {
+  background: #a54f39;
+}
+.family-row .timeline-effect-badge {
+  top: -2px;
+}
+.preview-loading-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 2200;
+  display: grid;
+  place-items: center;
+  padding: 16px;
+  background: #0009;
+}
+.preview-loading-card {
+  width: min(100%, 400px);
+  background: var(--panel);
+  color: var(--fg);
+  border-radius: 20px;
+  padding: 16px;
+  display: grid;
+  gap: 6px;
+}
+.preview-loading-card :is(h2, p) {
+  margin: 4px 0;
+}
+.preview-loading-card .btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  justify-self: start;
+  min-height: 44px;
+  flex: none;
+  text-decoration: none;
+  color: var(--fg);
+  background: var(--control);
+  border-radius: 999px;
+}
+.effect-badge-choices .btn {
+  display: flex;
+  width: fit-content;
+  max-width: 100%;
+  min-height: 44px;
+  margin-block: 4px;
+  text-align: start;
+  flex: none;
+}
+/* In the single-effect popup, preview stays left of the timeline at phone widths. */
+.single-effect-timing .effect-timing-workspace {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1.6fr);
+  gap: 8px;
+  align-items: center;
+}
+.single-effect-timing :is(.effect-timing-preview, .effect-timing-controls) {
+  min-width: 0;
+}
+.single-effect-timing .project-preview {
+  flex-direction: column;
+  align-items: center;
+  margin-block: 0;
+}
+.single-effect-timing .project-preview canvas {
+  width: 100%;
+  height: auto;
+  max-height: clamp(96px, 36dvh, 240px);
+  max-width: 100%;
+}
+.single-effect-timing .effect-timing-cursor {
+  margin: 4px 0;
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+}
+.single-effect-timing .hint {
+  margin-block: 4px;
+}
+.single-effect-timing .source-range.marker-range {
+  height: 44px;
+  margin: 54px 16px 8px;
+}
+.single-effect-timing .source-marker {
+  top: -64px;
+}
+.single-effect-timing .range-seconds span:first-child {
+  transform: none;
+}
+.single-effect-timing .range-seconds span:last-child {
+  transform: translateX(-100%);
+}
+.preview-loading-card .primary {
+  background: var(--accent);
+  color: var(--accent-ink);
+}
+.playback-buffering {
+  margin: 0;
+  padding: 4px 8px;
+}
+:root[data-theme] body .font-select {
+  background: #efe5d7;
+  color: #30271f;
+  border: 0;
+  border-radius: 999px;
+}
+:root[data-theme] body .font-select svg {
+  color: #79533e;
+}

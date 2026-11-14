@@ -1,3 +1,4 @@
+import { Play, Pause } from 'lucide-react';
 import { Undo2 } from 'lucide-react';
 import { useDraftHistory } from '../../ui/useDraftHistory';
 import { SelectionAddButton } from '../../ui/SelectionAddButton';
@@ -5,10 +6,11 @@ import { useEffect, useRef, useState } from 'react';
 import type { Asset, VideoItem } from '../../model/types';
 import { Sheet } from '../../ui/Sheet';
 import { SourceRanges } from '../../ui/SourceRanges';
-import { urlFor } from '../../engine/assetUrls';
+import { previewUrlFor as urlFor } from '../../engine/assetUrls';
 import { excludeAudio, includeAudio, inverseRanges } from '../../engine/audioRanges';
 import { editItem } from '../../store/actions';
 import { useProjectStore } from '../../store/projectStore';
+import { addSourceSelection } from '../../engine/sourceSelections';
 import { toast, useUI } from '../../store/uiStore';
 
 export function AudioRangeEditor({
@@ -30,6 +32,7 @@ export function AudioRangeEditor({
     [playing, setPlaying] = useState(false);
   const [markStart, setMarkStart] = useState<number | null>(null),
     [markerMode, setMarkerMode] = useState<'keep' | 'mute'>('keep');
+  const markBefore = useRef<[number, number][]>([]);
   const muted = inverseRanges(ranges, asset.duration);
   const sceneCanvas = useRef<HTMLCanvasElement>(null);
   const media = useRef<HTMLVideoElement | HTMLAudioElement | null>(null);
@@ -153,7 +156,7 @@ export function AudioRangeEditor({
               }
             }}
           >
-            {playing ? '⏸ 暫停試聽' : '▶ 播放試聽'}
+            {playing ? <Pause size={18} /> : <Play size={18} />}
           </button>
           <p className="source-now">
             目前：{cursor.toFixed(2)} 秒 {markStart !== null && `· 靜音起點 ${markStart.toFixed(2)} 秒`}
@@ -182,7 +185,15 @@ export function AudioRangeEditor({
           onClick={() => {
             media.current?.pause();
             setPlaying(false);
-            setMarkStart(cursor);
+            try {
+              const next = addSourceSelection(muted, cursor, asset.duration);
+              markBefore.current = structuredClone(ranges);
+              setRanges(inverseRanges(next, asset.duration));
+              setMarkStart(cursor);
+              setMarkerMode('mute');
+            } catch (e) {
+              toast((e as Error).message);
+            }
           }}
         >
           標記靜音起點
@@ -193,7 +204,7 @@ export function AudioRangeEditor({
           onClick={() => {
             if (markStart === null) return;
             if (cursor <= markStart + 0.009) return toast('請選擇起點之後的秒數作為終點');
-            setRanges((r) => excludeAudio(r, markStart, cursor));
+            setRanges(excludeAudio(markBefore.current, markStart, cursor));
             setMarkStart(null);
             setMarkerMode('mute');
           }}
@@ -201,7 +212,13 @@ export function AudioRangeEditor({
           標記靜音終點並新增
         </button>
         {markStart !== null && (
-          <button className="chip" onClick={() => setMarkStart(null)}>
+          <button
+            className="chip"
+            onClick={() => {
+              setRanges(markBefore.current);
+              setMarkStart(null);
+            }}
+          >
             取消此組標記
           </button>
         )}
@@ -209,24 +226,32 @@ export function AudioRangeEditor({
       <div className="chips option-primary">
         <button
           className={`chip${markerMode === 'keep' ? ' active' : ''}`}
-          onClick={() => setMarkerMode('keep')}
+          aria-pressed={markerMode === 'keep'}
+          onClick={() => {
+            setMarkerMode('keep');
+            setMarkStart(null);
+          }}
         >
           調整保留聲音標記
         </button>
         <button
           className={`chip${markerMode === 'mute' ? ' active' : ''}`}
-          onClick={() => setMarkerMode('mute')}
+          aria-pressed={markerMode === 'mute'}
+          onClick={() => {
+            setMarkerMode('mute');
+            setMarkStart(null);
+          }}
         >
           調整靜音標記（{muted.length} 組）
         </button>
       </div>
       <SelectionAddButton
-        ranges={ranges}
+        ranges={markerMode === 'mute' ? muted : ranges}
         cursor={cursor}
         duration={asset.duration}
         onChange={(r) => {
-          setRanges(r);
-          setMarkerMode('keep');
+          setRanges(markerMode === 'mute' ? inverseRanges(r, asset.duration) : r);
+          setMarkStart(null);
         }}
       />
       <p className="hint">

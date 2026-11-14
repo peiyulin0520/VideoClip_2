@@ -87,7 +87,8 @@ export function Settings() {
             value={prefs.preview}
             onChange={(e) => prefs.set({ preview: Number(e.target.value) })}
           >
-            <option value={720}>流暢（720）</option>
+            <option value={540}>低畫質・順暢（540）</option>
+            <option value={720}>標準（720）</option>
             <option value={1080}>平衡（1080）</option>
             <option value={1920}>精細（1920）</option>
           </select>

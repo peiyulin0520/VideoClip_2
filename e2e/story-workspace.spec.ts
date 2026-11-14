@@ -1,3 +1,4 @@
+import { waitForPreviewReady } from './helpers';
 import { expandAllGroups } from './helpers';
 import { expect, test, type Page } from '@playwright/test';
 import type { Project, VideoItem } from '../src/model/types';
@@ -33,6 +34,7 @@ async function template(
   await page.getByRole('button', { name: style, exact: true }).tap();
   await page.getByTestId('template-files').setInputFiles(files.map(fixture));
   await expect(page.locator('.busy')).toHaveCount(0);
+  await waitForPreviewReady(page);
   const p = await current(page);
   for (let i = 0; i < files.length; i++)
     await page
@@ -72,7 +74,7 @@ test('時間軸預設收合，展開各層；頁尾停在最後功能，沒有�
       document.querySelector('.bottombar')!.getBoundingClientRect().bottom,
   );
   expect(gap).toBeLessThan(12);
-  await expect(page.getByRole('button', { name: '回到最上方預覽', exact: true })).toBeHidden();
+  await expect(page.getByRole('button', { name: '回到最上方預覽', exact: true })).toBeVisible();
   await shot(page, 'collapsed-no-footer-gap');
 });
 
@@ -116,6 +118,7 @@ test('每格來源可獨立選段，共同長度不變，短素材補白且可�
     })
     .toBe(true);
   const first = page.locator('.template-cell').nth(0);
+  await first.getByRole('button', { name: '進階設定', exact: true }).tap();
   await first.getByRole('button', { name: '補白', exact: true }).tap();
   await expect
     .poll(async () => {
@@ -123,7 +126,7 @@ test('每格來源可獨立選段，共同長度不變，短素材補白且可�
       return c && c[0]! > 240 && c[1]! > 240;
     })
     .toBe(true);
-  await first.getByRole('button', { name: '放大選取第 1 格片段', exact: true }).tap();
+  await first.getByRole('button', { name: '選取第 1 格片段範圍', exact: true }).tap();
   const marker = page
     .getByRole('dialog', { name: '剪取片段' })
     .getByRole('button', { name: '來源起點標記', exact: true });
@@ -136,6 +139,7 @@ test('每格來源可獨立選段，共同長度不變，短素材補白且可�
   const second = page.locator('.template-cell').nth(1);
   await second.locator('summary').tap();
   await seekTo(page, 1);
+  await second.getByRole('button', { name: '進階設定', exact: true }).tap();
   await second.getByRole('button', { name: '在此格目前秒數插入色塊', exact: true }).tap();
   await seekTo(page, 1.5);
   const blank = await exportFrame(page, 1.5, [[0.5, 0.48]]);
@@ -166,6 +170,7 @@ test('音訊可直接標記多組精確靜音起迄，顯示對應畫面並可�
   ]) {
     await sourcePoint(page, a!);
     await page.getByRole('button', { name: '標記靜音起點', exact: true }).tap();
+    expect((await page.locator('.source-marker').count()) % 2).toBe(0);
     await sourcePoint(page, b!);
     await page.getByRole('button', { name: '標記靜音終點並新增', exact: true }).tap();
   }
@@ -256,6 +261,7 @@ test('模板色塊期間音訊也靜音，後續畫面及聲音接續並完整�
   await template(page, '直式膠卷', ['tone-video.webm', 'solid-green.webm', 'solid-red.webm'], 4);
   const first = page.locator('.template-cell').first();
   await seekTo(page, 1);
+  await first.getByRole('button', { name: '進階設定', exact: true }).tap();
   await first.getByRole('button', { name: '在此格目前秒數插入色塊', exact: true }).tap();
   await page.getByRole('button', { name: '匯出影片', exact: true }).tap();
   await page.getByLabel('匯出解析度').selectOption('360');

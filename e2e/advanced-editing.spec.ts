@@ -90,7 +90,10 @@ test('影片多組標記由白線明確新增，可局部復原與取消，保�
   await shortFirstRange(page, 0.2);
   await sourcePoint(page, 0.5);
   await expect(page.locator('.source-marker')).toHaveCount(2);
-  await page.getByRole('button', { name: '在白線位置新增一組起迄標記', exact: true }).tap();
+  await page
+    .getByRole('dialog')
+    .getByRole('button', { name: '在白線位置新增一組起迄標記', exact: true })
+    .tap();
   await expect(page.locator('.source-marker')).toHaveCount(4);
   await page.getByRole('button', { name: '復原上一步選段', exact: true }).tap();
   await expect(page.locator('.source-marker')).toHaveCount(2);
@@ -99,7 +102,10 @@ test('影片多組標記由白線明確新增，可局部復原與取消，保�
   await page.getByRole('button', { name: '片段範圍', exact: true }).tap();
   await shortFirstRange(page, 0.2);
   await sourcePoint(page, 0.5);
-  await page.getByRole('button', { name: '在白線位置新增一組起迄標記', exact: true }).tap();
+  await page
+    .getByRole('dialog')
+    .getByRole('button', { name: '在白線位置新增一組起迄標記', exact: true })
+    .tap();
   await shot(page, 'multiple-picture-markers');
   await page.getByRole('button', { name: '套用片段範圍', exact: true }).tap();
   const item = (await current(page)).tracks[0]!.items[0] as VideoItem;
@@ -134,11 +140,17 @@ test('音訊可在白線新增第二組保留範圍，復原與取消不改專�
   await shortFirstRange(page, 0.01);
   await sourcePoint(page, 0.5);
   await expect(page.locator('.source-marker')).toHaveCount(2);
-  await page.getByRole('button', { name: '在白線位置新增一組起迄標記', exact: true }).tap();
+  await page
+    .getByRole('dialog')
+    .getByRole('button', { name: '在白線位置新增一組起迄標記', exact: true })
+    .tap();
   await expect(page.locator('.source-marker')).toHaveCount(4);
   await page.getByRole('button', { name: '復原上一步選段', exact: true }).tap();
   await expect(page.locator('.source-marker')).toHaveCount(2);
-  await page.getByRole('button', { name: '在白線位置新增一組起迄標記', exact: true }).tap();
+  await page
+    .getByRole('dialog')
+    .getByRole('button', { name: '在白線位置新增一組起迄標記', exact: true })
+    .tap();
   await shot(page, 'multiple-audio-markers');
   await page.getByRole('button', { name: '取消', exact: true }).tap();
   expect(((await current(page)).tracks[0]!.items[0] as VideoItem).audioRanges).toBeUndefined();
@@ -335,11 +347,15 @@ test('膠卷多組來源的中間未選時段保留白色補時與框架，之�
   await expect(page.locator('.busy')).toHaveCount(0);
   await page.getByRole('button', { name: '套用多格版型', exact: true }).tap();
   const cell = page.locator('.template-cell').first();
+  await cell.getByRole('button', { name: '進階設定', exact: true }).tap();
   await cell.getByRole('button', { name: '補白', exact: true }).tap();
-  await cell.getByRole('button', { name: '放大選取第 1 格片段', exact: true }).tap();
+  await cell.getByRole('button', { name: '選取第 1 格片段範圍', exact: true }).tap();
   await shortFirstRange(page, 0.2);
   await sourcePoint(page, 0.5);
-  await page.getByRole('button', { name: '在白線位置新增一組起迄標記', exact: true }).tap();
+  await page
+    .getByRole('dialog')
+    .getByRole('button', { name: '在白線位置新增一組起迄標記', exact: true })
+    .tap();
   await page.getByRole('button', { name: '套用片段範圍', exact: true }).tap();
   await cell.getByRole('button', { name: '第2段終點標記', exact: true }).press('ArrowRight');
   const group = (await current(page)).tracks.find((t) => t.template)!;
@@ -366,7 +382,7 @@ test('膠卷多組來源的中間未選時段保留白色補時與框架，之�
   await expect.poll(async () => isRed(await samplePreview(page, 0.5, 0.18))).toBe(true);
 });
 
-test('A B 示意動畫真的更新，疊化推移四宮格轉場包含兩段來源並可移除', async ({ page }) => {
+test('A B 示意動畫真的更新，疊化推移四宮格在交接前後套用且不延遲素材', async ({ page }) => {
   test.setTimeout(90000);
   await createProjectWith(page, ['solid-red.webm', 'solid-green.webm']);
   await openTab(page, '特效');
@@ -384,14 +400,18 @@ test('A B 示意動畫真的更新，疊化推移四宮格轉場包含兩段來�
   await expect.poll(hash).not.toBe(before);
   await page.getByRole('button', { name: '疊化', exact: true }).tap();
   await page.getByRole('button', { name: '檢視 A B 交接', exact: true }).tap();
+  await seekTo(page, 3.85);
   await expect
     .poll(async () => {
       const c = await samplePreview(page, 0.5, 0.5);
-      return !!c && c[0] > 100 && c[0] < 155 && c[1] > 100 && c[1] < 155;
+      return !!c && c[0] > 100 && c[0] < 155 && c[1] < 20;
     })
     .toBe(true);
-  let frame = await exportFrame(page, 4, [[0.5, 0.5]]);
+  let frame = await exportFrame(page, 3.85, [[0.5, 0.5]]);
   expect(frame.samples[0]![0]).toBeGreaterThan(100);
+  expect(frame.samples[0]![1]).toBeLessThan(20);
+  frame = await exportFrame(page, 4.15, [[0.5, 0.5]]);
+  expect(frame.samples[0]![0]).toBeLessThan(20);
   expect(frame.samples[0]![1]).toBeGreaterThan(100);
   await page.getByTestId('stage').scrollIntoViewIfNeeded();
   await shot(page, 'crossfade-a-b');
@@ -399,22 +419,26 @@ test('A B 示意動畫真的更新，疊化推移四宮格轉場包含兩段來�
   await page.getByRole('button', { name: '相機動作', exact: true }).tap();
   await page.getByRole('button', { name: '向左推移', exact: true }).tap();
   await page.getByRole('button', { name: '檢視 A B 交接', exact: true }).tap();
-  frame = await exportFrame(page, 4, [
+  frame = await exportFrame(page, 4.15, [
     [0.25, 0.5],
     [0.75, 0.5],
   ]);
-  expect(isRed(frame.samples[0] as [number, number, number, number])).toBe(true);
+  expect(frame.samples[0]![0]).toBeLessThan(20);
+  expect(frame.samples[0]![1]).toBeLessThan(20);
   expect(isGreen(frame.samples[1] as [number, number, number, number])).toBe(true);
   await page.getByRole('button', { name: '移除轉場', exact: true }).tap();
   await page.getByRole('button', { name: '特效', exact: true }).tap();
   await page.getByRole('button', { name: '四宮格', exact: true }).tap();
-  frame = await exportFrame(page, 4, [
+  frame = await exportFrame(page, 4.15, [
     [0.25, 0.25],
     [0.05, 0.05],
   ]);
   expect(isGreen(frame.samples[0] as [number, number, number, number])).toBe(true);
-  expect(isRed(frame.samples[1] as [number, number, number, number])).toBe(true);
+  expect(frame.samples[1]![0]).toBeLessThan(20);
+  expect(frame.samples[1]![1]).toBeLessThan(20);
   await page.getByTestId('stage').scrollIntoViewIfNeeded();
+  await seekTo(page, 4.15);
+  await expect.poll(async () => isGreen(await samplePreview(page, 0.25, 0.25))).toBe(true);
   await shot(page, 'grid-a-b');
 });
 
@@ -424,7 +448,10 @@ test('A B 轉場不會顯示來源中未選的灰區畫面', async ({ page }) =>
   await page.getByRole('button', { name: '片段範圍', exact: true }).tap();
   await shortFirstRange(page, 0.2);
   await sourcePoint(page, 0.9);
-  await page.getByRole('button', { name: '在白線位置新增一組起迄標記', exact: true }).tap();
+  await page
+    .getByRole('dialog')
+    .getByRole('button', { name: '在白線位置新增一組起迄標記', exact: true })
+    .tap();
   const second = page.getByRole('button', { name: '第2段起點標記', exact: true });
   for (let i = 0; i < 5; i++) await second.press('ArrowRight');
   await page.getByRole('button', { name: '套用片段範圍', exact: true }).tap();
@@ -434,13 +461,12 @@ test('A B 轉場不會顯示來源中未選的灰區畫面', async ({ page }) =>
   await expect
     .poll(async () => {
       const c = await samplePreview(page, 0.5, 0.5);
-      return !!c && c[0] < 20 && c[1] > 10 && c[1] < 80;
+      return !!c && c[0] < 20 && c[1] < 20;
     })
     .toBe(true);
   const frame = await exportFrame(page, 3.75, [[0.5, 0.5]]);
   expect(frame.samples[0]![0]).toBeLessThan(20);
-  expect(frame.samples[0]![1]).toBeGreaterThan(10);
-  expect(frame.samples[0]![1]).toBeLessThan(80);
+  expect(frame.samples[0]![1]).toBeLessThan(20);
 });
 
 test('轉場各分類選項都可實際套用及匯出，不只靜態縮圖', async ({ page }) => {

@@ -1,3 +1,4 @@
+import { effectAtTime } from './animationTiming';
 import type { Project } from '../model/types';
 import type { SceneLayer } from './compositor';
 import { DEFAULT_ADJUSTMENT } from './keyframes';
@@ -58,6 +59,9 @@ export function videoEffectOverlay(
   w: number,
   h: number,
 ): SceneLayer | null {
+  const active = effectAtTime(effect, t);
+  if (!active) return null;
+  effect = active;
   if (
     !['grain', 'snow', 'sparkle', 'vignette'].includes(effect.preset) ||
     t < effect.start ||
@@ -83,8 +87,9 @@ export function videoEffectOverlay(
 }
 export function applyVideoEffects(layers: SceneLayer[], project: Project, t: number, w: number, h: number) {
   let out = layers;
-  for (const effect of project.effects ?? []) {
-    if (t < effect.start || t >= effect.start + effect.duration) continue;
+  for (const original of project.effects ?? []) {
+    const effect = effectAtTime(original, t);
+    if (!effect) continue;
     const s = effect.strength,
       local = t - effect.start;
     out = out.flatMap((layer) => {

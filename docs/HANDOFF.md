@@ -1,6 +1,44 @@
 # 交接手冊（HANDOFF）
 
 ## VideoClip_2 當前交接（優先於以下來源 repo 的歷史紀錄）
+- 最終左右更正（2026-11-14）：[Actions 43555594900](https://github.com/peiyulin0520/VideoClip_2/actions/runs/43555594900)：驗收程式 `91a676fa8d463513617e7b575eb36487b13cddcf` 的343單元、145 Chromium e2e全過，另25項快速情境全過（完整測試子集）；lint/格式/TypeScript/build/Pages/PWA與39字體檢查成功。artifact `14098482215`，ZIP SHA-256 `8fbdbdfb5c89f3c1085b353db822cfc9235d5d2c2920ad99016cfcb71179fd8d` 已核對；181張成功截圖。最後提交僅文件/成功截圖，與驗收程式的產品、測試及設定一致。PR #10保持open未合併，由使用者自行Merge後發布；Safari待真機。
+- 使用者說的是前圖三單素材起迄popup的預覽與播放軸分別在左右兩側，不能只做上下同頁。EffectTimingEditor的effect-timing-workspace在single-effect-timing下用兩欄grid，左preview/播放/目前秒數，右effect-timing-controls包含說明/全段軸/膠囊秒數，320px也不折成上下。其他效果/多組及雙素材布局維持原樣。
+- SourceRanges tickCount預設5，單素材傳3且實際軸寬<180用2；首尾刻度文字收在軸內。單素材numberedMarkers=false，editableSides一邊時不加crowded列；保留44px觸控與軸高度。數字seek時片尾取duration-0.001防黑畫面，固定端/時長聯動、取消復原等不變。
+- 重要教訓：同頁測試不能證明左右。三尺寸現在直接驗preview.right < timeline.left、兩者垂直交集、欄位在右、刻度不重疊/不超界；新320圖及390/長片82秒圖已人工看過。這些與原播放/來源/匯出回歸全部通過。
+- 播放架構：urlFor原檔、previewUrlFor只預覽；新素材只準備新proxy，不重建主player，讀當下time；destroy忽略舊回呼、通知走快照。長片縮圖預算只限制密度，跨全來源抽樣，精確定位看預覽。
+- 當前無待修程式，最後提交只文件/成功截圖。使用者自行Merge PR10後發布，Safari鍵盤/安全區/長片/聲音見PLAN §7。以下待驗均歷史，前7f版上下排列已被本輪取代。
+
+### 先前處理過程（歷史；以下待驗不代表當前狀態）
+- 最新追加7726486/Actions43551904638：快速21全過、完整145執行中；長片8d後追加。需等完整成功/下載新artifact（預期179 PNG）/更新全部圖與文件/最後check/doc commit skip-ci/推PR10；當前未提交舊178圖與README/USAGE需覆寫後交付。勿代Merge。
+
+- 2026-11-14追加長片縮圖待CI：Tiles原120格截斷可見長度，改120格分配完整片段寬度/格內重複原比例圖，採樣來源按全長走。121秒自製紅→藍素材/e2e驗82秒與放大覆蓋及≤120。前輪8d成功343/144是追加前，本輪需145新驗收再交付。
+
+- 最新最終：[Actions 43521756301](https://github.com/peiyulin0520/VideoClip_2/actions/runs/43521756301)：版本 8d27981dc9079b58ffb000798e1e6e4256099861 的343單元、144 Chromium e2e全過，另20項快速情境全過；lint/格式/TypeScript/build/Pages/39字體檢查成功。artifact 14083907571，ZIP SHA-256 8427f0ee5cdcc9a9d9a3021f0b50035f95f9ab6750ec781e0dc9864521b9261d 已核對；178張成功截圖，包含anchored-playback新增7張。新7張及固定單素材/A-B起迄畫面已人工檢視。最後文件/截圖提交不改驗收的產品、測試或設定。PR #10仍由使用者自行Merge，Safari待真機。
+- 重要：新增影片不能依assets重建player；只準備新proxy，prepare讀當下time。任何destroy後舊callback都忽略；emit用listener快照。測試填受控欄位前必等真實載入閘解除。以下待CI/未提交/失敗皆是歷史過程。
+
+- 最新source2877465c1d905d39ce54170f0aac642f7596b5bf，本機343單元/check成功；Actions43519974884快速6/6過，完整140/144；已補版型helper等真實inert/overlay/frameReady再fill，不改產品src，待新144。先等完整結果，再更新成功截圖/PR #10，不代Merge。規格見plans/2026-11-13-anchored-effects-and-playback.md。
+- 以下本輪待測/未提交/失敗狀態都是過程紀錄，以最新快照為準。
+
+- 第三輪快速仍5/6，匯入時CDP evaluate無回應；Preview主引擎不能依videoAssetsKey重建。新assets改獨立prepare effect，保留player/compositor，只準備新proxy、重新首幀對齊，品質/比例重建仍保留；待新完整CI。
+
+- 首輪播放43513918905為341單元/92瀏覽器成功，26失敗25未跑且20分時限。補destroyed player全部公開操作/late frame guard，避免ProjectPreview cleanup或舊React閉包render已銷毀compositor；測試須等待新player.ready，池的實際class是.pool。新增branch-only preview-smoke先回報新情境，完整build仍驗所有。第二輪待驗，不能宣稱已順暢。
+
+- 最新未提交待測：plans/2026-11-13-anchored-effects-and-playback.md；source在workspace，PR #10仍未合併。固定單素材邊界優先於上一輪任意；同秒特效marker需合併作用範圍後供選擇，不能彼此蓋住；真正proxy參考VideoClip，urlFor只原檔，previewUrlFor只預覽，勿低畫質匯出。本輪還缺新測試/check/CI，先前331/138是基線。
+
+- 最新特效時長最終：[Actions 43474533667](https://github.com/peiyulin0520/VideoClip_2/actions/runs/43474533667)：版本 8e45a480e2c3818217935f677a2d1047bab19107 的331單元、138 Chromium e2e全過，lint/格式/TypeScript/build/Pages/39字體檢查成功。artifact 14062124542，ZIP SHA-256 8f225265b3f38d07947a1f074098f2d22e3bad37368686a923f18d1b1fc7d50f 已核對；171張成功畫面（effect-timing新增5張）。新5張及混搭已用清單已人工看過。原134及新4全通過；最後文件不改驗收src/e2e/設定。PR #10待使用者自行Merge，Safari仍待真機；以下首輪待CI均為過程。
+
+- 首輪Actions43472475288為330單元/137 of138；新增4時序全過，舊混搭像素仍依借用A影格的行為，改驗交接前後A退/B進，待第二輪完整驗收。人工看首輪截圖後將標籤可見文字縮成1起/1迄，aria保留完整特效/靜音名稱，避免統一14px字級時擠成兩行。
+- 最新任務特效時長/任意配對標籤：plans/2026-11-13-effect-timing.md。使用者明確選A10+B10維持20秒，交接前後分配，不採重疊17秒；因此轉場不借靜止首尾幀，A退出後B進入，各自影片/聲音不延後。單素材enter=B/exit=A。動畫ranges本地秒數，畫面/轉場ranges絕對秒數，[]表示不使用；取消舊半片長限制。本輪CI待驗，之前321/134不是本輪結果。Player暫時草稿只供popup，cleanup清除並還原秒數，切勿持久化或匯出草稿。退場wipe需和原viewport取交集，不能把已裁切格子的viewport鏡射到另一塊來源。TemplatePanel選新進出場須關舊motion，選舊motion須清animations，避免同時套兩套幾何。
+
+- 最新九點最終：[Actions 43463065085](https://github.com/peiyulin0520/VideoClip_2/actions/runs/43463065085)：版本 6819c42e27914328f4ba183d493842903333f7f7 的321單元、134 Chromium e2e全過，lint/格式/TypeScript/build/Pages/39字體檢查成功。artifact 14058125854，ZIP SHA-256 be6d93e48b635a6ff142f6c6d2c05a8344a57c23b9c2b91a463f582826baad58 已核對；166張成功畫面（template-controls新增7張）。PR #10由使用者自行Merge，Safari仍待真機。以下待CI皆過程，最後文件/截圖不改成功產品/測試。
+
+- 九點第三輪 10cd2a5 / Actions43461401694 已321單元/134瀏覽器全過；核心產品與混色幾何驗收成功。最終另補人工看到的頁籤遮擋/安全區重複，完整新輪仍需過後才標PR #10 ready。
+- 人工檢視第二輪大手機截圖：箭頭仍擋特效tab，再提高到工具列+頁籤上方；加入最底各可見tab/工具中心elementFromPoint驗收。safe-bottom由editor/toolbar/panel重複改為只在bottombar一次，以34px模擬值驗證[0,34,6]，避免PWA多餘底部空白。需完整CI新輪，前三輪未作最終證據。
+- 九點第二輪 50092e1 / Actions43459368644：321單元、133/134瀏覽器；原127回歸全過，新增情境只剩整組zoom測試錯將50%淡入要求純紅。依既有zoom含淡入定義，改驗藍底不動、正確新位置紅色優勢與混色差值；產品不再修改。第三輪完整CI待驗。
+- 整組zoom/spin/page-turn以SceneLayer.animationTransform同步變換整組座標與容器（含viewport mask），避免每一格各自縮放/轉動；其他動畫共用transitionPair，膠片外框只加整組一次。新增瀏覽器像素對照整組縮放位置。
+- 九點首輪 e16e7fc / Actions43456433286：321單元、120/134瀏覽器（新增7全過）。7個匯出測試舊getByLabel非exact也匹配新播放label，改控制label為匯出結果；相紙改方形，舊取樣點調整到實際新格內；最底回頂擋工具，升到最後工具列上方且不加空白；安全區底色加深過淺色對比；放大舞台同步量測並等實際resize。第二輪完整驗收待push。
+- 追加三點同任務：layout.size有獨立長寬，layoutDefaultSize長型1080×1920/相紙1080平方；groupFrame/cellViewport不直接伸成畫布。scene框架畫布依自身比例且紋理上限跟輸出，避免巨大自訂框爆記憶體。預覽540預設（preferences previewModeVersion2遷移），頂部quality sheet可調且重建保留秒數/播放；隱藏示意卡不渲染，副預覽只可見30fps。stage父容器量測等比fit，外圍斜紋/邊線/範圍label僅UI，不匯出。321單元已過，134瀏覽器待CI；Safari待真機。
+- 最新六點：PR #9已Merge，main6ac2f13。本次新PR待建。layout.caption/frameColor/captionColor/frameOpacity/animations可存，重套carryTemplateEdits保留；layoutArt快取含caption/color，opacity在scene frame層。singleAnimations對目標或整組在其frame局部座標共用transitionPair，B透明，其他層不動；每段動效不超過片長一半。每格來源只一軸，advanced折疊補色/延後/popup，色塊起迄數字可改。動態預覽明確Play/Pause/active；ProjectPreview複製shared compositor並控制player，Drawing底圖不混入儲存畫作。最底顯示回頂，visualViewport修正實際可見高度；字級390基準及較大手機上限+10%，窄手機不縮小44px觸控。317本機成功，132e2e待驗。見plans/2026-11-13-template-controls.md。
 - 最新時間軸小字最終：[Actions 43422783991](https://github.com/peiyulin0520/VideoClip_2/actions/runs/43422783991)：版本 fc9d5bb813573aeba69889efe37b1ee98e5786f3 的313單元、127 Chromium e2e全過；lint/格式/TypeScript/build/Pages/39字體檢查成功。artifact 14036880124，ZIP SHA-256 6c1ef4fe7a5b5f2dc4ff8b93335c0138ca2b3a7e3c82b8d16897e19bf15423bb 已核對；159張成功畫面，新增uniform-type/small-timeline-labels.png。時間軸11px/9px，其餘介面14px。最後文件/截圖不改驗收版本，以下待CI皆歷史；Safari待真機。
 
 - 最新使用者更正：只有.timeline圖層拖拉軸恢復小字11px，群組計數/原音9px；局部覆寫--ui-font-size，其他頁面/功能/頁籤/播放列仍14px。維持負字距/緊行高/44px觸控。既有uniform-type驗收實際收合與展開分類並留圖，完整CI待本次push。

@@ -330,6 +330,14 @@ docs/
 - 每次回報時誠實區分：✅ 已驗證（附截圖）／🟡 寫好但只在 Chromium 驗證／🔴 做不到。
 
 ## 7. 待真機驗證清單（Sonnet 無法在沙盒驗證，要請使用者在 iPhone 上試）
+
+- [ ] 單素材同頁精調：各iPhone直向/瀏覽器工具列與安全區下，左預覽/右側起或迄標記與44px時間軸/右側膠囊秒數同頁可見，320px仍維持左右；數字鍵盤開啟仍能捲動操作，82秒等長片精調定位正確；載入返回/同秒效果小按鈕好點。Chromium三尺寸驗收不能代替Safari鍵盤與安全區。
+
+- [ ] 新固定邊界/播放修正：iPhone的worker/main相容proxy（H264/HEVC/HDR長片）/進度與取消/快取、回0秒重播、捲頁與popup後聲畫、無自動播、AudioSession/爆音與分離audio decoder、膠囊原生選單；來源VideoClip對照，Chromium不能代替真機。
+
+- [ ] 特效固定單素材邊界/成對起迄：Safari在10秒影片中設定3秒B進/A退時，影片及聲音繼續；A/B總長保留、起迄標籤觸控、白線播放同步與暫停、局部復原/取消/重開、長片及匯出聲畫。
+- [ ] 追加三點：自訂版型寬高與影片比例獨立、預覽540低畫質/切換保留時間與播放、輸出框/無效範圍、真機多影片播放順暢度。
+- [ ] 最新六點：版型自訂文字/色彩/透明度與單一素材進出場、各預覽▶/⏸與active、每格進階設定、320–430px比例/visualViewport動態工具列與鍵盤、最底回頂。
 - [ ] 全頁可讀性：六主題首次備份/字體包與字體選單，負字距/緊行高在Safari的中文、英文、網址與原生選單可讀且不重疊。
 - [ ] 全介面14px（註解11px）與縮小文字框內距：Safari原生輸入聚焦/選單、320px播放時間兩行/時間軸標記及44px觸控。
 - [ ] 最新 10 點：Safari 分類優先展開/重開、14px 控制與原生選單/輸入聚焦、緊湊交接入口及拖曳修剪、紙紋筆觸效能與手繪單指拖移、偏移瞄準圈保留/擦除/描邊（指觸不擋目標）與輸出、版型右側選單在窄螢幕操作。
@@ -411,3 +419,9 @@ docs/
 
 
 2026-11-13 最新例外：圖層時間軸刻度/分類/標籤11px，計數/原音9px，其他操作介面維持14px。[Actions 43422783991](https://github.com/peiyulin0520/VideoClip_2/actions/runs/43422783991)：版本 fc9d5bb813573aeba69889efe37b1ee98e5786f3 的313單元、127 Chromium e2e全過；lint/格式/TypeScript/build/Pages/39字體檢查成功。artifact 14036880124，ZIP SHA-256 6c1ef4fe7a5b5f2dc4ff8b93335c0138ca2b3a7e3c82b8d16897e19bf15423bb 已核對；159張成功畫面，新增uniform-type/small-timeline-labels.png。Safari待真機。
+
+
+2026-11-13 新六點規格：見 [版型/單素材動畫/預覽控制](plans/2026-11-13-template-controls.md)，取代先前最底隱藏回頂與各格補時預設全展開。
+
+
+九點最終驗收：[Actions 43463065085](https://github.com/peiyulin0520/VideoClip_2/actions/runs/43463065085)：版本 6819c42e27914328f4ba183d493842903333f7f7 的321單元、134 Chromium e2e全過，lint/格式/TypeScript/build/Pages/39字體檢查成功。artifact 14058125854，ZIP SHA-256 be6d93e48b635a6ff142f6c6d2c05a8344a57c23b9c2b91a463f582826baad58 已核對；166張成功畫面（template-controls新增7張）。PR #10由使用者自行Merge；Safari待真機。

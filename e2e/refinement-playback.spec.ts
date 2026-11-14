@@ -125,15 +125,24 @@ test('交接圓底加號定位正確，已用特效在上方且亮框，單一�
   expect((await current(page)).transitions).toHaveLength(1);
   await page.getByRole('button', { name: '向左推移', exact: true }).tap();
   expect((await current(page)).transitions).toHaveLength(2);
-  const mixed = await exportFrame(page, 8, [
+  const mixed = await exportFrame(page, 8.15, [
     [0.25, 0.5],
     [0.75, 0.5],
   ]);
-  expect(mixed.samples[0]![1]).toBeGreaterThan(240);
+  expect(mixed.samples[0]![1]).toBeLessThan(15);
   expect(mixed.samples[0]![2]).toBeLessThan(15);
   expect(mixed.samples[1]![2]).toBeGreaterThan(100);
   expect(mixed.samples[1]![2]).toBeLessThan(150);
   expect(mixed.samples[1]![1]).toBeLessThan(15);
+  const outgoing = await exportFrame(page, 7.85, [
+    [0.25, 0.5],
+    [0.75, 0.5],
+  ]);
+  expect(outgoing.samples[0]![1]).toBeGreaterThan(100);
+  expect(outgoing.samples[0]![1]).toBeLessThan(150);
+  expect(outgoing.samples[0]![2]).toBeLessThan(15);
+  expect(outgoing.samples[1]![1]).toBeLessThan(15);
+  expect(outgoing.samples[1]![2]).toBeLessThan(15);
 
   await page.getByRole('button', { name: '閃光', exact: true }).tap();
   await page.getByRole('button', { name: '閃光', exact: true }).tap();

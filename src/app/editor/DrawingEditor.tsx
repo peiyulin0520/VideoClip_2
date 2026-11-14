@@ -1,3 +1,5 @@
+import { ProjectPreview } from './ProjectPreview';
+import { totalDuration } from '../../engine/timeline';
 import { paintPencil } from '../../engine/pencilBrush';
 import { useRef, useState, type PointerEvent } from 'react';
 import { useProjectStore } from '../../store/projectStore';
@@ -18,6 +20,7 @@ export function DrawingEditor({
   background: string;
 }) {
   const project = useProjectStore((s) => s.project)!;
+  const backdrop = useRef<HTMLCanvasElement>(null);
   const canvas = useRef<HTMLCanvasElement>(null),
     strokes = useRef<Stroke[]>([]),
     active = useRef<Stroke | null>(null);
@@ -79,6 +82,7 @@ export function DrawingEditor({
   };
   return (
     <Sheet open title="在影片上畫畫" onClose={onClose}>
+      <ProjectPreview start={0} duration={totalDuration(project)} label="畫畫預覽" targetCanvas={backdrop} />
       <div
         className="drawing-stage"
         style={{
@@ -87,6 +91,13 @@ export function DrawingEditor({
           backgroundImage: background ? `url(${background})` : undefined,
         }}
       >
+        <canvas
+          className="drawing-backdrop"
+          width={Math.round(w * Math.min(1, 540 / h))}
+          height={Math.min(540, h)}
+          ref={backdrop}
+          aria-hidden="true"
+        />
         <canvas
           width={w}
           height={h}

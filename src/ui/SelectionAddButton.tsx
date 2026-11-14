@@ -5,12 +5,14 @@ export function SelectionAddButton({
   cursor,
   duration,
   minimum,
+  span,
   onChange,
 }: {
   ranges: [number, number][];
   cursor: number;
   duration: number;
   minimum?: number;
+  span?: number;
   onChange: (value: [number, number][]) => void;
 }) {
   return (
@@ -18,7 +20,7 @@ export function SelectionAddButton({
       className="btn"
       onClick={() => {
         try {
-          onChange(addSourceSelection(ranges, cursor, duration, minimum));
+          onChange(addSourceSelection(ranges, cursor, duration, minimum, span));
         } catch (e) {
           toast((e as Error).message);
         }

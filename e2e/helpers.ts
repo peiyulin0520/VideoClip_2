@@ -199,6 +199,22 @@ export async function openTab(
   await tab.tap();
 }
 
+/** Await the same real loading gate a phone user sees before editing any controlled field. */
+export async function waitForPreviewReady(page: Page) {
+  await page.waitForFunction(
+    () => {
+      const hook = (window as unknown as { __videoclip?: { ready: () => boolean } }).__videoclip;
+      return (
+        !!hook?.ready() &&
+        !document.querySelector('.preview-loading-backdrop') &&
+        !document.querySelector<HTMLElement>('.editor')?.inert
+      );
+    },
+    undefined,
+    { timeout: 20000 },
+  );
+}
+
 /** 疊加分頁 →「加入影片或照片」→ 選檔案 */
 export async function addOverlays(page: Page, files: string[]) {
   await openTab(page, '影像');
@@ -214,6 +230,7 @@ export async function addOverlays(page: Page, files: string[]) {
       timeout: 20_000,
     })
     .toBe(before + files.length);
+  await waitForPreviewReady(page);
   if (await page.locator('#editor-timeline').isVisible()) await expandAllGroups(page);
 }
 

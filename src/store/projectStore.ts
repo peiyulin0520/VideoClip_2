@@ -139,3 +139,25 @@ export function setTrackItems(trackId: string, items: Item[], opts?: ApplyOpts) 
     if (tr) tr.items = items;
   }, opts);
 }
+
+/** Preview cache metadata is housekeeping, never a user undo step. */
+export function setAssetPreview(
+  id: string,
+  side: number,
+  metadata: NonNullable<import('../model/types').Asset['previewFiles']>[string],
+) {
+  const state = useProjectStore.getState();
+  if (!state.project) return;
+  const patch = (p: Project): Project => ({
+    ...p,
+    assets: p.assets.map((a) =>
+      a.id === id ? { ...a, previewFiles: { ...a.previewFiles, [String(side)]: metadata } } : a,
+    ),
+  });
+  useProjectStore.setState({
+    project: patch(state.project),
+    past: state.past.map(patch),
+    future: state.future.map(patch),
+    revision: state.revision + 1,
+  });
+}

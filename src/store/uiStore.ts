@@ -9,8 +9,22 @@ type UI = {
   toast: (text: string) => void;
   busy: string | null;
   setBusy: (text: string | null) => void;
+  previewLoad: {
+    progress: number;
+    message: string;
+    error?: string;
+    retry?: () => void;
+    canSkip?: boolean;
+  } | null;
   player: Player | null;
   liftedId: string | null;
+  effectsSingle: {
+    id: string;
+    edge: 'enter' | 'exit';
+    mode?: 'effect' | 'transition';
+    effectId?: string;
+    request: number;
+  } | null;
   effectsJoin: { fromId: string; toId: string; request: number } | null;
 };
 
@@ -23,9 +37,11 @@ export const useUI = create<UI>((set, get) => ({
   },
   busy: null,
   setBusy: (busy) => set({ busy }),
+  previewLoad: null,
   player: null,
   liftedId: null,
   effectsJoin: null,
+  effectsSingle: null,
 }));
 
 export const toast = (text: string) => useUI.getState().toast(text);

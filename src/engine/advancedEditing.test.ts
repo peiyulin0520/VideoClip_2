@@ -263,63 +263,62 @@ describe('linear keyframes', () => {
     const frame = groupFrame(tr, 160, 96, 1),
       slot = cellViewport(tr, tr.items[0] as VideoItem, 0, 1)!;
     expect(frame.cx).toBe(96);
-    expect(frame.w).toBe(120);
+    expect(frame.w).toBe(40.5);
+    expect(frame.h).toBe(72);
     expect(slot.w).toBeCloseTo(0.76 * 0.75);
     expect(tr.items.map((it) => it.transform)).toEqual(before);
   });
 });
 describe('actual A/B transitions and video effects', () => {
-  it('borrowing transition frames never reveals a deselected source interval', () => {
+  it('never borrows deselected or held edge frames from either side', () => {
     const p = project();
     p.transitions = [{ id: 'tr', preset: 'crossfade', fromId: 'a', toId: 'b', duration: 1 }];
     (p.tracks[0]!.items[0] as VideoItem).sourceRanges = [
       [0, 0.5],
       [3.9, 4],
     ];
-    expect(renderLayers(p, 3.75).map((l) => l.item.id)).toEqual(['b']);
-    expect(applyTransitions([scene('b')], p, 3.75, 160, 96)[0]!.opacity).toBe(0.25);
+    expect(renderLayers(p, 3.75)).toEqual([]);
     (p.tracks[0]!.items[1] as VideoItem).sourceRanges = [
       [0, 0.1],
       [1, 4],
     ];
-    expect(renderLayers(p, 4.25).map((l) => l.item.id)).toEqual(['a']);
-    expect(applyTransitions([scene('a')], p, 4.25, 160, 96)[0]!.opacity).toBe(0.25);
+    expect(renderLayers(p, 4.25)).toEqual([]);
     expect(audibleClips(p, 4.25)).toEqual([]);
   });
-
-  it('decodes both sides of the join and exposes only real adjacent pairs', () => {
+  it('keeps original timeline and native media clocks on each side of the cut', () => {
     const p = project();
     p.transitions = [{ id: 'tr', preset: 'crossfade', fromId: 'a', toId: 'b', duration: 1 }];
     expect(transitionPairs(p)).toHaveLength(1);
-    expect(renderLayers(p, 3.75).map((l) => l.item.id)).toEqual(['a', 'b']);
-    expect(renderLayers(p, 4.25).map((l) => l.item.id)).toEqual(['a', 'b']);
+    expect(renderLayers(p, 3.75).map((l) => l.item.id)).toEqual(['a']);
+    expect(renderLayers(p, 4.25).map((l) => l.item.id)).toEqual(['b']);
     expect(audibleClips(p, 3.75).map((l) => l.item.id)).toEqual(['a']);
     p.tracks[0]!.items[1]!.start = 5;
     expect(transitionPairs(p)).toEqual([]);
     expect(renderLayers(p, 3.75).map((l) => l.item.id)).toEqual(['a']);
   });
-  it('push transforms A and B in opposite on-screen halves while preserving their source', () => {
+  it('A exits left before the cut and B enters from right after it, without changing source', () => {
     const p = project();
     p.transitions = [{ id: 'tr', preset: 'push-left', fromId: 'a', toId: 'b', duration: 1 }];
-    const [a, b] = applyTransitions([scene('a'), scene('b')], p, 4, 160, 96);
-    expect(a!.box.cx).toBe(0);
-    expect(b!.box.cx).toBe(160);
-    expect(a!.box.w).toBe(160);
+    const a = applyTransitions([scene('a')], p, 3.75, 160, 96)[0]!;
+    const b = applyTransitions([scene('b')], p, 4.25, 160, 96)[0]!;
+    expect(a.box.cx).toBe(0);
+    expect(b.box.cx).toBe(160);
+    expect(a.box.w).toBe(160);
   });
-  it('wipe and grid reveal different portions of B instead of just tinting the cut', () => {
+  it('wipe and grid reveal portions of B while A has already ended', () => {
     const p = project();
     p.transitions = [{ id: 'tr', preset: 'wipe-right', fromId: 'a', toId: 'b', duration: 1 }];
-    expect(applyTransitions([scene('a'), scene('b')], p, 4, 160, 96)[1]!.viewport).toEqual({
+    expect(applyTransitions([scene('b')], p, 4.25, 160, 96)[0]!.viewport).toEqual({
       x: 0,
       y: 0,
       w: 80,
       h: 96,
     });
     p.transitions[0]!.preset = 'grid9';
-    const grid = applyTransitions([scene('a'), scene('b')], p, 4, 160, 96);
-    expect(grid).toHaveLength(11);
-    expect(grid[1]!.opacity).toBe(0);
-    expect(grid[2]!.viewport!.w).toBeCloseTo(160 / 6);
+    const grid = applyTransitions([scene('b')], p, 4.25, 160, 96);
+    expect(grid).toHaveLength(9);
+    expect(grid.every((l) => l.opacity === 1)).toBe(true);
+    expect(grid[0]!.viewport!.w).toBeCloseTo(160 / 6);
   });
   it('removing a transition leaves the original scene untouched', () => {
     const p = project(),

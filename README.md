@@ -4,9 +4,11 @@
 
 ## 目前版本
 
+最新 PR #10 追加可調特效時長與任意多組起迄，影片及聲音按原時間繼續。單素材進場B、退場A；兩支10秒保留總長20秒，轉場在交接前後分配。來源/音訊/模板/特效共用白線與成對標籤，可新增、移除、復原、預覽暫停。詳見[操作說明](docs/USAGE.md#特效時長與成對起迄)及[本輪規格](docs/plans/2026-11-13-effect-timing.md)。
+
 已具備多專案、多素材拼接、修剪/分割/變速、多軌疊加、拖移縮放旋轉、字卡排版/描邊/陰影、13 種裝飾、33 種圖形、字體下載/快取/本機匯入、首次使用精靈與 PWA。
 
-仍在規劃中：Fluent Emoji 內建貼圖、雲朵字與完整字卡模板、完整動畫/轉場目錄與調色、進階動態遮罩追蹤、專案備份/Google Drive、IG 音樂推薦。本次新增完整逐格影片與音訊混音、相容即時匯出；格式依瀏覽器編碼能力明示 MP4 或 WebM。先前匯出與第二輪回饋已發布；PR #4 已由使用者合併；本次 PR #5 驗收見下方，細節見 PROGRESS。Google Drive 選項目前只是規劃入口。
+仍在規劃中：Fluent Emoji 內建貼圖、雲朵字與完整字卡模板、完整動畫/轉場目錄與調色、進階動態遮罩追蹤、專案備份/Google Drive、IG 音樂推薦。本次新增完整逐格影片與音訊混音、相容即時匯出；格式依瀏覽器編碼能力明示 MP4 或 WebM。先前匯出與第二輪回饋已發布；PR #4 已由使用者合併；最新 PR #10 驗收見 PROGRESS，細節見 PROGRESS。Google Drive 選項目前只是規劃入口。
 
 原 Sites 的 Little Moments 是另一個版本；這個建立工作不修改原 Sites。兩套模型不同，目前沒有自動轉換專案或素材庫 ZIP，請保留舊資料與原始影片。
 
@@ -20,7 +22,7 @@ npm run check
 npm run e2e -- --trace off
 ```
 
-`check` 包含 lint、313 個單元測試、TypeScript、正式建置及 GitHub Pages 路徑/PWA/字體檔案檢查。127 個瀏覽器測試（含完整影片/音訊解碼、收藏、GIF、手動遮罩、Key 與主題）交由 GitHub Actions 的 Chromium 153 執行，CI 保存截圖 artifact；最新成功狀態見 PROGRESS.md。本次已更新 159 張 CI 畫面（docs/screenshots）中文可讀；iPhone Safari 仍待真機驗證。
+`check` 包含 lint、343 個單元測試、TypeScript、正式建置及 GitHub Pages 路徑/PWA/字體檔案檢查。145 個瀏覽器測試（含完整影片/音訊解碼、收藏、GIF、手動遮罩、Key 與主題）交由 GitHub Actions 的 Chromium 153 執行，CI 保存截圖 artifact；最新成功狀態見 PROGRESS.md。本次已更新 181 張 CI 畫面（docs/screenshots）中文可讀；iPhone Safari 仍待真機驗證。
 
 ## GitHub Pages
 
@@ -145,3 +147,22 @@ GIF 解碼器 gifuct-js 2.1.2 為 MIT，授權位於 public/licenses。輸出含
 
 
 時間軸小字最終：[Actions 43422783991](https://github.com/peiyulin0520/VideoClip_2/actions/runs/43422783991)：版本 fc9d5bb813573aeba69889efe37b1ee98e5786f3 的313單元、127 Chromium e2e全過；lint/格式/TypeScript/build/Pages/39字體檢查成功。 [時間軸畫面](docs/screenshots/uniform-type/small-timeline-labels.png)。
+
+
+## 可編輯獨立版型與清楚預覽（PR #10）
+
+版型文字可改或留空，底色/文字色/框架透明度及自由寬高可調；影片比例不拉扁版型。單一素材或整組版型可設25種進出場，兩段銜接與自訂名稱保留。每格進階設定收合重複內容，各動態預覽有播放/暫停圖示與狀態色。540低畫質預設、頂部可切，輸出邊框及框外斜紋區分影片範圍；最底仍可回頂，手機尺寸與可視高度自適應。
+
+[Actions 43463065085](https://github.com/peiyulin0520/VideoClip_2/actions/runs/43463065085)：版本 6819c42e27914328f4ba183d493842903333f7f7 的321單元、134 Chromium e2e全過，lint/格式/TypeScript/build/Pages/39字體檢查成功。 [驗收畫面](docs/screenshots/template-controls/)；使用者自行Merge PR #10才發布，Safari待真機。
+
+
+## 特效標記與播放穩定性（PR #10追加）
+
+依VideoClip的播放方式加入真正本機輕量預覽檔與快取，載入進度完成後才開放編輯，禁止無操作自動播放；減少重複seek/速率更新，分離聲音使用audio元素，音量平滑切換並限制混音峰值。原始檔與匯出畫質保留。
+
+單素材僅開頭B進場／結尾A退場，固定一端，只顯示迄或起，秒數與時長連動；兩片銜接仍維持原總長。時間軸代表字區分單素材與銜接，同秒效果可選擇。全頁填寫框及下拉統一淺棕無黑框膠囊。最新驗收見[進度](docs/PROGRESS.md)，Safari播放仍待真機。
+
+
+最新播放、長片縮圖及單素材左右精調驗收：[Actions 43555594900](https://github.com/peiyulin0520/VideoClip_2/actions/runs/43555594900)：驗收程式 `91a676fa8d463513617e7b575eb36487b13cddcf` 的343單元、145 Chromium e2e全過，另25項快速情境全過（完整測試子集）；lint/格式/TypeScript/build/Pages/PWA與39字體檢查成功。artifact `14098482215`，ZIP SHA-256 `8fbdbdfb5c89f3c1085b353db822cfc9235d5d2c2920ad99016cfcb71179fd8d` 已核對；181張成功截圖。最後提交僅文件/成功截圖，與驗收程式的產品、測試及設定一致。PR #10保持open未合併，由使用者自行Merge後發布；Safari待真機。 [320px左右配置](docs/screenshots/effect-timing/side-by-side-single-range-320.png) · [長片與操作畫面](docs/screenshots/anchored-playback/) · [操作說明](docs/USAGE.md#特效代表字及穩定預覽pr-10追加)。
+
+單素材特效popup採左右並排：左側預覽，右側完整片長時間軸及下方秒數欄位；手機直向窄畫面也保持左右，僅顯示「起／迄」，填秒數會同步定位預覽。載入返回與同秒效果選擇按鈕依文字縮寬，維持44px觸控高度。

@@ -1,3 +1,4 @@
+import { usePreferences } from '../../store/preferences';
 import { KeyframeControl } from '../editor/KeyframeControl';
 import { ensureFont } from '../../fonts/fontStore';
 import { ArrowUp, PanelBottom, ChevronLeft, Pause, Play, Redo2, Undo2, ZoomIn, ZoomOut } from 'lucide-react';
@@ -32,23 +33,48 @@ function EditorLoader({ projectId }: { projectId: string }) {
 
   useEffect(() => {
     let cancelled = false;
+    useUI.setState({ previewLoad: { progress: 0, message: '讀取專案資料' } });
     let autosave: ReturnType<typeof startAutosave> | null = null;
     (async () => {
       const p = await getProject(projectId);
       if (cancelled) return;
-      if (!p) return setStatus('missing');
-      const missing = await ensureUrls(p.id, p.assets);
+      if (!p) {
+        useUI.setState({ previewLoad: null });
+        return setStatus('missing');
+      }
+      useUI.setState({ previewLoad: { progress: 10, message: '讀取裝置中的素材' } });
+      const missing = await ensureUrls(p.id, p.assets, (done, total) => {
+        if (!cancelled)
+          useUI.setState({
+            previewLoad: {
+              progress: 10 + Math.round((60 * done) / Math.max(1, total)),
+              message: '讀取裝置中的素材',
+            },
+          });
+      });
       if (cancelled) return;
       for (const id of new Set(p.tracks.flatMap((tr) => tr.layout?.story?.fontIds ?? [])))
         if (id !== 'system') await ensureFont(id);
-      useUI.setState({ effectsJoin: null });
+      useUI.setState({ previewLoad: { progress: 80, message: '準備預覽畫面' } });
+      useUI.setState({ effectsJoin: null, effectsSingle: null });
       useProjectStore.getState().load(editableProject(p));
       autosave = startAutosave();
       setStatus('ready');
       if (missing.length) toast(`找不到素材檔：${missing.join('、')}`);
-    })();
+    })().catch((error) => {
+      if (!cancelled)
+        useUI.setState({
+          previewLoad: {
+            progress: 0,
+            message: '讀取專案失敗',
+            error: String(error),
+            retry: () => location.reload(),
+          },
+        });
+    });
     return () => {
       cancelled = true;
+      useUI.setState({ previewLoad: null });
       void autosave?.stop(); // 先同步抓目前內容存檔，再關閉
       useProjectStore.getState().close();
       releaseProjectUrls(projectId);
@@ -81,16 +107,19 @@ function EditorBody() {
   const canUndo = useProjectStore((s) => s.past.length > 0);
   const canRedo = useProjectStore((s) => s.future.length > 0);
   const player = useUI((s) => s.player);
+  const previewLoad = useUI((s) => s.previewLoad);
+  const [buffering, setBuffering] = useState(false);
   const fileInput = useRef<HTMLInputElement>(null);
   const [pps, setPps] = useState(60);
   const [time, setTime] = useState(0);
   const [playing, setPlaying] = useState(false);
   const [renaming, setRenaming] = useState(false);
+  const previewQuality = usePreferences((s) => s.preview);
+  const [qualityOpen, setQualityOpen] = useState(false);
   const [ratioOpen, setRatioOpen] = useState(false);
   const [exportOpen, setExportOpen] = useState(false);
   const [nameDraft, setNameDraft] = useState('');
   const [showTop, setShowTop] = useState(false);
-  const [atEnd, setAtEnd] = useState(false);
   const [timelineOpen, setTimelineOpen] = useState(() => {
     try {
       return sessionStorage.getItem(`lm2-timeline:${project.id}`) === '1';
@@ -100,12 +129,38 @@ function EditorBody() {
   });
   const editorRef = useRef<HTMLElement>(null);
   const total = totalDuration(project);
+  useEffect(() => {
+    const el = editorRef.current;
+    if (el) el.inert = !!previewLoad;
+  }, [previewLoad]);
+  useEffect(() => {
+    const updateViewport = () => {
+      const viewport = window.visualViewport;
+      const el = editorRef.current;
+      if (!el) return;
+      el.style.setProperty('--app-viewport-height', `${viewport?.height ?? window.innerHeight}px`);
+      el.style.setProperty(
+        '--visible-bottom-inset',
+        `${Math.max(0, window.innerHeight - (viewport?.height ?? window.innerHeight) - (viewport?.offsetTop ?? 0))}px`,
+      );
+    };
+    updateViewport();
+    window.addEventListener('resize', updateViewport);
+    window.visualViewport?.addEventListener('resize', updateViewport);
+    window.visualViewport?.addEventListener('scroll', updateViewport);
+    return () => {
+      window.removeEventListener('resize', updateViewport);
+      window.visualViewport?.removeEventListener('resize', updateViewport);
+      window.visualViewport?.removeEventListener('scroll', updateViewport);
+    };
+  }, []);
 
   useEffect(() => {
     if (!player) return;
     return player.subscribe((t, p) => {
       setTime(t);
       setPlaying(p);
+      setBuffering(player.isBuffering);
     });
   }, [player]);
 
@@ -182,12 +237,11 @@ function EditorBody() {
         const editor = editorRef.current!,
           preview = editor.querySelector('.stage-wrap'),
           header = editor.querySelector('.ed-top');
-        setAtEnd(editor.scrollHeight - editor.scrollTop - editor.clientHeight < 12);
         if (preview && header)
           setShowTop(preview.getBoundingClientRect().top < header.getBoundingClientRect().bottom - 2);
       }}
     >
-      {showTop && !atEnd && (
+      {showTop && (
         <button
           className="back-to-preview"
           aria-label="回到最上方預覽"
@@ -196,6 +250,29 @@ function EditorBody() {
           <ArrowUp size={24} />
         </button>
       )}
+      <Sheet open={qualityOpen} title="預覽畫質" onClose={() => setQualityOpen(false)}>
+        <p className="hint">只影響預覽；影片比例與匯出畫質不變。低畫質較省運算，適合多圖層播放。</p>
+        <div className="chips">
+          {[
+            [540, '低畫質・順暢'],
+            [720, '標準'],
+            [1080, '平衡'],
+            [1920, '精細'],
+          ].map(([value, label]) => (
+            <button
+              className={`chip${previewQuality === value ? ' active' : ''}`}
+              key={value}
+              aria-pressed={previewQuality === value}
+              onClick={() => {
+                usePreferences.getState().set({ preview: Number(value) });
+                setQualityOpen(false);
+              }}
+            >
+              {label}
+            </button>
+          ))}
+        </div>
+      </Sheet>
       <header className="ed-top">
         <Link className="icon-btn" to="/" aria-label="回首頁">
           <ChevronLeft />
@@ -212,6 +289,15 @@ function EditorBody() {
         </button>
         <button className="ratio-btn" aria-label="畫面比例" onClick={() => setRatioOpen(true)}>
           {project.aspect}
+        </button>
+        <button className="quality-button" aria-label="預覽畫質" onClick={() => setQualityOpen(true)}>
+          {previewQuality <= 540
+            ? '順暢'
+            : previewQuality <= 720
+              ? '標準'
+              : previewQuality <= 1080
+                ? '平衡'
+                : '精細'}
         </button>
         <button
           className="icon-btn"
@@ -246,10 +332,17 @@ function EditorBody() {
         </button>
       )}
 
+      {buffering && (
+        <p className="hint playback-buffering" role="status">
+          正在準備播放畫面…
+        </p>
+      )}
       <div className="playbar">
         <button
           className="icon-btn"
           aria-label={playing ? '暫停' : '播放'}
+          aria-pressed={playing}
+          data-playing={playing}
           onClick={() => {
             if (total <= 0) return toast('先匯入影片或照片');
             player?.toggle();
