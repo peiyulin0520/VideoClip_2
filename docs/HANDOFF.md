@@ -1,6 +1,12 @@
 # 交接手冊（HANDOFF）
 
 ## VideoClip_2 當前交接（優先於以下來源 repo 的歷史紀錄）
+- 最新本輪（待CI）：main7350773已含使用者合併PR10，新分支codex/source-timestamp-thumbnails。主軸每2秒真正timestamp cache，舊8張overview不再鋪主軸；載入時proxy後補建並自動保存。7新單元/3新e2e，預期350/148/30。需新PR與成功截圖，下面舊343/145非本輪證據。
+- 根因：前版只用8張overview與120個DOM格鋪滿，不等於每2秒取圖；probe還有缺格複製前格與partial fallback誤當全長的風險。新filmstrip version1/interval2/duration/frames(time,src)，frameCovers校驗decoded時間範圍，缺格null不冒充。native備援只load/seek且校驗呈現mediaTime，不呼叫play。
+- 主軸可見範圍分桶虛擬化，span絕對位置按來源2秒區間/trim/speed映射。既有全片DOM右端覆蓋測試改為真正可見區覆蓋，避免測試要求把全部格留DOM。來源完整cache仍每2秒一張，不截斷。
+- 參見plans/2026-11-14-timestamped-thumbnails.md；對真機Safari修復仍待使用者，不能說已消除所有Safari卡頓或缺圖。
+
+### 前輪成功（歷史）
 - 最終左右更正（2026-11-14）：[Actions 43555594900](https://github.com/peiyulin0520/VideoClip_2/actions/runs/43555594900)：驗收程式 `91a676fa8d463513617e7b575eb36487b13cddcf` 的343單元、145 Chromium e2e全過，另25項快速情境全過（完整測試子集）；lint/格式/TypeScript/build/Pages/PWA與39字體檢查成功。artifact `14098482215`，ZIP SHA-256 `8fbdbdfb5c89f3c1085b353db822cfc9235d5d2c2920ad99016cfcb71179fd8d` 已核對；181張成功截圖。最後提交僅文件/成功截圖，與驗收程式的產品、測試及設定一致。PR #10保持open未合併，由使用者自行Merge後發布；Safari待真機。
 - 使用者說的是前圖三單素材起迄popup的預覽與播放軸分別在左右兩側，不能只做上下同頁。EffectTimingEditor的effect-timing-workspace在single-effect-timing下用兩欄grid，左preview/播放/目前秒數，右effect-timing-controls包含說明/全段軸/膠囊秒數，320px也不折成上下。其他效果/多組及雙素材布局維持原樣。
 - SourceRanges tickCount預設5，單素材傳3且實際軸寬<180用2；首尾刻度文字收在軸內。單素材numberedMarkers=false，editableSides一邊時不加crowded列；保留44px觸控與軸高度。數字seek時片尾取duration-0.001防黑畫面，固定端/時長聯動、取消復原等不變。

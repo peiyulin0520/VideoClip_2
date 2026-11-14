@@ -4,6 +4,8 @@
 export type Aspect = '9:16' | '16:9' | '1:1' | '3:4' | '4:3';
 
 export type Asset = {
+  /** Main timeline frames at explicit source timestamps, independent of legacy overview thumbs. */
+  filmstrip?: { version: 1; interval: 2; duration: number; frames: { time: number; src: string | null }[] };
   previewFiles?: Record<
     string,
     { status: 'ready' | 'none'; mime?: string; width?: number; height?: number; version: 1 }

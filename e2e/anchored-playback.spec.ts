@@ -407,13 +407,21 @@ test('兩分鐘影片超過一分鐘後仍鋪滿取樣縮圖，放大時間軸�
   const coverage = async () => {
     const clip = clips(page).first();
     const sizes = await clip.evaluate((el) => {
+      const viewport = el.closest('[data-testid="timeline-scroll"]')!.getBoundingClientRect();
       const strip = el.querySelector('.tiles')!.getBoundingClientRect();
       const tiles = Array.from(el.querySelectorAll<HTMLElement>('.tiles span'));
-      const last = tiles.at(-1)!.getBoundingClientRect();
-      return { count: tiles.length, right: last.right, edge: strip.right, width: strip.width };
+      return {
+        count: tiles.length,
+        first: tiles[0]!.getBoundingClientRect().left,
+        right: tiles.at(-1)!.getBoundingClientRect().right,
+        visibleRight: Math.min(strip.right, viewport.right),
+        visibleLeft: Math.max(strip.left, viewport.left),
+        width: strip.width,
+      };
     });
     expect(sizes.count).toBeLessThanOrEqual(120);
-    expect(sizes.right).toBeGreaterThanOrEqual(sizes.edge - 0.5);
+    expect(sizes.first).toBeLessThanOrEqual(sizes.visibleLeft + 0.5);
+    expect(sizes.right).toBeGreaterThanOrEqual(sizes.visibleRight - 0.5);
     expect(sizes.width).toBeGreaterThan(7000);
     const rgb = await clip.evaluate(async (el) => {
       const viewport = el.closest('[data-testid="timeline-scroll"]')!.getBoundingClientRect();

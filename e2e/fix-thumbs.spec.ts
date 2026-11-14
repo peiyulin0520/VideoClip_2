@@ -1,3 +1,4 @@
+import type { Project } from '../src/model/types';
 import { expandAllGroups } from './helpers';
 import { expect, test } from '@playwright/test';
 import { clips, createProjectWith, fixture, project } from './helpers';
@@ -16,9 +17,7 @@ test('一般情況：匯入後時間軸有縮圖（不顯示檔名）', async ({
   await expect(page.getByTestId('clip-name')).toHaveCount(0);
 });
 
-test('模擬 iPhone：解碼器不能用、<video> 不觸發 loadeddata → 先顯示檔名，播放器拿到畫面後補上縮圖', async ({
-  page,
-}) => {
+test('模擬 iPhone：WebCodecs不可用時，原生影片依每2秒解碼縮圖，完整快取可重開', async ({ page }) => {
   await page.addInitScript(() => {
     // Mediabunny 沒有 WebCodecs 可用
     delete (window as unknown as { VideoDecoder?: unknown }).VideoDecoder;
@@ -51,6 +50,9 @@ test('模擬 iPhone：解碼器不能用、<video> 不觸發 loadeddata → 先�
     .poll(async () => (await thumbsOf(page)).assets[0]!.thumbs.length, { timeout: 20_000 })
     .toBeGreaterThan(0);
   await expect(page.getByTestId('clip-name')).toHaveCount(0);
+  const cached = ((await project(page)) as unknown as Project).assets[0]!.filmstrip!;
+  expect(cached.frames.map((f) => f.time)).toEqual([0, 2]);
+  expect(cached.frames.every((f) => !!f.src)).toBe(true);
   await expect(clips(page)).toHaveCount(1);
   await page.screenshot({ path: `${SHOT}/after-thumb-fallback.png` });
 

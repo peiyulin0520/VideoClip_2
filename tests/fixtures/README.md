@@ -27,3 +27,5 @@ font.save('tests/fixtures/ui-noto-sans-tc.ttf')
 2026-11-13：preview-large.webm為ffmpeg自製1920×1080紅底/白色4px細線（x1000）/24fps/2秒、440Hz聲音，VP9 lossless/Opus；測本機540/720真proxy、快取、原檔匯出細節，不含第三方影片。
 
 2026-11-14：timeline-long.webm為ffmpeg自製121秒160×284/2fps/VP8無音訊，0–60秒紅、60秒後藍；每20格keyframe。驗長片及放大時間軸的120格縮圖預算不會截斷後段，縮圖仍對應後半藍色，不需逐幀大量解碼。
+
+2026-11-14：timeline-seconds.webm為自製126秒160×90、1fps、每幀keyframe的VP8；每2秒背景RGB由(32+3i,40,224-3i)改變並標示秒數，用於驗證63個實際時間戳、長片後段/放大、原生解碼與舊快取修復，不用作流暢度測試。

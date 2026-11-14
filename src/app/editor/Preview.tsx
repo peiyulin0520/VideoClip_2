@@ -10,6 +10,8 @@ import {
   useState,
   type PointerEvent as RPointerEvent,
 } from 'react';
+import { hasFilmstrip } from '../../engine/filmstrip';
+import { prepareFilmstrips } from '../../engine/prepareFilmstrips';
 import { preparePreviews } from '../../engine/preparePreviews';
 import { previewUrlFor } from '../../engine/assetUrls';
 import { installDebugHook } from '../../engine/debug';
@@ -29,7 +31,12 @@ import { layoutMotion } from '../../engine/layouts';
 import { geoCtx } from '../../engine/scene';
 import { findItem, visibleLayers } from '../../engine/timeline';
 import { setTransform } from '../../store/actions';
-import { setAssetPreview, setAssetThumbs, useProjectStore } from '../../store/projectStore';
+import {
+  setAssetFilmstrip,
+  setAssetPreview,
+  setAssetThumbs,
+  useProjectStore,
+} from '../../store/projectStore';
 import { toast, useUI } from '../../store/uiStore';
 
 // v2：改成預設關閉（舊版 'vc-safe-zone' 預設開，會讓使用者誤以為粉紅區是畫面的一部分）
@@ -132,7 +139,7 @@ export function Preview({ projectId, width, height }: { projectId: string; width
         previewCap,
         abort.signal,
         (fraction, message) => {
-          const progress = 80 + Math.round(fraction * 15);
+          const progress = 80 + Math.floor(fraction * 10);
           if (!cancelled && useUI.getState().previewLoad?.progress !== progress)
             useUI.setState({ previewLoad: { progress, message } });
         },
@@ -142,6 +149,19 @@ export function Preview({ projectId, width, height }: { projectId: string; width
       );
       if (cancelled) return null;
       if (failed) toast('部分影片無法建立輕量預覽，會使用原檔；匯出仍保留原始畫質');
+      const missingThumbs = await prepareFilmstrips(
+        projectId,
+        useProjectStore.getState().project!.assets,
+        abort.signal,
+        (f, message) => {
+          if (!cancelled) useUI.setState({ previewLoad: { progress: 90 + Math.floor(f * 7), message } });
+        },
+        (id, strip) => {
+          if (!cancelled) setAssetFilmstrip(id, strip);
+        },
+      );
+      if (cancelled) return null;
+      if (missingThumbs) toast('部分時間點縮圖尚未就緒，會標示缺圖；重新開啟專案會再嘗試建立');
       return Player.create({
         host: poolRef.current!,
         canvas: canvasRef.current!,
@@ -172,9 +192,9 @@ export function Preview({ projectId, width, height }: { projectId: string; width
         };
         installDebugHook(player);
         await player.prepare(player.time, (progress) => {
-          if (!cancelled && useUI.getState().previewLoad?.progress !== 95 + Math.floor(progress * 0.05))
+          if (!cancelled && useUI.getState().previewLoad?.progress !== 97 + Math.floor(progress * 0.02))
             useUI.setState({
-              previewLoad: { progress: 95 + Math.floor(progress * 0.05), message: '準備預覽畫面' },
+              previewLoad: { progress: 97 + Math.floor(progress * 0.02), message: '準備預覽畫面' },
             });
         });
         if (cancelled) return;
@@ -210,7 +230,9 @@ export function Preview({ projectId, width, height }: { projectId: string; width
     if (!player || useUI.getState().previewLoad) return;
     const p = useProjectStore.getState().project;
     if (!p || p.id !== projectId) return;
-    const pending = p.assets.filter((a) => a.kind === 'video' && !a.previewFiles?.[String(previewCap)]);
+    const pending = p.assets.filter(
+      (a) => a.kind === 'video' && (!a.previewFiles?.[String(previewCap)] || !hasFilmstrip(a)),
+    );
     if (!pending.length) return;
     const abort = new AbortController();
     let cancelled = false;
@@ -223,7 +245,7 @@ export function Preview({ projectId, width, height }: { projectId: string; width
       abort.signal,
       (fraction, message) => {
         if (!cancelled)
-          useUI.setState({ previewLoad: { progress: 80 + Math.floor(fraction * 15), message } });
+          useUI.setState({ previewLoad: { progress: 80 + Math.floor(fraction * 10), message } });
       },
       (id, metadata) => {
         if (!cancelled) setAssetPreview(id, previewCap, metadata);
@@ -232,10 +254,23 @@ export function Preview({ projectId, width, height }: { projectId: string; width
       .then(async (failed) => {
         if (cancelled) return;
         if (failed) toast('部分影片無法建立輕量預覽，會使用原檔；匯出仍保留原始畫質');
+        const missingThumbs = await prepareFilmstrips(
+          projectId,
+          useProjectStore.getState().project!.assets,
+          abort.signal,
+          (f, message) => {
+            if (!cancelled) useUI.setState({ previewLoad: { progress: 90 + Math.floor(f * 7), message } });
+          },
+          (id, strip) => {
+            if (!cancelled) setAssetFilmstrip(id, strip);
+          },
+        );
+        if (cancelled) return;
+        if (missingThumbs) toast('部分時間點縮圖尚未就緒，會標示缺圖；重新開啟專案會再嘗試建立');
         await player.prepare(player.time, (progress) => {
           if (!cancelled)
             useUI.setState({
-              previewLoad: { progress: 95 + Math.floor(progress * 0.05), message: '準備預覽畫面' },
+              previewLoad: { progress: 97 + Math.floor(progress * 0.02), message: '準備預覽畫面' },
             });
         });
         if (!cancelled) useUI.setState({ previewLoad: null });

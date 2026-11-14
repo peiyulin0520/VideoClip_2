@@ -161,3 +161,32 @@ export function setAssetPreview(
     revision: state.revision + 1,
   });
 }
+
+/** Timestamped timeline cache also patches undo snapshots, without creating an edit. */
+export function setAssetFilmstrip(
+  assetId: string,
+  filmstrip: NonNullable<import('../model/types').Asset['filmstrip']>,
+) {
+  const st = useProjectStore.getState();
+  if (!st.project) return;
+  const count = Math.min(8, filmstrip.frames.length);
+  const overview = Array.from(
+    { length: count },
+    (_, i) =>
+      filmstrip.frames[
+        Math.min(filmstrip.frames.length - 1, Math.floor(((i + 0.5) / count) * filmstrip.frames.length))
+      ]!.src,
+  ).filter((src): src is string => !!src);
+  const patch = (p: Project): Project => ({
+    ...p,
+    assets: p.assets.map((a) =>
+      a.id === assetId ? { ...a, filmstrip, ...(overview.length === count ? { thumbs: overview } : {}) } : a,
+    ),
+  });
+  useProjectStore.setState({
+    project: patch(st.project),
+    past: st.past.map(patch),
+    future: st.future.map(patch),
+    revision: st.revision + 1,
+  });
+}
