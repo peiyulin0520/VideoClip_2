@@ -354,8 +354,8 @@ export class Player {
     if (
       el.readyState >= 1 &&
       !el.seeking &&
-      Math.abs(delta) > (active && !this.requestedSeek ? DRIFT : 0.02) &&
-      (!active || this.requestedSeek || !last || now - last.at > 1000)
+      Math.abs(delta) > (active && !el.paused && !this.requestedSeek ? DRIFT : 0.02) &&
+      (!active || el.paused || this.requestedSeek || !last || now - last.at > 1000)
     ) {
       this.lastSeeks.set(el, { target: s, at: now });
       this.bus.deferSeek(el, () => {

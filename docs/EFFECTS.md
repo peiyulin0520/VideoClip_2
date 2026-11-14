@@ -181,7 +181,7 @@ type BrushStroke = {
 
 ## 2026-11-14 音訊與特效預覽連續性
 
-真正音訊區間（片頭片尾、來源空隙、留聲範圍）用 AudioContext 預先排 12ms 淡入淡出；原生 pause/seek 等淡出完成再做，避免繞過增益包絡。已接管 WebAudio 的元素不以 native muted 切音，有聲素材不反覆微調播放速率。停止與跳轉回呼須驗證目前意圖和素材，跳回同一留聲區也須重排包絡。混音保留餘裕與削峰保護；音量與留聲範圍仍由使用者設定。
+真正音訊區間（片頭片尾、來源空隙、留聲範圍）用 AudioContext 預先排 12ms 淡入淡出；原生 pause/seek 等音訊時鐘確認淡出完成再做，避免繞過增益包絡。每次重排先 cancelScheduledValues 並 setValueAtTime 明確錨定目前包絡，不在同一 audio quantum 重複 cancelAndHold 而丟失保持事件；同一次淡出不重排。已接管 WebAudio 的元素不以 native muted 切音，有聲素材不反覆微調播放速率。停止與跳轉回呼須驗證目前意圖和素材，跳回同一留聲區也須重排包絡。混音保留餘裕與削峰保護；音量與留聲範圍仍由使用者設定。
 
 逐格匯出只在真正剪輯邊界漸變，不能在每個解碼 buffer 或輸出 chunk 淡出。每個 GainNode 的 intrinsic 初值也須等於起始包絡值，避免 source.start 與 AudioParam 對小數樣本取整不同，漏出預設 gain=1；200% 音量測試曾在 2.730666 秒抓到這個單樣本突波。匯出混音後使用連續 soft knee 限幅。
 

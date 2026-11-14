@@ -3,6 +3,8 @@
 規則：每完成一個有意義的步驟，就在同一個 commit 裡 **覆寫「交接快照」** 並 **在「日誌」最上面新增一筆**（規則全文見 `AGENTS.md`「紀錄規則」，背景與架構見 `docs/HANDOFF.md`）。
 
 ## 交接快照（VideoClip_2 最新狀態）
+- 另由音訊時序看到留聲第二段恢復時舊media停在前段末尾，1秒seek退避可能先播到已靜音來源；paused重新進段改用20ms精準對齊且不受running drift退避，對齊後才淡入。加入本輪同時驗證。
+- 664e50c/43580593881新3項2/3：即時0.742突波在ramp0後6ms，native pause/seek在46ms後，故不是原生過早停止；同一audio quantum重複cancelAndHold丟失hold並露出intrinsic0。改cancelScheduledValues+setValueAtTime模型當前值明確錨定，且pause/seek共用既有淡出不重排；新增同量子回歸至359單元，保持live maxJump<0.08，待新CI。
 - 5ce7bab/43579799783：離線200%突波已0.399→0.00580、峰值≤1，但Worklet即時量測仍0.742，未通過，繼續修。pause/seek原生動作需等AudioContext實際淡出，不可只等16ms wall timer；加入audio clock守衛/原生操作時序診斷，舊暫停檢查02a822c改等待短淡出。待新CI。
 - 診斷輪0fcfc8e/43579445961快速31/33：突波在2.730666秒單樣本跌至0.600、鄰近為0.9995，對應分段預設gain1漏入2倍增益；5ce7bab已初始化包絡初值。另舊暫停斷言需等16ms原生停止（實際音量12ms淡出），改輪詢至停止而保留初始無自動播即時檢查，待新CI。
 - 修正Offline GainNode初值：source.start與AudioParam事件在非整數樣本邊界可能不同取整，不能讓預設gain=1漏入200%或淡入第一樣本；設intrinsic gain為同一包絡初值。0fcfc8e診斷輪仍在跑，保留嚴格量測，待結果。

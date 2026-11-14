@@ -134,7 +134,7 @@ it('schedules an edit boundary in the audio clock once and keeps zero-gain sourc
   bus.set(v, 0);
   bus.flush();
   expect(v.muted).toBe(false);
-  expect(gain.gain.cancelAndHoldAtTime).toHaveBeenCalled();
+  expect(gain.gain.cancelScheduledValues).toHaveBeenCalled();
   bus.destroy();
 });
 it('fades before pause and seek, coalesces scrubbing, and cancels a stale pause when resumed', () => {
@@ -217,5 +217,26 @@ it('seeking back inside the same window after its scheduled fade-out re-arms aud
   bus.set(v, 1, { start: 0, end: 2 }, 0);
   bus.flush();
   expect(gain.gain.linearRampToValueAtTime).toHaveBeenLastCalledWith(0, 6);
+  bus.destroy();
+});
+
+it('anchors repeated pause/seek in one audio quantum without dropping or restarting the fade', () => {
+  vi.useFakeTimers();
+  const { ctx, gain } = context();
+  const v = document.createElement('video');
+  vi.spyOn(v, 'paused', 'get').mockReturnValue(false);
+  vi.spyOn(v, 'pause').mockImplementation(() => {});
+  const bus = new AudioBus([v], ctx as unknown as AudioContext);
+  bus.set(v, 2, { start: 0, end: 3 }, 0);
+  bus.flush();
+  ctx.currentTime = 1.5;
+  v.dataset.previewIntent = 'pause';
+  gain.gain.linearRampToValueAtTime.mockClear();
+  bus.pause(v);
+  bus.deferSeek(v, () => {});
+  expect(gain.gain.setValueAtTime).toHaveBeenLastCalledWith(2, 1.5);
+  expect(gain.gain.linearRampToValueAtTime).toHaveBeenCalledTimes(1);
+  expect(gain.gain.linearRampToValueAtTime).toHaveBeenLastCalledWith(0, 1.512);
+  expect(gain.gain.cancelAndHoldAtTime).not.toHaveBeenCalled();
   bus.destroy();
 });

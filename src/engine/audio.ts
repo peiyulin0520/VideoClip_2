@@ -121,11 +121,10 @@ export class AudioBus {
     const now = this.ctx!.currentTime,
       param = node.gain.gain,
       current = this.value(node, now);
-    if (param.cancelAndHoldAtTime) param.cancelAndHoldAtTime(now);
-    else {
-      param.cancelScheduledValues(now);
-      param.setValueAtTime(current, now);
-    }
+    // Explicitly anchor the modeled current level. Repeated cancelAndHoldAtTime
+    // in one audio quantum can drop its same-time hold event and expose intrinsic 0.
+    param.cancelScheduledValues(now);
+    param.setValueAtTime(current, now);
     const fade = end === undefined ? AUDIO_FADE : Math.max(0, Math.min(AUDIO_FADE, (end - now) / 2));
     param.linearRampToValueAtTime(target, now + fade);
     if (end !== undefined && target > 0) {
@@ -154,7 +153,7 @@ export class AudioBus {
     const node = this.nodes.get(el);
     const audible = node && this.ctx && !el.paused && this.value(node, this.ctx.currentTime) > 0.000001;
     if (node && this.ctx) {
-      this.ramp(node, 0);
+      if (node.target !== 0 || node.envelope.end !== undefined) this.ramp(node, 0);
       node.windowKey = undefined;
     }
     if (!audible) {
@@ -190,7 +189,7 @@ export class AudioBus {
     const audible = node && this.ctx && !el.paused && this.value(node, this.ctx.currentTime) > 0.000001;
     // A silent seek must invalidate an expired fade-out too, or seeking back stays silent.
     if (node && this.ctx) {
-      this.ramp(node, 0);
+      if (node.target !== 0 || node.envelope.end !== undefined) this.ramp(node, 0);
       node.windowKey = undefined;
     }
     if (!audible) {
