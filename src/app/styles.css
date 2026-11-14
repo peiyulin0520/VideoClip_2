@@ -3538,3 +3538,66 @@ html {
 :root[data-theme] body .font-select svg {
   color: #79533e;
 }
+
+.tone-controls {
+  border: 0;
+  padding: 0;
+  margin: 0;
+  min-width: 0;
+}
+.tone-heading {
+  display: flex;
+  justify-content: space-between;
+  gap: 6px;
+  margin: 6px 0;
+}
+.tone-presets {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 6px;
+}
+.tone-preset {
+  min-height: 44px;
+  min-width: 0;
+  padding: 4px;
+  background: var(--control, var(--panel));
+  color: var(--fg);
+  border: 2px solid transparent;
+  border-radius: 10px;
+  display: grid;
+  gap: 3px;
+}
+.tone-preset svg {
+  width: 100%;
+  height: auto;
+  max-height: 48px;
+  border-radius: 6px;
+}
+.tone-preset.active {
+  border-color: var(--accent);
+  box-shadow: inset 0 -2px var(--accent);
+}
+.tone-controls:disabled {
+  opacity: 0.55;
+}
+.tone-record {
+  background: var(--accent);
+  color: var(--accent-ink);
+}
+.tone-record.active {
+  box-shadow: inset 0 0 0 2px currentColor;
+}
+.tone-panel .slider-label {
+  flex-basis: 60px;
+}
+.tone-panel .slider-val {
+  min-width: 64px;
+}
+.tone-actions {
+  margin-top: 8px;
+}
+@media (max-width: 350px) {
+  .tone-presets {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}

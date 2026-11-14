@@ -3,13 +3,10 @@
 規則：每完成一個有意義的步驟，就在同一個 commit 裡 **覆寫「交接快照」** 並 **在「日誌」最上面新增一筆**（規則全文見 `AGENTS.md`「紀錄規則」，背景與架構見 `docs/HANDOFF.md`）。
 
 ## 交接快照（VideoClip_2 最新狀態）
-- codex/source-timestamp-thumbnails / PR #11 open未合併，由使用者自行Merge後才發布，不開auto-merge、不推main。
-- 最終驗收（2026-11-14）：[Actions 43581659661](https://github.com/peiyulin0520/VideoClip_2/actions/runs/43581659661)；驗收程式 `cdc6195a7917b0acadce7a83c656e6a212379d51`，359單元、151 Chromium e2e全過，另3項音訊/特效＋30項快速回歸全過（完整151的子集）。lint/格式/TypeScript/build/Pages/PWA及39字體檢查成功。最後提交僅文件/量測/成功截圖，與驗收程式的產品、測試及設定一致。
-- artifact `14109275799`（browser-checks-43581659661，32956407 bytes），ZIP SHA-256 `34a8670383bb9e534a557544ba69a50a28cb1b2ce042b454925bc840885ef9e3` 已核對；187張成功截圖，無失敗context。新audio-effects三圖已人工檢視：合成色塊影片／片尾頁面，不能當聲音或真機FPS的視覺證據；實際聲音以波形量測為準。
-- 完整CI量測：100%離線peak0.79999/maxJump0.003982；200%離線peak0.9999998/maxJump0.005799（原診斷0.399）；即時peak0.76850/maxJump0.004122（原診斷0.742），168960個取樣。原始JSON/對照圖見docs/validation；這是本機合成測試素材，不是使用者影片、音量百分比或Safari硬體驗收。
-- 音訊：真實邊界12ms排程；重排明確setValue錨定，pause/seek共用既有淡出且等音訊時鐘到零；play確認後24ms靜音保持再12ms淡入（短區間自動縮短）。原生muted/volume統一bus.flush；有聲素材不nudge，paused重新進段精準seek。離線GainNode初值等包絡，真正邊界fade及softLimit，不淡每個chunk。
-- 特效：同來源/crop/mask/尺寸FrameResource共享與refcount、frameStamp去重、固定濾鏡/粒子canvas重用；≤720預覽輕量blur，高清預覽/匯出完整品質。18重影1buffer、上傳≤呈現幀+6、播放期無新配置/反覆seek、移除釋放及柔焦顆粒捲頁/popup續播均通過。
-- 每2秒來源縮圖、舊cache修復、左右popup等前輪回歸保留；目前無待修程式。規格docs/plans/2026-11-14-audio-effect-continuity.md；Safari喇叭/耳機/長片真實FPS仍待PLAN §7，不能以Chromium冒充。
+- 新任務（2026-11-14）：獨立「色調」頁籤＋亮度／飽和度／曝光／高光／對比／黑點／鮮艷度等10調整、13預設；兩個菱形定格的色調平滑漸變，不能拖累播放。
+- 當前分支codex/source-timestamp-thumbnails，PR11先前仍open，基線e76d133/cdc6195的359/151成功；本輪check全過（369單元／型別／建置／Pages）；156新完整／5+3+30快速待CI。不能拿前輪音訊結果當本輪色調驗收。
+- 已寫：ColorAdjustment新欄位選填相容舊專案，所有tone數值插值／trim／group；GradeFilter單一GPU pass、uniform重用、不額外解碼或讀像素；預設靜態SVG／調整同字級。未有定格改整段，有定格改當前秒數並可局部重設。
+- 計畫docs/plans/2026-11-14-tone-grading.md。需成功CI／截圖／資源JSON後交付；PR由使用者Merge，不代合併或開auto-merge；Safari真機聲畫／色調效能仍待PLAN §7。
 
 ## 日誌格式（新增一筆時照這個）
 ```
@@ -23,6 +20,7 @@
 ```
 
 ## 使用者已確認的偏好
+- 2026-11-14最新：調色獨立功能頁籤文字「色調」，不放剪輯；不能影響流暢度；從第一菱形定格到第二菱形定格，畫面色調須逐步變化。需要基本亮度／飽和／曝光／高光／對比／黑點／鮮艷度與可一鍵套用黑白、復古、清新、冷、暖、鮮豔、電影等組合。
 - 2026-11-14追加並要求繼續：目前聲音音訊有些微爆音；套特效可能卡/跳幀，需先確認並解決。不要只建議使用者再降畫質，保留可剪輯聲音與匯出品質。
 - 2026-11-14最新實機：主播放軸每2秒應有對應來源畫面，全片要能看，不能整排首幀或1分鐘後留白；popup選段畫面已正確，需修主時間軸及舊專案cache，不是只鋪滿。
 - 2026-11-14更正：不是上下同頁，特別是前圖三的特效起迄popup，預覽畫面與播放軸必須在左右兩側。實作左預覽、右時間軸，下方右側膠囊精調；不能因窄手機退回上下。
@@ -92,6 +90,8 @@
 - 2026-11-11 找到新字體來源 max32002/pop-gothic（大波浪圓體，含注音）→ 已加入手寫可愛包。問「能不能直接下載到我的 files 下載資料夾」→ 答：網頁在 iPhone 不能自動寫進「檔案」App 資料夾；官方字體存在瀏覽器裡，自己的字體用「匯入字體檔」從檔案 App 選
 
 ## 日誌（最新在最上面）
+- 2026-11-14 色調與定格漸變實作待CI：獨立頁籤、10參數／13組合、舊定格中性預設與數值插值，單一GradeFilter GPU pass及資源計數；新10單元／5e2e含像素、alpha、保存、影片匯出、播放資源及窄手機，六主題加入色調。先前359/151基線全綠；本輪369單元／型別／建置／Pages check已過，需Actions瀏覽器驗收，未交付。規格plans/2026-11-14-tone-grading.md。
+
 - 2026-11-14 音訊突波與特效效能完成（PR #11，驗收source cdc6195）
   - 做了什麼：修正GainNode分段預設音量單樣本漏入、同量子重排淡出與native解碼晚到；音訊時鐘排程/保留區恢復精準對齊、匯出真邊界fade與過峰保護。GPU同來源多sprite共用一次copy/upload，固定濾鏡與粒子canvas重用、預覽blur減負擔，HD/匯出不降。
   - 驗證：✅ 359單元、151 Chromium、3+30快速全部成功；Actions43581659661、artifact14109275799、187圖與波形JSON核對。離線200% maxJump0.005799、即時0.004122。新3圖已人工看；聲音證據是Waveform，不以靜態截圖代替。測試素材為合成，Safari硬體聲音/FPS仍待真機。

@@ -45,7 +45,7 @@ for (const theme of ['dark', 'mono', 'light', 'fresh', 'warm', 'beige']) {
     await assertUiContrast(page, '.page', theme + ' missing project');
     await createProjectWith(page, ['tone-video.webm']);
     await clips(page).first().tap();
-    for (const tab of ['剪輯', '影像', '圖層', '版型', '素材', '音訊', '特效'] as const) {
+    for (const tab of ['剪輯', '影像', '圖層', '版型', '素材', '音訊', '特效', '色調'] as const) {
       await openTab(page, tab);
       await assertUiContrast(page, '.editor', theme + ' editor ' + tab);
     }

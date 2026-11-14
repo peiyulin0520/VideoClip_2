@@ -44,6 +44,8 @@
 
 17. **音訊/特效連續性**：WebAudio已接管的元素不可用native muted/立即pause破壞漸變；真實剪接邊界預先排AudioContext淡入淡出，pause/seek待短淡出後動作且防舊回呼。音訊速率維持使用者設定，剩餘時間對齊實際media time；匯出只淡真正邊界，不淡每個decoded buffer/chunk；GainNode intrinsic初值與包絡一致，防小數樣本邊界漏出預設1倍音量。RGB/故障/多格同來源內容共用一次上傳、refcount釋放；不重建固定濾鏡/粒子canvas。流暢/標準預覽可降低blur負擔，高清及匯出保留完整品質。
 
+18. **色調與定格**：色調是獨立頁籤，不放剪輯；曝光／高光／對比／黑點／鮮艷度等須與既有菱形一起平滑插值，不以preset名稱跳切。舊欄位缺省中性；局部重設不動transform或其他定格。GPU單pass／uniform重用，不逐幀建濾鏡／貼圖／預覽canvas或讀像素；預覽及匯出用同一效果，不能為調色重建主player。新UI沿用緊湊字級、主題對比、44px。
+
 ## 紀錄規則（每次都做）
 **每完成一個有意義的步驟（不是只有每個 Phase 結束），在同一個 commit 裡更新：**
 - `docs/PROGRESS.md`

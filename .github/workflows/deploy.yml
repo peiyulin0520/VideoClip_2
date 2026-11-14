@@ -75,6 +75,9 @@ jobs:
           cache: npm
       - run: npm ci
       - run: npx playwright install chromium --only-shell
+      - name: Tone grading and diamond interpolation tests
+        timeout-minutes: 5
+        run: npm run e2e -- e2e/tone-grading.spec.ts --trace off --workers=1
       - name: Audio waveform and effect resource tests
         timeout-minutes: 3
         run: npm run e2e -- e2e/audio-effects-stability.spec.ts --trace off --workers=1
@@ -85,7 +88,9 @@ jobs:
         if: always()
         with:
           name: preview-smoke-${{ github.run_id }}
-          path: test-results/
+          path: |
+            test-results/
+            docs/screenshots/tone/
           retention-days: 7
 
   deploy:

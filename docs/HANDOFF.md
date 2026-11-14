@@ -1,5 +1,12 @@
 # 交接手冊（HANDOFF）
 
+## 色調本輪（優先於下方音訊成功歷史）
+- 規格plans/2026-11-14-tone-grading.md；新獨立色調頁，不能放剪輯。10參數13預設；菱形共享全部數值插值，未定格全片，有定格當前點，不動其他定格／transform。舊Keyframe.values新欄位缺省中性，animatedItem/trim/group都要保留全部色調。
+- GradeFilter單pass、uniform typed array原地更新，GlProgram快取；中性skip、無CPU逐幀getImageData、無新preview canvas／decoder，原本FrameResource共享不變。舊飽和先於色溫保持相容，alpha除後復乘。mediaStats colorAllocations/colorUpdates/colorPasses驗重用；預設SVG靜態無每幀渲染。
+- 本機369單元／型別／建置／Pages check已通過（NodeList用Array.from）；5新e2e預期156，CI快速先色調5再音訊3及播放30。先拿成功CI新圖／JSON，勿以前輪359/151作色調證據。PR11原仍open，交付前確認狀態再更新或新PR，不代Merge。
+- 手動有定格修改先pause避免移動白線寫一串；無定格整段調整可在播放時更新。Preset寫展開數值、不存離散名稱以避免中途跳風格；只清目前色調，不能整個keyframes移除或影響位置。
+
+### 前輪音訊／縮圖成功（歷史）
 ## VideoClip_2 當前交接（優先於以下來源 repo 的歷史紀錄）
 - 最終驗收（2026-11-14）：[Actions 43581659661](https://github.com/peiyulin0520/VideoClip_2/actions/runs/43581659661)；驗收程式 `cdc6195a7917b0acadce7a83c656e6a212379d51`，359單元、151 Chromium e2e全過，另3項音訊/特效＋30項快速回歸全過（完整151的子集）。lint/格式/TypeScript/build/Pages/PWA及39字體檢查成功。最後提交僅文件/量測/成功截圖，與驗收程式的產品、測試及設定一致。
 - artifact `14109275799`（browser-checks-43581659661，32956407 bytes），ZIP SHA-256 `34a8670383bb9e534a557544ba69a50a28cb1b2ce042b454925bc840885ef9e3` 已核對；187張成功截圖，無失敗context。新audio-effects三圖已人工檢視：合成色塊影片／片尾頁面，不能當聲音或真機FPS的視覺證據；實際聲音以波形量測為準。

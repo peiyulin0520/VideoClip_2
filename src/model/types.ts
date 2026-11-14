@@ -33,7 +33,21 @@ export type Outline = { color: string; width: number }; // width：以 1080 寬�
 /** 裁切：各邊切掉的比例 0–0.9 */
 export type Crop = { l: number; t: number; r: number; b: number };
 
-export type ColorAdjustment = { brightness: number; saturation: number; temperature: number; tint: string };
+export type ColorAdjustment = {
+  brightness: number;
+  saturation: number;
+  temperature: number;
+  tint: string;
+  /** Optional for projects/keyframes saved before tone grading. Neutral defaults on read. */
+  exposure?: number;
+  contrast?: number;
+  highlights?: number;
+  shadows?: number;
+  blacks?: number;
+  vibrance?: number;
+  fade?: number;
+};
+export type ResolvedAnimatedValues = Transform & Required<ColorAdjustment>;
 export type AnimatedValues = Transform & ColorAdjustment;
 export type Keyframe = { time: number; values: AnimatedValues };
 export type TransitionPreset =

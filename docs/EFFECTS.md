@@ -186,3 +186,9 @@ type BrushStroke = {
 逐格匯出只在真正剪輯邊界漸變，不能在每個解碼 buffer 或輸出 chunk 淡出。每個 GainNode 的 intrinsic 初值也須等於起始包絡值，避免 source.start 與 AudioParam 對小數樣本取整不同，漏出預設 gain=1；200% 音量測試曾在 2.730666 秒抓到這個單樣本突波。匯出混音後使用連續 soft knee 限幅。
 
 Compositor 的同來源/crop/mask/尺寸共享 FrameResource，RGB 重影與故障切片共用影格貼圖與上傳，但各 sprite 的位置、色調、濾鏡和遮罩獨立；refcount 歸零才釋放。依真正呈現 frameStamp 更新，固定濾鏡與粒子 canvas 重用。最高邊長≤720的預覽降低柔焦運算量；高清預覽、逐格與即時匯出保留完整柔焦品質。Chromium 資源計數及波形不等於 iPhone 真實 FPS／硬體聲音驗收，見 PLAN §7。
+
+
+## 2026-11-14 色調本輪實作（優先於§5遠期規劃）
+獨立頁籤「色調」，10參數（亮度、飽和度、曝光EV、高光、對比、黑點、鮮艷度、陰影、色溫、淡化）與13參數組合預設。舊brightness/saturation/temperature/tint保留，新增欄位可缺省中性；所有參數與既有菱形一起數值插值，Preset本身不是跳切屬性。逐格／即時匯出、預覽共享同一GradeFilter；中性跳過，非中性一個GPU pass／uniform更新，不逐幀建立貼圖或示意圖預覽。alpha不變。
+
+未有定格改整段，有定格改當前秒數；還原只重設目前色調，不動transform或其他定格。版型沿用整組定格與色調。10新單元與5新瀏覽器／資源計數驗證待成功CI，Safari待真機。詳細plans/2026-11-14-tone-grading.md。§5中的HSL／LUT／skinProtect／調整圖層等仍為遠期，不能當本輪已完成。

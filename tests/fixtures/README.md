@@ -31,3 +31,7 @@ font.save('tests/fixtures/ui-noto-sans-tc.ttf')
 2026-11-14：timeline-seconds.webm為自製126秒160×90、1fps、每幀keyframe的VP8；每2秒背景RGB由(32+3i,40,224-3i)改變並標示秒數，用於驗證63個實際時間戳、長片後段/放大、原生解碼與舊快取修復，不用作流暢度測試。
 
 2026-11-14：click-dc.wav是自製3秒48kHz PCM，0.7直流加0.1振幅220Hz正弦，刻意在剪接/暫停時暴露非零樣本硬切的爆音；只供音訊邊界/削峰驗收，不是使用者錄音。
+
+
+- `tone-chart.png`：自行產生320×180 RGBA色票（12格，右下完全透明），無第三方照片；用於調色/alpha/匯出像素驗收。
+- `tone-chart-video.webm`：同一色票以ffmpeg編為8秒30fps VP8/Opus，底部加入時間碼與440Hz正弦；用於調色漸變疊特效播放與貼圖資源檢查。

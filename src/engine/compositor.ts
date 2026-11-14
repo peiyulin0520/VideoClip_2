@@ -1,3 +1,5 @@
+import { GradeFilter } from './GradeFilter';
+import { gradeKey, hasGrade } from './grade';
 import {
   Application,
   CanvasSource,
@@ -6,7 +8,6 @@ import {
   Rectangle,
   Sprite,
   Texture,
-  ColorMatrixFilter,
   BlurFilter,
 } from 'pixi.js';
 import 'pixi.js/advanced-blend-modes';
@@ -75,7 +76,7 @@ type Obj = {
   outline: Graphics | null;
   maskKey: string;
   outlineKey: string;
-  colorFilter?: ColorMatrixFilter;
+  colorFilter?: GradeFilter;
   blurFilter?: BlurFilter;
   colorKey?: string;
   filterKey?: string;
@@ -87,6 +88,8 @@ export class Compositor {
   private backgroundColor = '';
   private uploads = 0;
   private allocations = 0;
+  private colorAllocations = 0;
+  private colorUpdates = 0;
   private maskStrings = new WeakMap<MediaMask, string>();
   private constructor(
     private app: Application,
@@ -355,45 +358,18 @@ export class Compositor {
     const adjustment = layer.adjustment;
     o.sprite.tint = adjustment?.tint ?? '#ffffff';
     const filters = [];
-    if (
-      adjustment &&
-      (adjustment.brightness !== 1 || adjustment.saturation !== 1 || adjustment.temperature !== 0)
-    ) {
-      const color = (o.colorFilter ??= new ColorMatrixFilter());
-      const colorKey = `${adjustment.brightness}|${adjustment.saturation}|${adjustment.temperature}`;
-      if (o.colorKey !== colorKey) {
-        const sat = adjustment.saturation,
-          inv = 1 - sat,
-          bright = adjustment.brightness,
-          temp = adjustment.temperature * 0.18;
-        const r = bright * (1 + temp),
-          g = bright,
-          b = bright * (1 - temp);
-        color.matrix = [
-          (0.2126 * inv + sat) * r,
-          0.7152 * inv * r,
-          0.0722 * inv * r,
-          0,
-          0,
-          0.2126 * inv * g,
-          (0.7152 * inv + sat) * g,
-          0.0722 * inv * g,
-          0,
-          0,
-          0.2126 * inv * b,
-          0.7152 * inv * b,
-          (0.0722 * inv + sat) * b,
-          0,
-          0,
-          0,
-          0,
-          0,
-          1,
-          0,
-        ];
-        o.colorKey = colorKey;
+    if (adjustment && hasGrade(adjustment)) {
+      if (!o.colorFilter) {
+        o.colorFilter = new GradeFilter();
+        this.colorAllocations++;
       }
-      filters.push(color);
+      const colorKey = gradeKey(adjustment);
+      if (o.colorKey !== colorKey) {
+        o.colorFilter.setTone(adjustment);
+        o.colorKey = colorKey;
+        this.colorUpdates++;
+      }
+      filters.push(o.colorFilter);
     }
     if (layer.blur && layer.blur > 0) {
       const blur = (o.blurFilter ??= new BlurFilter({
@@ -505,6 +481,9 @@ export class Compositor {
   mediaStats() {
     return {
       uploads: this.uploads,
+      colorAllocations: this.colorAllocations,
+      colorUpdates: this.colorUpdates,
+      colorPasses: [...this.objs.values()].filter((o) => o.sprite.filters?.includes(o.colorFilter!)).length,
       allocations: this.allocations,
       buffers: new Set([...this.objs.values()].flatMap((o) => (o.frame ? [o.frame] : []))).size,
       frames: [...this.objs]

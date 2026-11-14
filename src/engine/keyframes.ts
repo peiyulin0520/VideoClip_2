@@ -1,25 +1,28 @@
-import type { AnimatedValues, ColorAdjustment, Item, Keyframe, Project, Transform } from '../model/types';
-export const DEFAULT_ADJUSTMENT: ColorAdjustment = {
-  brightness: 1,
-  saturation: 1,
-  temperature: 0,
-  tint: '#ffffff',
-};
+import type {
+  AnimatedValues,
+  ResolvedAnimatedValues,
+  ColorAdjustment,
+  Item,
+  Keyframe,
+  Project,
+  Transform,
+} from '../model/types';
+import { DEFAULT_ADJUSTMENT, resolveAdjustment, TONE_KEYS } from './grade';
+export { DEFAULT_ADJUSTMENT };
 export type AnimationTarget = {
   transform?: Partial<Transform>;
   adjustment?: ColorAdjustment;
   keyframes?: Keyframe[];
   opacity?: number;
 };
-export function baseValues(target: AnimationTarget): AnimatedValues {
+export function baseValues(target: AnimationTarget): ResolvedAnimatedValues {
   return {
     x: 0.5,
     y: 0.5,
     scale: 1,
     rotation: 0,
     ...target.transform,
-    ...DEFAULT_ADJUSTMENT,
-    ...target.adjustment,
+    ...resolveAdjustment(target.adjustment),
     opacity: target.opacity ?? target.transform?.opacity ?? 1,
   };
 }
@@ -38,39 +41,34 @@ export function mixColor(a: string, b: string, p: number) {
       .join('')
   );
 }
-export function animationValues(target: AnimationTarget, local: number): AnimatedValues {
+export function animationValues(target: AnimationTarget, local: number): ResolvedAnimatedValues {
   const frames = target.keyframes;
   if (!frames?.length) return baseValues(target);
   const right = frames.findIndex((k) => k.time >= local);
-  if (right <= 0) return { ...(right < 0 ? frames.at(-1)! : frames[0]!).values };
+  const resolved = (values: AnimatedValues): ResolvedAnimatedValues => ({
+    ...baseValues(target),
+    ...values,
+    ...resolveAdjustment(values),
+  });
+  if (right <= 0) return resolved((right < 0 ? frames.at(-1)! : frames[0]!).values);
   const a = frames[right - 1]!,
     b = frames[right]!,
     p = (local - a.time) / (b.time - a.time);
-  const result = { ...a.values };
-  for (const key of [
-    'x',
-    'y',
-    'scale',
-    'rotation',
-    'opacity',
-    'brightness',
-    'saturation',
-    'temperature',
-  ] as const)
-    result[key] = a.values[key] + (b.values[key] - a.values[key]) * p;
+  const av = resolved(a.values),
+    bv = resolved(b.values);
+  const result = { ...av };
+  for (const key of ['x', 'y', 'scale', 'rotation', 'opacity', ...TONE_KEYS] as const)
+    result[key] = av[key] + (bv[key] - av[key]) * p;
   result.tint = mixColor(a.values.tint, b.values.tint, p);
   return result;
 }
 export function evaluatedItem<T extends Item>(item: T, time: number): T {
   if (!item.keyframes?.length) return item;
-  const { x, y, scale, rotation, opacity, brightness, saturation, temperature, tint } = animationValues(
-    item,
-    time - item.start,
-  );
+  const { x, y, scale, rotation, opacity, ...adjustment } = animationValues(item, time - item.start);
   return {
     ...item,
     transform: { x, y, scale, rotation, opacity },
-    adjustment: { brightness, saturation, temperature, tint },
+    adjustment,
   };
 }
 export function animationTarget(project: Project, id: string) {
@@ -115,10 +113,10 @@ export function editAnimatedValues(
   if (track.template) values.rotation = 0;
   if (target.keyframes?.length || forceFrame) upsertFrame(target, local, values);
   else {
-    const { x, y, scale, rotation, opacity, brightness, saturation, temperature, tint } = values;
+    const { x, y, scale, rotation, opacity, ...adjustment } = values;
     target.transform = track.template ? { x, y, scale } : { x, y, scale, rotation, opacity };
     if (track.template) target.opacity = opacity;
-    target.adjustment = { brightness, saturation, temperature, tint };
+    target.adjustment = adjustment;
   }
 }
 export function trimKeyframes(target: AnimationTarget, from: number, to: number): Keyframe[] | undefined {
