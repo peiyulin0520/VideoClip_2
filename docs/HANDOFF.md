@@ -1,13 +1,14 @@
 # 交接手冊（HANDOFF）
 
 ## 色調本輪（優先於下方音訊成功歷史）
-- eb6d734/43587823092快速5+3+30全過。人工看CJK成功截圖發現tone-record未active時受:root .chip舊底色蓋過，留下淺底白字；補:root[data-theme] .tone-panel .tone-record成對accent/ink。六主題測試原只看到頁籤，補捲到預設／定格按鈕／底部滑桿分段對比，不以未入畫面冒充通過。需新source完整156驗收。
-- 人工檢視首輪fast截圖發現快速job未裝CJK，補與完整job相同Noto字型；另首輪播放統計只有media1buffer，效果原在3秒加入但量測0.5–1.6，補0秒插入FX並斷言media+grain必須2buffer，避免以未啟用特效冒充疊加驗收。產品src不變，下一輪需新5/156。
-- 首輪色調3f7c733/43587368211快速4/5：全13預設／10滑桿GPU像素／alpha、完整影片多影格、uniform資源重用及窄手機已過。冷暖定格首末／中點／局部重設／保存也過；重開後預設群組收合（使用者要求）令clip locator不存在，補expandAllGroups後選片，不改產品或放寬斷言，待新CI。
-- 規格plans/2026-11-14-tone-grading.md；新獨立色調頁，不能放剪輯。10參數13預設；菱形共享全部數值插值，未定格全片，有定格當前點，不動其他定格／transform。舊Keyframe.values新欄位缺省中性，animatedItem/trim/group都要保留全部色調。
-- GradeFilter單pass、uniform typed array原地更新，GlProgram快取；中性skip、無CPU逐幀getImageData、無新preview canvas／decoder，原本FrameResource共享不變。舊飽和先於色溫保持相容，alpha除後復乘。mediaStats colorAllocations/colorUpdates/colorPasses驗重用；預設SVG靜態無每幀渲染。
-- 本機369單元／型別／建置／Pages check已通過（NodeList用Array.from）；5新e2e預期156，CI快速先色調5再音訊3及播放30。先拿成功CI新圖／JSON，勿以前輪359/151作色調證據。PR11原仍open，交付前確認狀態再更新或新PR，不代Merge。
-- 手動有定格修改先pause避免移動白線寫一串；無定格整段調整可在播放時更新。Preset寫展開數值、不存離散名稱以避免中途跳風格；只清目前色調，不能整個keyframes移除或影響位置。
+- 最終驗收（2026-11-14）：[Actions43588524060](https://github.com/peiyulin0520/VideoClip_2/actions/runs/43588524060)，驗收source `89872488fe0b866eae873799feca7235a9d4496d`；369單元、156 Chromium瀏覽器全過，另5色調＋3音訊＋30快速全過（156的子集）；lint／格式／TypeScript／build／Pages／PWA及39字體檢查成功。最後僅文件／量測／成功截圖提交，產品、測試與設定和source一致。
+- artifact `14111758046`（browser-checks-43588524060，33416955 bytes），ZIP SHA-256 `a8a766f2770ab6eac6e627b8638cefc674ab6c5e7fcff934c21f4e91f647e2fc`已核對；191張成功截圖，無失敗context，新tone4張人工檢視完成。六主題實際捲到預設／定格按鈕／滑桿對比成功，新增按鈕不是淺底白字。
+- 真實疊加量測（1029.8ms）：影片呈現回呼+25、色調uniform更新+25、上傳+37（影片與顆粒），媒體貼圖配置+0、色調濾鏡配置+0、seek+0；1個色調pass、2buffer（影片＋顆粒）、聲音energy0.11154。原始資料docs/validation/tone-playback-metrics.json；不是iPhone實機FPS保證。
+- PR #11保持open未合併，由使用者自行Merge後發布；目前無待修程式。最後僅文件／量測／191圖，產品、測試及設定與8987248一致。操作USAGE#色調與定格漸變，規格plans/2026-11-14-tone-grading.md。
+- 模型：10新參數展開數值，新增欄位選填中性，動畫返回ResolvedAnimatedValues；evaluatedItem/editAnimatedValues以rest保留全部色調，trim／split／模板共用。未有定格整段，有定格當前點，局部重置只色調不動transform／其他點，Preset不存跳切字串。手動有定格先pause，避免移動白線連續寫點。
+- 渲染：同sprite GradeFilter只一個GPU pass，GlProgram.from／typed uniform原地重用、key改才update；中性無pass。舊飽和先於色溫相容，alpha除後復乘，預覽／逐格／即時匯出同計算；原FrameResource共享／audio流程不變。預設Memo SVG靜態，無額外video／canvas預覽。
+- 踩坑：重開default收合不能直接找clip，測試expandAllGroups後再選。首輪FX插在3秒、量測0.5–1.6曾只測到tone；已改0秒加FX並必須2buffer。快速job也要CJK；tone-record需:root[data-theme] .tone-panel高特異性成對accent/ink，防chip舊底色壓掉。六主題對比必捲到實際preset／record／slider，單看頁籤會漏掉。
+- 色票PNG含透明格與8秒時間碼／正弦影片皆自行生成；像素門檻GPU4、編碼影片14、原片長不變。來源／音訊／縮圖／左右popup等舊151回歸全部保留。Safari硬體聲畫／長片FPS／HDR外觀仍待PLAN §7，不以資源數據說成實機保證。
 
 ### 前輪音訊／縮圖成功（歷史）
 ## VideoClip_2 當前交接（優先於以下來源 repo 的歷史紀錄）

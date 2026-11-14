@@ -14,12 +14,16 @@ GradeFilter在既有Compositor單一WebGL pass做曝光／亮度、對比、亮�
 
 預覽、定格、逐格與即時匯出共用Scene/Compositor評估與shader，不依Canvas2D filter。mediaStats新增colorAllocations/colorUpdates/colorPasses供實測，不能把資源計數當實機FPS保證。Safari真機仍列PLAN §7。
 
-## 驗收（待CI）
-10新單元，369單元及check已過；5新瀏覽器，156完整預期，另5色調＋3音訊＋30播放快速。色票PNG（含透明格）與8秒VP8/Opus時間碼皆自行生成，無第三方照片。
-- 全預設與10滑桿點擊：專案值、GPU像素、alpha不變、原色／undo/redo。
-- 兩菱形首末及中點、真實定格單格匯出、局部重設、保存重開／刪除。
-- 完整影片匯出多時間點對照曝光／黑白插值，片長不變。
-- 影片色調漸變疊柔焦顆粒有聲有畫面，只更新uniform、無新濾鏡／媒體貼圖配置與反覆seek，保存實測JSON。
-- 320／430尺寸字級／44px／無水平溢位／獨立收合，既有六主題對比涵蓋色調頁。
+## 驗收（已完成）
+- 最終驗收（2026-11-14）：[Actions43588524060](https://github.com/peiyulin0520/VideoClip_2/actions/runs/43588524060)，驗收source `89872488fe0b866eae873799feca7235a9d4496d`；369單元、156 Chromium瀏覽器全過，另5色調＋3音訊＋30快速全過（156的子集）；lint／格式／TypeScript／build／Pages／PWA及39字體檢查成功。最後僅文件／量測／成功截圖提交，產品、測試與設定和source一致。
+- artifact `14111758046`（browser-checks-43588524060，33416955 bytes），ZIP SHA-256 `a8a766f2770ab6eac6e627b8638cefc674ab6c5e7fcff934c21f4e91f647e2fc`已核對；191張成功截圖，無失敗context，新tone4張人工檢視完成。六主題實際捲到預設／定格按鈕／滑桿對比成功，新增按鈕不是淺底白字。
+- 真實疊加量測（1029.8ms）：影片呈現回呼+25、色調uniform更新+25、上傳+37（影片與顆粒），媒體貼圖配置+0、色調濾鏡配置+0、seek+0；1個色調pass、2buffer（影片＋顆粒）、聲音energy0.11154。原始資料docs/validation/tone-playback-metrics.json；不是iPhone實機FPS保證。
+- 全13預設與10滑桿點擊：專案值、GPU像素、alpha不變、原色／undo/redo。
+- 兩菱形首末及中點、單格匯出、局部重設、保存重開／刪除。
+- 完整影片多時間點對照曝光／黑白插值，片長不變。
+- 色調漸變與啟用中的柔焦／顆粒有聲有畫面，uniform更新且不新增filter／media配置／seek；測試先把FX放在0秒並斷言2buffer。
+- 320／430尺寸字級／44px／無水平溢位／獨立收合；六主題實際逐段捲到預設／定格／細調檢對比。
+
+首輪重開未展開group與未進入量測窗口的FX均修正測試；人工截圖修復新增按鈕白字淺底，未放寬原像素或資源門檻。新4張成功圖已人工檢視，Safari仍待真機。
 
 未擴充整個遠期Grade規格：HSL、LUT、skinProtect、全畫面調整圖層、銳利化等仍屬後續規劃。本輪不以風格預設冒充HDR色彩管理。

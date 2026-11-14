@@ -4,6 +4,8 @@
 
 ## 目前版本
 
+新增獨立「色調」頁籤：10項細調與13組基本色調，支援在不同秒數用菱形定格記錄，兩點之間平滑變色。與預覽／匯出共用單一GPU調色處理，不建立額外影片預覽。操作見[色調說明](docs/USAGE.md#色調與定格漸變)，本輪成功驗收以[進度](docs/PROGRESS.md)為準。
+
 PR #11 修正主時間軸每2秒來源縮圖與舊快取重建，並處理音訊分段、暫停/重播/跳轉的突波。重影、故障及粒子重用影格與貼圖；540/720預覽降低柔焦運算量，高清預覽與匯出保留完整品質。使用者自行合併後發布，完整驗收見[最新進度](docs/PROGRESS.md)。
 
 已合併 PR #10 提供可調特效時長與任意多組起迄，影片及聲音按原時間繼續。單素材進場B、退場A；兩支10秒保留總長20秒，轉場在交接前後分配。來源/音訊/模板/特效共用白線與成對標籤，可新增、移除、復原、預覽暫停。詳見[操作說明](docs/USAGE.md#特效時長與成對起迄)及[本輪規格](docs/plans/2026-11-13-effect-timing.md)。
@@ -24,7 +26,7 @@ npm run check
 npm run e2e -- --trace off
 ```
 
-`check` 包含 lint、359 個單元測試、TypeScript、正式建置及 GitHub Pages 路徑/PWA/字體檔案檢查。151 個瀏覽器測試（含完整影片/音訊解碼、收藏、GIF、手動遮罩、Key 與主題）交由 GitHub Actions 的 Chromium 153 執行，CI 保存截圖 artifact；最新成功狀態見 PROGRESS.md。本次已更新 187 張 CI 畫面（docs/screenshots）中文可讀；iPhone Safari 仍待真機驗證。
+`check` 包含 lint、369 個單元測試、TypeScript、正式建置及 GitHub Pages 路徑/PWA/字體檔案檢查。156 個瀏覽器測試（含完整影片/音訊解碼、收藏、GIF、手動遮罩、Key 與主題）交由 GitHub Actions 的 Chromium 153 執行，CI 保存截圖 artifact；最新成功狀態見 PROGRESS.md。本次已更新 191 張 CI 畫面（docs/screenshots）中文可讀；iPhone Safari 仍待真機驗證。
 
 ## GitHub Pages
 
@@ -184,3 +186,14 @@ GIF 解碼器 gifuct-js 2.1.2 為 MIT，授權位於 public/licenses。輸出含
 - 完整CI量測：100%離線peak0.79999/maxJump0.003982；200%離線peak0.9999998/maxJump0.005799（原診斷0.399）；即時peak0.76850/maxJump0.004122（原診斷0.742），168960個取樣。原始JSON/對照圖見docs/validation；這是本機合成測試素材，不是使用者影片、音量百分比或Safari硬體驗收。
 
 [音訊量測對照](docs/validation/audio-jump-comparison.png) · [原始量測JSON](docs/validation/audio-wave-metrics.json) · [驗收頁面](docs/screenshots/audio-effects/) · [操作說明](docs/USAGE.md#音訊與特效預覽)。iPhone Safari聲音與長片真實FPS仍需真機，PR由使用者自行合併後發布。
+
+
+## 色調與定格漸變（PR #11）
+
+獨立「色調」提供亮度、飽和度、曝光、高光、對比、黑點、鮮艷度、陰影、色溫、淡化與13組預設。未有定格改整段，兩個菱形之間以完整參數漸變；還原不影響其他定格及位置／大小。單一GPU處理並重用uniform／shader與影格，與預覽／匯出相同，原素材不變。
+
+- 最終驗收（2026-11-14）：[Actions43588524060](https://github.com/peiyulin0520/VideoClip_2/actions/runs/43588524060)，驗收source `89872488fe0b866eae873799feca7235a9d4496d`；369單元、156 Chromium瀏覽器全過，另5色調＋3音訊＋30快速全過（156的子集）；lint／格式／TypeScript／build／Pages／PWA及39字體檢查成功。最後僅文件／量測／成功截圖提交，產品、測試與設定和source一致。
+- artifact `14111758046`（browser-checks-43588524060，33416955 bytes），ZIP SHA-256 `a8a766f2770ab6eac6e627b8638cefc674ab6c5e7fcff934c21f4e91f647e2fc`已核對；191張成功截圖，無失敗context，新tone4張人工檢視完成。六主題實際捲到預設／定格按鈕／滑桿對比成功，新增按鈕不是淺底白字。
+- 真實疊加量測（1029.8ms）：影片呈現回呼+25、色調uniform更新+25、上傳+37（影片與顆粒），媒體貼圖配置+0、色調濾鏡配置+0、seek+0；1個色調pass、2buffer（影片＋顆粒）、聲音energy0.11154。原始資料docs/validation/tone-playback-metrics.json；不是iPhone實機FPS保證。
+
+[色調預設與細調](docs/screenshots/tone/presets-and-adjustments.png) · [兩點漸變](docs/screenshots/tone/keyframe-midpoint.png) · [實際疊加特效](docs/screenshots/tone/graded-effects-preview.png) · [操作步驟](docs/USAGE.md#色調與定格漸變)。PR由使用者自行合併後發布；iPhone Safari真機待驗。

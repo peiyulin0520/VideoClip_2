@@ -191,4 +191,4 @@ Compositor 的同來源/crop/mask/尺寸共享 FrameResource，RGB 重影與故�
 ## 2026-11-14 色調本輪實作（優先於§5遠期規劃）
 獨立頁籤「色調」，10參數（亮度、飽和度、曝光EV、高光、對比、黑點、鮮艷度、陰影、色溫、淡化）與13參數組合預設。舊brightness/saturation/temperature/tint保留，新增欄位可缺省中性；所有參數與既有菱形一起數值插值，Preset本身不是跳切屬性。逐格／即時匯出、預覽共享同一GradeFilter；中性跳過，非中性一個GPU pass／uniform更新，不逐幀建立貼圖或示意圖預覽。alpha不變。
 
-未有定格改整段，有定格改當前秒數；還原只重設目前色調，不動transform或其他定格。版型沿用整組定格與色調。10新單元與5新瀏覽器／資源計數驗證待成功CI，Safari待真機。詳細plans/2026-11-14-tone-grading.md。§5中的HSL／LUT／skinProtect／調整圖層等仍為遠期，不能當本輪已完成。
+未有定格改整段，有定格改當前秒數；還原只重設目前色調，不動transform或其他定格。版型沿用整組定格與色調。10新單元與5新瀏覽器已納入369／156成功CI（Actions43588524060），另5+3+30快速成功；六主題實際控制對比已過。資源JSON見validation/tone-playback-metrics.json，Safari仍待真機。詳細plans/2026-11-14-tone-grading.md。§5中的HSL／LUT／skinProtect／調整圖層等仍為遠期，不能當本輪已完成。

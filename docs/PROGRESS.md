@@ -3,13 +3,13 @@
 規則：每完成一個有意義的步驟，就在同一個 commit 裡 **覆寫「交接快照」** 並 **在「日誌」最上面新增一筆**（規則全文見 `AGENTS.md`「紀錄規則」，背景與架構見 `docs/HANDOFF.md`）。
 
 ## 交接快照（VideoClip_2 最新狀態）
-- eb6d734/43587823092快速5+3+30全過。人工看CJK成功截圖發現tone-record未active時受:root .chip舊底色蓋過，留下淺底白字；補:root[data-theme] .tone-panel .tone-record成對accent/ink。六主題測試原只看到頁籤，補捲到預設／定格按鈕／底部滑桿分段對比，不以未入畫面冒充通過。需新source完整156驗收。
-- 人工檢視首輪fast截圖發現快速job未裝CJK，補與完整job相同Noto字型；另首輪播放統計只有media1buffer，效果原在3秒加入但量測0.5–1.6，補0秒插入FX並斷言media+grain必須2buffer，避免以未啟用特效冒充疊加驗收。產品src不變，下一輪需新5/156。
-- 首輪色調3f7c733/43587368211快速4/5：全13預設／10滑桿GPU像素／alpha、完整影片多影格、uniform資源重用及窄手機已過。冷暖定格首末／中點／局部重設／保存也過；重開後預設群組收合（使用者要求）令clip locator不存在，補expandAllGroups後選片，不改產品或放寬斷言，待新CI。
-- 新任務（2026-11-14）：獨立「色調」頁籤＋亮度／飽和度／曝光／高光／對比／黑點／鮮艷度等10調整、13預設；兩個菱形定格的色調平滑漸變，不能拖累播放。
-- 當前分支codex/source-timestamp-thumbnails，PR11先前仍open，基線e76d133/cdc6195的359/151成功；本輪check全過（369單元／型別／建置／Pages）；eb6d734/Actions43587823092新5項色調已過，156完整與3+30快速執行中。不能拿前輪音訊結果當本輪色調驗收。
-- 已寫：ColorAdjustment新欄位選填相容舊專案，所有tone數值插值／trim／group；GradeFilter單一GPU pass、uniform重用、不額外解碼或讀像素；預設靜態SVG／調整同字級。未有定格改整段，有定格改當前秒數並可局部重設。
-- 計畫docs/plans/2026-11-14-tone-grading.md。需成功CI／截圖／資源JSON後交付；PR由使用者Merge，不代合併或開auto-merge；Safari真機聲畫／色調效能仍待PLAN §7。
+- codex/source-timestamp-thumbnails / PR #11 open未合併，色調與先前音訊／縮圖一併交付；由使用者自行Merge後才發布，不開auto-merge、不推main。
+- 最終驗收（2026-11-14）：[Actions43588524060](https://github.com/peiyulin0520/VideoClip_2/actions/runs/43588524060)，驗收source `89872488fe0b866eae873799feca7235a9d4496d`；369單元、156 Chromium瀏覽器全過，另5色調＋3音訊＋30快速全過（156的子集）；lint／格式／TypeScript／build／Pages／PWA及39字體檢查成功。最後僅文件／量測／成功截圖提交，產品、測試與設定和source一致。
+- artifact `14111758046`（browser-checks-43588524060，33416955 bytes），ZIP SHA-256 `a8a766f2770ab6eac6e627b8638cefc674ab6c5e7fcff934c21f4e91f647e2fc`已核對；191張成功截圖，無失敗context，新tone4張人工檢視完成。六主題實際捲到預設／定格按鈕／滑桿對比成功，新增按鈕不是淺底白字。
+- 真實疊加量測（1029.8ms）：影片呈現回呼+25、色調uniform更新+25、上傳+37（影片與顆粒），媒體貼圖配置+0、色調濾鏡配置+0、seek+0；1個色調pass、2buffer（影片＋顆粒）、聲音energy0.11154。原始資料docs/validation/tone-playback-metrics.json；不是iPhone實機FPS保證。
+- 色調：獨立頁籤、10參數／13預設，兩菱形所有數值插值，舊定格缺欄位中性；沒有定格整段，有定格當前點並可局部還原，保留位置／大小／其他定格。Template整組，原素材不改，保存重開／單格及完整影片匯出相同。
+- 效能：GradeFilter單一GPU pass（每個有調色sprite），shader／typed uniforms／FrameResource重用，沒有CPU逐幀讀像素、新解碼器或逐幀濾鏡重建；預設SVG靜態，中性色調skip。核心與界面已驗收，目前無待修程式。
+- 規格docs/plans/2026-11-14-tone-grading.md；操作docs/USAGE.md#色調與定格漸變。Safari／iPhone長片、HDR外觀與真實聲畫流暢度仍待PLAN §7，不以Chromium資源計數冒充。HSL／LUT／調整圖層等仍是遠期。
 
 ## 日誌格式（新增一筆時照這個）
 ```
@@ -93,6 +93,13 @@
 - 2026-11-11 找到新字體來源 max32002/pop-gothic（大波浪圓體，含注音）→ 已加入手寫可愛包。問「能不能直接下載到我的 files 下載資料夾」→ 答：網頁在 iPhone 不能自動寫進「檔案」App 資料夾；官方字體存在瀏覽器裡，自己的字體用「匯入字體檔」從檔案 App 選
 
 ## 日誌（最新在最上面）
+- 2026-11-14 色調／定格漸變完成（驗收8987248，PR #11仍open）
+  - 做了什麼：獨立「色調」10調整／13組合；菱形全數值插值與舊欄位相容；同一GradeFilter供預覽／單格／完整匯出，中性skip、typed uniforms與shader資源重用，原alpha不變。
+  - 驗證：✅ 369單元、156 Chromium、5+3+30快速全過；Actions43588524060，artifact14111758046校驗通過，191張新成功圖。冷暖／曝光／黑白中點與匯出多影格、13預設／10滑桿GPU像素、alpha、保存重開／復原／刪除、320/430字級／44px及六主題均過。疊柔焦／顆粒1029.8ms無新media/grade配置或seek；原始JSON見validation。
+  - 使用者更正：獨立功能頁籤「色調」，不可放剪輯；要順暢及第一到第二菱形漸變。現在無待修程式；Safari真機／HDR外觀／長片FPS仍待確認。
+  - 踩坑：重開時間軸預設收合，測試須展開再選clip；特效要插在真正量測區，buffer2證明顆粒確實啟用。人工截圖抓tone-record被舊chip底色覆蓋，增加成對accent/ink高特異性；對比審核須捲到實際控制。
+  - 下一步：使用者自行Merge PR11後發布；最後只文件／量測／圖，不改成功產品／測試／設定。
+
 - 2026-11-14 色調與定格漸變實作待CI：獨立頁籤、10參數／13組合、舊定格中性預設與數值插值，單一GradeFilter GPU pass及資源計數；新10單元／5e2e含像素、alpha、保存、影片匯出、播放資源及窄手機，六主題加入色調。先前359/151基線全綠；本輪369單元／型別／建置／Pages check已過，需Actions瀏覽器驗收，未交付。規格plans/2026-11-14-tone-grading.md。
 
 - 2026-11-14 音訊突波與特效效能完成（PR #11，驗收source cdc6195）
