@@ -62,6 +62,11 @@ export class AudioBus {
   private wanted = new Map<HTMLMediaElement, { value: number; window?: AudioWindow; time?: number }>();
   private stops = new Map<HTMLMediaElement, ReturnType<typeof setTimeout>>();
   private seeks = new Map<HTMLMediaElement, { apply: () => void; timer: ReturnType<typeof setTimeout> }>();
+  private trace: Record<string, number | string>[] | null = null;
+  private mark(event: string, el?: HTMLMediaElement, value?: number) {
+    if (this.trace && this.trace.length < 120)
+      this.trace.push({ event, at: this.ctx!.currentTime, media: el?.currentTime ?? -1, value: value ?? -1 });
+  }
   private allowed: Set<HTMLMediaElement>;
   constructor(elements: HTMLMediaElement[], existing?: AudioContext) {
     this.allowed = new Set(elements);
@@ -127,6 +132,7 @@ export class AudioBus {
       param.setValueAtTime(target, Math.max(now + fade, end - fade));
       param.linearRampToValueAtTime(0, end);
     }
+    this.mark('ramp', undefined, target);
     node.envelope = {
       at: now,
       from: current,
@@ -152,21 +158,27 @@ export class AudioBus {
       node.windowKey = undefined;
     }
     if (!audible) {
-      if (!el.paused) el.pause();
+      if (!el.paused) {
+        this.mark('silent-pause', el);
+        el.pause();
+      }
       return;
     }
     el.dataset.audioFading = '1';
-    this.stops.set(
-      el,
-      setTimeout(
-        () => {
-          this.stops.delete(el);
-          if (!this.seeks.has(el)) delete el.dataset.audioFading;
-          if (el.dataset.previewIntent !== 'play' && !el.dataset.priming) el.pause();
-        },
-        AUDIO_FADE * 1000 + 4,
-      ),
-    );
+    const finish = () => {
+      if (!this.stops.has(el)) return;
+      if (this.ctx?.state === 'running' && this.value(node!, this.ctx.currentTime) > 0.000001) {
+        this.stops.set(el, setTimeout(finish, 4));
+        return;
+      }
+      this.stops.delete(el);
+      if (!this.seeks.has(el)) delete el.dataset.audioFading;
+      if (el.dataset.previewIntent !== 'play' && !el.dataset.priming) {
+        this.mark('native-pause', el);
+        el.pause();
+      }
+    };
+    this.stops.set(el, setTimeout(finish, AUDIO_FADE * 1000 + 4));
   }
   deferSeek(el: HTMLMediaElement, apply: () => void) {
     const pending = this.seeks.get(el);
@@ -182,21 +194,23 @@ export class AudioBus {
       node.windowKey = undefined;
     }
     if (!audible) {
+      this.mark('silent-seek', el);
       apply();
       return;
     }
     el.dataset.audioFading = '1';
-    const task = {
-      apply,
-      timer: setTimeout(
-        () => {
-          this.seeks.delete(el);
-          if (!this.stops.has(el)) delete el.dataset.audioFading;
-          task.apply();
-        },
-        AUDIO_FADE * 1000 + 4,
-      ),
+    const finish = () => {
+      if (!this.seeks.has(el)) return;
+      if (this.ctx?.state === 'running' && this.value(node!, this.ctx.currentTime) > 0.000001) {
+        task.timer = setTimeout(finish, 4);
+        return;
+      }
+      this.seeks.delete(el);
+      if (!this.stops.has(el)) delete el.dataset.audioFading;
+      this.mark('native-seek', el);
+      task.apply();
     };
+    const task = { apply, timer: setTimeout(finish, AUDIO_FADE * 1000 + 4) };
     this.seeks.set(el, task);
   }
   flush() {
@@ -235,6 +249,7 @@ export class AudioBus {
           value > 0 && wanted?.window && wanted.time !== undefined
             ? this.ctx!.currentTime + Math.max(0, wanted.window.end - wanted.time)
             : undefined;
+        this.mark(`window:${key ?? 'none'} end:${end ?? -1}`, el, wanted?.time);
         this.ramp(node, value, end);
         node.windowKey = key;
       }
@@ -252,8 +267,13 @@ export class AudioBus {
     const ctx = this.ctx,
       master = this.master;
     if (!ctx || !master) throw Error('Start playback before measuring audio');
+    this.trace = [];
+    const startedAt = ctx.currentTime;
     const name = `lm-meter-${Math.random().toString(36).slice(2)}`;
-    const code = `class Meter extends AudioWorkletProcessor { constructor(){ super(); this.peak=0; this.jump=0; this.samples=0; this.last=null; this.port.onmessage=()=>this.port.postMessage({peak:this.peak,maxJump:this.jump,samples:this.samples}); } process(inputs){ const x=inputs[0]?.[0]; if(x)for(const v of x){ this.peak=Math.max(this.peak,Math.abs(v)); if(this.last!==null)this.jump=Math.max(this.jump,Math.abs(v-this.last)); this.last=v; this.samples++; } return true; } } registerProcessor('${name}',Meter);`;
+    const code = `class Meter extends AudioWorkletProcessor {
+      constructor(){ super(); this.peak=0; this.jump=0; this.jumpTime=0; this.pair=[]; this.samples=0; this.last=null; this.port.onmessage=()=>this.port.postMessage({peak:this.peak,maxJump:this.jump,jumpTime:this.jumpTime,pair:this.pair,samples:this.samples}); }
+      process(inputs){ const x=inputs[0]?.[0]; if(x)for(let i=0;i<x.length;i++){const v=x[i]; this.peak=Math.max(this.peak,Math.abs(v)); if(this.last!==null && Math.abs(v-this.last)>this.jump){this.jump=Math.abs(v-this.last);this.jumpTime=currentTime+i/sampleRate;this.pair=[this.last,v];} this.last=v; this.samples++; } return true; }
+    } registerProcessor('${name}',Meter);`;
     const url = URL.createObjectURL(new Blob([code], { type: 'text/javascript' }));
     let node: AudioWorkletNode | null = null;
     try {
@@ -261,11 +281,13 @@ export class AudioBus {
       node = new AudioWorkletNode(ctx, name);
       master.connect(node);
       node.connect(ctx.destination);
-      return await new Promise<{ peak: number; maxJump: number; samples: number }>((resolve) => {
+      const result = await new Promise<{ peak: number; maxJump: number; samples: number }>((resolve) => {
         node!.port.onmessage = (event) => resolve(event.data);
         setTimeout(() => node!.port.postMessage('done'), milliseconds);
       });
+      return { ...result, startedAt, events: this.trace };
     } finally {
+      this.trace = null;
       if (node) {
         try {
           master.disconnect(node);

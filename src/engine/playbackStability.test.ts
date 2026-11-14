@@ -163,11 +163,15 @@ it('fades before pause and seek, coalesces scrubbing, and cancels a stale pause 
   bus.deferSeek(v, last);
   expect(bus.isSeeking(v)).toBe(true);
   vi.advanceTimersByTime(20);
+  expect(last).not.toHaveBeenCalled(); // Wall timers can outrun the audio clock under load.
+  ctx.currentTime += 0.02;
+  vi.advanceTimersByTime(8);
   expect(first).not.toHaveBeenCalled();
   expect(last).toHaveBeenCalledOnce();
   expect(bus.isSeeking(v)).toBe(false);
   bus.set(v, 1);
   bus.flush();
+  ctx.currentTime += 0.02;
   v.dataset.previewIntent = 'pause';
   bus.pause(v);
   v.dataset.previewIntent = 'play';
