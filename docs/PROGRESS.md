@@ -3,6 +3,7 @@
 規則：每完成一個有意義的步驟，就在同一個 commit 裡 **覆寫「交接快照」** 並 **在「日誌」最上面新增一筆**（規則全文見 `AGENTS.md`「紀錄規則」，背景與架構見 `docs/HANDOFF.md`）。
 
 ## 交接快照（VideoClip_2 最新狀態）
+- 首輪2cc6411/43560901659快速25/30：找到zoom時DOM scroll先走、React可見桶晚一拍的真實缺圖，已在syncScroll同步更新bucket；3個新情境的63張唯一圖/來源秒數已過，先修正影像內部取樣x（避56px表頭+4px邊距）、VP8不同色矩陣容差24，以及clip-a實際2秒不硬寫[0,2]。所有63圖唯一性/時間戳/覆蓋斷言保留；需新完整驗收。PR #11已開啟，未合併。
 - 2026-11-14 / codex/source-timestamp-thumbnails，基於main7350773（PR #10已由使用者合併）。本輪新PR待建立，不再改已合併PR10。
 - 使用者實機主時間軸58秒同首幀、112秒空白，popup overview有後段畫面；之前只驗鋪滿/紅藍後半不夠。已新增獨立filmstrip timestamp資料，每2秒實際解碼，驗decoded frame覆蓋所求秒數，失敗不沿用前格；原生fallback等seek及實際呈現回呼，靜音不play。8張overview保留給popup/封面，主軸不再取它。
 - 既有專案/僅首幀或舊8張cache在載入閘中自動補建，存filmstrip並更新undo快照不增加編輯；完整cache重用。低畫質proxy準備後產生縮圖，仍用原檔匯出。主時間軸按可見範圍虛擬化，每2秒來源映射trim/speed，不用固定120格截斷或首幀延伸。
@@ -89,6 +90,8 @@
 - 2026-11-11 找到新字體來源 max32002/pop-gothic（大波浪圓體，含注音）→ 已加入手寫可愛包。問「能不能直接下載到我的 files 下載資料夾」→ 答：網頁在 iPhone 不能自動寫進「檔案」App 資料夾；官方字體存在瀏覽器裡，自己的字體用「匯入字體檔」從檔案 App 選
 
 ## 日誌（最新在最上面）
+- 2026-11-14 首輪快速25/30：虛擬格在zoom後等晚到scroll事件會短暫空白，syncScroll now同步更新bucket。新長片63張唯一/time斷言已過，修正測試取樣點在影像內部、VP8跨解碼器色矩陣容差及短片source duration推導。等待下一輪350/148/30，不以首輪當成功。
+
 - 2026-11-14 主時間軸真實每2秒縮圖與舊cache修復（待CI）
   - PR #10已使用者合併，從main7350773開新分支。probe既有最多8張且缺格複製前格、播放器單張fallback不能滿足每2秒；新filmstrip分開時間戳，不冒充overview。
   - 來源秒數、trim/speed及可見段虛擬化；載入時proxy後建cache、原生seek+呈現驗證，不auto-play、不改匯出；完整快取保存與undo同步。

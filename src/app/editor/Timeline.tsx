@@ -250,8 +250,10 @@ export function Timeline({
         lastSet.current = target;
         el.scrollLeft = target;
       }
+      // Zoom/seek must refresh the visible images before paint, not a later scroll event.
+      setScrollBucket(Math.floor(el.scrollLeft / bucketWidth));
     },
-    [pps],
+    [pps, bucketWidth],
   );
 
   useLayoutEffect(() => {

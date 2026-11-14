@@ -50,8 +50,11 @@ test('模擬 iPhone：WebCodecs不可用時，原生影片依每2秒解碼縮圖
     .poll(async () => (await thumbsOf(page)).assets[0]!.thumbs.length, { timeout: 20_000 })
     .toBeGreaterThan(0);
   await expect(page.getByTestId('clip-name')).toHaveCount(0);
-  const cached = ((await project(page)) as unknown as Project).assets[0]!.filmstrip!;
-  expect(cached.frames.map((f) => f.time)).toEqual([0, 2]);
+  const a = ((await project(page)) as unknown as Project).assets[0]!;
+  const cached = a.filmstrip!;
+  expect(cached.frames.map((f) => f.time)).toEqual(
+    Array.from({ length: Math.ceil(a.duration / 2) }, (_, i) => i * 2),
+  );
   expect(cached.frames.every((f) => !!f.src)).toBe(true);
   await expect(clips(page)).toHaveCount(1);
   await page.screenshot({ path: `${SHOT}/after-thumb-fallback.png` });
