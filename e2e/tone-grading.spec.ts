@@ -7,6 +7,7 @@ import {
   clips,
   createProjectWith,
   exportFrame,
+  expandAllGroups,
   openTab,
   samplePreview,
   seekTo,
@@ -147,6 +148,7 @@ test('色調與菱形定格共用，冷暖中點與匯出一致，重開保留�
     .toBe(0);
   await page.reload();
   await waitForPreviewReady(page);
+  await expandAllGroups(page);
   await clips(page).first().tap();
   await openTab(page, '色調');
   expect((await item(page)).keyframes).toHaveLength(2);
@@ -221,6 +223,7 @@ test('漸變色調疊柔焦顆粒仍更新畫面與聲音，播放只改uniform�
   await page.getByRole('button', { name: '◇ 定格目前色調', exact: true }).tap();
   await at(page, 3);
   await page.getByRole('button', { name: '套用鮮豔', exact: true }).tap();
+  await at(page, 0);
   await openTab(page, '特效');
   await page.getByRole('tab', { name: '影片特效', exact: true }).tap();
   for (const name of ['柔焦', '底片顆粒']) await page.getByRole('button', { name, exact: true }).tap();
@@ -260,6 +263,7 @@ test('漸變色調疊柔焦顆粒仍更新畫面與聲音，播放只改uniform�
   const after = await snapshot();
   expect(after.stats.allocations - before.stats.allocations).toBe(0);
   expect(after.stats.colorAllocations - before.stats.colorAllocations).toBe(0);
+  expect(after.stats.buffers).toBe(2); // Media plus the active grain layer.
   expect(after.stats.colorPasses).toBe(1);
   expect(after.stats.colorUpdates - before.stats.colorUpdates).toBeGreaterThan(5);
   expect(after.stats.uploads - before.stats.uploads).toBeGreaterThan(5);

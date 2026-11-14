@@ -75,6 +75,13 @@ jobs:
           cache: npm
       - run: npm ci
       - run: npx playwright install chromium --only-shell
+      - name: Install CJK font for tone review screenshots
+        run: |
+          mkdir -p "$HOME/.local/share/fonts/little-moments"
+          mkdir -p "$HOME/.config/fontconfig/conf.d"
+          cp tests/fixtures/ui-noto-sans-tc.ttf "$HOME/.local/share/fonts/little-moments/"
+          cp tests/fixtures/ui-fontconfig.conf "$HOME/.config/fontconfig/conf.d/99-little-moments.conf"
+          fc-cache -f "$HOME/.local/share/fonts/little-moments"
       - name: Tone grading and diamond interpolation tests
         timeout-minutes: 5
         run: npm run e2e -- e2e/tone-grading.spec.ts --trace off --workers=1

@@ -1,6 +1,8 @@
 # 交接手冊（HANDOFF）
 
 ## 色調本輪（優先於下方音訊成功歷史）
+- 人工檢視首輪fast截圖發現快速job未裝CJK，補與完整job相同Noto字型；另首輪播放統計只有media1buffer，效果原在3秒加入但量測0.5–1.6，補0秒插入FX並斷言media+grain必須2buffer，避免以未啟用特效冒充疊加驗收。產品src不變，下一輪需新5/156。
+- 首輪色調3f7c733/43587368211快速4/5：全13預設／10滑桿GPU像素／alpha、完整影片多影格、uniform資源重用及窄手機已過。冷暖定格首末／中點／局部重設／保存也過；重開後預設群組收合（使用者要求）令clip locator不存在，補expandAllGroups後選片，不改產品或放寬斷言，待新CI。
 - 規格plans/2026-11-14-tone-grading.md；新獨立色調頁，不能放剪輯。10參數13預設；菱形共享全部數值插值，未定格全片，有定格當前點，不動其他定格／transform。舊Keyframe.values新欄位缺省中性，animatedItem/trim/group都要保留全部色調。
 - GradeFilter單pass、uniform typed array原地更新，GlProgram快取；中性skip、無CPU逐幀getImageData、無新preview canvas／decoder，原本FrameResource共享不變。舊飽和先於色溫保持相容，alpha除後復乘。mediaStats colorAllocations/colorUpdates/colorPasses驗重用；預設SVG靜態無每幀渲染。
 - 本機369單元／型別／建置／Pages check已通過（NodeList用Array.from）；5新e2e預期156，CI快速先色調5再音訊3及播放30。先拿成功CI新圖／JSON，勿以前輪359/151作色調證據。PR11原仍open，交付前確認狀態再更新或新PR，不代Merge。
