@@ -1,0 +1,110 @@
+{
+  "before": {
+    "stats": {
+      "uploads": 3,
+      "colorAllocations": 0,
+      "colorUpdates": 0,
+      "colorPasses": 0,
+      "allocations": 3,
+      "buffers": 3,
+      "frames": [
+        {
+          "id": "i_b75a206acf56",
+          "width": 320,
+          "height": 180
+        },
+        {
+          "id": "t_24892bb00b04-frame",
+          "width": 171,
+          "height": 304
+        },
+        {
+          "id": "i_ef42e0d80793-blank",
+          "width": 256,
+          "height": 2
+        },
+        {
+          "id": "i_ef42e0d80793",
+          "width": 320,
+          "height": 180
+        },
+        {
+          "id": "i_d65e8c1940fc-blank",
+          "width": 256,
+          "height": 2
+        },
+        {
+          "id": "i_d65e8c1940fc",
+          "width": 320,
+          "height": 180
+        },
+        {
+          "id": "i_159ec023ca79-blank",
+          "width": 256,
+          "height": 2
+        },
+        {
+          "id": "i_159ec023ca79",
+          "width": 320,
+          "height": 180
+        }
+      ]
+    },
+    "hash": 1156392831,
+    "wall": 2026.1000000000931
+  },
+  "after": {
+    "stats": {
+      "uploads": 3,
+      "colorAllocations": 0,
+      "colorUpdates": 0,
+      "colorPasses": 0,
+      "allocations": 3,
+      "buffers": 3,
+      "frames": [
+        {
+          "id": "i_b75a206acf56",
+          "width": 320,
+          "height": 180
+        },
+        {
+          "id": "t_24892bb00b04-frame",
+          "width": 171,
+          "height": 304
+        },
+        {
+          "id": "i_ef42e0d80793-blank",
+          "width": 256,
+          "height": 2
+        },
+        {
+          "id": "i_ef42e0d80793",
+          "width": 320,
+          "height": 180
+        },
+        {
+          "id": "i_d65e8c1940fc-blank",
+          "width": 256,
+          "height": 2
+        },
+        {
+          "id": "i_d65e8c1940fc",
+          "width": 320,
+          "height": 180
+        },
+        {
+          "id": "i_159ec023ca79-blank",
+          "width": 256,
+          "height": 2
+        },
+        {
+          "id": "i_159ec023ca79",
+          "width": 320,
+          "height": 180
+        }
+      ]
+    },
+    "hash": 2411762418,
+    "wall": 2953.3000000000466
+  }
+}

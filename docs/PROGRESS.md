@@ -4,12 +4,12 @@
 
 ## 交接快照（VideoClip_2 最新狀態）
 
-- 分支 codex/editing-refinements，PR #12 draft：https://github.com/peiyulin0520/VideoClip_2/pull/12 。前輪 PR11 已合併，本輪不可合併或推 main。
-- Actions43626948329 / source14f70bcf5174a7b59d67f59b54d0cc8ea4045ffe：381單元/check、完整167瀏覽器全過；快速29編輯＋5色調/震動＋3音訊＋30生命週期全過。模板Pop實際3buffer/零新增配置、畫面hash持續改變；tone/震動零新增貼圖/濾鏡且有原音。
-- 定格四動作、獨立裁切/UV縮放/undo-redo、固定基地/自訂比例、統一命名/placeholder/圓角、多版型/局部有聲來源/輪序停格/子素材時間軸已驗收。167成功artifact主ZIP已核SHA，最終圖庫與PR仍待整理。
-- 使用者11/15追加：四裁切工具加左側單色圖示（空心四邊/四角圓點、不規則形、毛筆、橡皮擦），和播放操作明顯分區；底部功能頁籤改圖三直線底線，不要被切的圓角。已改，新增320/390/430同列/icon/44px及直線tab斷言；此追加check/381單元與建置已過，新版瀏覽器待驗。
-- 目前待修驗：偶發片尾live音訊突波0.092916，已找出延長已排淡出的排程，修正及3單元待驗。
-- 下一步：音訊截止修正check＋新Actions，下載最新成功截圖與量測，PR12 ready但不merge；Safari音訊、手勢、實機流暢度仍PLAN §7待真機。使用者錄影未放repo。
+- 分支 codex/editing-refinements，PR #12：https://github.com/peiyulin0520/VideoClip_2/pull/12 。前輪PR11已合併；本輪由使用者自行Merge，不開auto-merge、不推main。
+- 驗收source `b5f83655a567a0a713fb9f56d104085a55a0b01e` / Actions43662869767。387單元/check、快速29編輯＋5色調動作＋9音訊（三輪）＋30生命週期全過，完整167瀏覽器全部成功（8.0分鐘）。最後提交只含文件/量測/201張成功截圖，產品、測試與workflow和驗收source一致。
+- 本輪功能：定格選取/四動作、裁切獨立四工具/原UV縮放/undo-redo/X草稿、固定基地/自訂輸出比例、全頁素材名/原音名稱/真placeholder/圓角、多版型/局部有聲來源popup/輪序停格/子素材時間軸。11/15追加單色四工具圖示與分區、直線導航均實際驗320/390/430與computed radius0通過。
+- 偶發片尾突波已補兩層：停止時不延長既有fade deadline；僅原生檔尾加12ms安全緩衝。新版三輪live maxJump 0.004184/0.004109/0.003958（原0.092916），原<0.08門檻不變，所有原始輪次留validation。內部選段邊界與匯出不套原生EOF緩衝。
+- 完整artifact14140903796/14140619551的SHA-256已核對，201張新成功截圖、10張editing畫面；裁切/直線導航/來源popup/示意圖4張人工檢視。tone+shake 865.1ms新增貼圖/濾鏡0、26回呼/24uniform、0seek、有原音；Pop固定3buffer/0配置且hash改變。詳docs/validation/editing-refinements.md。
+- 下一步：由使用者審核並Merge PR12後發布；Safari實際聲音/手勢/長片FPS仍PLAN §7待真機，不能稱已測。使用者錄影未進repo。
 
 ## 本輪較早狀態（歷史）
 
@@ -20,6 +20,12 @@
 - 2026-11-14 E 階段自訂輸出比例：主預覽基地不依輸出比例改高，頂部比例可進入主預覽四邊/角拖曳草稿，X不儲存、套用才寫 width/height/customAspect。內框/框外斜紋分開。ProjectPreview 使用240方形固定基地 contain，不因4:3上下錯位；音訊來源固定160px基地，播放秒數同列。check/374單元成功，新瀏覽器待驗。
 
 ## 本輪日誌
+
+- 2026-11-15 完整交付驗收（source b5f83655a567a0a713fb9f56d104085a55a0b01e）
+  - Actions43662869767：387單元/check、167完整Chromium全過，另快速29編輯＋5色調動作＋9音訊（三輪）＋30生命週期全過。表單圓角12，導航radius0/直底線；320/390/430工具圖示/分區/44px、UV/匯出、定格/ABC/多版型/有聲來源均過。
+  - 三輪live maxJump0.004184/0.004109/0.003958，完整獨立0.003908；所有中間失敗/較大值亦保留JSON，不放寬門檻。tone+shake零新增貼圖/濾鏡、0seek且有原音；Pop零配置、固定buffer/hash改變。
+  - 兩份成功artifact核SHA，201張新成功圖只取PNG、無failure context；4張本輪主要圖人工檢視。USAGE/規格/驗收對照與原始量測同步。最後只文件/成功圖/量測，產品測試workflow不再更動。
+  - PR12交使用者審核Merge，未代合併或發布；Safari真機仍PLAN §7待驗。
 
 - 2026-11-15 原生檔尾時鐘緩衝
   - dd73418 / Actions43662176453快速29/5/9/30全過；3輪live maxJump為0.003908、0.061215、0.004082，原門檻0.08。第二輪仍有EOF小突波（未隱藏/未挑掉）。

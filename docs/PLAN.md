@@ -436,3 +436,7 @@ docs/
 - iPhone Safari：裁切四工具同列、雙指縮放移動後原UV保留與無閃爍；有聲選段及X關閉不殘留播放。
 - 自訂比例只改內框，固定預覽基地/斜紋框外，4:3來源popup左右等基地。
 - 多版型輪序停格、當前原音、子圖層觸控/重排/來源選段、長片多組流暢度；Chromium不能代替真機FPS/爆音驗證。
+
+2026-11-15 追加真機待驗：四裁切SVG圖示與分區、320–430px直線導航、iOS字體/瀏覽器工具列下無裁切溢出；原檔EOF短緩衝在Safari喇叭/耳機與長片seek/背景切回的聽感仍需真機。
+
+本輪最終：[Actions43662869767](https://github.com/peiyulin0520/VideoClip_2/actions/runs/43662869767)，source b5f83655a567a0a713fb9f56d104085a55a0b01e：387單元、167 Chromium、29/5/9/30快速全過。201成功圖核兩份artifact SHA，原音三輪/動作零配置詳validation/editing-refinements.md；PR12交使用者Merge，以上真機項目保持待驗。

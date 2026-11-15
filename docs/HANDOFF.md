@@ -1,3 +1,16 @@
+# 交接手冊（HANDOFF）
+
+## 本輪最新狀態（先讀）
+
+- PR12由使用者審核Merge：https://github.com/peiyulin0520/VideoClip_2/pull/12 。分支codex/editing-refinements，source b5f83655a567a0a713fb9f56d104085a55a0b01e / Actions43662869767：387單元/check、167完整、快速29+5+9+30全部成功。最後提交只文件/量測/201成功圖，產品、測試、workflow與此source一致；不可代合併、開auto-merge或推main。
+- 主artifact14140903796 SHA ff86dac1d83b15e24089cf8a18d2092d35d60fc68d0c2bc18aa8e7dd8704f735；refinement14140619551 SHA faf5d5d1f67f938bde30f15567e65284da09fd4ca8e12119fc72b395bc3e6549均核對。201成功PNG/10editing，新裁切/導航/來源popup/示意4張人工看過，不用較早失敗圖冒充。
+- 新三輪live maxJump0.004184/0.004109/0.003958、完整0.003908。target0不延長既有fade；只有native EOF才提早12ms，內部選段/離線匯出不改。6新增單元＋三輪套件保持原<0.08。前/中/後JSON全部保留validation。
+- 色調/顆粒/柔焦/震動：865.1ms新增貼圖/色調濾鏡0，影片回呼+26/uniform+24/上傳+36、0seek、energy0.112007。模板Pop927.2ms固定3buffer/0新增配置，hash持續改變。不是Safari FPS保證。
+- 四工具currentColor SVG（Brush尖頭毛筆）、工具區與播放區、直線tab（#root高specificity，radius0）已驗320/390/430。穩定mask canvas、UV縮放、Sheet X快照與local draft、templateCellDraft遷移/多組/輪序/來源binding見下方歷史；USAGE為目前操作。Safari聲音/手勢/長片仍PLAN §7待真機。
+- 沒有待修程式；下一步使用者Merge與真機驗。以下保留中間失敗與決策，不能拿較早狀態覆蓋本段。
+
+## 本輪過程與踩坑（歷史）
+
 > 原生檔尾補強：dd73418快速29+5+9+30全過，但3輪live0.003908/0.061215/0.004082，其中一次EOF仍有較小突波，不能當完全解決。AudioBus.flush只在nativeRemaining<=windowRemaining+12ms時，將end提早12ms，避免native EOF早於兩時鐘估計一小段；中間選段維持exact end。加3個正常/變速/內部邊界測試；新387/check已過，CI待驗。不得只保留成功最小值。
 
 > 最新音訊阻擋：43661477158新29編輯/5tone通過，tab radius0/圖示已驗；live音訊maxJump0.092916>原門檻0.08。原排end3.027404，3.018594收到target0改排12ms至3.030594，native EOF時3.034535 PCM0.093799→0.000883；這是真實排程延長，不可重跑挑綠或放寬。AudioBus.ramp silenceBudget限制零目標為舊end-now，3測試涵蓋window/pause/seek deadline；新check/384已過，CI待驗。e2e寫metrics改在assert前，保留失敗證據。fast音訊--repeat-each=3，共9項，驗偶發而非只挑一次成功。
@@ -20,7 +33,7 @@
 
 > 進行中：2026-11-14 定格及23點需求，依 docs/plans/2026-11-14-editing-refinements.md。前輪369/156是基線。A 階段 check/370單元已過，新瀏覽器驗收待 Actions。CropEditor 改 stable canvas，mask.base empty 讓筆刷可單獨保留；useDraftHistory 支援 redo。Sheet 僅 X/backdrop 回復 project/past/future 快照，正常 apply 呼叫 owner onClose 不回復。
 
-# 交接手冊（HANDOFF）
+
 
 ## 色調本輪（優先於下方音訊成功歷史）
 - 最終驗收（2026-11-14）：[Actions43588524060](https://github.com/peiyulin0520/VideoClip_2/actions/runs/43588524060)，驗收source `89872488fe0b866eae873799feca7235a9d4496d`；369單元、156 Chromium瀏覽器全過，另5色調＋3音訊＋30快速全過（156的子集）；lint／格式／TypeScript／build／Pages／PWA及39字體檢查成功。最後僅文件／量測／成功截圖提交，產品、測試與設定和source一致。
