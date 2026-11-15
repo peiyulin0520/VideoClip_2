@@ -3996,12 +3996,12 @@ textarea.text-input.area {
   margin: 0 0 4px;
 }
 /* Navigation uses a straight underline, independent of rounded action controls. */
-.editor .bottombar .tabs .tab {
+:root[data-theme] #root .editor .bottombar .tabs .tab {
   border-radius: 0;
   border: 0;
   border-bottom: 2px solid transparent;
   background: transparent;
 }
-.editor .bottombar .tabs .tab.active {
+:root[data-theme] #root .editor .bottombar .tabs .tab.active {
   border-bottom-color: var(--accent);
 }
