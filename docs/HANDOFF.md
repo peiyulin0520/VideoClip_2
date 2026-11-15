@@ -3,7 +3,7 @@
 ## 本輪播放／匯入修復（進行中，先讀）
 
 - 分支codex/playback-import-reliability，main1971bae/PR13已合併。使用者確認參考原版VideoClip網站；本輪方案及測試見plans/2026-11-15-playback-import-reliability.md，尚待Actions，不宣稱Safari真機完成。
-- AudioBus.mode在iOS無AudioSession走native；WebAudio prime必須在play之前同手勢。ctx由Preview保留跨尺寸/畫質重建，只有專案離開close；不要讓背景重建重新索取聲音權限。
+- AudioBus.mode在iOS無AudioSession走native；WebAudio prime必須在play之前同手勢。ctx由Preview保留跨尺寸/畫質重建，只有專案離開close；cancelled初始化若仍共用目前ctx必須keep，closed ctx不可沿用；不要讓背景重建重新索取聲音權限。
 - 首畫面ready不依賴全片proxy/filmstrip。useMediaPreparation/PausedMediaQueue負責暫停後工作，播放即abort、縮圖分段持久化；失敗用原檔本次不忙重試。不要把每2秒真縮圖換回8張overview，也不要在播放中換URL。
 - 播放條獨立訂閱，Preview僅暫停更新選取時間；短readyState缺口不能pause全部媒體，保留15秒錯誤看門狗。舊native預聽細部音量有限，匯出仍精確。
 

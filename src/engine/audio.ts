@@ -76,6 +76,7 @@ export class AudioBus {
   private allowed: Set<HTMLMediaElement>;
   constructor(elements: HTMLMediaElement[], existing?: AudioContext) {
     this.allowed = new Set(elements);
+    if (existing?.state === 'closed') existing = undefined;
     const nav = navigator as Navigator & { audioSession?: unknown };
     this.mode = existing
       ? 'webaudio'

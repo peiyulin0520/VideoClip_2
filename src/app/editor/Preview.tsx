@@ -150,7 +150,10 @@ export function Preview({ projectId, width, height }: { projectId: string; width
     })()
       .then(async (player) => {
         if (!player) return;
-        if (cancelled) return player.destroy();
+        if (cancelled)
+          return player.destroy({
+            keepAudioContext: !!player.audioContext && player.audioContext === audioContext.current,
+          });
         created = player;
         useUI.setState({ player });
         const resume = resumeRef.current;

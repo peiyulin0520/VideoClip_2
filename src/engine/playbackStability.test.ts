@@ -367,3 +367,20 @@ it('does not replace an active decoder URL during playback; paused video and aud
   video.destroy();
   audio.destroy();
 });
+
+it('does not retain a closed audio context after an interrupted preview rebuild', () => {
+  const old = context().ctx;
+  old.state = 'closed';
+  const fresh = context().ctx;
+  const factory = vi.fn(function () {
+    return fresh;
+  });
+  vi.stubGlobal('AudioContext', factory);
+  const bus = new AudioBus([], old as unknown as AudioContext);
+  expect(bus.context).toBeNull();
+  expect(old.createDynamicsCompressor).not.toHaveBeenCalled();
+  bus.unlock();
+  expect(bus.context).toBe(fresh);
+  expect(factory).toHaveBeenCalledOnce();
+  bus.destroy();
+});
