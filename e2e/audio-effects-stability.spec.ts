@@ -106,12 +106,12 @@ test('音訊真實波形在片頭片尾、剪段、暫停重播及跳轉均平�
       ).probeResult,
   );
   console.info('Live preview audio envelope', JSON.stringify(live));
+  await mkdir('test-results', { recursive: true });
+  await writeFile('test-results/audio-wave-metrics.json', JSON.stringify({ normal, loud, live }, null, 2));
   expect(live.samples).toBeGreaterThan(48000);
   expect(live.peak).toBeGreaterThan(0.05);
   expect(live.peak).toBeLessThanOrEqual(1);
   expect(live.maxJump).toBeLessThan(0.08);
-  await mkdir('test-results', { recursive: true });
-  await writeFile('test-results/audio-wave-metrics.json', JSON.stringify({ normal, loud, live }, null, 2));
   await shot(page, 'audio-envelope-controls');
 });
 test('色散與故障疊加共用一次來源上傳，連續播放不反覆seek，移除效果正確釋放', async ({ page }) => {

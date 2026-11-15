@@ -1,3 +1,5 @@
+> 最新音訊阻擋：43661477158新29編輯/5tone通過，tab radius0/圖示已驗；live音訊maxJump0.092916>原門檻0.08。原排end3.027404，3.018594收到target0改排12ms至3.030594，native EOF時3.034535 PCM0.093799→0.000883；這是真實排程延長，不可重跑挑綠或放寬。AudioBus.ramp silenceBudget限制零目標為舊end-now，3測試涵蓋window/pause/seek deadline；新check/384已過，CI待驗。e2e寫metrics改在assert前，保留失敗證據。
+
 > 新坑：rounded全域`:is`中有input屬性selector，specificity比單看chip/tab高；`.editor .bottombar .tabs .tab`仍輸給全域，43661078172實際computed radius12。導航規則加`:root[data-theme] #root`明確勝出，保留radius0測試，不降標準。該版320/390/430四工具/圖示/44px已過，快速28/29；新check/381單元已過，Actions待驗。
 
 > 11/15追加圖示/頁籤：CropToolIcon四單色currentColor SVG（Brush尖頭毛筆，非Paintbrush寬刷），crop-tool-section有標題/邊框底區與crop-action-section分開；四列按文字長度分配，320px維持四工具同列。`.editor .bottombar .tabs .tab`高specificity只把導航改radius0/straight underline，保留操作/表單12px。新viewport/icon/tab斷言等待新版Actions，check/381單元已過。前版14f70bc source的Actions43626948329完整167、快速29+5+3+30、check381全過；Pop零配置/hash改變、tone+shake零配置/原音持續，不能把這版成功圖冒充追加後新版。主artifact14126748541 SHA bfacd6b90bfa48b4f7be9621ae6035d3511575a6892dbf013f92144964f2f563已核對，位/tmp/lm-editing-14；最終圖需新source。

@@ -240,3 +240,36 @@ it('anchors repeated pause/seek in one audio quantum without dropping or restart
   expect(gain.gain.cancelAndHoldAtTime).not.toHaveBeenCalled();
   bus.destroy();
 });
+
+it.each(['window', 'pause', 'seek'] as const)(
+  'does not extend an imminent audio fade deadline when %s requests silence',
+  (action) => {
+    vi.useFakeTimers();
+    const { ctx, gain } = context();
+    const el = document.createElement('video');
+    vi.spyOn(el, 'paused', 'get').mockReturnValue(false);
+    const pause = vi.spyOn(el, 'pause').mockImplementation(() => {});
+    const seek = vi.fn();
+    const bus = new AudioBus([el], ctx as unknown as AudioContext);
+    bus.set(el, 2, { start: 0, end: 3 }, 0); // Audio-clock deadline is 4.
+    bus.flush();
+    ctx.currentTime = 3.994;
+    gain.gain.linearRampToValueAtTime.mockClear();
+    el.dataset.previewIntent = 'pause';
+    if (action === 'window') {
+      bus.clear();
+      bus.flush();
+    } else if (action === 'pause') bus.pause(el);
+    else bus.deferSeek(el, seek);
+    const [level, deadline] = gain.gain.linearRampToValueAtTime.mock.calls.at(-1)!;
+    expect(level).toBe(0);
+    expect(deadline).toBeCloseTo(4, 8);
+    expect(pause).not.toHaveBeenCalled();
+    expect(seek).not.toHaveBeenCalled();
+    ctx.currentTime = 4.001;
+    vi.advanceTimersByTime(20);
+    if (action === 'pause') expect(pause).toHaveBeenCalledOnce();
+    if (action === 'seek') expect(seek).toHaveBeenCalledOnce();
+    bus.destroy();
+  },
+);

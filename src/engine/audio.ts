@@ -129,7 +129,12 @@ export class AudioBus {
     // Hold silence briefly before a fresh fade-in so a late block cannot enter mid-ramp.
     const remaining = end === undefined ? Infinity : Math.max(0, end - now);
     const delay = target > 0 && current <= 0.000001 ? Math.min(AUDIO_FADE * 2, remaining / 3) : 0;
-    const fade = Math.min(AUDIO_FADE, (remaining - delay) / 2);
+    // A late UI tick may request silence while the edit-boundary fade is already
+    // running. Preserve its deadline: restarting a full fade can outlive the
+    // native source's EOF and expose a nonzero last sample.
+    const silenceBudget =
+      target === 0 && node.envelope.end !== undefined ? Math.max(0, node.envelope.end - now) : Infinity;
+    const fade = Math.min(AUDIO_FADE, (remaining - delay) / 2, silenceBudget);
     if (delay) param.setValueAtTime(current, now + delay);
     param.linearRampToValueAtTime(target, now + delay + fade);
     if (end !== undefined && target > 0) {
