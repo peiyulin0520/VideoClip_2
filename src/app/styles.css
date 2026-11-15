@@ -4005,3 +4005,16 @@ textarea.text-input.area {
 :root[data-theme] #root .editor .bottombar .tabs .tab.active {
   border-bottom-color: var(--accent);
 }
+
+.app-update-notice {
+  position: relative;
+  margin: 8px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px;
+  background: var(--panel);
+  color: var(--fg);
+  border: 1px solid var(--line);
+  border-radius: 12px;
+}

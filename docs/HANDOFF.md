@@ -1,6 +1,17 @@
 # 交接手冊（HANDOFF）
 
-## 本輪最新狀態（先讀）
+## 載入錯誤修復交付（先讀）
+
+- PR13：https://github.com/peiyulin0520/VideoClip_2/pull/13 ，codex/recover-module-loading。source19291aeb4efd413e085a2b16c686734040535462 / Actions43668024373：399單元/check、169完整、快速2+29+5+9+30全過。最後提交只文件/PNG，程式/測試/設定與source一致。由使用者Merge後發布，不能代合併/auto-merge/推main。
+- 問題：80% Importing a module script failed，舊retry只重建Player仍留在相同failed ESM document；Pixi原lazy Renderer及強制PWA更新有混版風險。沒Safari原始stack，不能聲稱唯一網路原因或素材損壞。
+- appRecovery.ts分類ESM vs media；reloadAppCode保留path/query/hash加cache-bust，只更新exact app scope worker，getRegistration受限可重開，update8秒/worker10秒上限、等待啟用後replace。Toasts只save當前路由project（避免首頁把已刪舊project存回），pause後完整重開；不動IDB/OPFS/字體/其他cache。Preview無Player不給skip。
+- build.codeSplitting=false把Renderer納入約1.77MB主程式，workers仍分離；Pages驗single非worker bundle/no相對lazy imports/precache含main。Router未用generic import(e.module)可存在；worker只允許手動SKIP_WAITING message handler，無無條件skip或clientsClaim。
+- PWA prompt/injectRegisterfalse；main自行load後register(updateViaCache none)。首頁明確更新，editor不自動重整。watch既有installer立即檢查installed，避免錯過快事件。首次從舊PWA過渡可能需重新整理等安裝後關閉舊分頁/主畫面App再重開；不清網站資料。
+- 12單元＋2e2e（第二例含錯誤按鈕及首頁更新按鈕）。實際同hash重開、名稱/assets/tracks/OPFS sentinel/cache保留、無自動播放；無WebGPU仍可WebGL預覽。首頁通知用installer事件模擬，不當作兩版Safari部署已驗。
+- fast artifact14142943701 /2318200 bytes，SHA eb4031eccbdecd84dd7b41529d97b949fb9a89d535b4c1408b72b3095196ae14已核；只copy module-recovery 3 PNG並人工看過，舊201圖仍PR12基線。完整報告artifact14143032750未另copy全圖。
+- 操作USAGE#程式元件載入失敗時、驗收validation/module-recovery.md；沒有待修程式。下一步使用者Merge並等待Pages發布，再Safari真機確認，PLAN §7仍未驗。
+
+## PR12 交付狀態（歷史）
 
 - PR12由使用者審核Merge：https://github.com/peiyulin0520/VideoClip_2/pull/12 。分支codex/editing-refinements，source b5f83655a567a0a713fb9f56d104085a55a0b01e / Actions43662869767：387單元/check、167完整、快速29+5+9+30全部成功。最後提交只文件/量測/201成功圖，產品、測試、workflow與此source一致；不可代合併、開auto-merge或推main。
 - 主artifact14140903796 SHA ff86dac1d83b15e24089cf8a18d2092d35d60fc68d0c2bc18aa8e7dd8704f735；refinement14140619551 SHA faf5d5d1f67f938bde30f15567e65284da09fd4ca8e12119fc72b395bc3e6549均核對。201成功PNG/10editing，新裁切/導航/來源popup/示意4張人工看過，不用較早失敗圖冒充。
