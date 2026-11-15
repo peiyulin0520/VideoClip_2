@@ -93,9 +93,11 @@ export function registerAppWorker(onUpdate: () => void) {
       waiting();
       const watch = () => {
         const worker = registration.installing;
-        worker?.addEventListener('statechange', () => {
-          if (worker.state === 'installed' && navigator.serviceWorker.controller) onUpdate();
-        });
+        const ready = () => {
+          if (worker?.state === 'installed' && navigator.serviceWorker.controller) onUpdate();
+        };
+        worker?.addEventListener('statechange', ready);
+        ready();
       };
       watch();
       registration.addEventListener('updatefound', watch);

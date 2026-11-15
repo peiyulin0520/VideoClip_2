@@ -73,4 +73,31 @@ test('Safari模組錯誤提供更新程式，完整重開原專案且保留素�
   expect(after.cache).toBe('keep-cache');
   expect(after.playing).toBe(false);
   await page.screenshot({ path: 'docs/screenshots/module-recovery/project-reopened.png' });
+  // Exercise the other explicit update entry, without replacing a real worker mid-edit.
+  await page.getByRole('link', { name: '回首頁', exact: true }).tap();
+  await page.reload();
+  await expect(page.getByRole('button', { name: '新增專案', exact: true })).toBeVisible();
+  await expect.poll(() => page.evaluate(() => !!navigator.serviceWorker.controller)).toBe(true);
+  await page.evaluate(async () => {
+    const registration = await navigator.serviceWorker.register('/VideoClip_2/sw.js', {
+      scope: '/VideoClip_2/',
+      updateViaCache: 'none',
+    });
+    const installer = new EventTarget();
+    Object.defineProperty(installer, 'state', { value: 'installed' });
+    Object.defineProperty(registration, 'installing', { configurable: true, value: installer });
+    try {
+      registration.dispatchEvent(new Event('updatefound'));
+      installer.dispatchEvent(new Event('statechange'));
+    } finally {
+      Reflect.deleteProperty(registration, 'installing');
+    }
+  });
+  await expect(page.getByRole('button', { name: '更新程式', exact: true })).toBeVisible();
+  await page.screenshot({ path: 'docs/screenshots/module-recovery/home-update-ready.png' });
+  const previousStamp = new URL(page.url()).searchParams.get('lm2-code-reload');
+  await page.getByRole('button', { name: '更新程式', exact: true }).tap();
+  await page.waitForURL((url) => url.searchParams.get('lm2-code-reload') !== previousStamp);
+  await expect(page.getByRole('button', { name: '新增專案', exact: true })).toBeVisible();
+  await expect(page.getByRole('button', { name: '更新程式', exact: true })).toHaveCount(0);
 });

@@ -29,6 +29,10 @@
 
 ## 本輪日誌
 
+- 2026-11-15 首頁更新入口補驗
+  - 46310ec新版2載入恢復＋29編輯＋5色調＋9音訊已通過，完整回歸待完。將首頁waiting update→更新程式→重開也接進同一恢復case，確保新按鈕確實可操作。
+  - registerAppWorker監看現有installer時立即檢查installed狀態，避免太快完成而錯過狀態事件。新check/399單元已過，Actions待驗。
+
 - 2026-11-15 專案80%模組錯誤恢復（codex/recover-module-loading）
   - 使用者回報Safari Importing a module script failed，舊重試留在同文件，失敗ESM會重用；bundle取消主線code splitting，build驗單一完整main/precache/不fetch相對lazy chunk；worker仍分離並保留原始媒體fallback。
   - 明確程式重開、儲存同專案、只更新scope worker/activate waiting、保留hash/cache/OPFS；舊素材錯誤仍普通retry。PWA等待更新不接管編輯，首頁提供更新程式，不強迫重整使用中的專案。

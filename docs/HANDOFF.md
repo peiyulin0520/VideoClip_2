@@ -5,6 +5,7 @@
 - PR12已Merge/main8b76117，新分支codex/recover-module-loading。使用者80% Safari module script failed，按retry無效。程式bundle之前Pixi會lazy importRenderer，舊retry重用被瀏覽器cache的failed module；autoUpdate清舊chunk也有版本混用風險。不是確認影片檔壞，不刪資料。
 - appRecovery.ts分類ESM錯誤並更新本app scope worker/activate waiting/完整replace同hash、加cache-bust query；Toasts先saveProject當下路由專案再reload。getRegistration受限可直接重開，update檢查8秒/worker10秒上限。舊素材/codec錯誤保留原retry；Player未create不給skip。
 - 主Vite bundle codeSplitting false；verify-pages驗single entry/no relative chunk imports/precache main/no skipWaiting/claim。PWA prompt/injectRegisterfalse，自行load後register(updateViaCache none)，waiting時只首頁顯示更新，不強制覆蓋正在編輯的文件。
+- 首頁更新入口也納入恢復e2e：已active worker，模擬installer狀態事件通知，點實際首頁更新按鈕重新開啟；register watch立即ready檢查防錯過已installed事件。check/399通過，新瀏覽器待驗。
 - 新12單元399過；初次TS mockPromise unknown已改ServiceWorkerRegistration。build只阻止相對chunk imports：Router有未使用generic import(e.module)不能當Pixi lazy chunk；SW手動SKIP_WAITING message handler可存在，禁止的是無條件啟用。2e2e走Actions待跑：阻擋非index chunks仍開圖，Safari錯誤→有聲原件/OPFS sentinel/cache不刪/名稱與tracks同hash保存、無自動播放。
 - 399單元/39檔、lint/build/Pages/PWA/39字體通過；無WebGPU加在新e2e首例，169瀏覽器/新PR/截圖待驗。以下PR12是已合併的歷史基線，不是當前待修結論。
 
