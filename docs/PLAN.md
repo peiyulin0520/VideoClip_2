@@ -451,3 +451,6 @@ docs/
 - 原版VideoClip參考策略：AudioSession有／無的Safari首次有聲播放、靜音鍵/耳機/背景回來、切540/720/比例沿用context、拖回0。舊iOS native預聽volume限制與匯出細部音量分別驗。
 - 匯入長片只等首畫面，背景進度可先編輯；play／來源popup預聽／畫布手勢即停止optional解碼，pause後繼續每2秒真縮圖，驗長片後段準確與無聲舊cache重建。
 - 捲動／色調＋多效果／來源視窗關閉後的FPS與爆音需Safari真機。Chromium自製素材只能驗授權順序/音軌波形/資源，不宣稱已測同一iPhone原片。
+
+
+2026-11-15 本輪Chromium最終：[Actions43675152122](https://github.com/peiyulin0520/VideoClip_2/actions/runs/43675152122)，sourcebffd168bfde821aaa1e8d92bb74ae352b64a5a6f：412單元/check、174完整及33/2/29/5/9/30快速全部通過；音訊三輪maxJump約0.0041，門檻0.08不改。2新成功PNG核fast artifact SHA並人工檢視。以上Safari真機項目仍待驗，詳validation/playback-import.md。PR14由使用者自行Merge。

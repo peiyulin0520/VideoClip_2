@@ -4,9 +4,12 @@
 
 ## 交接快照（VideoClip_2 最新狀態）
 
-- 本輪分支 `codex/playback-import-reliability`，由已合併 PR13 的 main1971bae 起。使用者最新確認參考 **原版VideoClip網站**，優先處理預覽無聲／卡頓與匯入過久。
-- 已實作手勢內音訊prime、無AudioSession的iOS native fallback、切畫質保留context、短缺frame不全域pause、獨立播放列。匯入改metadata＋目前畫面先就緒，轉檔／每2秒真縮圖只在暫停背景準備，取消可接續，舊silent cache查音軌後重建。
-- 最新412單元／41檔與check已過。初版Actions43674079537新增4＋2載入＋29編輯＋5色調＋9音訊成功，但完整3例有背景seek/版面競態；第二版43674613411的快速ABC亦發現seek回舊秒數。已修refresh同時間通知與提示列高，新增第5個確定性瀏覽器測試並把受影響檔加入快測；新版Actions待驗，不能稱Safari已修妥。PR14草稿：https://github.com/peiyulin0520/VideoClip_2/pull/14 ，由使用者自行Merge。
+- PR14：https://github.com/peiyulin0520/VideoClip_2/pull/14 ，分支codex/playback-import-reliability。PR13已合併；本輪由使用者自行Merge，不代合併／auto-merge／推main。
+- 最終驗收source `bffd168bfde821aaa1e8d92bb74ae352b64a5a6f` / Actions43675152122：412單元／41檔與check、174完整Chromium（12.1m）全過，快速33＋2＋29＋5＋9（三輪音訊）＋30全部成功。最後提交只文件/量測/2成功PNG，產品、測試、workflow與source一致。
+- 使用者確認參考**原版VideoClip網站**：手勢內啟用原音、無AudioSession的iOS native fallback、切畫質沿用context、短暫缺frame不全域pause。時鐘訂閱分離播放列；匯入metadata＋目前畫面先就緒，proxy及每2秒真縮圖只在暫停背景準備，播放/預聽/畫布及時間軸手勢立即取消、部分縮圖可接續。原檔匯出不變。
+- 初版背景refresh同時間通知及提示列高使seek/拖曳失敗已修：refresh只在clamp實改時間emit，進度absolute在預覽。原advanced/feedback/story/GIPHY/ABC時間與像素斷言保留；新增確定性scroll→refresh回歸。初、中版失敗保留日誌，不以舊快測冒充完整成功。
+- 音訊三輪live maxJump0.004138／0.004171／0.004067，完整0.004067，原<0.08門檻不改。fast artifact14146372790／2,631,919 bytes下載核SHA b66e52499260b2c47217f8865d17df19b72faeccb71cfddfd7f88b5d61579672，2新PNG人工檢視；舊204圖為前輪基線，不批次替換。詳validation/playback-import.md與USAGE。
+- 下一步：使用者Merge PR14並等待Pages發布，再iPhone Safari驗首次原音、零秒重播、切畫質、長片/多效果及靜音鍵/背景返回。Chromium有實際音軌/PCM及資源斷言，仍不能稱Safari原片FPS/聽感已驗。proxy完成前先用原檔；舊iOS native預聽細部音量有限，匯出仍保留設定。
 
 ## PR13 已交付基線（歷史）
 
@@ -35,6 +38,12 @@
 - 2026-11-14 E 階段自訂輸出比例：主預覽基地不依輸出比例改高，頂部比例可進入主預覽四邊/角拖曳草稿，X不儲存、套用才寫 width/height/customAspect。內框/框外斜紋分開。ProjectPreview 使用240方形固定基地 contain，不因4:3上下錯位；音訊來源固定160px基地，播放秒數同列。check/374單元成功，新瀏覽器待驗。
 
 ## 本輪日誌
+
+- 2026-11-15 播放／匯入完整驗收交付（sourcebffd168 / PR14）
+  - Actions43675152122：412單元與check、174完整（12.1m）全過；快速33背景/操作＋2載入＋29編輯＋5色調＋9三輪音訊＋30生命週期全部成功。含首播native PCM、同context換畫質、短readiness缺口不pause、永久阻塞optional仍能編輯、全片2秒真縮圖及先前seek/拖曳失敗。
+  - 三輪live maxJump0.004138112／0.004171133／0.004067361、完整0.004067361；原<0.08不改。量測JSON與兩張成功圖保存，fast artifact SHA已核並人工檢視；不放使用者錄影、不批次替換舊圖。
+  - PR14交使用者Merge；Safari聲音/靜音鍵/長片FPS及舊native音量限制列PLAN §7，未宣稱真機完成。最後僅文件/量測/成功PNG，不再更動通過驗收的產品/測試/workflow。
+
 
 - 2026-11-15 背景工作與時間軸競態修正
   - 初版完整回歸取消前有3失敗（advanced選段、feedback跨層、story補色後seek），已下載artifact14146380206查看原始error-context，未略過。兩個seek停在舊秒數，背景project.refresh會emit同時間覆蓋尚未派送的scroll；改只有clamp時間改變才emit。

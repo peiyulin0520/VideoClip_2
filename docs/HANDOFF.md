@@ -1,13 +1,14 @@
 # 交接手冊（HANDOFF）
 
-## 本輪播放／匯入修復（進行中，先讀）
+## 本輪播放／匯入修復（交付，先讀）
 
-- 分支codex/playback-import-reliability，main1971bae/PR13已合併。使用者確認參考原版VideoClip網站；本輪方案及測試見plans/2026-11-15-playback-import-reliability.md，尚待Actions，不宣稱Safari真機完成。
-- AudioBus.mode在iOS無AudioSession走native；WebAudio prime必須在play之前同手勢。ctx由Preview保留跨尺寸/畫質重建，只有專案離開close；cancelled初始化若仍共用目前ctx必須keep，closed ctx不可沿用；不要讓背景重建重新索取聲音權限。
-- 首畫面ready不依賴全片proxy/filmstrip。useMediaPreparation/PausedMediaQueue負責暫停後工作，播放即abort、縮圖分段持久化；失敗用原檔本次不忙重試。不要把每2秒真縮圖換回8張overview，也不要在播放中換URL。
-- 背景提示必須absolute在主預覽，不能增減時間軸上方列高；Player.refresh只在clamp實際改time時emit，metadata更新不能在尚未派送scroll前推回舊time。初版3失敗與修復見PROGRESS。
-- 播放條獨立訂閱，Preview僅暫停更新選取時間；短readyState缺口不能pause全部媒體，保留15秒錯誤看門狗。舊native預聽細部音量有限，匯出仍精確。
-
+- PR14：https://github.com/peiyulin0520/VideoClip_2/pull/14 ，分支codex/playback-import-reliability，main1971bae／PR13已合併。本輪sourcebffd168bfde821aaa1e8d92bb74ae352b64a5a6f / Actions43675152122：412單元/check、174完整Chromium及快速33/2/29/5/9/30全過。最後提交只文件/量測/PNG，產品/測試/workflow與source一致。只能由使用者Merge。
+- 原版VideoClip是使用者確認的參考。方案見plans/2026-11-15-playback-import-reliability.md；驗收及圖見validation/playback-import.md，操作見USAGE。Safari原片、靜音鍵及長片FPS仍PLAN §7待驗。
+- AudioBus.mode：iOS無AudioSession用native；WebAudio prime必須在play前同手勢，分離音訊也unlock。ctx由Preview保留跨尺寸/畫質重建，專案離開close；cancelled初始化若仍共用當前ctx必須keep，closed ctx不可沿用。舊native預聽細部音量有限，設定/匯出保留。
+- 首畫面ready不依賴全片proxy/filmstrip。useMediaPreparation/PausedMediaQueue暫停後做序列工作，播放/外部來源預聽/畫布/裁切/範圍/時間軸手勢即abort；縮圖部分持久化後續做。失敗本隊列不忙重試，原檔仍可用；每2秒真縮圖不得換回8張overview。Blob直接重用，不fetch大blob URL複製，pool只在暫停換proxyURL。未驗聲音的舊proxy先查音軌。
+- 初版3失敗、第二版ABC/GIPHY seek回舊時間，根因之一為Player.refresh在cache更新emit舊時間覆蓋待派送scroll；現在只有clamp實改time才emit。背景進度absolute在預覽，不能增減時間軸上方列高干擾拖曳。確定性scrollLeft→refresh回歸及原時間/像素斷言均過。
+- 播放條獨立訂閱，Preview只在暫停更新選取時間；短readyState缺口不pause全部媒體，保留15秒錯誤看門狗。既有音訊包絡/EOF緩衝/削峰不放寬。
+- 三輪live maxJump0.004138/0.004171/0.004067（limit0.08）；完整0.004067。fast artifact14146372790 SHA b66e52499260b2c47217f8865d17df19b72faeccb71cfddfd7f88b5d61579672已核，2新PNG人工檢視。原204圖保持歷史基線；完整artifact14146492590遠端31,236,842 bytes未另下載，不冒充已核。
 
 ## 載入錯誤修復交付（先讀）
 
