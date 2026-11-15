@@ -18,6 +18,25 @@ test('裁切工具同列、筆刷獨立保留、縮放不丟座標、undo/redo �
   await page.getByRole('button', { name: '裁切', exact: true }).tap();
   const tools = page.locator('.crop-tools .chip');
   expect(await tools.count()).toBe(4);
+  await expect(tools.locator('svg')).toHaveCount(4);
+  await expect(page.getByRole('region', { name: '裁切工具', exact: true })).toBeVisible();
+  await expect(page.getByRole('group', { name: '預覽與套用', exact: true })).toBeVisible();
+  for (const width of [320, 390, 430]) {
+    await page.setViewportSize({ width, height: 844 });
+    const fit = await tools.evaluateAll((es) =>
+      es.map((e) => ({
+        overflow: e.scrollWidth - e.clientWidth,
+        fill: getComputedStyle(e.querySelector('svg')!).fill,
+        height: e.getBoundingClientRect().height,
+      })),
+    );
+    for (const f of fit) {
+      expect(f.overflow).toBeLessThanOrEqual(1);
+      expect(f.fill).toBe('none');
+      expect(f.height).toBeGreaterThanOrEqual(44);
+    }
+  }
+  await page.setViewportSize({ width: 390, height: 844 });
   const boxes = await tools.evaluateAll((es) =>
     es.map((e) => ({ y: e.getBoundingClientRect().y, h: e.getBoundingClientRect().height })),
   );
@@ -48,6 +67,14 @@ test('裁切工具同列、筆刷獨立保留、縮放不丟座標、undo/redo �
         ).mask,
     ),
   ).toBeUndefined();
+  const tabStyle = await page.getByRole('tab', { name: '剪輯', exact: true }).evaluate((el) => {
+    const style = getComputedStyle(el);
+    return { radius: style.borderRadius, underline: style.borderBottomWidth };
+  });
+  expect(tabStyle).toEqual({ radius: '0px', underline: '2px' });
+  await page.getByRole('tab', { name: '剪輯', exact: true }).tap();
+  await expect(page.getByRole('button', { name: '裁切', exact: true })).toBeVisible();
+  await page.screenshot({ path: 'docs/screenshots/editing/straight-navigation-tabs.png' });
 });
 
 test('選段預覽由播放按鈕啟用原音，秒數及 undo/redo 在同列', async ({ page }) => {

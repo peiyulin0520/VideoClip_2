@@ -1,6 +1,6 @@
 import { MediaPlayback } from '../../ui/MediaPlayback';
 import { useEffect, useRef, useState, type PointerEvent } from 'react';
-import { Undo2, Redo2, ZoomIn, ZoomOut } from 'lucide-react';
+import { Undo2, Redo2, ZoomIn, ZoomOut, Paintbrush, Eraser } from 'lucide-react';
 import { paintMask } from '../../engine/mediaMask';
 import type { VideoItem, Crop, MediaMask } from '../../model/types';
 import { useProjectStore } from '../../store/projectStore';
@@ -12,6 +12,30 @@ import { Sheet } from '../../ui/Sheet';
 import { Slider } from '../../ui/Slider';
 import { cropPointer } from '../../engine/cropPointer';
 import { useDraftHistory } from '../../ui/useDraftHistory';
+
+function CropToolIcon({ mode }: { mode: 'crop' | 'lasso' | 'keep' | 'erase' }) {
+  if (mode === 'keep') return <Paintbrush aria-hidden="true" />;
+  if (mode === 'erase') return <Eraser aria-hidden="true" />;
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" aria-hidden="true">
+      {mode === 'crop' ? (
+        <>
+          <path d="M6 4h12M20 6v12M18 20H6M4 18V6" />
+          {[
+            [4, 4],
+            [20, 4],
+            [20, 20],
+            [4, 20],
+          ].map(([cx, cy]) => (
+            <circle key={`${cx}-${cy}`} cx={cx} cy={cy} r="2" />
+          ))}
+        </>
+      ) : (
+        <path strokeLinejoin="round" d="M4 4 13 6 20 3 18 12 21 19 11 21 3 16 6 10Z" />
+      )}
+    </svg>
+  );
+}
 
 /** Persistent canvas: no data URLs, CSS mask replacement, pixel readback or decoder remounts. */
 export function CropEditor({ item, onClose }: { item: VideoItem; onClose: () => void }) {
@@ -141,47 +165,54 @@ export function CropEditor({ item, onClose }: { item: VideoItem; onClose: () => 
   };
   return (
     <Sheet open title="裁切／手動去背" onClose={onClose}>
-      <div className="crop-tools">
-        {(
-          [
-            ['crop', '一般裁切'],
-            ['lasso', '自由裁切'],
-            ['keep', '筆刷'],
-            ['erase', '橡皮擦'],
-          ] as const
-        ).map(([key, label]) => (
-          <button
-            key={key}
-            className={`chip${mode === key ? ' active' : ''}`}
-            aria-pressed={mode === key}
-            onClick={() => {
-              finish();
-              setMode(key);
-              setPreview(false);
-            }}
-          >
-            {label}
+      <section className="crop-tool-section" aria-label="裁切工具">
+        <h3>裁切工具</h3>
+        <div className="crop-tools">
+          {(
+            [
+              ['crop', '一般裁切'],
+              ['lasso', '自由裁切'],
+              ['keep', '筆刷'],
+              ['erase', '橡皮擦'],
+            ] as const
+          ).map(([key, label]) => (
+            <button
+              key={key}
+              className={`chip${mode === key ? ' active' : ''}`}
+              aria-pressed={mode === key}
+              onClick={() => {
+                finish();
+                setMode(key);
+                setPreview(false);
+              }}
+            >
+              <CropToolIcon mode={key} />
+              <span>{label}</span>
+            </button>
+          ))}
+        </div>
+      </section>
+      <div className="crop-action-section" role="group" aria-label="預覽與套用">
+        <p className="hint">預覽與套用</p>
+        <div className="crop-actions">
+          {item.type === 'video' && <MediaPlayback media={video} label="裁切預覽" />}
+          <button className="icon-btn" aria-label="undo" disabled={!history.canUndo} onClick={history.undo}>
+            <Undo2 size={18} />
           </button>
-        ))}
-      </div>
-      <div className="crop-actions">
-        {item.type === 'video' && <MediaPlayback media={video} label="裁切預覽" />}
-        <button className="icon-btn" aria-label="undo" disabled={!history.canUndo} onClick={history.undo}>
-          <Undo2 size={18} />
-        </button>
-        <button className="icon-btn" aria-label="redo" disabled={!history.canRedo} onClick={history.redo}>
-          <Redo2 size={18} />
-        </button>
-        <button
-          className={`chip${preview ? ' active' : ''}`}
-          aria-pressed={preview}
-          onClick={() => setPreview(!preview)}
-        >
-          {preview ? '繼續調整裁切' : '檢查裁切結果'}
-        </button>
-        <button className="chip primary" onClick={apply}>
-          套用裁切
-        </button>
+          <button className="icon-btn" aria-label="redo" disabled={!history.canRedo} onClick={history.redo}>
+            <Redo2 size={18} />
+          </button>
+          <button
+            className={`chip${preview ? ' active' : ''}`}
+            aria-pressed={preview}
+            onClick={() => setPreview(!preview)}
+          >
+            {preview ? '繼續調整裁切' : '檢查裁切結果'}
+          </button>
+          <button className="chip primary" onClick={apply}>
+            套用裁切
+          </button>
+        </div>
       </div>
       <div className="crop-zoom-controls">
         <button

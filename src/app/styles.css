@@ -3622,7 +3622,7 @@ html {
 }
 .crop-tools {
   display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
+  grid-template-columns: minmax(0, 1.15fr) minmax(0, 1.15fr) minmax(0, 0.75fr) minmax(0, 0.95fr);
   gap: 4px;
   margin-block: 6px;
 }
@@ -3961,4 +3961,47 @@ textarea.text-input.area {
 }
 .source-range .range-seconds span:last-child {
   transform: translateX(-100%);
+}
+
+/* Tool modes and playback/actions are separate levels; keep four modes in one row. */
+.crop-tool-section {
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  padding: 6px 4px;
+  margin-block: 6px 10px;
+}
+.crop-tool-section h3 {
+  margin: 0 2px 4px;
+  font-size: var(--ui-font-size);
+}
+.crop-tool-section .crop-tools {
+  margin: 0;
+}
+.crop-tools .chip {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  padding-inline: 1px;
+}
+.crop-tools .chip svg {
+  flex: 0 0 clamp(14px, 4vw, 16px);
+  width: clamp(14px, 4vw, 16px);
+  height: clamp(14px, 4vw, 16px);
+  fill: none;
+  stroke: currentColor;
+}
+.crop-action-section > .hint {
+  margin: 0 0 4px;
+}
+/* Navigation uses a straight underline, independent of rounded action controls. */
+.editor .bottombar .tabs .tab {
+  border-radius: 0;
+  border: 0;
+  border-bottom: 2px solid transparent;
+  background: transparent;
+}
+.editor .bottombar .tabs .tab.active {
+  border-bottom-color: var(--accent);
 }
