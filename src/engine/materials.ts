@@ -1,3 +1,4 @@
+import { arrangeTemplate } from './templatePlayback';
 import { createClip, createTrack, newId } from '../model/defaults';
 import type { Asset, VideoItem } from '../model/types';
 import { useProjectStore } from '../store/projectStore';
@@ -126,11 +127,21 @@ export function separateAudio(id: string) {
   if (!item || item.type !== 'video') throw Error('請選擇有原音的影片');
   const asset = p.assets.find((a) => a.id === item.assetId);
   if (!asset?.hasAudio) throw Error('這個素材沒有音訊');
-  const audio: VideoItem = { ...item, type: 'audio', id: newId('i_'), audioEnabled: true };
+  const audio: VideoItem = {
+    ...item,
+    name: undefined,
+    sourceItemId: item.id,
+    type: 'audio',
+    id: newId('i_'),
+    audioEnabled: true,
+  };
   useProjectStore.getState().apply(
     (d) => {
       const target = d.tracks.flatMap((t) => t.items).find((x) => x.id === id)!;
-      if (target.type !== 'text') target.audioEnabled = false;
+      if (target.type !== 'text') {
+        target.audioEnabled = false;
+        if (target.cell) target.cell.sequentialAudio = false;
+      }
       const track = createTrack('audio', d.tracks);
       track.items = [audio];
       d.tracks.push(track);
@@ -141,6 +152,35 @@ export function separateAudio(id: string) {
 
 export function setAudioEnabled(id: string, enabled: boolean) {
   editItem(id, (it) => {
-    if (it.type !== 'text') it.audioEnabled = enabled;
+    if (it.type !== 'text') {
+      it.audioEnabled = enabled;
+      if (it.cell) it.cell.sequentialAudio = enabled;
+    }
   });
+}
+
+export async function addTemplateSolid(trackId: string, color: string) {
+  const p = useProjectStore.getState().project;
+  if (!p) return;
+  const track = p.tracks.find((t) => t.id === trackId);
+  if (!track?.template || track.locked) throw Error('請先選擇可編輯版型');
+  const asset = await solidAsset(p.id, color);
+  await ensureUrls(p.id, [asset]);
+  if (useProjectStore.getState().project?.id !== p.id) return;
+  const clip = {
+    ...createClip(asset),
+    start: track.layout?.start ?? 0,
+    duration: 1,
+    slot: { x: 0.1, y: 0.8, w: 0.8, h: 0.1 },
+  };
+  useProjectStore.getState().apply(
+    (d) => {
+      const group = d.tracks.find((t) => t.id === trackId);
+      if (!group) return;
+      d.assets.push(asset);
+      group.items.push(clip);
+      arrangeTemplate(group);
+    },
+    { select: clip.id },
+  );
 }

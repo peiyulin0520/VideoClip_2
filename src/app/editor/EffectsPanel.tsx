@@ -1,3 +1,4 @@
+import { TemplatePlaybackSettings } from './TemplatePlaybackSettings';
 import { AnimationSettings } from './AnimationSettings';
 import { ProjectPreview } from './ProjectPreview';
 import { EffectTimingEditor } from './EffectTimingEditor';
@@ -115,6 +116,11 @@ export function EffectsPanel() {
   const animations = found?.track.template ? found.track.layout?.animations : target?.animations;
   return (
     <div className="panel" aria-label="轉場與畫面特效">
+      {p.tracks.find((t) => t.template && t.items.some((i) => i.id === selectedId)) && (
+        <TemplatePlaybackSettings
+          track={p.tracks.find((t) => t.template && t.items.some((i) => i.id === selectedId))!}
+        />
+      )}
       <div className="chips option-primary effect-modes" role="tablist" aria-label="特效類型">
         {(
           [

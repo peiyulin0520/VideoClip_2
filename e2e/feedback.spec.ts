@@ -247,7 +247,7 @@ test('裁切套用前可看透明結果，復原上一筆描邊不改原片', as
   await addOverlays(page, ['solid-green.webm']);
   await openTab(page, '剪輯');
   await page.getByRole('button', { name: '裁切', exact: true }).tap();
-  await page.getByRole('button', { name: '自由描邊保留區域', exact: true }).tap();
+  await page.getByRole('button', { name: '自由裁切', exact: true }).tap();
   await setCropOffset(page);
   const stage = page.getByTestId('crop-stage'),
     box = (await stage.boundingBox())!;
@@ -261,7 +261,7 @@ test('裁切套用前可看透明結果，復原上一筆描邊不改原片', as
   };
   await draw(0.45);
   await draw(0.8);
-  await page.getByRole('button', { name: '復原描邊', exact: true }).tap();
+  await page.getByRole('button', { name: 'undo', exact: true }).tap();
   await page.getByRole('button', { name: '檢查裁切結果', exact: true }).tap();
   await expect(page.getByRole('button', { name: '繼續調整裁切', exact: true })).toHaveAttribute(
     'aria-pressed',

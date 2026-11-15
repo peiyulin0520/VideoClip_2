@@ -163,7 +163,7 @@ test('時間軸代表字在正確秒數，單素材及銜接不同色，收合�
   await expect(page.getByRole('dialog', { name: '特效起迄', exact: true })).toBeVisible();
 });
 
-async function capsule(control: Locator) {
+async function roundedField(control: Locator) {
   const s = await control.evaluate((el) => {
     const c = getComputedStyle(el);
     return {
@@ -176,33 +176,33 @@ async function capsule(control: Locator) {
     };
   });
   expect(s.border).toBe('0px');
-  expect(s.radius).toBeGreaterThanOrEqual(18);
+  expect(s.radius).toBe(12);
   expect(s.bg).toBe('rgb(239, 229, 215)');
   expect(s.color).toBe('rgb(48, 39, 31)');
   expect(s.height).toBeGreaterThanOrEqual(44);
   return s;
 }
-test('六主題的填寫框及下拉都為無黑框膠囊，起迄數字/版型選單/名稱/設定一致', async ({ page }) => {
+test('六主題的填寫框及下拉都為無黑框圓角，起迄數字/版型選單/名稱/設定一致', async ({ page }) => {
   await createProjectWith(page, ['solid-red.webm']);
   await openTab(page, '版型');
   await page.getByRole('button', { name: '套用多格版型', exact: true }).tap();
   const select = page.getByLabel('第 1 格素材', { exact: true });
   for (const theme of ['dark', 'mono', 'light', 'fresh', 'warm', 'beige']) {
     await page.evaluate((theme) => (document.documentElement.dataset.theme = theme), theme);
-    const s = await capsule(select);
+    const s = await roundedField(select);
     expect(s.arrow).toContain('svg');
-    await capsule(page.getByLabel('版型寬度', { exact: true }));
-    await capsule(page.getByLabel('版型文字', { exact: true }));
+    await roundedField(page.getByLabel('版型寬度', { exact: true }));
+    await roundedField(page.getByLabel('版型文字', { exact: true }));
   }
   await page.getByRole('button', { name: '專案名稱', exact: true }).tap();
-  await capsule(page.getByLabel('專案名稱輸入', { exact: true }));
+  await roundedField(page.getByLabel('專案名稱輸入', { exact: true }));
   await page.getByLabel('專案名稱輸入', { exact: true }).fill('圓角輸入');
   await page.getByRole('button', { name: '確定', exact: true }).tap();
   await page.getByLabel('第 1 格素材', { exact: true }).scrollIntoViewIfNeeded();
   await shot(page, 'capsule-fields-and-selects');
   await page.getByRole('link', { name: '回首頁', exact: true }).tap();
   await page.getByRole('link', { name: '設定', exact: true }).tap();
-  await capsule(page.getByLabel('GIPHY API Key', { exact: true }));
+  await roundedField(page.getByLabel('GIPHY API Key', { exact: true }));
 });
 
 test('真實載入完成前禁止編輯，無自動播放；重播0秒、捲頁及popup後播放狀態一致且不重設速率', async ({
@@ -309,7 +309,7 @@ test('真實載入完成前禁止編輯，無自動播放；重播0秒、捲頁�
   await page.getByRole('button', { name: '片段範圍', exact: true }).tap();
   await page.getByRole('button', { name: '播放片段預覽', exact: true }).tap();
   await page.getByRole('button', { name: '暫停片段預覽', exact: true }).tap();
-  await page.getByRole('button', { name: '取消', exact: true }).tap();
+  await page.getByRole('button', { name: '關閉且不儲存', exact: true }).tap();
   expect(await active()).toBe(0);
   await page.getByRole('button', { name: '播放', exact: true }).tap();
   await expect.poll(() => energy(page)).toBeGreaterThan(0.01);

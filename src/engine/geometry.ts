@@ -7,6 +7,7 @@ import type { Layer } from './timeline';
 export type Box = { cx: number; cy: number; w: number; h: number; rotation: number };
 export type TextSize = (item: TextItem, canvasW: number, canvasH: number) => { w: number; h: number };
 export type GeoCtx = {
+  editingHints?: boolean;
   canvasW: number;
   canvasH: number;
   time?: number;

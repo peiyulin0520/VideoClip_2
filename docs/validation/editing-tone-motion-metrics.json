@@ -1,0 +1,61 @@
+{
+  "before": {
+    "stats": {
+      "uploads": 39,
+      "colorAllocations": 1,
+      "colorUpdates": 1,
+      "colorPasses": 1,
+      "allocations": 2,
+      "buffers": 2,
+      "frames": [
+        {
+          "id": "i_7728c281040c",
+          "width": 320,
+          "height": 180
+        },
+        {
+          "id": "fx_1cff7fb8a02f",
+          "width": 320,
+          "height": 568
+        }
+      ]
+    },
+    "frameStamp": 43,
+    "seeks": 4,
+    "energy": 0.11189673877982435,
+    "wall": 2605.20000000007,
+    "mediaTime": 0.876
+  },
+  "after": {
+    "stats": {
+      "uploads": 75,
+      "colorAllocations": 1,
+      "colorUpdates": 25,
+      "colorPasses": 1,
+      "allocations": 2,
+      "buffers": 2,
+      "frames": [
+        {
+          "id": "i_7728c281040c",
+          "width": 320,
+          "height": 180
+        },
+        {
+          "id": "fx_1cff7fb8a02f",
+          "width": 320,
+          "height": 568
+        }
+      ]
+    },
+    "frameStamp": 69,
+    "seeks": 4,
+    "energy": 0.11200728096556947,
+    "wall": 3470.3000000000466,
+    "mediaTime": 1.734667
+  },
+  "motion": {
+    "kind": "shake",
+    "duration": 3,
+    "strength": 1
+  }
+}

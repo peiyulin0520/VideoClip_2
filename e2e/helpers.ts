@@ -315,3 +315,11 @@ export async function setCropOffset(page: Page, value = 0) {
     el.dispatchEvent(new Event('input', { bubbles: true }));
   }, value);
 }
+
+/** Template source editor is opened from the miniature, not hidden inline controls. */
+export async function openTemplateCell(page: Page, index = 0) {
+  await page.getByLabel('版型格子位置對照', { exact: true }).locator('button').nth(index).tap();
+  const dialog = page.getByRole('dialog', { name: `第 ${index + 1} 格片段範圍`, exact: true });
+  await expect(dialog).toBeVisible();
+  return dialog;
+}

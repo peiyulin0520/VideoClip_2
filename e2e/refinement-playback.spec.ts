@@ -26,7 +26,7 @@ async function slider(page: Page, label: string, value: number) {
 test('聲音小預覽貼著時間軸，試播白線同步並能暫停，沒有多餘快捷選項', async ({ page }) => {
   await createProjectWith(page, ['tone-video.webm']);
   await openTab(page, '音訊');
-  await page.getByRole('button', { name: '聲音片段範圍', exact: true }).tap();
+  await page.getByRole('button', { name: '片段範圍', exact: true }).tap();
   const preview = page.getByLabel('音訊對應影片'),
     strip = page.locator('.sheet .source-thumbs');
   const pb = (await preview.boundingBox())!,

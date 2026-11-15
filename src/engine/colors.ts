@@ -29,3 +29,12 @@ export function hsvHex(h: number, s: number, v: number) {
   };
   return rgbHex([f(5), f(3), f(1)]);
 }
+
+/** Readable companion colour for user-created solid backgrounds. */
+export function contrastText(hex: string) {
+  const l = hexRgb(hex).reduce((sum, v, i) => {
+    const c = v / 255;
+    return sum + [0.2126, 0.7152, 0.0722][i]! * (c <= 0.04045 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4);
+  }, 0);
+  return l > 0.179 ? '#111111' : '#ffffff';
+}

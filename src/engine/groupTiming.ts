@@ -65,6 +65,7 @@ export function trimSourceRange(project: Project, itemId: string, from: number, 
     Object.assign(item, {
       trimIn,
       cell: {
+        ...item.cell,
         sourceEnd: end,
         offset: item.cell?.offset ?? 0,
         blanks: item.cell?.blanks ?? [],

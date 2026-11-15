@@ -1,3 +1,6 @@
+import { TemplateCellEditor } from './TemplateCellEditor';
+import { updateTemplateChild } from '../../engine/templatePlayback';
+import { itemName } from '../../engine/itemName';
 import { TonePanel } from './TonePanel';
 import { KeyframeControl } from './KeyframeControl';
 import { evaluatedItem } from '../../engine/keyframes';
@@ -129,14 +132,11 @@ export function BottomBar({
   const found = findItem(project, selectedId);
   const items = mainItems(project);
 
-  // 點目前的分頁＝收合/展開下面的面板（讓出空間給預覽畫面）
+  // Re-selecting a tool keeps its controls open.
   const switchTab = (t: Tab) => {
     setPanel(null);
-    if (t === tab) setCollapsed((c) => !c);
-    else {
-      setTab(t);
-      setCollapsed(false);
-    }
+    setTab(t);
+    setCollapsed(false);
   };
 
   return (
@@ -164,7 +164,9 @@ export function BottomBar({
         <KeyframeControl detailsOnly />
       )}
       {!collapsed && tab === 'layers' && <LayersTab />}
-      {!collapsed && tab === 'layout' && <TemplatePanel />}
+      {!collapsed && tab === 'layout' && (
+        <TemplatePanel key={found?.track.template ? found.track.id : 'new'} />
+      )}
       {!collapsed && tab === 'effects' && <EffectsPanel />}
       {!collapsed && tab === 'tone' && <TonePanel />}
       {!collapsed && tab === 'assets' && <AssetsPanel />}
@@ -415,10 +417,9 @@ function EditTab({
         onClick={() => {
           if (!selected) return toast('請先選取素材');
           setNameDraft(
-            selected.name ??
-              (selected.type === 'text'
-                ? (selected.card.runs[0]?.text ?? '')
-                : (project.assets.find((a) => a.id === selected.assetId)?.name ?? '')),
+            found?.track.template && useUI.getState().templateCellId !== selected.id
+              ? found.track.name
+              : itemName(project, selected),
           );
           setNaming(true);
         }}
@@ -435,16 +436,18 @@ function EditTab({
             />
           </label>
           <div className="sheet-row">
-            <button className="btn" onClick={() => setNaming(false)}>
-              取消
-            </button>
             <button
               className="btn primary"
               disabled={!nameDraft.trim()}
               onClick={() => {
-                editItem(selected.id, (it) => {
-                  it.name = nameDraft.trim();
-                });
+                if (found?.track.template && useUI.getState().templateCellId !== selected.id)
+                  useProjectStore.getState().apply((d) => {
+                    d.tracks.find((t) => t.id === found.track.id)!.name = nameDraft.trim();
+                  });
+                else
+                  editItem(selected.id, (it) => {
+                    it.name = nameDraft.trim();
+                  });
                 setNaming(false);
               }}
             >
@@ -464,9 +467,22 @@ function EditTab({
           setTrimming(true);
         }}
       />
-      {trimming && selected && selected.type !== 'text' && selected.type !== 'image' && (
-        <TrimEditor item={selected} onClose={() => setTrimming(false)} />
-      )}
+      {trimming &&
+        selected &&
+        selected.type !== 'text' &&
+        selected.type !== 'image' &&
+        (found?.track.template ? (
+          <TemplateCellEditor
+            item={selected}
+            index={found.track.items.findIndex((i) => i.id === selected.id)}
+            onApply={(draft) =>
+              useProjectStore.getState().apply((d) => updateTemplateChild(d, selected.id, draft))
+            }
+            onClose={() => setTrimming(false)}
+          />
+        ) : (
+          <TrimEditor item={selected} onClose={() => setTrimming(false)} />
+        ))}
       <ToolButton
         icon={Maximize}
         label="裁切"
@@ -550,13 +566,7 @@ function LayersTab() {
       </div>
       <ul className="layer-list" data-testid="layer-list">
         {layers.map(({ item, track, trackIndex }) => {
-          const asset = isVideoItem(item) ? project.assets.find((a) => a.id === item.assetId) : undefined;
-          const label =
-            item.type === 'text'
-              ? item.card.runs[0]?.text === ''
-                ? '圖形'
-                : `文字：${item.card.runs[0]?.text.slice(0, 8) ?? ''}`
-              : (item.name ?? asset?.name ?? '素材');
+          const label = itemName(project, item);
           return (
             <li
               key={item.id}

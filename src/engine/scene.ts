@@ -1,9 +1,10 @@
+import { contrastText } from './colors';
 import { applySingleAnimations } from './singleAnimations';
 import { renderLayers, applyTransitions } from './transitions';
 import { applyVideoEffects, videoEffectOverlay } from './videoEffects';
 import { animationValues, evaluatedItem } from './keyframes';
 import { groupFrame, templateContexts } from './templateGeometry';
-import { cellMediaTime } from './templateTiming';
+import { cellMediaTime, templateCardAt } from './templateTiming';
 import { effectLayer, solidCanvas } from './sceneEffects';
 import { createTextItem } from '../model/defaults';
 import type { Asset, Item, Project, Track, VideoItem } from '../model/types';
@@ -54,6 +55,7 @@ export function buildScene(
   previewLiftedId?: string | null,
 ): SceneLayer[] {
   const ctx = geoCtx(project, canvasW, canvasH, t);
+  ctx.editingHints = previewLiftedId !== undefined;
   let out: SceneLayer[] = [];
   const artAdded = new Set<string>();
   const layers = renderLayers(project, t);
@@ -93,7 +95,8 @@ export function buildScene(
     }
     const viewport = ctx.templates?.[item.id]?.slot;
     if (track.template && item.type !== 'text' && viewport) {
-      const source = solidCanvas(item.cell?.background ?? '#000000');
+      const card = templateCardAt(item, t);
+      const source = solidCanvas(card?.color ?? item.cell?.background ?? '#000000');
       out.push({
         id: `${item.id}-blank`,
         kind: 'image',
@@ -121,6 +124,42 @@ export function buildScene(
         ? null
         : toLayer(item, track, project, ctx, provide);
     if (layer) out.push(layer);
+    if (!layer && track.template && item.type !== 'text' && viewport) {
+      const card = templateCardAt(item, t);
+      if (card?.text) {
+        const text = createTextItem(0, card.text);
+        text.card.runs[0]!.size = 60;
+        text.card.runs[0]!.color = contrastText(card.color);
+        text.card.width = Math.max(80, viewport.w * 1080);
+        const rendered = renderText(text.card, uiScale(canvasW, canvasH), 2);
+        out.push({
+          id: `${item.id}-blank-text`,
+          kind: 'text',
+          source: rendered.canvas,
+          ready: true,
+          srcW: rendered.w,
+          srcH: rendered.h,
+          textKey: rendered.key,
+          box: {
+            cx: (viewport.x + viewport.w / 2) * canvasW,
+            cy: (viewport.y + viewport.h / 2) * canvasH,
+            w: rendered.w,
+            h: rendered.h,
+            rotation: 0,
+          },
+          viewport: {
+            x: viewport.x * canvasW,
+            y: viewport.y * canvasH,
+            w: viewport.w * canvasW,
+            h: viewport.h * canvasH,
+          },
+          opacity: animationValues(layout ?? {}, t - (layout?.start ?? 0)).opacity,
+          adjustment: animationValues(layout ?? {}, t - (layout?.start ?? 0)),
+          blend: 'normal',
+          cornerRadius: 0,
+        });
+      }
+    }
     if (track.template && layout?.style === 'story' && item === track.items.at(-1)) {
       const story = layout.story;
       if (story && t >= layout.start + story.opening) {
@@ -207,6 +246,7 @@ function toLayer(
   provide: SourceProvider,
 ): SceneLayer | null {
   if (item.type === 'audio') return null;
+  const original = item;
   item = evaluatedItem(item, ctx.time ?? item.start);
   if (track.template && track.layout) {
     const values = animationValues(track.layout, (ctx.time ?? item.start) - track.layout.start);
@@ -232,9 +272,31 @@ function toLayer(
   };
   if (item.type === 'text') {
     const r = renderText(
-      item.card,
+      ctx.editingHints && item.card.placeholder
+        ? {
+            ...item.card,
+            runs: item.card.runs.map((r) => ({ ...r, text: '點兩下編輯文字', color: '#aaaaaa' })),
+          }
+        : item.card,
       uiScale(ctx.canvasW, ctx.canvasH),
-      Math.min(4, Math.max(2, Math.ceil(item.transform.scale))),
+      Math.min(
+        4,
+        Math.max(
+          2,
+          Math.ceil(
+            Math.max(
+              original.transform.scale,
+              ...(original.keyframes ?? []).map(
+                (frame) =>
+                  frame.values.scale *
+                  (frame.motion?.kind === 'pop'
+                    ? 1 + 0.15 * Math.max(0, Math.min(3, frame.motion.strength))
+                    : 1),
+              ),
+            ),
+          ),
+        ),
+      ),
     );
     return { ...common, kind: 'text', source: r.canvas, ready: true, srcW: r.w, srcH: r.h, textKey: r.key };
   }
@@ -279,7 +341,25 @@ function toLayer(
             h: item.slot.h * ctx.canvasH,
           }
         : undefined,
-    frameW: base.w * k,
-    frameH: base.h * k,
+    // Template viewports move/scale with the group. Their sampling dimensions must
+    // stay fixed; otherwise pop/zoom creates a new source texture on every frame.
+    frameW: track.template
+      ? cw *
+        (src.srcW / asset.width) *
+        Math.min(
+          1,
+          Math.max(ctx.canvasW, ctx.canvasH) /
+            Math.max(cw * (src.srcW / asset.width), ch * (src.srcH / asset.height)),
+        )
+      : base.w * k,
+    frameH: track.template
+      ? ch *
+        (src.srcH / asset.height) *
+        Math.min(
+          1,
+          Math.max(ctx.canvasW, ctx.canvasH) /
+            Math.max(cw * (src.srcW / asset.width), ch * (src.srcH / asset.height)),
+        )
+      : base.h * k,
   };
 }

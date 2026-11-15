@@ -1,5 +1,7 @@
 # 色調驗收
 
+最新定格震動與版型彈動資源驗收見[編輯流程驗收](editing-refinements.md)。以下為前輪量測紀錄。
+
 來源：[Actions43588524060](https://github.com/peiyulin0520/VideoClip_2/actions/runs/43588524060)，source `89872488fe0b866eae873799feca7235a9d4496d`，artifact14111758046。369單元、156 Chromium與5+3+30快速全部成功；tone-playback-metrics.json從成功完整CI原樣複製。
 
 |播放量測（1029.8ms）|結果|

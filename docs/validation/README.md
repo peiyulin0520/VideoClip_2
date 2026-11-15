@@ -1,4 +1,6 @@
-# 音訊量測
+# 音訊量測（前輪紀錄）
+
+最新原檔片尾排程與三輪實測見[編輯流程驗收](editing-refinements.md)。以下保留前輪來源與對照圖。
 
 來源：[Actions 43581659661](https://github.com/peiyulin0520/VideoClip_2/actions/runs/43581659661)，source `cdc6195a7917b0acadce7a83c656e6a212379d51`，artifact14109275799。原始JSON直接取自成功完整CI，不改數據。
 

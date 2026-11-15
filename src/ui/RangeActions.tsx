@@ -11,6 +11,7 @@ export function RangeActions({
   onChange,
   noun = '片段',
   showTimes = true,
+  showCursor = true,
 }: {
   ranges: TimeRange[];
   cursor: number;
@@ -20,10 +21,11 @@ export function RangeActions({
   onChange: (value: TimeRange[]) => void;
   noun?: string;
   showTimes?: boolean;
+  showCursor?: boolean;
 }) {
   return (
     <div className="range-actions">
-      <p className="source-now">目前白線：{cursor.toFixed(2)} 秒</p>
+      {showCursor && <p className="source-now">目前白線：{cursor.toFixed(2)} 秒</p>}
       <SelectionAddButton
         ranges={ranges}
         cursor={cursor}

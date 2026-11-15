@@ -113,9 +113,18 @@ export function TextPanel({
           <textarea
             className="text-input area"
             aria-label="文字內容"
-            rows={2}
-            value={run.text}
-            onChange={(e) => edit((c) => void (c.runs[0]!.text = e.target.value), 'txt')}
+            rows={1}
+            onFocus={(e) => {
+              if (run.text === '點兩下編輯文字') e.currentTarget.select();
+            }}
+            placeholder="點兩下編輯文字"
+            value={card.placeholder || run.text === '點兩下編輯文字' ? '' : run.text}
+            onChange={(e) =>
+              edit((c) => {
+                c.runs[0]!.text = e.target.value;
+                delete c.placeholder;
+              }, 'txt')
+            }
           />
           <div className="font-row-wrap">
             <FontSelect

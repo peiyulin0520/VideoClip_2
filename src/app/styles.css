@@ -3363,7 +3363,7 @@ html {
   min-width: 0;
 }
 
-/* All editable fields use the same paper capsule, including native Safari selects. */
+/* Editable fields share a light paper surface and rounded rectangles, including Safari selects. */
 :root[data-theme]
   body
   :is(
@@ -3376,11 +3376,11 @@ html {
   -webkit-appearance: none;
   appearance: none;
   border: 0;
-  border-radius: 999px;
+  border-radius: 12px;
   box-shadow: none;
   background-color: #efe5d7;
   color: #30271f;
-  padding: 4px 6px;
+  padding: var(--field-padding, 4px 6px);
   min-height: 44px;
   font-family: inherit;
 }
@@ -3396,7 +3396,7 @@ html {
   color: #30271f;
 }
 :root[data-theme] body textarea {
-  border-radius: 18px;
+  border-radius: 12px;
 }
 :root[data-theme] body :is(input, select, textarea):focus-visible {
   outline: 2px solid #9d674e;
@@ -3468,7 +3468,7 @@ html {
   text-decoration: none;
   color: var(--fg);
   background: var(--control);
-  border-radius: 999px;
+  border-radius: 12px;
 }
 .effect-badge-choices .btn {
   display: flex;
@@ -3533,7 +3533,7 @@ html {
   background: #efe5d7;
   color: #30271f;
   border: 0;
-  border-radius: 999px;
+  border-radius: 12px;
 }
 :root[data-theme] body .font-select svg {
   color: #79533e;
@@ -3600,4 +3600,408 @@ html {
   .tone-presets {
     grid-template-columns: repeat(3, minmax(0, 1fr));
   }
+}
+
+/* Editing refinements: consistent rounded rectangles; circles remain for icon/colour controls. */
+:root[data-theme]
+  :is(
+    .chip,
+    .btn,
+    .tab,
+    .color-custom-button,
+    input:not([type='range']):not([type='checkbox']):not([type='radio']),
+    textarea,
+    select
+  ) {
+  border-radius: 12px;
+}
+.sheet-heading .sheet-close {
+  flex: 0 0 44px;
+  border-radius: 50%;
+  background: var(--panel);
+}
+.crop-tools {
+  display: grid;
+  grid-template-columns: minmax(0, 1.15fr) minmax(0, 1.15fr) minmax(0, 0.75fr) minmax(0, 0.95fr);
+  gap: 4px;
+  margin-block: 6px;
+}
+.crop-tools .chip {
+  min-width: 0;
+  padding-inline: 3px;
+  white-space: nowrap;
+}
+.crop-actions,
+.source-playback-row,
+.crop-zoom-controls {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  flex-wrap: nowrap;
+  margin-block: 6px;
+}
+.crop-actions .chip {
+  min-width: 0;
+  flex: 1;
+  padding-inline: 3px;
+}
+.crop-actions .icon-btn {
+  flex: 0 0 44px;
+}
+.crop-actions .primary {
+  background: var(--accent);
+  color: var(--accent-fg, #fff);
+}
+.crop-viewport {
+  position: relative;
+  margin: 6px auto;
+  overflow: hidden;
+  touch-action: none;
+  background: repeating-conic-gradient(#888 0% 25%, #bbb 0% 50%) 0 0/16px 16px;
+}
+.crop-viewport .crop-stage {
+  margin: 0;
+  max-width: none;
+  background: none;
+  transform-origin: center;
+}
+.crop-stage .crop-decoder {
+  position: absolute;
+  opacity: 0;
+  pointer-events: none;
+  inset: 0;
+}
+.crop-result {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+.source-playback-row .source-now {
+  margin: 0;
+}
+.custom-color {
+  margin-block: 8px;
+}
+.used-effects .effect-row {
+  justify-content: flex-start;
+  text-align: left;
+}
+.used-effects .effect-row strong {
+  text-align: left;
+  flex: 1;
+}
+
+.timeline-keyframe {
+  color: #ce714a;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.timeline-keyframe .diamond-shape {
+  width: 12px;
+  height: 12px;
+  background: #dc875b;
+  border: 2px solid #dc875b;
+  transform: rotate(45deg);
+  box-sizing: border-box;
+}
+.timeline-keyframe.selected .diamond-shape {
+  width: 16px;
+  height: 16px;
+  background: #fff;
+  border-color: #d97944;
+}
+.diamond-badge {
+  position: absolute;
+  color: #402318;
+  font-size: 9px;
+  line-height: 1;
+}
+.freeze-button[aria-pressed='true'] svg {
+  stroke: #d97944;
+  fill: #fff;
+}
+
+:root[data-theme] .text-input.area {
+  padding: 12px 10px;
+  line-height: 1.4;
+  min-height: 48px;
+  text-align: left;
+  resize: vertical;
+}
+:root[data-theme] .text-input::placeholder {
+  color: var(--muted);
+  opacity: 0.7;
+}
+
+.aspect-editor {
+  position: absolute;
+  inset: 0;
+  z-index: 15;
+  touch-action: none;
+}
+.aspect-editor-actions {
+  position: absolute;
+  top: 4px;
+  left: 4px;
+  right: 4px;
+  display: flex;
+  gap: 4px;
+  align-items: center;
+  justify-content: flex-end;
+  background: var(--panel);
+  padding: 4px;
+  border-radius: 12px;
+  z-index: 2;
+}
+.aspect-crop-frame {
+  position: absolute;
+  border: 2px solid #fff;
+  box-shadow: 0 0 0 100vmax #0006;
+  pointer-events: none;
+}
+.aspect-editor .crop-handle {
+  z-index: 1;
+}
+.project-preview canvas,
+.sheet .range-preview {
+  aspect-ratio: 1;
+  width: 100%;
+  height: 160px;
+  max-height: 160px;
+  object-fit: contain;
+  background: repeating-linear-gradient(45deg, #303238 0 8px, #27292f 8px 16px);
+}
+.single-effect-timing .project-preview canvas {
+  height: 160px;
+  max-height: 160px;
+}
+.audio-range-workspace {
+  align-items: center;
+}
+.audio-range-preview {
+  height: 160px;
+  display: flex;
+  align-items: center;
+  background: repeating-linear-gradient(45deg, #303238 0 8px, #27292f 8px 16px);
+}
+.audio-range-preview .range-preview {
+  height: 100%;
+  max-height: 100%;
+  background: transparent;
+}
+
+.aspect-editor {
+  overflow: hidden;
+}
+
+.cell-range-workspace {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1.6fr);
+  gap: 8px;
+  align-items: center;
+}
+.source-preview-base {
+  height: 180px;
+  background: repeating-linear-gradient(45deg, #303238 0 8px, #27292f 8px 16px);
+  display: flex;
+  align-items: center;
+  min-width: 0;
+  overflow: hidden;
+}
+.source-preview-base :is(img, video.range-preview) {
+  width: 100%;
+  height: 100%;
+  max-height: 100%;
+  object-fit: contain;
+  margin: 0;
+  background: transparent;
+}
+.cell-range-controls {
+  min-width: 0;
+}
+.cell-range-controls .source-range.marker-range {
+  margin-inline: 8px;
+}
+.cell-range-fields {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 6px;
+}
+.cell-range-fields .field {
+  min-width: 0;
+}
+.cell-range-fields input {
+  width: 100%;
+  min-width: 0;
+}
+.template-child-list {
+  display: grid;
+  gap: 6px;
+}
+.template-child-entry {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+.template-child-entry > .chip {
+  flex: 1;
+  min-width: 0;
+  text-align: left;
+  overflow-wrap: anywhere;
+}
+.blank-card {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+  margin-block: 8px;
+}
+.blank-card label {
+  min-width: 0;
+  flex: 1;
+}
+.blank-card input {
+  width: 100%;
+}
+.slot-map .tone-thumbnail {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.template-cell-editor .source-playback-row .primary {
+  margin-left: auto;
+  background: var(--accent);
+  color: var(--accent-ink);
+}
+
+.template-summary-thumbs {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  gap: 2px;
+  opacity: 0.8;
+}
+.template-summary-thumbs span {
+  flex: 1;
+  background-size: auto 100%;
+  background-position: center;
+  background-repeat: repeat-x;
+}
+.template-group-toggle {
+  position: absolute;
+  right: 0;
+  top: 0;
+  width: 44px;
+  height: 44px;
+  background: #0008;
+  color: #fff;
+  z-index: 9;
+  border: 0;
+  border-radius: 8px;
+}
+.template-playback-settings {
+  padding: 6px;
+  margin-bottom: 8px;
+  background: var(--control);
+  border-radius: 12px;
+}
+.template-playback-settings .template-child-entry > span {
+  flex: 1;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+:root[data-theme] .color-custom-button {
+  border: 0;
+}
+.crop-actions .chip {
+  white-space: normal;
+  line-height: 1.15;
+  min-height: 44px;
+}
+.crop-actions .preview-toggle {
+  flex: 0 0 44px;
+  min-width: 44px;
+}
+:root[data-theme] .chip.primary {
+  background: var(--accent);
+  color: var(--accent-ink);
+}
+
+/* A real placeholder remains grey but legible against the light input surface in every theme. */
+:root[data-theme] :is(#root, .sheet) .text-input::placeholder {
+  color: #6b635a;
+  opacity: 1;
+}
+
+.blank-card > span {
+  border-radius: 8px;
+  padding: 6px;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.used-effects .effect-name {
+  text-align: left;
+  justify-content: flex-start;
+  padding-inline: 0;
+  min-width: 0;
+}
+.sheet-heading .sheet-close {
+  background: var(--control);
+}
+
+textarea.text-input.area {
+  --field-padding: 12px 10px;
+}
+.source-range .range-seconds span:first-child {
+  transform: none;
+}
+.source-range .range-seconds span:last-child {
+  transform: translateX(-100%);
+}
+
+/* Tool modes and playback/actions are separate levels; keep four modes in one row. */
+.crop-tool-section {
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  padding: 6px 4px;
+  margin-block: 6px 10px;
+}
+.crop-tool-section h3 {
+  margin: 0 2px 4px;
+  font-size: var(--ui-font-size);
+}
+.crop-tool-section .crop-tools {
+  margin: 0;
+}
+.crop-tools .chip {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  padding-inline: 1px;
+}
+.crop-tools .chip svg {
+  flex: 0 0 clamp(14px, 4vw, 16px);
+  width: clamp(14px, 4vw, 16px);
+  height: clamp(14px, 4vw, 16px);
+  fill: none;
+  stroke: currentColor;
+}
+.crop-action-section > .hint {
+  margin: 0 0 4px;
+}
+/* Navigation uses a straight underline, independent of rounded action controls. */
+:root[data-theme] #root .editor .bottombar .tabs .tab {
+  border-radius: 0;
+  border: 0;
+  border-bottom: 2px solid transparent;
+  background: transparent;
+}
+:root[data-theme] #root .editor .bottombar .tabs .tab.active {
+  border-bottom-color: var(--accent);
 }

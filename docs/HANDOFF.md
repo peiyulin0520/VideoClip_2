@@ -1,5 +1,40 @@
 # 交接手冊（HANDOFF）
 
+## 本輪最新狀態（先讀）
+
+- PR12由使用者審核Merge：https://github.com/peiyulin0520/VideoClip_2/pull/12 。分支codex/editing-refinements，source b5f83655a567a0a713fb9f56d104085a55a0b01e / Actions43662869767：387單元/check、167完整、快速29+5+9+30全部成功。最後提交只文件/量測/201成功圖，產品、測試、workflow與此source一致；不可代合併、開auto-merge或推main。
+- 主artifact14140903796 SHA ff86dac1d83b15e24089cf8a18d2092d35d60fc68d0c2bc18aa8e7dd8704f735；refinement14140619551 SHA faf5d5d1f67f938bde30f15567e65284da09fd4ca8e12119fc72b395bc3e6549均核對。201成功PNG/10editing，新裁切/導航/來源popup/示意4張人工看過，不用較早失敗圖冒充。
+- 新三輪live maxJump0.004184/0.004109/0.003958、完整0.003908。target0不延長既有fade；只有native EOF才提早12ms，內部選段/離線匯出不改。6新增單元＋三輪套件保持原<0.08。前/中/後JSON全部保留validation。
+- 色調/顆粒/柔焦/震動：865.1ms新增貼圖/色調濾鏡0，影片回呼+26/uniform+24/上傳+36、0seek、energy0.112007。模板Pop927.2ms固定3buffer/0新增配置，hash持續改變。不是Safari FPS保證。
+- 四工具currentColor SVG（Brush尖頭毛筆）、工具區與播放區、直線tab（#root高specificity，radius0）已驗320/390/430。穩定mask canvas、UV縮放、Sheet X快照與local draft、templateCellDraft遷移/多組/輪序/來源binding見下方歷史；USAGE為目前操作。Safari聲音/手勢/長片仍PLAN §7待真機。
+- 沒有待修程式；下一步使用者Merge與真機驗。以下保留中間失敗與決策，不能拿較早狀態覆蓋本段。
+
+## 本輪過程與踩坑（歷史）
+
+> 原生檔尾補強：dd73418快速29+5+9+30全過，但3輪live0.003908/0.061215/0.004082，其中一次EOF仍有較小突波，不能當完全解決。AudioBus.flush只在nativeRemaining<=windowRemaining+12ms時，將end提早12ms，避免native EOF早於兩時鐘估計一小段；中間選段維持exact end。加3個正常/變速/內部邊界測試；新387/check已過，CI待驗。不得只保留成功最小值。
+
+> 最新音訊阻擋：43661477158新29編輯/5tone通過，tab radius0/圖示已驗；live音訊maxJump0.092916>原門檻0.08。原排end3.027404，3.018594收到target0改排12ms至3.030594，native EOF時3.034535 PCM0.093799→0.000883；這是真實排程延長，不可重跑挑綠或放寬。AudioBus.ramp silenceBudget限制零目標為舊end-now，3測試涵蓋window/pause/seek deadline；新check/384已過，CI待驗。e2e寫metrics改在assert前，保留失敗證據。fast音訊--repeat-each=3，共9項，驗偶發而非只挑一次成功。
+
+> 新坑：rounded全域`:is`中有input屬性selector，specificity比單看chip/tab高；`.editor .bottombar .tabs .tab`仍輸給全域，43661078172實際computed radius12。導航規則加`:root[data-theme] #root`明確勝出，保留radius0測試，不降標準。該版320/390/430四工具/圖示/44px已過，快速28/29；新check/381單元已過，Actions待驗。
+
+> 11/15追加圖示/頁籤：CropToolIcon四單色currentColor SVG（Brush尖頭毛筆，非Paintbrush寬刷），crop-tool-section有標題/邊框底區與crop-action-section分開；四列按文字長度分配，320px維持四工具同列。`.editor .bottombar .tabs .tab`高specificity只把導航改radius0/straight underline，保留操作/表單12px。新viewport/icon/tab斷言等待新版Actions，check/381單元已過。前版14f70bc source的Actions43626948329完整167、快速29+5+3+30、check381全過；Pop零配置/hash改變、tone+shake零配置/原音持續，不能把這版成功圖冒充追加後新版。主artifact14126748541 SHA bfacd6b90bfa48b4f7be9621ae6035d3511575a6892dbf013f92144964f2f563已核對，位/tmp/lm-editing-14；最終圖需新source。
+
+> 最新修整：81d38dc Actions43624878140完整162/164、快速26編輯+5tone/motion+3audio+29/30生命週期成功。2失敗只因舊膠囊radius及文字padding斷言，依使用者新圓角12/padding12,10改；不改音訊/GPU門檻。AudioRangeEditor預設原音試聽不跟保留range靜音，可切selectionOnly；播放秒數整列在workspace上方。Scene模板來源取樣大小固定，不依動畫viewport每幀變動；文字raster品質依原始/keyframes最大scale固定，避免Pop逐幀texture配置。新增3瀏覽器case（總167）：原音未選區、縮圖黑白/透明、Pop零貼圖配置/hash變化。TemplateCell RangeActions不重複cursor；固定軌道設定可展開長模板。新check/381單元已過，Actions/成功圖待驗，不得把162稱最終全過。
+
+> 待新版最後驗收：381單元/check過。e679172完整161/163及快速25+5+3成功，2舊selector行為已改（重開先選既有版型、素材label exact）。canonical表單高specificity原999px壓過round12，已直接改12＋computed-style驗收；SourceRanges首尾刻度收內。Crop maskCanvas持續重用，雙指取消筆畫並限制pan，useDraftHistory.cancel保留redo；新CDP/原UV/匯出測試。templateCellDraft把舊delay/blanks轉可編輯cards且不碰原資料；setAudioEnabled/separateAudio記sequentialAudio避免輪序重開原音。來源binding加duration/cell/ranges（ref變化才序列化）防舊seek。tone資源測試加入motion3秒。最後artifact拆browser-checks與browser-refinement以各<32MiB。新截圖尚未下載，PR12仍draft。以下161/379為較早驗收。
+
+> 最新 F/G：379單元/check過，新瀏覽器待驗。TemplateCellEditor整個VideoItem局部draft，套用才updateTemplateChild/arrangeTemplate；SourceRanges.linkedDuration讓起點越過舊迄並推新迄。cell.cards附本格補色文字，mediaSegments停止來源消耗/音訊，scene畫文字；cell.holdAfter只顯示片尾，聲音仍限item真實區間。layout.playback=sequential/simultaneous。Timeline templateChild虛擬列不改儲存軌道；UI.templateCellId區分刪子片段/整組。carryTemplateEdits保留group/child ID、名稱/時長與物理slot。TemplatePanel無fallbackfirstgroup；Toolbar按group ID key重置新草稿。ToneThumbnail僅靜態96px，暫停/編輯取樣，不逐幀CPU讀影片。ProjectPreview依CSS基地調bitmap防拉扁。PR12仍draft，最新驗收見PROGRESS。
+
+> 新版22項裁切/聲音/定格/ABC原生時間已過（43619159592）；Tone舊測試「改值自動建點後再記錄」會依新規則刪點，改先記錄再改值。check/374成功，完整待最終。
+
+> E：Project.customAspect 與 aspectLabel 顯示自訂像素寬高；Editor 比例自訂啟用 UI.aspectEditing，Preview 原基地上拖 frame，套用才更改輸出尺寸，X 無寫入。ProjectPreview 固定240方形 contain，來源視窗160px基地，框外斜紋。374單元/check過，瀏覽器待驗。
+
+> B/C/D：定格 keyframeAt 以7px/pps 選最近點；editAnimatedValues 選中則改其 time，addKeyframe 明確精確插入，toggleKeyframe 在同點刪除。frame.motion 四解析動作及 elapsed 剪斷續接。itemName 統一命名與原音來源；新文字 card.placeholder 不存提示字。Player mediaBindings 防同來源分段重綁繼承 seek 節流。374單元，待新版瀏覽器。
+
+> 進行中：2026-11-14 定格及23點需求，依 docs/plans/2026-11-14-editing-refinements.md。前輪369/156是基線。A 階段 check/370單元已過，新瀏覽器驗收待 Actions。CropEditor 改 stable canvas，mask.base empty 讓筆刷可單獨保留；useDraftHistory 支援 redo。Sheet 僅 X/backdrop 回復 project/past/future 快照，正常 apply 呼叫 owner onClose 不回復。
+
+
+
 ## 色調本輪（優先於下方音訊成功歷史）
 - 最終驗收（2026-11-14）：[Actions43588524060](https://github.com/peiyulin0520/VideoClip_2/actions/runs/43588524060)，驗收source `89872488fe0b866eae873799feca7235a9d4496d`；369單元、156 Chromium瀏覽器全過，另5色調＋3音訊＋30快速全過（156的子集）；lint／格式／TypeScript／build／Pages／PWA及39字體檢查成功。最後僅文件／量測／成功截圖提交，產品、測試與設定和source一致。
 - artifact `14111758046`（browser-checks-43588524060，33416955 bytes），ZIP SHA-256 `a8a766f2770ab6eac6e627b8638cefc674ab6c5e7fcff934c21f4e91f647e2fc`已核對；191張成功截圖，無失敗context，新tone4張人工檢視完成。六主題實際捲到預設／定格按鈕／滑桿對比成功，新增按鈕不是淺底白字。

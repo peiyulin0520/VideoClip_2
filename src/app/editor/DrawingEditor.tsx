@@ -170,9 +170,6 @@ export function DrawingEditor({
         <input aria-label="畫作名稱" value={name} onChange={(e) => setName(e.target.value)} />
       </label>
       <div className="sheet-row">
-        <button className="btn" onClick={onClose}>
-          取消
-        </button>
         <button
           className="btn primary"
           disabled={!count || saving}

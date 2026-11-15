@@ -16,6 +16,9 @@ type UI = {
     retry?: () => void;
     canSkip?: boolean;
   } | null;
+  templateCellId: string | null;
+  aspectEditing: boolean;
+  keyframePps: number;
   player: Player | null;
   liftedId: string | null;
   effectsSingle: {
@@ -38,6 +41,9 @@ export const useUI = create<UI>((set, get) => ({
   busy: null,
   setBusy: (busy) => set({ busy }),
   previewLoad: null,
+  templateCellId: null,
+  aspectEditing: false,
+  keyframePps: 60,
   player: null,
   liftedId: null,
   effectsJoin: null,
