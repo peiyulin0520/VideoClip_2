@@ -47,6 +47,11 @@
 
 ## 本輪日誌
 
+- 2026-11-15 追加版型文字的CI幾何測試依賴
+  - source39e919c / Actions43691474481新增7個瀏覽器已通過；build檢查在storyTemplates幾何hit測試因CI jsdom沒有Canvas而失敗（本機有）。caption新增為可點文字，舊測試現在也會量文字。
+  - 該純幾何測試注入固定文字bounds，保留frame/cell/hit原斷言；實際字體raster、匯出及貼圖配置已由新7個瀏覽器斷言，沒有把正式Canvas路徑改成fallback。新check及新版Actions待驗。
+
+
 - 2026-11-15 使用者追加特效／層級／音訊／版型文字（本機已驗，瀏覽器待驗）
   - PR14未合併，接續同PR並暫draft。effects ownership與中央apply刪除清理覆蓋刪片/圖層/群組/批次；legacy無owner以原時間找素材，未知來源仍有badge，基本overlay badge跳正確面板。
   - captionText不塞進media items，避免變4格或拖長輪序；舊版型載入補Caption，普通TextPanel編輯與groupFrame局部座標/固定raster比例共用。版型圖示文字用微型靜態canvas，不訂閱播放時鐘。

@@ -5,6 +5,7 @@
 - PR14未合併，接續codex/playback-import-reliability並draft；418單元/check已過，新7瀏覽器與完整181待Actions，不能沿用下面174稱追加完成。計畫plans/2026-11-15-effects-caption-followup.md。
 - effectOwnership.ts / projectStore.apply：比較前後所有item IDs（含nested caption）；刪除時同交易清理effects/transitions，undo/redo自然一起還原。新FX ownerId只記歸屬，不改既有全畫面渲染。舊無owner以套用時間推定；未知來源不藏起來，Timeline以空main lane顯示badge可管理。基本flash/light-leak badge必須回transition面板，不能回只列VIDEO_EFFECTS的effect面板。
 - layout.captionText是真正TextItem，獨立於media items以保住格數/輪序/來源索引。findItem index=-1代表caption；editItem寫nested，captionEdited同步caption/fontId/size/color。Timeline展開插入虛擬text row，普通TextPanel可編輯；刪caption不刪group。groupFrame textScale直接依預覽基地固定（不使用當前group scale），文字raster快取固定，幾何box才乘scale。
+- CI jsdom沒有2DCanvas，本機可能有：storyTemplates純geometry的ctx.textSize需固定bounds，不能不小心呼叫真正renderText。字體/匯出/GPU用Playwright驗，不要為測試改正式renderer。
 - ProjectStore.apply在父群組時間改變時retime caption；複製／分割必須新caption ID、不能把Immer draft與copy共享caption物件。hydrate舊caption ID固定trackId-caption，反覆載入不換ID。只對non-story做caption，story既有動態標題保留。
 - 主層文字底線、次層淺底、第三層輪廓；#root specificity防全域圓角覆寫，選取保留aria/44px/主題fg。音訊左側三icon+短標籤同列，完整aria/title名稱保留，避免窄螢幕換列。
 
