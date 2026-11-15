@@ -23,7 +23,7 @@
 
 - 2026-11-15 偶發片尾音訊突波：保留已排淡出的截止時間
   - Actions43661477158新版29編輯/5色調動作已過（tab computed radius0）；音訊2/3通過，live maxJump0.092916>0.08，未降低門檻。trace在3.018594秒要求0時，原fade deadline3.027404，卻重排成3.030594；native EOF附近3.034535發生0.093799→0.000883跳變。
-  - AudioBus.ramp(target0)將fade限制為原envelope.end-now，暫停/seek/視窗關閉不延長已接近的淡出；新增3個行為回歸。失敗時也先寫原始JSON，方便比對，不隱藏失敗。
+  - AudioBus.ramp(target0)將fade限制為原envelope.end-now，暫停/seek/視窗關閉不延長已接近的淡出；新增3個行為回歸。失敗時也先寫原始JSON，方便比對，不隱藏失敗。快速音訊套件連跑3輪（9項），原live<0.08門檻不改。
   - 新check/384單元與lint/build/Pages通過，瀏覽器待驗；PR12仍draft，不能引用前版音訊全過稱本次完成。
 
 - 2026-11-15 導航圓角specificity修正

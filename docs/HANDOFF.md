@@ -1,4 +1,4 @@
-> 最新音訊阻擋：43661477158新29編輯/5tone通過，tab radius0/圖示已驗；live音訊maxJump0.092916>原門檻0.08。原排end3.027404，3.018594收到target0改排12ms至3.030594，native EOF時3.034535 PCM0.093799→0.000883；這是真實排程延長，不可重跑挑綠或放寬。AudioBus.ramp silenceBudget限制零目標為舊end-now，3測試涵蓋window/pause/seek deadline；新check/384已過，CI待驗。e2e寫metrics改在assert前，保留失敗證據。
+> 最新音訊阻擋：43661477158新29編輯/5tone通過，tab radius0/圖示已驗；live音訊maxJump0.092916>原門檻0.08。原排end3.027404，3.018594收到target0改排12ms至3.030594，native EOF時3.034535 PCM0.093799→0.000883；這是真實排程延長，不可重跑挑綠或放寬。AudioBus.ramp silenceBudget限制零目標為舊end-now，3測試涵蓋window/pause/seek deadline；新check/384已過，CI待驗。e2e寫metrics改在assert前，保留失敗證據。fast音訊--repeat-each=3，共9項，驗偶發而非只挑一次成功。
 
 > 新坑：rounded全域`:is`中有input屬性selector，specificity比單看chip/tab高；`.editor .bottombar .tabs .tab`仍輸給全域，43661078172實際computed radius12。導航規則加`:root[data-theme] #root`明確勝出，保留radius0測試，不降標準。該版320/390/430四工具/圖示/44px已過，快速28/29；新check/381單元已過，Actions待驗。
 
