@@ -152,7 +152,7 @@ export function timelineEffectBadges(project: Project): TimelineEffectBadge[] {
             trackId: track.id,
             itemId: item?.id ?? '',
             time,
-            kind: fx.targetId || fx.ownerId ? 'single' : 'screen',
+            kind: fx.targetId ? 'single' : 'screen',
             effectId: fx.id,
           },
           fx.preset,

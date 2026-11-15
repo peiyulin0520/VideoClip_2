@@ -89,9 +89,9 @@ jobs:
           cp tests/fixtures/ui-noto-sans-tc.ttf "$HOME/.local/share/fonts/little-moments/"
           cp tests/fixtures/ui-fontconfig.conf "$HOME/.config/fontconfig/conf.d/99-little-moments.conf"
           fc-cache -f "$HOME/.local/share/fonts/little-moments"
-      - name: Effect ownership, option hierarchy and editable template caption
+      - name: Effect ownership, same-time choices and editable template caption
         timeout-minutes: 5
-        run: npm run e2e -- e2e/effects-caption-followup.spec.ts --trace off --workers=1
+        run: npm run e2e -- e2e/effects-caption-followup.spec.ts e2e/anchored-playback.spec.ts --trace off --workers=1
       - name: First-play audio, nonblocking import and background editing races
         timeout-minutes: 6
         run: npm run e2e -- e2e/playback-import-reliability.spec.ts e2e/advanced-editing.spec.ts e2e/feedback.spec.ts e2e/story-workspace.spec.ts --trace off --workers=1
@@ -109,7 +109,7 @@ jobs:
         run: npm run e2e -- e2e/audio-effects-stability.spec.ts --trace off --workers=1 --repeat-each=3
       - name: Preview lifecycle and local proxy smoke tests
         timeout-minutes: 6
-        run: npm run e2e -- e2e/timestamped-thumbnails.spec.ts e2e/fix-thumbs.spec.ts e2e/anchored-playback.spec.ts e2e/effect-timing.spec.ts e2e/template-controls.spec.ts e2e/story-workspace.spec.ts --trace off --workers=1
+        run: npm run e2e -- e2e/timestamped-thumbnails.spec.ts e2e/fix-thumbs.spec.ts e2e/effect-timing.spec.ts e2e/template-controls.spec.ts e2e/story-workspace.spec.ts --trace off --workers=1
       - uses: actions/upload-artifact@v4
         if: always()
         with:
@@ -121,6 +121,7 @@ jobs:
             docs/screenshots/module-recovery/
             docs/screenshots/playback-import/
             docs/screenshots/effects-caption/
+            docs/screenshots/anchored-playback/
           retention-days: 7
 
   deploy:

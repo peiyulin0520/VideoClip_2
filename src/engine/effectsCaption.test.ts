@@ -50,6 +50,8 @@ function project() {
 it('deleting a clip removes owned, legacy-at-time and pair effects in the same undo/redo transaction', () => {
   const p = project();
   state().load(p);
+  // Lifecycle ownership must not relabel a full-screen effect as a single-item animation.
+  expect(timelineEffectBadges(p).find((b) => b.effectId === 'owned')?.kind).toBe('screen');
   removeAnyItem(p.tracks[0]!.items[0]!.id);
   expect(state().project!.effects!.map((e) => e.id)).toEqual(['keep']);
   expect(state().project!.transitions).toHaveLength(0);

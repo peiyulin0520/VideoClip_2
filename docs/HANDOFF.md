@@ -2,6 +2,8 @@
 
 ## 追加四項（進行中，先讀）
 
+- ownerId是刪除歸屬，不是targetId：timeline effect kind仍只依targetId判single，ownerId全畫面FX維持screen。17d406b完整180/181及快29/30都因chooser被誤標單素材而失敗；保留原chooser斷言並加unit防混淆。快速首組14（新7＋anchored7），末組23，其餘33/2/29/5/9不變；沒有少跑原回歸。
+
 - 截圖需明確scrollIntoView到實際驗收區；openTab只保證分頁可見，長主預覽會讓下方操作落在截圖外。caption-timeline另存展開文字軌，caption-proportion捲到template-assignment。
 
 - PR14未合併，接續codex/playback-import-reliability並draft；418單元/check已過，新7瀏覽器與完整181待Actions，不能沿用下面174稱追加完成。計畫plans/2026-11-15-effects-caption-followup.md。
