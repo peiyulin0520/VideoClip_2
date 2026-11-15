@@ -213,7 +213,7 @@ export function Preview({ projectId, width, height }: { projectId: string; width
               progress: 80,
               message: '素材尚未就緒',
               error: String(error),
-              canSkip: true,
+              canSkip: !!created,
               retry: () => setRetry((n) => n + 1),
             },
           });

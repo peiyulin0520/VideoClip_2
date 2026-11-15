@@ -1,6 +1,14 @@
 # 交接手冊（HANDOFF）
 
-## 本輪最新狀態（先讀）
+## 載入錯誤修復進行中（先讀）
+
+- PR12已Merge/main8b76117，新分支codex/recover-module-loading。使用者80% Safari module script failed，按retry無效。程式bundle之前Pixi會lazy importRenderer，舊retry重用被瀏覽器cache的failed module；autoUpdate清舊chunk也有版本混用風險。不是確認影片檔壞，不刪資料。
+- appRecovery.ts分類ESM錯誤並更新本app scope worker/activate waiting/完整replace同hash、加cache-bust query；Toasts先saveProject當下路由專案再reload。getRegistration受限可直接重開，update檢查8秒/worker10秒上限。舊素材/codec錯誤保留原retry；Player未create不給skip。
+- 主Vite bundle codeSplitting false；verify-pages驗single entry/no relative chunk imports/precache main/no skipWaiting/claim。PWA prompt/injectRegisterfalse，自行load後register(updateViaCache none)，waiting時只首頁顯示更新，不強制覆蓋正在編輯的文件。
+- 新12單元399過；初次TS mockPromise unknown已改ServiceWorkerRegistration。build只阻止相對chunk imports：Router有未使用generic import(e.module)不能當Pixi lazy chunk；SW手動SKIP_WAITING message handler可存在，禁止的是無條件啟用。2e2e走Actions待跑：阻擋非index chunks仍開圖，Safari錯誤→有聲原件/OPFS sentinel/cache不刪/名稱與tracks同hash保存、無自動播放。
+- 399單元/39檔、lint/build/Pages/PWA/39字體通過；無WebGPU加在新e2e首例，169瀏覽器/新PR/截圖待驗。以下PR12是已合併的歷史基線，不是當前待修結論。
+
+## PR12 交付狀態（歷史）
 
 - PR12由使用者審核Merge：https://github.com/peiyulin0520/VideoClip_2/pull/12 。分支codex/editing-refinements，source b5f83655a567a0a713fb9f56d104085a55a0b01e / Actions43662869767：387單元/check、167完整、快速29+5+9+30全部成功。最後提交只文件/量測/201成功圖，產品、測試、workflow與此source一致；不可代合併、開auto-merge或推main。
 - 主artifact14140903796 SHA ff86dac1d83b15e24089cf8a18d2092d35d60fc68d0c2bc18aa8e7dd8704f735；refinement14140619551 SHA faf5d5d1f67f938bde30f15567e65284da09fd4ca8e12119fc72b395bc3e6549均核對。201成功PNG/10editing，新裁切/導航/來源popup/示意4張人工看過，不用較早失敗圖冒充。

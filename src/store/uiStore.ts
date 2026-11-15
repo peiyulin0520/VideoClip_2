@@ -7,6 +7,7 @@ let nextId = 1;
 type UI = {
   toasts: Toast[];
   toast: (text: string) => void;
+  appUpdateReady: boolean;
   busy: string | null;
   setBusy: (text: string | null) => void;
   previewLoad: {
@@ -32,6 +33,7 @@ type UI = {
 };
 
 export const useUI = create<UI>((set, get) => ({
+  appUpdateReady: false,
   toasts: [],
   toast: (text) => {
     const id = nextId++;

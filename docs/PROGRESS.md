@@ -4,6 +4,14 @@
 
 ## 交接快照（VideoClip_2 最新狀態）
 
+- 使用者2026-11-15回報80%「TypeError: Importing a module script failed.」，重試不能進專案。PR12已由使用者合併，main8b76117；新分支codex/recover-module-loading，準備新PR，不推main/不代合併。
+- 判斷是程式元件載入錯誤，舊retry只重建Player，無法清該document已失敗的ESM module map。Pixi在app.init動態載入Renderer；autoUpdate SW可能和舊頁面版本混用。沒有Safari真機stack，不能聲稱確定唯一網路原因。
+- 實作：主bundle合併動態imports，進專案不再抓渲染器chunk；PWA改等待更新/不強制接管舊文件，首頁可明確更新。模組錯誤顯示「更新程式並重新開啟」，先儲存目前專案、只更新本app worker、必要時啟用waiting、完整重開同hash專案；不刪IndexedDB/OPFS/字體或其他cache。沒有建立player的錯誤不再給無效略過。
+- 新12單元＋2瀏覽器case，399單元/39檔與完整check已過（含single main、無相對lazy chunk、precache/手動啟用worker/39字體）。新169瀏覽器待驗，另加無WebGPU環境測單bundle不影響WebGL。編譯後主程式1.77MB（gzip約506KB），不改播放解析度/匯出。禁止本機preview，瀏覽器走Actions。
+- 下一步：check→新PR13→模組失敗/資料保留/無渲染器chunk的瀏覽器測試及全回歸→新截圖、文件與可合併PR。Safari仍待真機；專案/原始影片未刪。
+
+## PR12 已交付基線（歷史）
+
 - 分支 codex/editing-refinements，PR #12：https://github.com/peiyulin0520/VideoClip_2/pull/12 。前輪PR11已合併；本輪由使用者自行Merge，不開auto-merge、不推main。
 - 驗收source `b5f83655a567a0a713fb9f56d104085a55a0b01e` / Actions43662869767。387單元/check、快速29編輯＋5色調動作＋9音訊（三輪）＋30生命週期全過，完整167瀏覽器全部成功（8.0分鐘）。最後提交只含文件/量測/201張成功截圖，產品、測試與workflow和驗收source一致。
 - 本輪功能：定格選取/四動作、裁切獨立四工具/原UV縮放/undo-redo/X草稿、固定基地/自訂輸出比例、全頁素材名/原音名稱/真placeholder/圓角、多版型/局部有聲來源popup/輪序停格/子素材時間軸。11/15追加單色四工具圖示與分區、直線導航均實際驗320/390/430與computed radius0通過。
@@ -20,6 +28,11 @@
 - 2026-11-14 E 階段自訂輸出比例：主預覽基地不依輸出比例改高，頂部比例可進入主預覽四邊/角拖曳草稿，X不儲存、套用才寫 width/height/customAspect。內框/框外斜紋分開。ProjectPreview 使用240方形固定基地 contain，不因4:3上下錯位；音訊來源固定160px基地，播放秒數同列。check/374單元成功，新瀏覽器待驗。
 
 ## 本輪日誌
+
+- 2026-11-15 專案80%模組錯誤恢復（codex/recover-module-loading）
+  - 使用者回報Safari Importing a module script failed，舊重試留在同文件，失敗ESM會重用；bundle取消主線code splitting，build驗單一完整main/precache/不fetch相對lazy chunk；worker仍分離並保留原始媒體fallback。
+  - 明確程式重開、儲存同專案、只更新scope worker/activate waiting、保留hash/cache/OPFS；舊素材錯誤仍普通retry。PWA等待更新不接管編輯，首頁提供更新程式，不強迫重整使用中的專案。
+  - 12新單元，2新瀏覽器驗不載渲染器chunk/重開資料保存；399單元與check過，含build/PWA規則；169瀏覽器/Actions待驗。程式載入是根本錯誤，不能用「略過素材」掩蓋。
 
 - 2026-11-15 完整交付驗收（source b5f83655a567a0a713fb9f56d104085a55a0b01e）
   - Actions43662869767：387單元/check、167完整Chromium全過，另快速29編輯＋5色調動作＋9音訊（三輪）＋30生命週期全過。表單圓角12，導航radius0/直底線；320/390/430工具圖示/分區/44px、UV/匯出、定格/ABC/多版型/有聲來源均過。

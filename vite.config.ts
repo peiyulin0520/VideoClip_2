@@ -6,10 +6,12 @@ import { VitePWA } from 'vite-plugin-pwa';
 // GitHub Pages 網址：https://peiyulin0520.github.io/VideoClip_2/
 export default defineConfig({
   base: '/VideoClip_2/',
+  build: { rolldownOptions: { output: { codeSplitting: false } } },
   plugins: [
     react(),
     VitePWA({
-      registerType: 'autoUpdate',
+      registerType: 'prompt',
+      injectRegister: false,
       includeAssets: ['icons/apple-touch-icon.png', 'icons/favicon.png'],
       manifest: {
         id: '/VideoClip_2/',
@@ -30,6 +32,9 @@ export default defineConfig({
         ],
       },
       workbox: {
+        skipWaiting: false,
+        clientsClaim: false,
+        maximumFileSizeToCacheInBytes: 5 * 1024 * 1024,
         // 字體（Phase 3）另外用 Cache Storage 管理，不放進預快取
         globPatterns: ['**/*.{js,css,html,svg,png,ico,webmanifest}'],
         navigateFallback: 'index.html',

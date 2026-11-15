@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict';
-import { access, readFile } from 'node:fs/promises';
+import { access, readFile, readdir } from 'node:fs/promises';
 import { resolve } from 'node:path';
 
 const base = '/VideoClip_2/';
@@ -21,7 +21,28 @@ for (const font of catalog.fonts) {
   await access(resolve(output, 'fonts', font.key, font.licenseFile));
   await access(resolve(output, 'fonts', font.key, font.preview));
 }
-await access(resolve(output, 'sw.js'));
+const mainScripts = [...html.matchAll(/<script[^>]+type="module"[^>]+src="([^"]+)"/g)].map(
+  (match) => match[1],
+);
+assert.equal(mainScripts.length, 1, 'The app must load one complete code bundle');
+const mainCode = await readFile(resolve(output, mainScripts[0].slice(base.length)), 'utf8');
+assert(
+  !/\bimport\s*\(\s*['"]\.[^'"]+\.js/.test(mainCode),
+  'Project initialization must not fetch relative lazy code chunks',
+);
+const appBundles = (await readdir(resolve(output, 'assets'))).filter(
+  (name) => name.endsWith('.js') && !/worker/i.test(name),
+);
+assert.equal(appBundles.length, 1, 'Renderer modules must be in the main bundle, with workers kept separate');
+const sw = await readFile(resolve(output, 'sw.js'), 'utf8');
+assert(sw.includes(mainScripts[0].slice(base.length)), 'The complete app code must be precached');
+assert.match(
+  sw,
+  /self\.addEventListener\(["']message["'],[\s\S]{0,180}SKIP_WAITING[\s\S]{0,100}self\.skipWaiting\(\)/,
+  'Worker activation must require an explicit update message',
+);
+assert.equal([...sw.matchAll(/self\.skipWaiting\(\)/g)].length, 1, 'No unconditional worker activation');
+assert(!sw.includes('.clientsClaim()'), 'New workers must not take over an existing document');
 console.log(
   `Pages checks passed: ${base}, PWA scope, resources, ${catalog.fonts.length} fonts and licenses.`,
 );
