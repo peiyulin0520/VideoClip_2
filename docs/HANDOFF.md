@@ -1,13 +1,15 @@
 # 交接手冊（HANDOFF）
 
-## 載入錯誤修復進行中（先讀）
+## 載入錯誤修復交付（先讀）
 
-- PR12已Merge/main8b76117，新分支codex/recover-module-loading。使用者80% Safari module script failed，按retry無效。程式bundle之前Pixi會lazy importRenderer，舊retry重用被瀏覽器cache的failed module；autoUpdate清舊chunk也有版本混用風險。不是確認影片檔壞，不刪資料。
-- appRecovery.ts分類ESM錯誤並更新本app scope worker/activate waiting/完整replace同hash、加cache-bust query；Toasts先saveProject當下路由專案再reload。getRegistration受限可直接重開，update檢查8秒/worker10秒上限。舊素材/codec錯誤保留原retry；Player未create不給skip。
-- 主Vite bundle codeSplitting false；verify-pages驗single entry/no relative chunk imports/precache main/no skipWaiting/claim。PWA prompt/injectRegisterfalse，自行load後register(updateViaCache none)，waiting時只首頁顯示更新，不強制覆蓋正在編輯的文件。
-- 首頁更新入口也納入恢復e2e：已active worker，模擬installer狀態事件通知，點實際首頁更新按鈕重新開啟；register watch立即ready檢查防錯過已installed事件。check/399通過，新瀏覽器待驗。
-- 新12單元399過；初次TS mockPromise unknown已改ServiceWorkerRegistration。build只阻止相對chunk imports：Router有未使用generic import(e.module)不能當Pixi lazy chunk；SW手動SKIP_WAITING message handler可存在，禁止的是無條件啟用。2e2e走Actions待跑：阻擋非index chunks仍開圖，Safari錯誤→有聲原件/OPFS sentinel/cache不刪/名稱與tracks同hash保存、無自動播放。
-- 399單元/39檔、lint/build/Pages/PWA/39字體通過；無WebGPU加在新e2e首例，169瀏覽器/新PR/截圖待驗。以下PR12是已合併的歷史基線，不是當前待修結論。
+- PR13：https://github.com/peiyulin0520/VideoClip_2/pull/13 ，codex/recover-module-loading。source19291aeb4efd413e085a2b16c686734040535462 / Actions43668024373：399單元/check、169完整、快速2+29+5+9+30全過。最後提交只文件/PNG，程式/測試/設定與source一致。由使用者Merge後發布，不能代合併/auto-merge/推main。
+- 問題：80% Importing a module script failed，舊retry只重建Player仍留在相同failed ESM document；Pixi原lazy Renderer及強制PWA更新有混版風險。沒Safari原始stack，不能聲稱唯一網路原因或素材損壞。
+- appRecovery.ts分類ESM vs media；reloadAppCode保留path/query/hash加cache-bust，只更新exact app scope worker，getRegistration受限可重開，update8秒/worker10秒上限、等待啟用後replace。Toasts只save當前路由project（避免首頁把已刪舊project存回），pause後完整重開；不動IDB/OPFS/字體/其他cache。Preview無Player不給skip。
+- build.codeSplitting=false把Renderer納入約1.77MB主程式，workers仍分離；Pages驗single非worker bundle/no相對lazy imports/precache含main。Router未用generic import(e.module)可存在；worker只允許手動SKIP_WAITING message handler，無無條件skip或clientsClaim。
+- PWA prompt/injectRegisterfalse；main自行load後register(updateViaCache none)。首頁明確更新，editor不自動重整。watch既有installer立即檢查installed，避免錯過快事件。首次從舊PWA過渡可能需重新整理等安裝後關閉舊分頁/主畫面App再重開；不清網站資料。
+- 12單元＋2e2e（第二例含錯誤按鈕及首頁更新按鈕）。實際同hash重開、名稱/assets/tracks/OPFS sentinel/cache保留、無自動播放；無WebGPU仍可WebGL預覽。首頁通知用installer事件模擬，不當作兩版Safari部署已驗。
+- fast artifact14142943701 /2318200 bytes，SHA eb4031eccbdecd84dd7b41529d97b949fb9a89d535b4c1408b72b3095196ae14已核；只copy module-recovery 3 PNG並人工看過，舊201圖仍PR12基線。完整報告artifact14143032750未另copy全圖。
+- 操作USAGE#程式元件載入失敗時、驗收validation/module-recovery.md；沒有待修程式。下一步使用者Merge並等待Pages發布，再Safari真機確認，PLAN §7仍未驗。
 
 ## PR12 交付狀態（歷史）
 

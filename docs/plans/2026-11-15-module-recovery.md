@@ -8,4 +8,4 @@
 - build驗main無相對JS chunk import、precache包含完整main、worker沒有auto skipWaiting/clientsClaim。
 - 12單元分類/worker啟用/foreign scope/offline/權限/timeout；2瀏覽器阻斷lazy chunks及錯誤重開、名稱/素材/OPFS/cache保留，回歸全部舊流程。
 
-目前399單元及完整check成功，Actions169瀏覽器待驗；無WebGPU時WebGL渲染也要通過。Safari仍待真機。
+最終source19291ae / Actions43668024373：399單元/check、169完整、快速2/29/5/9/30全過；無WebGPU、模組失敗資料保留與首頁更新均已驗。3張成功圖核SHA/人工看過，PR13交使用者Merge。Safari仍待真機。

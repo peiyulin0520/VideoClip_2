@@ -4,11 +4,12 @@
 
 ## 交接快照（VideoClip_2 最新狀態）
 
-- 使用者2026-11-15回報80%「TypeError: Importing a module script failed.」，重試不能進專案。PR12已由使用者合併，main8b76117；新分支codex/recover-module-loading，準備新PR，不推main/不代合併。
-- 判斷是程式元件載入錯誤，舊retry只重建Player，無法清該document已失敗的ESM module map。Pixi在app.init動態載入Renderer；autoUpdate SW可能和舊頁面版本混用。沒有Safari真機stack，不能聲稱確定唯一網路原因。
-- 實作：主bundle合併動態imports，進專案不再抓渲染器chunk；PWA改等待更新/不強制接管舊文件，首頁可明確更新。模組錯誤顯示「更新程式並重新開啟」，先儲存目前專案、只更新本app worker、必要時啟用waiting、完整重開同hash專案；不刪IndexedDB/OPFS/字體或其他cache。沒有建立player的錯誤不再給無效略過。
-- 新12單元＋2瀏覽器case，399單元/39檔與完整check已過（含single main、無相對lazy chunk、precache/手動啟用worker/39字體）。新169瀏覽器待驗，另加無WebGPU環境測單bundle不影響WebGL。編譯後主程式1.77MB（gzip約506KB），不改播放解析度/匯出。禁止本機preview，瀏覽器走Actions。
-- 下一步：check→新PR13→模組失敗/資料保留/無渲染器chunk的瀏覽器測試及全回歸→新截圖、文件與可合併PR。Safari仍待真機；專案/原始影片未刪。
+- 使用者回報80% Safari「Importing a module script failed」，舊retry無效。本輪修復PR #13：https://github.com/peiyulin0520/VideoClip_2/pull/13 ，分支codex/recover-module-loading。PR12已由使用者合併，本輪由使用者自行Merge，未代合併/不推main。
+- 驗收source `19291aeb4efd413e085a2b16c686734040535462` / Actions43668024373：399單元/39檔與check、169完整Chromium全過，另2恢復＋29編輯＋5色調＋9音訊（三輪）＋30生命週期全過。最後僅文件/3新成功圖，程式/測試/build/workflow與source一致。
+- 主bundle合併Renderer lazy imports，預覽初始化不再fetch獨立renderer檔；PWA完整程式預快取、等待明確更新，不自動接管使用中的文件。模組錯誤顯示「更新程式並重新開啟」，先save當前專案，只更新本app scope worker、啟用waiting後完整同hash重開；不刪IndexedDB/OPFS/字體/其他cache。一般媒體錯誤仍普通retry，無Player不給無效略過。
+- 新2e2e驗無WebGPU/封鎖lazy chunk仍可預覽；Safari模組錯誤→新按鈕→完整重開保留projectID/name/assets/tracks/OPFS/cache、沒有自動播放，另實際點首頁更新按鈕。首頁通知以installer事件模擬，不冒充Safari兩版實際部署測試。
+- artifact14142943701下載核SHA eb4031eccbdecd84dd7b41529d97b949fb9a89d535b4c1408b72b3095196ae14；3張新圖人工檢視。其他201圖為PR12基線不重複替換。詳docs/validation/module-recovery.md / USAGE。
+- 下一步：使用者Merge PR13並等待Pages發布完成，再重新整理網站；舊分頁/PWA可關閉重開，保留網站資料。Safari原始失敗URL/真機stack與舊worker切換仍PLAN §7待真機，不能稱已在同一iPhone驗通。
 
 ## PR12 已交付基線（歷史）
 
@@ -28,6 +29,11 @@
 - 2026-11-14 E 階段自訂輸出比例：主預覽基地不依輸出比例改高，頂部比例可進入主預覽四邊/角拖曳草稿，X不儲存、套用才寫 width/height/customAspect。內框/框外斜紋分開。ProjectPreview 使用240方形固定基地 contain，不因4:3上下錯位；音訊來源固定160px基地，播放秒數同列。check/374單元成功，新瀏覽器待驗。
 
 ## 本輪日誌
+
+- 2026-11-15 載入恢復完整驗收（source19291ae / PR13）
+  - Actions43668024373：399單元/check與169完整（9.4min）全過；快速2/29/5/9/30全過。無WebGPU/阻擋lazy chunk、Safari錯誤同hash完整重開/資料保留、首頁更新點擊均已驗。
+  - 成功fast artifact14142943701已核SHA，3新截圖人工檢視；只提交本輪3圖，舊201保持PR12基線。更新USAGE、驗收文件/PLAN/HANDOFF；最後只文件/PNG，不更動已測產品/測試/設定。
+  - PR13交使用者自行Merge，等待main Pages發布再重整；原Safari失敗URL/堆疊未拿到，仍需真機確認，不宣稱唯一網路原因或刪資料修復。
 
 - 2026-11-15 首頁更新入口補驗
   - 46310ec新版2載入恢復＋29編輯＋5色調＋9音訊已通過，完整回歸待完。將首頁waiting update→更新程式→重開也接進同一恢復case，確保新按鈕確實可操作。

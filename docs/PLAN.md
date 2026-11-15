@@ -442,3 +442,5 @@ docs/
 本輪最終：[Actions43662869767](https://github.com/peiyulin0520/VideoClip_2/actions/runs/43662869767)，source b5f83655a567a0a713fb9f56d104085a55a0b01e：387單元、167 Chromium、29/5/9/30快速全過。201成功圖核兩份artifact SHA，原音三輪/動作零配置詳validation/editing-refinements.md；PR12交使用者Merge，以上真機項目保持待驗。
 
 2026-11-15載入錯誤追加：Safari真機驗舊分頁更新後80%失敗→更新程式重開原專案、原媒體/字體/設定保留、離線重開、首頁waiting update與多分頁版本一致。Chromium可驗流程/儲存，不能代替Safari錯誤來源的實機stack。
+
+載入修復最終：source19291aeb4efd413e085a2b16c686734040535462 / [Actions43668024373](https://github.com/peiyulin0520/VideoClip_2/actions/runs/43668024373)：399單元/check、169完整、2/29/5/9/30快速全過。3新恢復圖核artifact14142943701 SHA，詳validation/module-recovery.md。PR13待使用者Merge並等Pages發布，Safari失敗URL/原裝置切換仍待驗。
