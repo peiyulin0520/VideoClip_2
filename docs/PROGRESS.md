@@ -47,6 +47,10 @@
 
 ## 本輪日誌
 
+- 2026-11-15 驗收截圖取景補強
+  - source77ca098的Actions43691920624 check及新增7瀏覽器已過，完整回歸仍執行中。初輪4截圖的音訊/版型操作在視窗下緣，不足供使用者目視審核。新增明確捲到音訊列、特效第三層與版型示意，另存群組文字軌畫面；只改截圖取景，保留所有原斷言，產品程式不改。新版check/Actions待驗。
+
+
 - 2026-11-15 追加版型文字的CI幾何測試依賴
   - source39e919c / Actions43691474481新增7個瀏覽器已通過；build檢查在storyTemplates幾何hit測試因CI jsdom沒有Canvas而失敗（本機有）。caption新增為可點文字，舊測試現在也會量文字。
   - 該純幾何測試注入固定文字bounds，保留frame/cell/hit原斷言；實際字體raster、匯出及貼圖配置已由新7個瀏覽器斷言，沒有把正式Canvas路徑改成fallback。新check及新版Actions待驗。

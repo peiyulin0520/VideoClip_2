@@ -2,6 +2,8 @@
 
 ## 追加四項（進行中，先讀）
 
+- 截圖需明確scrollIntoView到實際驗收區；openTab只保證分頁可見，長主預覽會讓下方操作落在截圖外。caption-timeline另存展開文字軌，caption-proportion捲到template-assignment。
+
 - PR14未合併，接續codex/playback-import-reliability並draft；418單元/check已過，新7瀏覽器與完整181待Actions，不能沿用下面174稱追加完成。計畫plans/2026-11-15-effects-caption-followup.md。
 - effectOwnership.ts / projectStore.apply：比較前後所有item IDs（含nested caption）；刪除時同交易清理effects/transitions，undo/redo自然一起還原。新FX ownerId只記歸屬，不改既有全畫面渲染。舊無owner以套用時間推定；未知來源不藏起來，Timeline以空main lane顯示badge可管理。基本flash/light-leak badge必須回transition面板，不能回只列VIDEO_EFFECTS的effect面板。
 - layout.captionText是真正TextItem，獨立於media items以保住格數/輪序/來源索引。findItem index=-1代表caption；editItem寫nested，captionEdited同步caption/fontId/size/color。Timeline展開插入虛擬text row，普通TextPanel可編輯；刪caption不刪group。groupFrame textScale直接依預覽基地固定（不使用當前group scale），文字raster快取固定，幾何box才乘scale。

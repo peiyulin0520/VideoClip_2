@@ -128,6 +128,7 @@ test('特效三層選項樣式不同，文字與素材導覽共用主層樣式�
     for (const button of [primary, secondary, tertiary])
       expect((await button.boundingBox())!.height).toBeGreaterThanOrEqual(44);
   }
+  await tertiary.scrollIntoViewIfNeeded();
   await shot(page, 'effect-levels');
   await openTab(page, '素材');
   await expect(page.locator('[aria-label="素材類型"]')).toHaveClass(/option-primary/);
@@ -158,6 +159,7 @@ test('音訊三操作與素材名稱左右並排，320至430px保留觸控大小
       expect(size.h).toBeGreaterThanOrEqual(44);
     }
   }
+  await row.scrollIntoViewIfNeeded();
   await shot(page, 'audio-actions-left');
   await row.getByRole('button', { name: '片段範圍', exact: true }).tap();
   await page.getByRole('dialog').getByRole('button', { name: '關閉且不儲存', exact: true }).tap();
@@ -200,6 +202,7 @@ test('版型小示意呈現文字比例，展開群組可在文字頁編輯字�
   const text = page.locator('[data-template-caption=true]').getByTestId('clip');
   await expect(text).toHaveCount(1);
   await text.tap();
+  await shot(page, 'caption-timeline');
   await openTab(page, '文字');
   await page.getByLabel('文字內容', { exact: true }).fill('Our November');
   await slider(page, '大小', 120);
@@ -213,6 +216,7 @@ test('版型小示意呈現文字比例，展開群組可在文字頁編輯字�
     'data-caption-size',
     '120',
   );
+  await page.locator('.template-assignment').scrollIntoViewIfNeeded();
   await shot(page, 'caption-proportion');
   await page.reload();
   await waitForPreviewReady(page);
