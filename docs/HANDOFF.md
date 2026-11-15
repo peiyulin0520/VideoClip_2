@@ -1,12 +1,16 @@
 # 交接手冊（HANDOFF）
 
-## 追加四項（進行中，先讀）
+## 追加四項（交付，先讀）
+
+- 最終source942895a3c6e898d83861c501c19dd66bfa77892f / Actions43693750451：418單元/check、181完整（9.8m）、快速14/33/2/29/5/9/23全過。PR14交使用者Merge，最後僅文件/量測/5新PNG，產品/測試/workflow與source一致。驗收validation/effects-caption-followup.md，操作USAGE。
+- fast artifact14154206234／5,150,019 bytes下載SHA61b2b3651016a96dfd6f37b82dd720e9a7bdbb5736d837798f026f052b26df7d已核、5新圖人工檢視；完整artifact14154206620遠端產物未下載核對。三輪live maxJump0.003899/0.003886/0.004181、完整0.004079，原0.08不變。Safari真機待PLAN §7。
+
 
 - ownerId是刪除歸屬，不是targetId：timeline effect kind仍只依targetId判single，ownerId全畫面FX維持screen。17d406b完整180/181及快29/30都因chooser被誤標單素材而失敗；保留原chooser斷言並加unit防混淆。快速首組14（新7＋anchored7），末組23，其餘33/2/29/5/9不變；沒有少跑原回歸。
 
 - 截圖需明確scrollIntoView到實際驗收區；openTab只保證分頁可見，長主預覽會讓下方操作落在截圖外。caption-timeline另存展開文字軌，caption-proportion捲到template-assignment。
 
-- PR14未合併，接續codex/playback-import-reliability並draft；418單元/check已過，新7瀏覽器與完整181待Actions，不能沿用下面174稱追加完成。計畫plans/2026-11-15-effects-caption-followup.md。
+- PR14未合併，接續codex/playback-import-reliability；新增7瀏覽器及原174已在最終source全過，詳上方最終證據。計畫plans/2026-11-15-effects-caption-followup.md。
 - effectOwnership.ts / projectStore.apply：比較前後所有item IDs（含nested caption）；刪除時同交易清理effects/transitions，undo/redo自然一起還原。新FX ownerId只記歸屬，不改既有全畫面渲染。舊無owner以套用時間推定；未知來源不藏起來，Timeline以空main lane顯示badge可管理。基本flash/light-leak badge必須回transition面板，不能回只列VIDEO_EFFECTS的effect面板。
 - layout.captionText是真正TextItem，獨立於media items以保住格數/輪序/來源索引。findItem index=-1代表caption；editItem寫nested，captionEdited同步caption/fontId/size/color。Timeline展開插入虛擬text row，普通TextPanel可編輯；刪caption不刪group。groupFrame textScale直接依預覽基地固定（不使用當前group scale），文字raster快取固定，幾何box才乘scale。
 - CI jsdom沒有2DCanvas，本機可能有：storyTemplates純geometry的ctx.textSize需固定bounds，不能不小心呼叫真正renderText。字體/匯出/GPU用Playwright驗，不要為測試改正式renderer。

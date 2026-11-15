@@ -4,11 +4,13 @@
 
 ## 交接快照（VideoClip_2 最新狀態）
 
-- 使用者追加4項：刪素材連特效清除、特效等階層樣式、音訊三操作移名稱左側、版型caption比例示意及群組內文字軌。PR14尚未合併，因此接續同分支codex/playback-import-reliability，PR已轉draft，完成後仍使用者自行Merge。
-- 已實作ownerId與舊特效時間歸屬、同undo交易清理所有刪除路徑、無素材舊效果也有可點badge。主/次/第三層分別底線文字、淺底、輪廓選取；文字/素材等巢狀導航同步。音訊三圖示短標籤在名稱左側同列。
-- 版型layout.captionText是真正TextItem，獨立於items媒體格數/輪序長度；findItem/editText/geometry/scene/keyframes/虛擬時間軸列打通，字體/大小/內容與小示意同步；群組移動/修剪/複製/隱藏跟隨，文字貼圖比例不隨群組動態scale反覆重建。
-- 本機最新check通過：418單元/42檔、lint/格式/TypeScript/build/Pages/PWA/39字體。新增7個瀏覽器與既有174回歸待GitHub Actions，不能稱已完成。原媒體列數測試明確排除新caption列，保留同時3列/輪序1列；新測另驗文字列。
-- 下一步：推送、跑Actions及新截圖，處理實際失敗、整理驗收後PR14改ready。計畫plans/2026-11-15-effects-caption-followup.md。下面bffd168是播放基線，不能拿174作追加功能已通過證據。
+- PR14：https://github.com/peiyulin0520/VideoClip_2/pull/14 ，分支codex/playback-import-reliability。使用者追加四項與原播放／匯入修復一起交付；由使用者自行Merge後Pages才發布，不代合併、auto-merge或推main。
+- 最終驗收source `942895a3c6e898d83861c501c19dd66bfa77892f` / Actions43693750451：418單元／42檔與check、181完整Chromium（9.8m）全過；快速14＋33＋2＋29＋5＋9（三輪音訊）＋23全部成功。最後僅文件/量測/5新成功PNG，產品、測試與workflow和source一致。
+- 刪素材/整層/群組/批次時，同undo交易清所屬特效與銜接；舊無法確定來源的效果有可點badge。ownerId只記刪除歸屬，targetId才影響single分類，保留畫面效果的screen選單；同秒chooser原回歸已過。
+- 主層文字底線、次層淺底、第三層輪廓；文字/素材等巢狀導航同步。音訊三圖示短標籤在名稱左側同列，320/390/430觸控/溢出及實際按鈕操作通過。
+- 拍貼／膠卷／相紙layout.captionText為真正TextItem、獨立於media格數及輪序長度；群組展開文字軌可從普通文字頁編輯字體/大小/內容。示意比例、保存重開及匯出像素通過，群組縮放播放文字貼圖新增配置0。
+- 三輪live maxJump0.003899/0.003886/0.004181，完整0.004079，原<0.08不變。fast artifact14154206234／5,150,019 bytes下載核SHA61b2b3651016a96dfd6f37b82dd720e9a7bdbb5736d837798f026f052b26df7d，5圖人工檢視；詳validation/effects-caption-followup.md、effects-caption-audio.json及USAGE。
+- 下一步：使用者審核Merge PR14、等Pages發布後iPhone Safari驗實際原片聲音/長片FPS/字體與手勢；Chromium不等於Safari真機。沒有待修程式，使用者錄影未進repo。下方bffd168／174為追加前基線。
 
 ## PR14 播放／匯入已驗基線（追加前）
 
@@ -46,6 +48,12 @@
 - 2026-11-14 E 階段自訂輸出比例：主預覽基地不依輸出比例改高，頂部比例可進入主預覽四邊/角拖曳草稿，X不儲存、套用才寫 width/height/customAspect。內框/框外斜紋分開。ProjectPreview 使用240方形固定基地 contain，不因4:3上下錯位；音訊來源固定160px基地，播放秒數同列。check/374單元成功，新瀏覽器待驗。
 
 ## 本輪日誌
+
+- 2026-11-15 追加四項完整驗收交付（source942895a / PR14）
+  - Actions43693750451：418/check、181完整（9.8m）、快速14/33/2/29/5/9/23全過。原同秒chooser測試不改，ownerId分類混淆修正已驗；沒有降低波形、像素、媒體列數或資源配置標準。
+  - 三輪live0.003898978/0.003886402/0.004180849、完整0.004078627（limit0.08），raw JSON保存。fast artifact14154206234 SHA已核，5新成功圖人工檢視，舊圖保持歷史基線。
+  - 最後僅文件/量測/成功PNG，程式、測試與workflow同source；PR14交由使用者Merge，Safari仍PLAN §7待真機。
+
 
 - 2026-11-15 同秒多效果分類回歸修復
   - source17d406b / Actions43692408338：418/check及新增7、33/2/29/5/9全過，完整180/181、快速29/30。唯一失敗為同秒chooser原「畫面特效」因ownerId被標成「單素材特效」。ownerId只管理生命週期，不應改變渲染/編輯分類；恢復只有targetId才single，新增單元斷言，既有chooser測試不改。下載fast artifact error-context確認實際三個選項，不以重跑挑綠。新版check/Actions待驗。快速入口把anchored-playback移到首組與新7同跑（14項），末組剩23項，沒有刪任何回歸。
