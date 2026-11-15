@@ -1,3 +1,4 @@
+import { useUI } from '../store/uiStore';
 import { arrangeTemplate } from './templatePlayback';
 import { createClip, createTrack, newId } from '../model/defaults';
 import type { Asset, VideoItem } from '../model/types';
@@ -157,6 +158,7 @@ export function setAudioEnabled(id: string, enabled: boolean) {
       if (it.cell) it.cell.sequentialAudio = enabled;
     }
   });
+  useUI.getState().player?.refreshAudioPermission();
 }
 
 export async function addTemplateSolid(trackId: string, color: string) {

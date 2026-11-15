@@ -4,6 +4,12 @@
 
 ## 交接快照（VideoClip_2 最新狀態）
 
+- 本輪分支 `codex/playback-import-reliability`，由已合併 PR13 的 main1971bae 起。使用者最新確認參考 **原版VideoClip網站**，優先處理預覽無聲／卡頓與匯入過久。
+- 已實作手勢內音訊prime、無AudioSession的iOS native fallback、切畫質保留context、短缺frame不全域pause、獨立播放列。匯入改metadata＋目前畫面先就緒，轉檔／每2秒真縮圖只在暫停背景準備，取消可接續，舊silent cache查音軌後重建。
+- 410單元／41檔及完整check（lint/格式/TypeScript/build/Pages/39字體）已通過；新增瀏覽器待GitHub Actions驗證，不能稱Safari已修妥。方案/風險/測試見 plans/2026-11-15-playback-import-reliability.md。本輪待推功能分支開draftPR與瀏覽器驗收，不代合併。
+
+## PR13 已交付基線（歷史）
+
 - 使用者回報80% Safari「Importing a module script failed」，舊retry無效。本輪修復PR #13：https://github.com/peiyulin0520/VideoClip_2/pull/13 ，分支codex/recover-module-loading。PR12已由使用者合併，本輪由使用者自行Merge，未代合併/不推main。
 - 驗收source `19291aeb4efd413e085a2b16c686734040535462` / Actions43668024373：399單元/39檔與check、169完整Chromium全過，另2恢復＋29編輯＋5色調＋9音訊（三輪）＋30生命週期全過。最後僅文件/3新成功圖，程式/測試/build/workflow與source一致。
 - 主bundle合併Renderer lazy imports，預覽初始化不再fetch獨立renderer檔；PWA完整程式預快取、等待明確更新，不自動接管使用中的文件。模組錯誤顯示「更新程式並重新開啟」，先save當前專案，只更新本app scope worker、啟用waiting後完整同hash重開；不刪IndexedDB/OPFS/字體/其他cache。一般媒體錯誤仍普通retry，無Player不給無效略過。
@@ -29,6 +35,11 @@
 - 2026-11-14 E 階段自訂輸出比例：主預覽基地不依輸出比例改高，頂部比例可進入主預覽四邊/角拖曳草稿，X不儲存、套用才寫 width/height/customAspect。內框/框外斜紋分開。ProjectPreview 使用240方形固定基地 contain，不因4:3上下錯位；音訊來源固定160px基地，播放秒數同列。check/374單元成功，新瀏覽器待驗。
 
 ## 本輪日誌
+
+- 2026-11-15 預覽有聲與非阻塞匯入（進行中）
+  - 比對原版audio/player/mediaPool/proxyQueue/videoSync；修正先muted play再非手勢開聲、always WebAudio及畫質重建授權流失。背景解碼取消／部分縮圖保存與UI時鐘隔離已寫入。
+  - 新增單元與4瀏覽器情境，既有縮圖/實際proxy測試改為明確等背景完成，保留真時間戳/聲音/原檔匯出斷言。尚待新版check與Actions，不以PR13測試當本輪完成。
+
 
 - 2026-11-15 載入恢復完整驗收（source19291ae / PR13）
   - Actions43668024373：399單元/check與169完整（9.4min）全過；快速2/29/5/9/30全過。無WebGPU/阻擋lazy chunk、Safari錯誤同hash完整重開/資料保留、首頁更新點擊均已驗。

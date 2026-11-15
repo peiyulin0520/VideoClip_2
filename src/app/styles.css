@@ -4018,3 +4018,10 @@ textarea.text-input.area {
   border: 1px solid var(--line);
   border-radius: 12px;
 }
+
+.media-preparation-status {
+  margin: 0;
+  padding: 4px 8px;
+  color: var(--muted);
+  background: var(--panel);
+}

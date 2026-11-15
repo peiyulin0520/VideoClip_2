@@ -41,6 +41,11 @@ export function previewPlaybackRate(delta: number, speed: number, ios = isIOSDev
     : speed * (1 + Math.max(-0.03, Math.min(0.03, delta * 0.1)));
 }
 
+export type AudioMode = 'webaudio' | 'element';
+export function chooseAudioMode(env: { isIOS: boolean; hasAudioSession: boolean }): AudioMode {
+  return env.isIOS && !env.hasAudioSession ? 'element' : 'webaudio';
+}
+
 type Envelope = { at: number; from: number; to: number; riseEnd: number; fadeStart?: number; end?: number };
 type AudioNodeState = {
   source: MediaElementAudioSourceNode;
@@ -52,6 +57,7 @@ type AudioNodeState = {
 /** Web Audio envelopes keep native mute/pause/seek from cutting a nonzero sample. */
 export class AudioBus {
   private ctx: AudioContext | null = null;
+  mode: AudioMode;
   get context() {
     return this.ctx;
   }
@@ -70,6 +76,10 @@ export class AudioBus {
   private allowed: Set<HTMLMediaElement>;
   constructor(elements: HTMLMediaElement[], existing?: AudioContext) {
     this.allowed = new Set(elements);
+    const nav = navigator as Navigator & { audioSession?: unknown };
+    this.mode = existing
+      ? 'webaudio'
+      : chooseAudioMode({ isIOS: isIOSDevice(), hasAudioSession: !!nav.audioSession });
     if (existing) this.initialize(existing);
   }
   private initialize(ctx: AudioContext) {
@@ -89,19 +99,50 @@ export class AudioBus {
     this.master.connect(this.analyser);
   }
   unlock() {
+    if (this.mode === 'element') return;
     const nav = navigator as Navigator & { audioSession?: { type: string } };
     try {
       if (nav.audioSession) nav.audioSession.type = 'playback';
     } catch {
-      /* Older Safari. */
+      if (isIOSDevice() && !this.ctx) this.mode = 'element';
     }
     try {
-      if (!this.ctx && typeof AudioContext !== 'undefined')
-        this.initialize(new AudioContext({ latencyHint: 'playback' }));
+      const AudioCtor =
+        window.AudioContext ??
+        (window as unknown as { webkitAudioContext?: typeof AudioContext }).webkitAudioContext;
+      if (this.mode === 'webaudio' && !this.ctx && AudioCtor)
+        this.initialize(new AudioCtor({ latencyHint: 'playback' }));
     } catch {
       /* Keep native audio available. */
     }
-    if (this.ctx?.state === 'suspended') void this.ctx.resume().catch(() => {});
+    if (!this.ctx) this.mode = 'element';
+    if (this.ctx && this.ctx.state !== 'running' && this.ctx.state !== 'closed')
+      void this.ctx.resume().catch(() => {});
+  }
+  private attach(el: HTMLMediaElement) {
+    if (!this.ctx || !this.output || !this.allowed.has(el) || this.nodes.has(el)) return;
+    try {
+      const source = this.ctx.createMediaElementSource(el),
+        gain = this.ctx.createGain();
+      gain.gain.value = 0;
+      source.connect(gain).connect(this.output);
+      this.nodes.set(el, {
+        source,
+        gain,
+        target: 0,
+        envelope: { at: this.ctx.currentTime, from: 0, to: 0, riseEnd: this.ctx.currentTime },
+      });
+    } catch {
+      /* A media element can belong to only one context. */
+    }
+  }
+  /** Before play(), route through a silent gain and unmute inside the user gesture. */
+  prime(el: HTMLMediaElement, volume = 1) {
+    this.attach(el);
+    el.muted = this.nodes.has(el) ? false : volume <= 0;
+    if (el.volume !== (this.nodes.has(el) ? 1 : Math.min(1, volume)))
+      el.volume = this.nodes.has(el) ? 1 : Math.min(1, volume);
+    return this.nodes.has(el);
   }
   owns(el: HTMLMediaElement) {
     return this.nodes.has(el);
@@ -223,24 +264,7 @@ export class AudioBus {
     this.seeks.set(el, task);
   }
   flush() {
-    if (this.ctx && this.output)
-      for (const [el, wanted] of this.wanted)
-        if (wanted.value > 0 && this.allowed.has(el) && !this.nodes.has(el)) {
-          try {
-            const source = this.ctx.createMediaElementSource(el),
-              gain = this.ctx.createGain();
-            gain.gain.value = 0;
-            source.connect(gain).connect(this.output);
-            this.nodes.set(el, {
-              source,
-              gain,
-              target: 0,
-              envelope: { at: this.ctx.currentTime, from: 0, to: 0, riseEnd: this.ctx.currentTime },
-            });
-          } catch {
-            /* Never attach one element to two contexts. */
-          }
-        }
+    for (const [el, wanted] of this.wanted) if (wanted.value > 0) this.attach(el);
     for (const [el, node] of this.nodes) {
       const wanted = this.wanted.get(el),
         value = wanted?.value ?? 0;
@@ -328,7 +352,7 @@ export class AudioBus {
     this.master?.connect(dest);
     return dest.stream;
   }
-  destroy() {
+  destroy(closeContext = true) {
     for (const timer of this.stops.values()) clearTimeout(timer);
     for (const task of this.seeks.values()) clearTimeout(task.timer);
     this.stops.clear();
@@ -341,6 +365,6 @@ export class AudioBus {
     this.output?.disconnect();
     this.master?.disconnect();
     this.nodes.clear();
-    void this.ctx?.close().catch(() => {});
+    if (closeContext) void this.ctx?.close().catch(() => {});
   }
 }

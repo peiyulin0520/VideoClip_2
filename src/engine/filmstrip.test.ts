@@ -126,3 +126,29 @@ it('repair persists across undo without adding an edit or changing the source an
   expect(hasFilmstrip(useProjectStore.getState().project!.assets[0]!)).toBe(true);
   expect(useProjectStore.getState().project!.assets[0]!.duration).toBe(6);
 });
+it('resumes missing source timestamps after an interrupted background job and publishes immutable partials', async () => {
+  const old = strip(6);
+  old.frames[1]!.src = null;
+  old.frames[2]!.src = null;
+  mock.frames = [
+    { canvas: { width: 160, height: 90 }, timestamp: 2, duration: 1 },
+    { canvas: { width: 160, height: 90 }, timestamp: 4, duration: 1 },
+  ];
+  vi.spyOn(HTMLCanvasElement.prototype, 'getContext').mockReturnValue({ drawImage: vi.fn() } as never);
+  vi.spyOn(HTMLCanvasElement.prototype, 'toDataURL')
+    .mockReturnValueOnce('frame-2')
+    .mockReturnValueOnce('frame-4');
+  const partials: Filmstrip[] = [];
+  const result = await buildFilmstrip(
+    new Blob(),
+    6,
+    new AbortController().signal,
+    () => {},
+    old,
+    (s) => partials.push(s),
+  );
+  expect(old.frames.map((f) => f.src)).toEqual(['image-at-0', null, null]);
+  expect(partials[0]!.frames.map((f) => f.src)).toEqual(['image-at-0', null, null]);
+  expect(partials[1]!.frames.map((f) => f.src)).toEqual(['image-at-0', 'frame-2', null]);
+  expect(result.frames.map((f) => f.src)).toEqual(['image-at-0', 'frame-2', 'frame-4']);
+});

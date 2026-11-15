@@ -36,6 +36,9 @@ export async function pinchSelection(page: Page, factor = 1.7) {
 export async function createProjectWith(page: Page, files: string[], expandTimeline = true) {
   // 打開測試用的除錯掛鉤 window.__videoclip（正常使用者看不到）
   await page.addInitScript(() => {
+    // Exercise modern WebAudio envelopes explicitly; native fallback has its own capability test.
+    if (!('audioSession' in navigator) && !localStorage.getItem('lm2-test-native-audio'))
+      Object.defineProperty(navigator, 'audioSession', { configurable: true, value: { type: 'auto' } });
     localStorage.setItem('lm2-debug', '1');
     localStorage.setItem('lm2-skip-onboarding', '1');
   });

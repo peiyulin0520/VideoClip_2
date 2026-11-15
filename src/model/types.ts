@@ -8,7 +8,14 @@ export type Asset = {
   filmstrip?: { version: 1; interval: 2; duration: number; frames: { time: number; src: string | null }[] };
   previewFiles?: Record<
     string,
-    { status: 'ready' | 'none'; mime?: string; width?: number; height?: number; version: 1 }
+    {
+      status: 'ready' | 'none';
+      mime?: string;
+      width?: number;
+      height?: number;
+      version: 1;
+      audioVerified?: boolean;
+    }
   >;
   id: string;
   kind: 'video' | 'image' | 'audio';

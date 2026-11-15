@@ -444,3 +444,10 @@ docs/
 2026-11-15載入錯誤追加：Safari真機驗舊分頁更新後80%失敗→更新程式重開原專案、原媒體/字體/設定保留、離線重開、首頁waiting update與多分頁版本一致。Chromium可驗流程/儲存，不能代替Safari錯誤來源的實機stack。
 
 載入修復最終：source19291aeb4efd413e085a2b16c686734040535462 / [Actions43668024373](https://github.com/peiyulin0520/VideoClip_2/actions/runs/43668024373)：399單元/check、169完整、2/29/5/9/30快速全過。3新恢復圖核artifact14142943701 SHA，詳validation/module-recovery.md。PR13待使用者Merge並等Pages發布，Safari失敗URL/原裝置切換仍待驗。
+
+
+2026-11-15 播放／匯入追加真機待驗：
+
+- 原版VideoClip參考策略：AudioSession有／無的Safari首次有聲播放、靜音鍵/耳機/背景回來、切540/720/比例沿用context、拖回0。舊iOS native預聽volume限制與匯出細部音量分別驗。
+- 匯入長片只等首畫面，背景進度可先編輯；play／來源popup預聽／畫布手勢即停止optional解碼，pause後繼續每2秒真縮圖，驗長片後段準確與無聲舊cache重建。
+- 捲動／色調＋多效果／來源視窗關閉後的FPS與爆音需Safari真機。Chromium自製素材只能驗授權順序/音軌波形/資源，不宣稱已測同一iPhone原片。

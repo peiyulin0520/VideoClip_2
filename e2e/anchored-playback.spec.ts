@@ -351,9 +351,11 @@ test('大型影片以真正低解析度本機檔預覽，快取重開/切畫質�
   page.on('worker', () => workers++);
   await createProjectWith(page, ['preview-large.webm']);
   await ready(page);
+  await expect
+    .poll(async () => (await current(page)).assets[0]!.previewFiles?.['540']?.status, { timeout: 45000 })
+    .toBe('ready');
   const p = await current(page),
     asset = p.assets[0]!;
-  expect(asset.previewFiles?.['540']?.status).toBe('ready');
   await expect
     .poll(() =>
       page
@@ -383,7 +385,9 @@ test('大型影片以真正低解析度本機檔預覽，快取重開/切畫質�
   await page.getByRole('button', { name: '標準', exact: true }).tap();
   await expect(page.getByTestId('preview-canvas')).toHaveAttribute('width', '720');
   await ready(page);
-  expect((await current(page)).assets[0]!.previewFiles?.['720']?.status).toBe('ready');
+  await expect
+    .poll(async () => (await current(page)).assets[0]!.previewFiles?.['720']?.status, { timeout: 45000 })
+    .toBe('ready');
   await expect
     .poll(() =>
       page
@@ -397,6 +401,11 @@ test('大型影片以真正低解析度本機檔預覽，快取重開/切畫質�
 
 test('兩分鐘影片超過一分鐘後仍鋪滿取樣縮圖，放大時間軸不超過格數預算或留白', async ({ page }) => {
   await createProjectWith(page, ['timeline-long.webm']);
+  await expect
+    .poll(async () => (await current(page)).assets[0]!.filmstrip?.frames.every((f) => !!f.src), {
+      timeout: 45000,
+    })
+    .toBe(true);
   await seekTo(page, 82);
   await expect
     .poll(() =>

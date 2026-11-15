@@ -14,6 +14,13 @@ test('一般情況：匯入後時間軸有縮圖（不顯示檔名）', async ({
   await expect
     .poll(async () => (await thumbsOf(page)).assets[0]!.thumbs[0] ?? '', { timeout: 15_000 })
     .toMatch(/^data:image\/jpeg/);
+  await expect
+    .poll(
+      async () =>
+        ((await project(page)) as unknown as Project).assets[0]?.filmstrip?.frames.every((f) => !!f.src),
+      { timeout: 30000 },
+    )
+    .toBe(true);
   await expect(page.getByTestId('clip-name')).toHaveCount(0);
 });
 
@@ -34,7 +41,7 @@ test('模擬 iPhone：WebCodecs不可用時，原生影片依每2秒解碼縮圖
     } as typeof orig;
   });
   test.setTimeout(60_000);
-  // 匯入會先等 <video> 8 秒才放棄，所以等待時間要拉長（不用 createProjectWith）
+  // Metadata import does not wait for overview thumbnails; background native decoding is separate.
   await page.addInitScript(() => {
     localStorage.setItem('lm2-debug', '1');
     localStorage.setItem('lm2-skip-onboarding', '1');
@@ -49,6 +56,13 @@ test('模擬 iPhone：WebCodecs不可用時，原生影片依每2秒解碼縮圖
   await expect
     .poll(async () => (await thumbsOf(page)).assets[0]!.thumbs.length, { timeout: 20_000 })
     .toBeGreaterThan(0);
+  await expect
+    .poll(
+      async () =>
+        ((await project(page)) as unknown as Project).assets[0]?.filmstrip?.frames.every((f) => !!f.src),
+      { timeout: 30000 },
+    )
+    .toBe(true);
   await expect(page.getByTestId('clip-name')).toHaveCount(0);
   const a = ((await project(page)) as unknown as Project).assets[0]!;
   const cached = a.filmstrip!;

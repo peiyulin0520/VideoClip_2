@@ -10,6 +10,7 @@ import { Slider } from '../../ui/Slider';
 
 export function AudioPanel() {
   const project = useProjectStore((s) => s.project)!;
+  const player = useUI((s) => s.player);
   const [editing, setEditing] = useState<VideoItem | null>(null);
   const input = useRef<HTMLInputElement>(null);
   const entries = project.tracks.flatMap((track) =>
@@ -51,6 +52,9 @@ export function AudioPanel() {
       <p className="hint">
         音樂放在播放頭位置。時間軸長按拖移、拉片頭片尾修剪；每支影片可保留、關閉或分離原音。
       </p>
+      {player?.audioMode === 'element' && (
+        <p className="hint">此瀏覽器使用原音直接預聽；細部音量仍會套用到匯出影片。</p>
+      )}
       {entries.length === 0 && <p className="hint">目前沒有音訊。可匯入配樂，或加入帶有聲音的影片。</p>}
       {entries.map(({ item, asset, track }) => (
         <div className="audio-row" key={item.id}>

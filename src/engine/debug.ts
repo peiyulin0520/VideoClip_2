@@ -25,6 +25,8 @@ export function installDebugHook(player: Player) {
     ready: () => player.isReady,
     time: () => player.time,
     selected: () => useProjectStore.getState().selectedId,
+    audioMode: () => player.audioMode,
+    audioState: () => player.audioContext?.state ?? 'native',
     audioEnergy: () => player.audioEnergy(),
     audioProbe: (milliseconds: number) => player.audioProbe(milliseconds),
     async audioWave(start: number, end: number, times: number[]) {

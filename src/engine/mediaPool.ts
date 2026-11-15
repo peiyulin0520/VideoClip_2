@@ -1,3 +1,4 @@
+import { unlockPausedMedia } from './mediaUnlock';
 /**
  * 一組隱藏的 <video>，給所有「現在或即將播放」的影片物件輪流使用。
  * 同一個物件盡量一直用同一個元素（不重設 src）；沒人用的元素讓出去。
@@ -89,6 +90,7 @@ export class VideoPool {
     url: string,
     protect: Set<HTMLVideoElement>,
     audio = false,
+    allowUrlChange = true,
   ): HTMLVideoElement | null {
     let el = this.find(itemId);
     if (!el) {
@@ -113,7 +115,7 @@ export class VideoPool {
       delete el.dataset.priming;
     }
     el.dataset.mediaKind = audio ? 'audio' : 'video';
-    if (el.dataset.assetId !== assetId || el.dataset.url !== url) {
+    if (el.dataset.assetId !== assetId || (allowUrlChange && el.dataset.url !== url)) {
       delete el.dataset.priming;
       el.dataset.url = url;
       el.src = url;
@@ -146,15 +148,8 @@ export class VideoPool {
   }
 
   /** VideoClip's synchronous unlock: queued elements are paused before any promise can race playback. */
-  unlock() {
-    for (const v of this.els) {
-      if (!v.paused || v.dataset.previewIntent === 'play' || v.dataset.unlocked || !v.getAttribute('src'))
-        continue;
-      v.dataset.unlocked = '1';
-      v.muted = true;
-      void v.play().catch(() => {});
-      v.pause();
-    }
+  unlock(prepare?: (element: HTMLMediaElement) => boolean) {
+    unlockPausedMedia(this.els, prepare);
   }
 
   destroy() {

@@ -97,16 +97,21 @@ async function nativeFrames(
       const presented =
         t > 0.001 && v.requestVideoFrameCallback
           ? new Promise<boolean>((resolve) => {
-              const timer = setTimeout(() => {
-                v.cancelVideoFrameCallback(callback);
-                resolve(false);
-              }, 2000);
-              callback = v.requestVideoFrameCallback((_now, info) => {
+              const finish = (ok: boolean) => {
                 clearTimeout(timer);
-                resolve(
+                signal.removeEventListener('abort', abort);
+                if (callback) v.cancelVideoFrameCallback(callback);
+                resolve(ok);
+              };
+              const abort = () => finish(false);
+              const timer = setTimeout(abort, 2000);
+              signal.addEventListener('abort', abort, { once: true });
+              if (signal.aborted) return abort();
+              callback = v.requestVideoFrameCallback((_now, info) =>
+                finish(
                   Math.abs(info.mediaTime - t) <= 0.1 || (info.mediaTime <= t && info.mediaTime >= t - 1),
-                );
-              });
+                ),
+              );
             })
           : null;
       const moved =
@@ -142,9 +147,23 @@ export async function buildFilmstrip(
   duration: number,
   signal: AbortSignal,
   onProgress: (f: number) => void,
+  previous?: Filmstrip,
+  onPartial?: (strip: Filmstrip) => void,
 ): Promise<Filmstrip> {
   signal.throwIfAborted();
-  const frames = filmstripTimes(duration).map((time) => ({ time, src: null as string | null }));
+  const frames = filmstripTimes(duration).map((time, index) => ({
+    time,
+    src:
+      previous?.version === 1 && previous.duration === duration && previous.frames[index]?.time === time
+        ? previous.frames[index]!.src
+        : null,
+  }));
+  const pending = frames.filter((frame) => !frame.src);
+  const publish = () => {
+    signal.throwIfAborted();
+    onPartial?.({ version: 1, interval: 2, duration, frames: frames.map((frame) => ({ ...frame })) });
+  };
+  publish();
   const input = new Input({ source: new BlobSource(file), formats: ALL_FORMATS });
   const cancel = () => input.dispose();
   signal.addEventListener('abort', cancel, { once: true });
@@ -154,15 +173,16 @@ export async function buildFilmstrip(
     const track = await input.getPrimaryVideoTrack();
     if (track && (await track.canDecode())) {
       const sink = new CanvasSink(track, { height: 80, fit: 'contain' });
-      for await (const wrapped of sink.canvasesAtTimestamps(frames.map((f) => f.time))) {
+      for await (const wrapped of sink.canvasesAtTimestamps(pending.map((f) => f.time))) {
         signal.throwIfAborted();
         clearTimeout(idle);
         idle = setTimeout(cancel, 30000);
-        const frame = frames[done++];
+        const frame = pending[done++];
         if (!frame) break;
         if (wrapped && frameCovers(frame.time, wrapped.timestamp, wrapped.duration))
           frame.src = snapshot(wrapped.canvas, wrapped.canvas.width, wrapped.canvas.height);
         onProgress((0.85 * done) / Math.max(1, frames.length));
+        if (done === 1 || done % 8 === 0 || done === pending.length) publish();
         if (done % 8 === 0) await new Promise((r) => setTimeout(r, 0));
       }
     }
@@ -174,9 +194,10 @@ export async function buildFilmstrip(
     input.dispose();
   }
   if (frames.some((f) => !f.src))
-    await nativeFrames(file, frames, signal, () =>
-      onProgress(0.85 + (0.15 * frames.filter((f) => !!f.src).length) / Math.max(1, frames.length)),
-    );
+    await nativeFrames(file, frames, signal, () => {
+      onProgress(0.85 + (0.15 * frames.filter((f) => !!f.src).length) / Math.max(1, frames.length));
+      publish();
+    });
   signal.throwIfAborted();
   onProgress(1);
   return { version: 1, interval: 2, duration, frames };

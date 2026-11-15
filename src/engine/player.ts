@@ -25,7 +25,7 @@ type Deps = {
 };
 type Listener = (t: number, playing: boolean) => void;
 
-const DRIFT = 0.3;
+const DRIFT = 0.5;
 const PREFETCH_S = 1.0;
 const POOL_SIZE = 8;
 
@@ -85,7 +85,6 @@ export class Player {
   private bus: AudioBus;
   private lastEmit = 0;
   frameReady = false;
-  private preloadReady = false;
   private lastScene: SceneLayer[] = [];
   private hitCanvas: HTMLCanvasElement | null = null;
 
@@ -169,7 +168,7 @@ export class Player {
     this.pause();
     this.seek(t);
     const deadline = performance.now() + 15000;
-    while (!this.frameReady || !this.preloadReady) {
+    while (!this.frameReady) {
       if (this.destroyed) return;
       onProgress?.(Math.min(99, Math.round((100 * this.readyCount) / Math.max(1, this.expectedCount))));
       if (performance.now() > deadline) throw Error('預覽素材尚未準備完成，請重試或略過無法載入的素材');
@@ -193,9 +192,9 @@ export class Player {
     return () => this.listeners.delete(fn);
   }
 
-  private emit() {
+  private emit(force = false) {
     const now = performance.now();
-    if (this.playing && now - this.lastEmit < 80) return;
+    if (!force && this.playing && now - this.lastEmit < 80) return;
     this.lastEmit = now;
     for (const l of [...this.listeners]) l(this.t, this.playing);
   }
@@ -238,9 +237,10 @@ export class Player {
     this.bufferSince = performance.now();
     this.wallStart = performance.now();
     this.tStart = this.t;
+    this.emit(true); // Stop optional background decoders before starting playback.
     this.render(this.t);
-    this.pool.unlock();
-    this.emit();
+    this.pool.unlock((el) => this.bus.prime(el));
+    this.audioPool.unlock((el) => this.bus.prime(el));
     this.raf = requestAnimationFrame(this.tick);
   }
 
@@ -283,27 +283,17 @@ export class Player {
     if (!this.playing) return;
     const total = this.total();
     const now = performance.now();
+    // Native playback keeps decoding during brief readiness gaps. Keep the last
+    // drawable frame; never repeatedly pause/restart every stream to wait for one.
     if (!this.frameReady && this.deps.clock !== 'wall') {
       if (!this.buffering) this.bufferSince = now;
       this.buffering = true;
-      this.wallStart = now;
-      this.tStart = this.t;
-      this.render(this.t);
-      this.emit();
       if (now - this.bufferSince > 15000) {
         this.pause();
         this.deps.onPlaybackError?.('預覽暫時無法繼續，請稍候再播放');
         return;
       }
-      this.raf = requestAnimationFrame(this.tick);
-      return;
-    }
-    if (this.buffering) {
-      this.buffering = false;
-      this.wallStart = now;
-      this.tStart = this.t;
-      this.render(this.t);
-    }
+    } else this.buffering = false;
     const t = this.tStart + (now - this.wallStart) / 1000;
     const fps = this.getProject()?.fps ?? 30;
     if (Math.floor(t * fps) === Math.floor(this.t * fps) && t < total) {
@@ -337,9 +327,11 @@ export class Player {
   }
 
   private syncVideo(el: HTMLMediaElement, item: VideoItem, asset: Asset, track: Track, t: number) {
-    const active = this.playing && !this.buffering && t >= item.start && t < item.start + item.duration;
-    el.dataset.previewIntent = active ? 'play' : 'pause';
     const s = sourceTimeAt(item, t);
+    const holdAtEnd =
+      el.ended || (el instanceof HTMLVideoElement && asset.duration > 0.1 && s >= asset.duration - 0.02);
+    const active = this.playing && !holdAtEnd && t >= item.start && t < item.start + item.duration;
+    el.dataset.previewIntent = active ? 'play' : 'pause';
     // A pooled decoder can move from B to C of the same file without changing src.
     // Source edits/rebinding must not inherit the old clip's one-second seek throttle.
     let sourceMap = this.sourceMaps.get(el);
@@ -351,7 +343,7 @@ export class Player {
       };
       this.sourceMaps.set(el, sourceMap);
     }
-    const binding = `${item.id}:${item.assetId}:${item.trimIn}:${item.start}:${item.duration}:${item.speed}:${sourceMap.key}`;
+    const binding = `${el.dataset.url}:${item.id}:${item.assetId}:${item.trimIn}:${item.start}:${item.duration}:${item.speed}:${sourceMap.key}`;
     const rebound = this.mediaBindings.get(el) !== binding;
     if (rebound) {
       this.mediaBindings.set(el, binding);
@@ -359,8 +351,7 @@ export class Player {
     }
     const gain =
       !active ||
-      el.paused ||
-      this.pendingPlay.has(el) ||
+      (this.bus.mode === 'webaudio' && (el.paused || this.pendingPlay.has(el))) ||
       el.seeking ||
       t < item.start ||
       t >= item.start + item.duration ||
@@ -405,6 +396,7 @@ export class Player {
     if (el.playbackRate !== rate) el.playbackRate = rate;
     if (active) {
       if (el.paused && !this.pendingPlay.has(el)) {
+        if (asset.hasAudio) this.bus.prime(el, track.muted || item.audioEnabled === false ? 0 : item.volume);
         this.pendingPlay.add(el);
         void el.play().then(
           () => {
@@ -483,7 +475,7 @@ export class Player {
             srcH: img.naturalHeight || asset.height,
           };
         }
-        const el = this.pool.acquire(item.id, asset.id, url, used);
+        const el = this.pool.acquire(item.id, asset.id, url, used, false, !this.playing);
         if (!el) return null; // 同時疊的影片超過上限，多的不畫
         used.add(el);
         this.syncVideo(el, item, asset, track, t);
@@ -514,7 +506,7 @@ export class Player {
       const url = this.deps.urlFor(asset.id);
       if (!url) continue;
       this.expectedCount++;
-      const el = this.audioPool.acquire(item.id, asset.id, url, usedAudio);
+      const el = this.audioPool.acquire(item.id, asset.id, url, usedAudio, !this.playing);
       if (!el) continue;
       usedAudio.add(el);
       this.syncVideo(el, item, asset, track, t);
@@ -532,7 +524,7 @@ export class Player {
     for (const { item, asset } of this.upcoming(p, t)) {
       const url = this.deps.urlFor(asset.id);
       if (!url) continue;
-      const el = this.pool.acquire(item.id, asset.id, url, used);
+      const el = this.pool.acquire(item.id, asset.id, url, used, false, !this.playing);
       if (!el) continue;
       used.add(el);
       el.dataset.seekTarget = String(item.trimIn);
@@ -542,9 +534,6 @@ export class Player {
       }
       if (!el.paused) el.pause();
     }
-    this.preloadReady = [...used, ...usedAudio].every(
-      (el) => el.readyState >= 2 && !el.seeking && !this.bus.isSeeking(el) && !el.dataset.priming,
-    );
     this.pool.pauseAllExcept(used, (el) => this.bus.pause(el));
     this.audioPool.pauseAllExcept(usedAudio, (el) => this.bus.pause(el));
     this.bus.flush();
@@ -598,6 +587,18 @@ export class Player {
     return this.bus.probe(milliseconds);
   }
 
+  refreshAudioPermission() {
+    if (!this.destroyed) {
+      this.bus.unlock();
+      this.render(this.t);
+    }
+  }
+  get audioMode() {
+    return this.bus.mode;
+  }
+  get audioContext() {
+    return this.bus.context;
+  }
   audioEnergy() {
     return this.bus.energy();
   }
@@ -613,7 +614,7 @@ export class Player {
     return mainTrack(p).items.find((x) => this.t >= x.start && this.t < x.start + x.duration)?.id;
   }
 
-  destroy() {
+  destroy({ keepAudioContext = false }: { keepAudioContext?: boolean } = {}) {
     if (this.destroyed) return;
     this.destroyed = true;
     for (const gif of this.gifs.values()) gif.destroy();
@@ -624,7 +625,7 @@ export class Player {
     this.listeners.clear();
     this.pool.destroy();
     this.audioPool.destroy();
-    this.bus.destroy();
+    this.bus.destroy(!keepAudioContext);
     this.compositor.destroy();
   }
 }

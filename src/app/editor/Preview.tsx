@@ -11,9 +11,8 @@ import {
   useState,
   type PointerEvent as RPointerEvent,
 } from 'react';
-import { hasFilmstrip } from '../../engine/filmstrip';
-import { prepareFilmstrips } from '../../engine/prepareFilmstrips';
-import { preparePreviews } from '../../engine/preparePreviews';
+import { restorePreviews } from '../../engine/preparePreviews';
+import { useMediaPreparation } from './useMediaPreparation';
 import { previewUrlFor } from '../../engine/assetUrls';
 import { installDebugHook } from '../../engine/debug';
 import { useFonts } from '../../fonts/fontStore';
@@ -32,12 +31,7 @@ import { layoutMotion } from '../../engine/layouts';
 import { geoCtx } from '../../engine/scene';
 import { findItem, visibleLayers } from '../../engine/timeline';
 import { setTransform } from '../../store/actions';
-import {
-  setAssetFilmstrip,
-  setAssetPreview,
-  setAssetThumbs,
-  useProjectStore,
-} from '../../store/projectStore';
+import { setAssetPreview, setAssetThumbs, useProjectStore } from '../../store/projectStore';
 import { toast, useUI } from '../../store/uiStore';
 
 // v2：改成預設關閉（舊版 'vc-safe-zone' 預設開，會讓使用者誤以為粉紅區是畫面的一部分）
@@ -89,6 +83,7 @@ export function Preview({ projectId, width, height }: { projectId: string; width
   const [guides, setGuides] = useState<{ x: number | null; y: number | null }>({ x: null, y: null });
   const [selVisible, setSelVisible] = useState(true);
   const [timelineTime, setTimelineTime] = useState(0);
+  const audioContext = useRef<AudioContext | null>(null);
   const project = useProjectStore((s) => s.project)!;
   const videoAssetsKey = project.assets
     .filter((a) => a.kind === 'video')
@@ -96,6 +91,8 @@ export function Preview({ projectId, width, height }: { projectId: string; width
     .join('|');
   const selectedId = useProjectStore((s) => s.selectedId);
   const player = useUI((s) => s.player);
+  const loading = useUI((s) => !!s.previewLoad);
+  const preparedAssets = useRef(new Set(project.assets.map((asset) => asset.id)));
   const liftedId = useUI((s) => s.liftedId);
   const [picker, setPicker] = useState<{ ids: string[]; x: number; y: number } | null>(null);
   const holdTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -136,37 +133,13 @@ export function Preview({ projectId, width, height }: { projectId: string; width
     let unsub = () => {};
     void (async () => {
       const p = useProjectStore.getState().project!;
-      const failed = await preparePreviews(
-        projectId,
-        p.assets,
-        previewCap,
-        abort.signal,
-        (fraction, message) => {
-          const progress = 80 + Math.floor(fraction * 10);
-          if (!cancelled && useUI.getState().previewLoad?.progress !== progress)
-            useUI.setState({ previewLoad: { progress, message } });
-        },
-        (id, metadata) => {
-          if (!cancelled) setAssetPreview(id, previewCap, metadata);
-        },
-      );
+      await restorePreviews(projectId, p.assets, previewCap, abort.signal, (id, metadata) => {
+        if (!cancelled) setAssetPreview(id, previewCap, metadata);
+      });
       if (cancelled) return null;
-      if (failed) toast('部分影片無法建立輕量預覽，會使用原檔；匯出仍保留原始畫質');
-      const missingThumbs = await prepareFilmstrips(
-        projectId,
-        useProjectStore.getState().project!.assets,
-        abort.signal,
-        (f, message) => {
-          if (!cancelled) useUI.setState({ previewLoad: { progress: 90 + Math.floor(f * 7), message } });
-        },
-        (id, strip) => {
-          if (!cancelled) setAssetFilmstrip(id, strip);
-        },
-      );
-      if (cancelled) return null;
-      if (missingThumbs) toast('部分時間點縮圖尚未就緒，會標示缺圖；重新開啟專案會再嘗試建立');
       return Player.create({
         host: poolRef.current!,
+        audioContext: audioContext.current ?? undefined,
         canvas: canvasRef.current!,
         getProject: () => useProjectStore.getState().project,
         getLiftedId: () => useUI.getState().liftedId,
@@ -183,6 +156,9 @@ export function Preview({ projectId, width, height }: { projectId: string; width
         const resume = resumeRef.current;
         player.seek(resume && resume.projectId === projectId ? resume.time : 0);
 
+        const unsubAudio = player.subscribe(() => {
+          if (player.audioContext) audioContext.current = player.audioContext;
+        });
         const unsubProject = useProjectStore.subscribe((s, prev) => {
           if (s.project !== prev.project) player.refresh();
         });
@@ -192,6 +168,7 @@ export function Preview({ projectId, width, height }: { projectId: string; width
         unsub = () => {
           unsubProject();
           unsubFonts();
+          unsubAudio();
         };
         installDebugHook(player);
         await player.prepare(player.time, (progress) => {
@@ -203,6 +180,7 @@ export function Preview({ projectId, width, height }: { projectId: string; width
         if (cancelled) return;
         await new Promise<void>((resolve) => requestAnimationFrame(() => resolve()));
         if (cancelled) return;
+        preparedAssets.current = new Set(useProjectStore.getState().project?.assets.map((asset) => asset.id));
         useUI.setState({ previewLoad: null });
         if (resume?.projectId === projectId && resume.playing) player.play();
       })
@@ -223,67 +201,53 @@ export function Preview({ projectId, width, height }: { projectId: string; width
       abort.abort();
       unsub();
       if (created) resumeRef.current = { projectId, time: created.time, playing: created.isPlaying };
-      created?.destroy();
+      if (created?.audioContext) audioContext.current = created.audioContext;
+      created?.destroy({ keepAudioContext: true });
       useUI.setState({ player: null });
     };
   }, [projectId, width, height, previewCap, retry]); // 比例改了（寬高變了）就重建預覽引擎
 
-  // Imports keep the compositor/player alive. Only new media needs preparation.
+  useEffect(
+    () => () => {
+      void audioContext.current?.close().catch(() => {});
+      audioContext.current = null;
+    },
+    [projectId],
+  );
+
+  // Newly imported media only waits for the actual current scene, never a whole-file transcode.
   useEffect(() => {
     if (!player || useUI.getState().previewLoad) return;
-    const p = useProjectStore.getState().project;
-    if (!p || p.id !== projectId) return;
-    const pending = p.assets.filter(
-      (a) => a.kind === 'video' && (!a.previewFiles?.[String(previewCap)] || !hasFilmstrip(a)),
-    );
-    if (!pending.length) return;
-    const abort = new AbortController();
+    const assets = useProjectStore.getState().project?.assets ?? [];
+    const added = assets.some((asset) => asset.kind === 'video' && !preparedAssets.current.has(asset.id));
+    if (!added) {
+      preparedAssets.current = new Set(assets.map((asset) => asset.id));
+      return;
+    }
     let cancelled = false;
     player.pause();
-    useUI.setState({ previewLoad: { progress: 80, message: '準備新匯入的影片' } });
-    void preparePreviews(
-      projectId,
-      pending,
-      previewCap,
-      abort.signal,
-      (fraction, message) => {
+    useUI.setState({ previewLoad: { progress: 95, message: '準備目前播放畫面' } });
+    void player
+      .prepare(player.time, (progress) => {
         if (!cancelled)
-          useUI.setState({ previewLoad: { progress: 80 + Math.floor(fraction * 10), message } });
-      },
-      (id, metadata) => {
-        if (!cancelled) setAssetPreview(id, previewCap, metadata);
-      },
-    )
-      .then(async (failed) => {
-        if (cancelled) return;
-        if (failed) toast('部分影片無法建立輕量預覽，會使用原檔；匯出仍保留原始畫質');
-        const missingThumbs = await prepareFilmstrips(
-          projectId,
-          useProjectStore.getState().project!.assets,
-          abort.signal,
-          (f, message) => {
-            if (!cancelled) useUI.setState({ previewLoad: { progress: 90 + Math.floor(f * 7), message } });
-          },
-          (id, strip) => {
-            if (!cancelled) setAssetFilmstrip(id, strip);
-          },
-        );
-        if (cancelled) return;
-        if (missingThumbs) toast('部分時間點縮圖尚未就緒，會標示缺圖；重新開啟專案會再嘗試建立');
-        await player.prepare(player.time, (progress) => {
-          if (!cancelled)
-            useUI.setState({
-              previewLoad: { progress: 97 + Math.floor(progress * 0.02), message: '準備預覽畫面' },
-            });
-        });
-        if (!cancelled) useUI.setState({ previewLoad: null });
+          useUI.setState({
+            previewLoad: { progress: 95 + Math.floor(progress * 0.05), message: '準備目前播放畫面' },
+          });
+      })
+      .then(() => {
+        if (!cancelled) {
+          preparedAssets.current = new Set(
+            useProjectStore.getState().project?.assets.map((asset) => asset.id),
+          );
+          useUI.setState({ previewLoad: null });
+        }
       })
       .catch((error) => {
         if (!cancelled)
           useUI.setState({
             previewLoad: {
               progress: 95,
-              message: '新素材尚未就緒',
+              message: '目前畫面尚未就緒',
               error: String(error),
               canSkip: true,
               retry: () => setRetry((n) => n + 1),
@@ -292,10 +256,11 @@ export function Preview({ projectId, width, height }: { projectId: string; width
       });
     return () => {
       cancelled = true;
-      abort.abort();
-      if (useUI.getState().player === player) useUI.setState({ previewLoad: null });
+      if (useUI.getState().player === player && useUI.getState().previewLoad?.message === '準備目前播放畫面')
+        useUI.setState({ previewLoad: null });
     };
-  }, [projectId, videoAssetsKey, previewCap, player]);
+  }, [projectId, videoAssetsKey, player]);
+  useMediaPreparation(projectId, previewCap, player, videoAssetsKey, loading);
 
   useEffect(() => {
     const pause = () => {
@@ -354,8 +319,8 @@ export function Preview({ projectId, width, height }: { projectId: string; width
   // 選取的物件目前在不在畫面上（不在就不顯示選取框）
   useEffect(() => {
     if (!player) return;
-    const check = (t: number) => {
-      setTimelineTime(t);
+    const check = (t: number, playing = player.isPlaying) => {
+      if (!playing) setTimelineTime(t);
       const p = useProjectStore.getState().project;
       const id = useProjectStore.getState().selectedId;
       const f = p && findItem(p, id);

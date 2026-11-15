@@ -1,14 +1,15 @@
 import { aspectLabel } from '../../engine/itemName';
 import { usePreferences } from '../../store/preferences';
-import { KeyframeControl } from '../editor/KeyframeControl';
+import { MediaPreparationStatus } from '../editor/MediaPreparationStatus';
+import { PlaybackBar } from '../editor/PlaybackBar';
 import { ensureFont } from '../../fonts/fontStore';
-import { ArrowUp, PanelBottom, ChevronLeft, Pause, Play, Redo2, Undo2, ZoomIn, ZoomOut } from 'lucide-react';
+import { ArrowUp, ChevronLeft, Redo2, Undo2 } from 'lucide-react';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { ensureUrls, releaseProjectUrls } from '../../engine/assetUrls';
 import { importFiles } from '../../engine/importMedia';
 import { addOverlayClips } from '../../store/actions';
-import { relayout, totalDuration, formatTime } from '../../engine/timeline';
+import { relayout, totalDuration } from '../../engine/timeline';
 import { getProject } from '../../storage/projects';
 import { editableProject } from '../../engine/layerEditing';
 import { startAutosave } from '../../store/autosave';
@@ -19,7 +20,7 @@ import type { Aspect } from '../../model/types';
 import { setProjectAspect } from '../../store/actions';
 import { Sheet } from '../../ui/Sheet';
 import { Preview } from '../editor/Preview';
-import { Timeline, MAX_PPS, MIN_PPS } from '../editor/Timeline';
+import { Timeline } from '../editor/Timeline';
 import { BottomBar } from '../editor/Toolbar';
 import { ExportPanel } from '../editor/ExportPanel';
 
@@ -107,13 +108,9 @@ function EditorBody() {
   const project = useProjectStore((s) => s.project)!;
   const canUndo = useProjectStore((s) => s.past.length > 0);
   const canRedo = useProjectStore((s) => s.future.length > 0);
-  const player = useUI((s) => s.player);
   const previewLoad = useUI((s) => s.previewLoad);
-  const [buffering, setBuffering] = useState(false);
   const fileInput = useRef<HTMLInputElement>(null);
   const [pps, setPps] = useState(60);
-  const [time, setTime] = useState(0);
-  const [playing, setPlaying] = useState(false);
   const [renaming, setRenaming] = useState(false);
   const previewQuality = usePreferences((s) => s.preview);
   const [qualityOpen, setQualityOpen] = useState(false);
@@ -155,15 +152,6 @@ function EditorBody() {
       window.visualViewport?.removeEventListener('scroll', updateViewport);
     };
   }, []);
-
-  useEffect(() => {
-    if (!player) return;
-    return player.subscribe((t, p) => {
-      setTime(t);
-      setPlaying(p);
-      setBuffering(player.isBuffering);
-    });
-  }, [player]);
 
   const importTrack = useRef<string | undefined>(undefined);
   const importMode = useRef<'main' | 'overlay'>('main');
@@ -333,69 +321,8 @@ function EditorBody() {
         </button>
       )}
 
-      {buffering && (
-        <p className="hint playback-buffering" role="status">
-          正在準備播放畫面…
-        </p>
-      )}
-      <div className="playbar">
-        <button
-          className="icon-btn"
-          aria-label={playing ? '暫停' : '播放'}
-          aria-pressed={playing}
-          data-playing={playing}
-          onClick={() => {
-            if (total <= 0) return toast('先匯入影片或照片');
-            player?.toggle();
-          }}
-        >
-          {playing ? <Pause size={22} /> : <Play size={22} />}
-        </button>
-        <span className="time" data-testid="time">
-          <span>{formatTime(time)}</span> <span>/ {formatTime(total)}</span>
-        </span>
-        <span className="spacer" />
-        <KeyframeControl />
-        <button
-          className="icon-btn"
-          aria-label="回到預覽"
-          title="回到預覽"
-          onClick={(e) => e.currentTarget.closest('.editor')!.scrollTo({ top: 0 })}
-        >
-          <ArrowUp size={20} />
-          <span>預覽</span>
-        </button>
-        <button
-          className="icon-btn"
-          aria-label="編輯工具"
-          title="編輯工具"
-          onClick={(e) =>
-            e.currentTarget
-              .closest('.editor')!
-              .querySelector('.bottombar')!
-              .scrollIntoView({ block: 'start' })
-          }
-        >
-          <PanelBottom size={20} />
-          <span>工具</span>
-        </button>
-        <button
-          className="icon-btn"
-          aria-label="縮小時間軸"
-          onClick={() => setPps(Math.max(pps / 1.5, MIN_PPS))}
-        >
-          <ZoomOut size={22} />
-          <span>縮小</span>
-        </button>
-        <button
-          className="icon-btn"
-          aria-label="放大時間軸"
-          onClick={() => setPps(Math.min(pps * 1.5, MAX_PPS))}
-        >
-          <ZoomIn size={22} />
-          <span>放大</span>
-        </button>
-      </div>
+      <PlaybackBar total={total} pps={pps} setPps={setPps} />
+      <MediaPreparationStatus />
 
       <button
         className="timeline-toggle"

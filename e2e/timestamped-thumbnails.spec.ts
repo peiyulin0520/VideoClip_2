@@ -6,6 +6,11 @@ const current = (page: Page): Promise<Project> =>
     (window as unknown as { __videoclip: { project: () => Project } }).__videoclip.project(),
   );
 async function frames(page: Page) {
+  await expect
+    .poll(async () => (await current(page)).assets[0]?.filmstrip?.frames.every((f) => !!f.src), {
+      timeout: 45000,
+    })
+    .toBe(true);
   return page.evaluate(async () => {
     const p = (window as unknown as { __videoclip: { project: () => Project } }).__videoclip.project();
     const s = p.assets[0]!.filmstrip!;

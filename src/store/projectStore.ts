@@ -144,15 +144,19 @@ export function setTrackItems(trackId: string, items: Item[], opts?: ApplyOpts) 
 export function setAssetPreview(
   id: string,
   side: number,
-  metadata: NonNullable<import('../model/types').Asset['previewFiles']>[string],
+  metadata: NonNullable<import('../model/types').Asset['previewFiles']>[string] | undefined,
 ) {
   const state = useProjectStore.getState();
   if (!state.project) return;
   const patch = (p: Project): Project => ({
     ...p,
-    assets: p.assets.map((a) =>
-      a.id === id ? { ...a, previewFiles: { ...a.previewFiles, [String(side)]: metadata } } : a,
-    ),
+    assets: p.assets.map((a) => {
+      if (a.id !== id) return a;
+      const previewFiles = { ...a.previewFiles };
+      if (metadata) previewFiles[String(side)] = metadata;
+      else delete previewFiles[String(side)];
+      return { ...a, previewFiles };
+    }),
   });
   useProjectStore.setState({
     project: patch(state.project),

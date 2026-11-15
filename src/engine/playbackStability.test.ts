@@ -295,3 +295,75 @@ it.each([
     bus.destroy();
   },
 );
+
+it('routes and unmutes before play, with a silent initial gain and a reusable audio context', () => {
+  const { ctx, gain } = context();
+  ctx.state = 'interrupted';
+  const video = document.createElement('video');
+  video.muted = true;
+  const bus = new AudioBus([video], ctx as unknown as AudioContext);
+  bus.unlock();
+  expect(ctx.resume).toHaveBeenCalledOnce();
+  expect(bus.prime(video)).toBe(true);
+  expect(video.muted).toBe(false);
+  expect(gain.gain.value).toBe(0);
+  expect(bus.owns(video)).toBe(true);
+  bus.destroy(false);
+  expect(ctx.close).not.toHaveBeenCalled();
+  const next = new AudioBus([], ctx as unknown as AudioContext);
+  next.destroy();
+  expect(ctx.close).toHaveBeenCalledOnce();
+});
+it('uses native sound on iOS without AudioSession, keeping older Safari out of a silent WebAudio session', () => {
+  vi.stubGlobal('navigator', { userAgent: 'iPhone', platform: 'iPhone', maxTouchPoints: 5 });
+  const factory = vi.fn();
+  vi.stubGlobal('AudioContext', factory);
+  const el = document.createElement('video');
+  el.muted = true;
+  const bus = new AudioBus([el]);
+  expect(bus.mode).toBe('element');
+  bus.unlock();
+  expect(factory).not.toHaveBeenCalled();
+  expect(bus.prime(el, 1)).toBe(false);
+  expect(el.muted).toBe(false);
+  bus.prime(el, 0);
+  expect(el.muted).toBe(true);
+  bus.destroy();
+});
+it('queued separated audio is authorized unmuted inside the gesture and synchronously paused', () => {
+  vi.spyOn(HTMLMediaElement.prototype, 'load').mockImplementation(() => {});
+  const pause = vi.spyOn(HTMLMediaElement.prototype, 'pause').mockImplementation(() => {});
+  const mutedAtPlay: boolean[] = [];
+  vi.spyOn(HTMLMediaElement.prototype, 'play').mockImplementation(function (this: HTMLMediaElement) {
+    mutedAtPlay.push(this.muted);
+    return Promise.resolve();
+  });
+  const pool = new AudioPool(document.createElement('div'), 1, () => {});
+  const el = pool.acquire('sound', 'a', 'blob:original', new Set())!;
+  el.muted = true;
+  pause.mockClear();
+  pool.unlock();
+  expect(mutedAtPlay).toEqual([false]);
+  expect(pause).toHaveBeenCalledOnce();
+  expect(el.muted).toBe(true);
+  pool.destroy();
+});
+it('does not replace an active decoder URL during playback; paused video and audio adopt the ready proxy', () => {
+  vi.spyOn(HTMLMediaElement.prototype, 'load').mockImplementation(() => {});
+  vi.spyOn(HTMLMediaElement.prototype, 'pause').mockImplementation(() => {});
+  const host = document.createElement('div');
+  const video = new VideoPool(host, 1, () => {}),
+    audio = new AudioPool(host, 1, () => {});
+  const v = video.acquire('v', 'a', 'blob:original', new Set())!;
+  const a = audio.acquire('a', 'a', 'blob:original', new Set())!;
+  video.acquire('v', 'a', 'blob:proxy', new Set(), false, false);
+  audio.acquire('a', 'a', 'blob:proxy', new Set(), false);
+  expect(v.getAttribute('src')).toBe('blob:original');
+  expect(a.getAttribute('src')).toBe('blob:original');
+  video.acquire('v', 'a', 'blob:proxy', new Set());
+  audio.acquire('a', 'a', 'blob:proxy', new Set());
+  expect(v.getAttribute('src')).toBe('blob:proxy');
+  expect(a.getAttribute('src')).toBe('blob:proxy');
+  video.destroy();
+  audio.destroy();
+});

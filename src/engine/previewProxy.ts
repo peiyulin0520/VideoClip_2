@@ -16,6 +16,7 @@ export type PreviewFile = {
   width?: number;
   height?: number;
   version: 1;
+  audioVerified?: boolean;
 };
 export type PreviewResult = { metadata: PreviewFile; blob?: Blob };
 export const previewKey = (id: string, side: number) => `${id}~preview-${side}-v1`;
@@ -105,7 +106,7 @@ export async function makePreview(
     } finally {
       check.dispose();
     }
-    return { blob, metadata: { status: 'ready', version: 1, mime, ...size } };
+    return { blob, metadata: { status: 'ready', version: 1, mime, audioVerified: true, ...size } };
   } finally {
     input.dispose();
   }

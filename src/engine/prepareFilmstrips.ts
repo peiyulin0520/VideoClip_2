@@ -1,8 +1,8 @@
 import type { Asset } from '../model/types';
-import { previewUrlFor } from './assetUrls';
+import { previewBlobFor } from './assetUrls';
 import { buildFilmstrip, hasFilmstrip, type Filmstrip } from './filmstrip';
 
-/** Rebuild legacy/single-frame thumbnails once before playback; complete results persist with the asset. */
+/** Rebuild legacy/single-frame thumbnails while paused; partial and complete results persist with the asset. */
 export async function prepareFilmstrips(
   projectId: string,
   assets: Asset[],
@@ -18,13 +18,14 @@ export async function prepareFilmstrips(
       progress((i + f) / Math.max(1, pending.length), `建立每2秒縮圖 ${i + 1}/${pending.length}`);
     update(0);
     try {
-      const url = previewUrlFor(projectId, asset.id);
-      if (!url) {
+      const file = previewBlobFor(projectId, asset.id);
+      if (!file) {
         failed++;
         continue;
       }
-      const file = await (await fetch(url, { signal })).blob();
-      const strip = await buildFilmstrip(file, asset.duration, signal, update);
+      const strip = await buildFilmstrip(file, asset.duration, signal, update, asset.filmstrip, (partial) =>
+        save(asset.id, partial),
+      );
       signal.throwIfAborted();
       save(asset.id, strip);
       if (strip.frames.some((f) => !f.src)) failed++;
