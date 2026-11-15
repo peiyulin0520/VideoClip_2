@@ -1,3 +1,4 @@
+import { effectOwners } from './effectOwnership';
 import type { Project } from '../model/types';
 import { TRANSITIONS, VIDEO_EFFECTS } from './effectCatalog';
 import { EFFECTS } from './sceneEffects';
@@ -125,23 +126,33 @@ export function timelineEffectBadges(project: Project): TimelineEffectBadge[] {
         }
   }
   for (const fx of project.effects ?? []) {
-    if (fx.transitionFromId) continue;
+    if (
+      fx.transitionFromId &&
+      project.tracks.some((tr) => tr.items.some((it) => it.id === fx.transitionFromId)) &&
+      project.tracks.some((tr) => tr.items.some((it) => it.id === fx.transitionToId))
+    )
+      continue;
+    const ownerId = fx.targetId ?? fx.ownerId ?? effectOwners(project, fx)[0];
     for (const [time] of fx.ranges ?? [[fx.start, fx.start + fx.duration]]) {
       const track =
-        project.tracks.find((tr) => tr.items.some((it) => it.id === fx.targetId)) ??
+        project.tracks.find(
+          (tr) => tr.items.some((it) => it.id === ownerId) || tr.layout?.captionText?.id === ownerId,
+        ) ??
         project.tracks.find((tr) => tr.kind === 'main') ??
         project.tracks.find((tr) => tr.items.some((it) => it.type !== 'audio'));
       const item =
-        track?.items.find((it) => it.id === fx.targetId) ??
+        (ownerId && track?.layout?.captionText?.id === ownerId
+          ? track.layout.captionText
+          : track?.items.find((it) => it.id === ownerId)) ??
         track?.items.find((it) => it.type !== 'audio' && time >= it.start && time < it.start + it.duration);
-      if (track && item)
+      if (track)
         add(
           {
             id: `screen:${fx.id}:${time}`,
             trackId: track.id,
-            itemId: item.id,
+            itemId: item?.id ?? '',
             time,
-            kind: fx.targetId ? 'single' : 'screen',
+            kind: fx.targetId || fx.ownerId ? 'single' : 'screen',
             effectId: fx.id,
           },
           fx.preset,

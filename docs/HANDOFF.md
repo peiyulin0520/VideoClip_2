@@ -1,5 +1,14 @@
 # 交接手冊（HANDOFF）
 
+## 追加四項（進行中，先讀）
+
+- PR14未合併，接續codex/playback-import-reliability並draft；418單元/check已過，新7瀏覽器與完整181待Actions，不能沿用下面174稱追加完成。計畫plans/2026-11-15-effects-caption-followup.md。
+- effectOwnership.ts / projectStore.apply：比較前後所有item IDs（含nested caption）；刪除時同交易清理effects/transitions，undo/redo自然一起還原。新FX ownerId只記歸屬，不改既有全畫面渲染。舊無owner以套用時間推定；未知來源不藏起來，Timeline以空main lane顯示badge可管理。基本flash/light-leak badge必須回transition面板，不能回只列VIDEO_EFFECTS的effect面板。
+- layout.captionText是真正TextItem，獨立於media items以保住格數/輪序/來源索引。findItem index=-1代表caption；editItem寫nested，captionEdited同步caption/fontId/size/color。Timeline展開插入虛擬text row，普通TextPanel可編輯；刪caption不刪group。groupFrame textScale直接依預覽基地固定（不使用當前group scale），文字raster快取固定，幾何box才乘scale。
+- ProjectStore.apply在父群組時間改變時retime caption；複製／分割必須新caption ID、不能把Immer draft與copy共享caption物件。hydrate舊caption ID固定trackId-caption，反覆載入不換ID。只對non-story做caption，story既有動態標題保留。
+- 主層文字底線、次層淺底、第三層輪廓；#root specificity防全域圓角覆寫，選取保留aria/44px/主題fg。音訊左側三icon+短標籤同列，完整aria/title名稱保留，避免窄螢幕換列。
+
+
 ## 本輪播放／匯入修復（交付，先讀）
 
 - PR14：https://github.com/peiyulin0520/VideoClip_2/pull/14 ，分支codex/playback-import-reliability，main1971bae／PR13已合併。本輪sourcebffd168bfde821aaa1e8d92bb74ae352b64a5a6f / Actions43675152122：412單元/check、174完整Chromium及快速33/2/29/5/9/30全過。最後提交只文件/量測/PNG，產品/測試/workflow與source一致。只能由使用者Merge。

@@ -363,7 +363,9 @@ export function Preview({ projectId, width, height }: { projectId: string; width
         : itemBox(sel.item, geo)
       : null;
   const editableBox = (f: NonNullable<ReturnType<typeof findItem>>) =>
-    f.track.template ? groupFrame(f.track, width, height, player?.time ?? 0) : itemBox(f.item, geo);
+    f.track.template && f.item.id !== f.track.layout?.captionText?.id
+      ? groupFrame(f.track, width, height, player?.time ?? 0)
+      : itemBox(f.item, geo);
   const selLocked = !!sel?.track.locked || !!sel?.track.hidden;
 
   const pointers = useRef(new Map<number, Pt>());
@@ -382,12 +384,14 @@ export function Preview({ projectId, width, height }: { projectId: string; width
       id,
       key: `gesture:move:${id}:${performance.now()}`,
       start: at,
-      startX: f.track.template
-        ? groupTransform(f.track, player?.time).x
-        : evaluatedItem(f.item, player?.time ?? f.item.start).transform.x,
-      startY: f.track.template
-        ? groupTransform(f.track, player?.time).y
-        : evaluatedItem(f.item, player?.time ?? f.item.start).transform.y,
+      startX:
+        f.track.template && f.item.id !== f.track.layout?.captionText?.id
+          ? groupTransform(f.track, player?.time).x
+          : evaluatedItem(f.item, player?.time ?? f.item.start).transform.x,
+      startY:
+        f.track.template && f.item.id !== f.track.layout?.captionText?.id
+          ? groupTransform(f.track, player?.time).y
+          : evaluatedItem(f.item, player?.time ?? f.item.start).transform.y,
       moved: false,
     };
   };

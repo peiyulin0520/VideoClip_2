@@ -91,7 +91,7 @@ export function TextPanel({
 
   return (
     <>
-      <div className="chips sticky-tabs" role="tablist" aria-label="字卡設定">
+      <div className="chips sticky-tabs option-primary" role="tablist" aria-label="字卡設定">
         {SECTIONS.map((s) => (
           <button
             key={s}
@@ -236,7 +236,7 @@ export function TextPanel({
 
       {section === '字塊' && (
         <>
-          <div className="chips box-categories" aria-label="字塊分類">
+          <div className="chips box-categories option-secondary" aria-label="字塊分類">
             <button
               role="radio"
               aria-checked={!box}

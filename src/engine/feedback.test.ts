@@ -98,7 +98,7 @@ describe('iPhone 第二輪修剪與群組回歸', () => {
     p.layout = plan.layout;
     const tr = p.tracks[1]!;
     expect(tr.items).toHaveLength(3);
-    expect(visibleLayers(p, 2).filter((l) => l.track.template)).toHaveLength(3);
+    expect(visibleLayers(p, 2).filter((l) => l.track.template && l.item.type !== 'text')).toHaveLength(3);
     useProjectStore.getState().load(p);
     placeItem(tr.items[0]!.id, 3);
     const moved = useProjectStore.getState().project!;

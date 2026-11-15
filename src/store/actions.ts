@@ -1,3 +1,4 @@
+import { captionEdited } from '../engine/templateCaption';
 import { arrangeTemplate } from '../engine/templatePlayback';
 import { laneCategory } from '../engine/batchLayers';
 import { editAnimatedValues, trimKeyframes } from '../engine/keyframes';
@@ -42,9 +43,12 @@ type Opts = { coalesce?: string; select?: string | null };
 export function editItem(id: string, recipe: (it: Draft<Item>) => void, opts?: Opts) {
   store().apply((d) => {
     for (const tr of d.tracks) {
-      const it = tr.items.find((x) => x.id === id);
+      const it =
+        tr.items.find((x) => x.id === id) ??
+        (tr.layout?.captionText?.id === id ? tr.layout.captionText : undefined);
       if (it) {
         recipe(it);
+        if (tr.layout?.captionText?.id === id) captionEdited(tr);
         return;
       }
     }
@@ -127,6 +131,11 @@ export function removeAnyItem(id: string): boolean {
         (transition) => transition.fromId !== id && transition.toId !== id,
       );
       const tr = d.tracks[f.trackIndex]!;
+      if (tr.layout?.captionText?.id === id) {
+        delete tr.layout.captionText;
+        tr.layout.caption = '';
+        return;
+      }
       if (tr.template) {
         if (useUI.getState().templateCellId === id && tr.items.length > 1) {
           tr.items = tr.items.filter((i) => i.id !== id);
@@ -178,6 +187,13 @@ export function splitAny(id: string, t: number): string | null {
         };
       }
       selected = copy.items[0]!.id;
+      const caption = p.tracks[f.trackIndex]!.layout?.captionText;
+      if (copy.layout && caption) {
+        copy.layout.captionText = structuredClone(caption);
+        copy.layout.captionText.id = `${copy.id}-caption`;
+        copy.layout.captionText.start = t;
+        copy.layout.captionText.duration = copy.layout.duration;
+      }
       d.tracks.splice(f.trackIndex + 1, 0, copy);
     });
     store().select(selected);
@@ -213,7 +229,13 @@ export function duplicateAny(id: string): boolean {
     copy.id = newId('t_');
     copy.items = copy.items.map((it) => ({ ...it, id: newId('i_'), start: it.start + delta }));
     const layout = copy.layout ?? p.layout;
-    if (layout) copy.layout = { ...layout, start };
+    if (layout) {
+      copy.layout = { ...layout, start };
+      if (copy.layout.captionText) {
+        copy.layout.captionText.id = `${copy.id}-caption`;
+        copy.layout.captionText.start += start - layout.start;
+      }
+    }
     store().apply(
       (d) => {
         d.tracks.splice(f.trackIndex + 1, 0, copy);

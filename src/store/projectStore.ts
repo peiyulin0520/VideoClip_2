@@ -1,3 +1,5 @@
+import { hydrateTemplateCaptions, retimeTemplateCaption } from '../engine/templateCaption';
+import { pruneRemovedEffects } from '../engine/effectOwnership';
 import { produce, type Draft } from 'immer';
 import { create } from 'zustand';
 import type { Item, Project, VideoItem } from '../model/types';
@@ -40,7 +42,7 @@ export const useProjectStore = create<State>((set, get) => ({
 
   load: (p) =>
     set({
-      project: mergeLegacyTemplate(p),
+      project: hydrateTemplateCaptions(mergeLegacyTemplate(p)),
       past: [],
       future: [],
       selectedId: null,
@@ -54,6 +56,11 @@ export const useProjectStore = create<State>((set, get) => ({
     if (!project) return;
     const next = produce(project, (d) => {
       recipe(d);
+      for (const track of d.tracks) {
+        const before = project.tracks.find((t) => t.id === track.id)?.layout;
+        if (before && track.layout) retimeTemplateCaption(track, before);
+      }
+      pruneRemovedEffects(d, project);
     });
     if (next === project) return;
     const stamped = { ...next, updatedAt: Date.now() };

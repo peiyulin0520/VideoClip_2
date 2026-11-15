@@ -1,3 +1,6 @@
+import { updateTemplateCaption, createTemplateCaption } from '../../engine/templateCaption';
+import { TemplateCaptionThumbnail } from './TemplateCaptionThumbnail';
+import { FontSelect } from '../fonts/FontSelect';
 import { animationValues } from '../../engine/keyframes';
 import { TemplateCellEditor } from './TemplateCellEditor';
 import { ToneThumbnail } from './ToneThumbnail';
@@ -39,7 +42,10 @@ export function TemplatePanel() {
     [player],
   );
   const selectedId = useProjectStore((s) => s.selectedId);
-  const activeGroup = project.tracks.find((t) => t.template && t.items.some((it) => it.id === selectedId));
+  const activeGroup = project.tracks.find(
+    (t) =>
+      t.template && (t.items.some((it) => it.id === selectedId) || t.layout?.captionText?.id === selectedId),
+  );
   const miniatureTone = activeGroup?.layout
     ? animationValues(activeGroup.layout, miniTime - activeGroup.layout.start)
     : undefined;
@@ -62,6 +68,12 @@ export function TemplatePanel() {
   const [appearance, setAppearance] = useState<Partial<NonNullable<Project['layout']>>>({
     size: activeGroup?.layout?.size ?? layoutDefaultSize(style),
     caption: activeGroup?.layout?.caption ?? 'LITTLE MOMENTS',
+    captionFontId:
+      activeGroup?.layout?.captionText?.card.runs[0]?.fontId ??
+      activeGroup?.layout?.captionFontId ??
+      'system',
+    captionFontSize:
+      activeGroup?.layout?.captionText?.card.runs[0]?.size ?? activeGroup?.layout?.captionFontSize ?? 38,
     frameColor:
       activeGroup?.layout?.frameColor ?? (style === 'filmstrip' || style === 'story' ? '#17171b' : '#fff5df'),
     captionColor: activeGroup?.layout?.captionColor ?? (style === 'filmstrip' ? '#e3d4bc' : '#7e6c5b'),
@@ -74,6 +86,7 @@ export function TemplatePanel() {
       useProjectStore.getState().apply((d) => {
         const group = d.tracks.find((t) => t.id === activeGroup.id)!;
         Object.assign(group.layout!, patch);
+        updateTemplateCaption(group);
         if (d.layout?.style === style) Object.assign(d.layout, patch);
       });
   };
@@ -156,6 +169,8 @@ export function TemplatePanel() {
       }
       Object.assign(plan.layout, appearance);
       Object.assign(plan.tracks[0]!.layout!, appearance);
+      updateTemplateCaption(plan.tracks[0]!);
+      plan.layout.captionText = plan.tracks[0]!.layout?.captionText;
       if (plan.layout.story) {
         useUI.getState().setBusy('正在準備故事模板字體…');
         for (const id of plan.tracks[0]!.layout?.story?.fontIds ?? [])
@@ -213,6 +228,8 @@ export function TemplatePanel() {
               setAppearance({
                 size: current?.size ?? layoutDefaultSize(l.id),
                 caption: current?.caption ?? 'LITTLE MOMENTS',
+                captionFontId: current?.captionFontId ?? 'system',
+                captionFontSize: current?.captionFontSize ?? 38,
                 frameColor:
                   current?.frameColor ?? (l.id === 'filmstrip' || l.id === 'story' ? '#17171b' : '#fff5df'),
                 captionColor: current?.captionColor ?? (l.id === 'filmstrip' ? '#e3d4bc' : '#7e6c5b'),
@@ -285,6 +302,25 @@ export function TemplatePanel() {
               onChange={(e) => patchAppearance({ caption: e.target.value })}
             />
           </label>
+        )}
+        {style !== 'story' && (
+          <div className="template-caption-options">
+            <label className="field">
+              版型字體
+              <FontSelect
+                value={appearance.captionFontId ?? 'system'}
+                onChange={(captionFontId) => patchAppearance({ captionFontId })}
+              />
+            </label>
+            <Slider
+              label="版型文字大小"
+              value={appearance.captionFontSize ?? 38}
+              min={8}
+              max={240}
+              step={1}
+              onChange={(captionFontSize) => patchAppearance({ captionFontSize })}
+            />
+          </div>
         )}
         <ColorPicker
           label="版型底色"
@@ -407,6 +443,33 @@ export function TemplatePanel() {
               </button>
             );
           })}
+          {style !== 'story' &&
+            (() => {
+              const layout = {
+                style,
+                motion,
+                start: activeGroup?.layout?.start ?? 0,
+                duration: seconds,
+                ...appearance,
+              };
+              const text = activeGroup?.layout?.captionText
+                ? structuredClone(activeGroup.layout.captionText)
+                : createTemplateCaption({ layout } as import('../../model/types').Track);
+              text.card.runs[0]!.text = appearance.caption ?? '';
+              Object.assign(text.card.runs[0]!, {
+                fontId: appearance.captionFontId ?? 'system',
+                size: appearance.captionFontSize ?? 38,
+                color: appearance.captionColor ?? '#7e6c5b',
+              });
+              return (
+                <TemplateCaptionThumbnail
+                  text={text}
+                  width={appearance.size?.width ?? 1080}
+                  height={appearance.size?.height ?? layoutDefaultSize(style).height}
+                  adjustment={miniatureTone}
+                />
+              );
+            })()}
         </div>
         <div className="template-source-choices">
           {ids.map((id, i) => (
@@ -441,7 +504,7 @@ export function TemplatePanel() {
           ))}
         </div>
       </div>
-      <div className="chips">
+      <div className="chips option-secondary" aria-label="版型來源方式">
         <button className={`chip${sourceIds === null ? ' active' : ''}`} onClick={() => setSourceIds(null)}>
           選素材套版
         </button>

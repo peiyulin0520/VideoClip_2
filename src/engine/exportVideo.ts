@@ -48,6 +48,7 @@ export async function prepareFonts(project: Project) {
   const ids = [
     ...new Set([
       ...project.tracks.flatMap((tr) => tr.layout?.story?.fontIds ?? []),
+      ...project.tracks.flatMap((tr) => tr.layout?.captionText?.card.runs.map((r) => r.fontId) ?? []),
       ...project.tracks.flatMap((t) =>
         t.items.flatMap((it) => (it.type === 'text' ? it.card.runs.map((r) => r.fontId) : [])),
       ),

@@ -200,3 +200,8 @@ Compositor 的同來源/crop/mask/尺寸共享 FrameResource，RGB 重影與故�
 ### 2026-11-15 預覽原音片尾
 
 AudioBus已排好的淡出截止不可被late pause/seek延長。原生EOF才使用12ms安全緩衝，以避開媒體與AudioContext時鐘的小段誤差；內部選段保留既有精確邊界，離線匯出不套這個原生解碼緩衝。音訊回歸原live maxJump<0.08不變，快速套件連跑三輪並保留全部原始值，不挑最低一輪。
+
+
+## 2026-11-15 特效歸屬與刪除
+
+新增effects.ownerId記錄套用素材，transitionFromId/toId及targetId亦是歸屬。所有UI刪除經ProjectStore.apply同一交易比較item IDs，刪片/整層/模板/批次連相關特效與轉場一起移除，undo/redo一起還原。舊未記owner的畫面特效依原始套用時點推定；無法識別來源時仍顯示可管理的時間軸標記。ownerId不改既有全畫面合成語意。主/次/分類分別文字底線、淺底、輪廓選取。

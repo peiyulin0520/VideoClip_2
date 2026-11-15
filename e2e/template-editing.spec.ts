@@ -85,7 +85,9 @@ test('輪序在同列、同時分列；已播格停最後一幀且靜音，輸�
   expect(group.layout!.duration).toBe(3);
   await page.locator(`[data-track-id="${group.id}"] [data-testid=track-chip]`).tap();
   await page.getByRole('dialog').getByRole('button', { name: '展開版型素材', exact: true }).tap();
-  await expect(page.locator(`[data-track-id="${group.id}"][data-template-child=true]`)).toHaveCount(1);
+  await expect(
+    page.locator(`[data-track-id="${group.id}"][data-template-child=true]:not([data-template-caption=true])`),
+  ).toHaveCount(1);
   await seekTo(page, 2.5);
   await expect
     .poll(() =>
@@ -108,7 +110,9 @@ test('輪序在同列、同時分列；已播格停最後一幀且靜音，輸�
   await page.locator('.template-playback-settings').scrollIntoViewIfNeeded();
   await page.screenshot({ path: 'docs/screenshots/editing/template-sequential-timeline.png' });
   await page.getByRole('button', { name: '同時播放', exact: true }).tap();
-  await expect(page.locator(`[data-track-id="${group.id}"][data-template-child=true]`)).toHaveCount(3);
+  await expect(
+    page.locator(`[data-track-id="${group.id}"][data-template-child=true]:not([data-template-caption=true])`),
+  ).toHaveCount(3);
   await page.locator('.template-playback-settings summary').tap();
   await page.getByRole('button', { name: '新增群組色塊', exact: true }).tap();
   await expect.poll(async () => (await current(page)).tracks.find((t) => t.template)!.items.length).toBe(4);

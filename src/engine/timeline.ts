@@ -38,6 +38,8 @@ export function findItem(
     const track = p.tracks[ti]!;
     const index = track.items.findIndex((x) => x.id === id);
     if (index >= 0) return { item: track.items[index]!, track, trackIndex: ti, index };
+    if (track.layout?.captionText?.id === id)
+      return { item: track.layout.captionText, track, trackIndex: ti, index: -1 };
   }
   return null;
 }
@@ -79,6 +81,8 @@ export function layersAt(p: Project, t: number, includeHidden: boolean): Layer[]
             t < track.layout.start + track.layout.duration)),
     );
     for (const item of track.template ? active : active.slice(0, 1)) out.push({ item, track, trackIndex });
+    const caption = track.template && track.layout?.captionText;
+    if (caption && t >= caption.start && t < itemEnd(caption)) out.push({ item: caption, track, trackIndex });
   });
   return out;
 }

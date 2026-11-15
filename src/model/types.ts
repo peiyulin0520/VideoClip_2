@@ -288,6 +288,9 @@ export type Project = {
     playback?: 'simultaneous' | 'sequential';
     size?: { width: number; height: number };
     caption?: string;
+    captionText?: TextItem;
+    captionFontId?: string;
+    captionFontSize?: number;
     frameColor?: string;
     captionColor?: string;
     frameOpacity?: number;
@@ -316,6 +319,7 @@ export type Project = {
     strength: number;
     ranges?: [number, number][];
     targetId?: string;
+    ownerId?: string;
     transitionFromId?: string;
     transitionToId?: string;
   }[];

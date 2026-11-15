@@ -4,6 +4,14 @@
 
 ## 交接快照（VideoClip_2 最新狀態）
 
+- 使用者追加4項：刪素材連特效清除、特效等階層樣式、音訊三操作移名稱左側、版型caption比例示意及群組內文字軌。PR14尚未合併，因此接續同分支codex/playback-import-reliability，PR已轉draft，完成後仍使用者自行Merge。
+- 已實作ownerId與舊特效時間歸屬、同undo交易清理所有刪除路徑、無素材舊效果也有可點badge。主/次/第三層分別底線文字、淺底、輪廓選取；文字/素材等巢狀導航同步。音訊三圖示短標籤在名稱左側同列。
+- 版型layout.captionText是真正TextItem，獨立於items媒體格數/輪序長度；findItem/editText/geometry/scene/keyframes/虛擬時間軸列打通，字體/大小/內容與小示意同步；群組移動/修剪/複製/隱藏跟隨，文字貼圖比例不隨群組動態scale反覆重建。
+- 本機最新check通過：418單元/42檔、lint/格式/TypeScript/build/Pages/PWA/39字體。新增7個瀏覽器與既有174回歸待GitHub Actions，不能稱已完成。原媒體列數測試明確排除新caption列，保留同時3列/輪序1列；新測另驗文字列。
+- 下一步：推送、跑Actions及新截圖，處理實際失敗、整理驗收後PR14改ready。計畫plans/2026-11-15-effects-caption-followup.md。下面bffd168是播放基線，不能拿174作追加功能已通過證據。
+
+## PR14 播放／匯入已驗基線（追加前）
+
 - PR14：https://github.com/peiyulin0520/VideoClip_2/pull/14 ，分支codex/playback-import-reliability。PR13已合併；本輪由使用者自行Merge，不代合併／auto-merge／推main。
 - 最終驗收source `bffd168bfde821aaa1e8d92bb74ae352b64a5a6f` / Actions43675152122：412單元／41檔與check、174完整Chromium（12.1m）全過，快速33＋2＋29＋5＋9（三輪音訊）＋30全部成功。最後提交只文件/量測/2成功PNG，產品、測試、workflow與source一致。
 - 使用者確認參考**原版VideoClip網站**：手勢內啟用原音、無AudioSession的iOS native fallback、切畫質沿用context、短暫缺frame不全域pause。時鐘訂閱分離播放列；匯入metadata＋目前畫面先就緒，proxy及每2秒真縮圖只在暫停背景準備，播放/預聽/畫布及時間軸手勢立即取消、部分縮圖可接續。原檔匯出不變。
@@ -38,6 +46,12 @@
 - 2026-11-14 E 階段自訂輸出比例：主預覽基地不依輸出比例改高，頂部比例可進入主預覽四邊/角拖曳草稿，X不儲存、套用才寫 width/height/customAspect。內框/框外斜紋分開。ProjectPreview 使用240方形固定基地 contain，不因4:3上下錯位；音訊來源固定160px基地，播放秒數同列。check/374單元成功，新瀏覽器待驗。
 
 ## 本輪日誌
+
+- 2026-11-15 使用者追加特效／層級／音訊／版型文字（本機已驗，瀏覽器待驗）
+  - PR14未合併，接續同PR並暫draft。effects ownership與中央apply刪除清理覆蓋刪片/圖層/群組/批次；legacy無owner以原時間找素材，未知來源仍有badge，基本overlay badge跳正確面板。
+  - captionText不塞進media items，避免變4格或拖長輪序；舊版型載入補Caption，普通TextPanel編輯與groupFrame局部座標/固定raster比例共用。版型圖示文字用微型靜態canvas，不訂閱播放時鐘。
+  - 418單元/check過；7新瀏覽器待跑，原同時3媒體/輪序1媒體斷言排除caption，另驗caption行與GPU零新配置。Safari仍待真機，未提交使用者圖片/影片。
+
 
 - 2026-11-15 播放／匯入完整驗收交付（sourcebffd168 / PR14）
   - Actions43675152122：412單元與check、174完整（12.1m）全過；快速33背景/操作＋2載入＋29編輯＋5色調＋9三輪音訊＋30生命週期全部成功。含首播native PCM、同context換畫質、短readiness缺口不pause、永久阻塞optional仍能編輯、全片2秒真縮圖及先前seek/拖曳失敗。

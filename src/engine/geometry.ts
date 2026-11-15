@@ -47,6 +47,16 @@ export function itemBox(item: Item, ctx: GeoCtx): Box | null {
   if (item.type === 'audio') return null;
   const { canvasW: cw, canvasH: ch } = ctx;
   const cell = ctx.templates?.[item.id];
+  if (cell?.textScale !== undefined && item.type === 'text') {
+    const size = ctx.textSize(item, 1080 * cell.textScale, 1920 * cell.textScale);
+    return {
+      cx: cell.frame.cx + (item.transform.x - 0.5) * cell.frame.w,
+      cy: cell.frame.cy + (item.transform.y - 0.5) * cell.frame.h,
+      w: size.w * item.transform.scale * (cell.groupScale ?? 1),
+      h: size.h * item.transform.scale * (cell.groupScale ?? 1),
+      rotation: item.transform.rotation,
+    };
+  }
   if (cell && item.type !== 'text') {
     const slot = cell.slot;
     if (!slot) return null;

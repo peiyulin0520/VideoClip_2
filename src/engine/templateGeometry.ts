@@ -47,21 +47,43 @@ export function cellViewport(track: Track, item: VideoItem, index: number, t: nu
     h: (slot.h * frame.h) / h,
   };
 }
-export function templateContexts(project: Project, w: number, h: number, t: number) {
-  return Object.fromEntries(
-    project.tracks
-      .filter((tr) => tr.template)
-      .flatMap((tr) =>
-        tr.items.flatMap((it, i) =>
-          it.type === 'text'
-            ? []
-            : [
-                [
-                  it.id,
-                  { slot: cellViewport(tr, it, i, t, w, h), frame: groupFrame(tr, w, h, t), anchor: i === 0 },
-                ],
-              ],
-        ),
-      ),
-  );
+export type TemplateContext = {
+  slot: NonNullable<VideoItem['slot']> | null;
+  frame: Box;
+  anchor: boolean;
+  textScale?: number;
+  groupScale?: number;
+};
+export function templateContexts(
+  project: Project,
+  w: number,
+  h: number,
+  t: number,
+): Record<string, TemplateContext> {
+  const out: Record<string, TemplateContext> = {};
+  for (const tr of project.tracks) {
+    if (!tr.template) continue;
+    const frame = groupFrame(tr, w, h, t);
+    tr.items.forEach((it, i) => {
+      if (it.type !== 'text') out[it.id] = { slot: cellViewport(tr, it, i, t, w, h), frame, anchor: i === 0 };
+    });
+    const caption = tr.layout?.captionText;
+    if (caption) {
+      const scale = groupTransform(tr, t).scale;
+      const reference = layoutDefaultSize(tr.layout?.style ?? 'photobooth');
+      out[caption.id] = {
+        frame,
+        anchor: false,
+        slot: {
+          x: (frame.cx - frame.w / 2) / w,
+          y: (frame.cy - frame.h / 2) / h,
+          w: frame.w / w,
+          h: frame.h / h,
+        },
+        textScale: Math.min(w / reference.width, h / reference.height),
+        groupScale: scale,
+      };
+    }
+  }
+  return out;
 }

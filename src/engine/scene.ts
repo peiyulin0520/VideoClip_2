@@ -278,7 +278,7 @@ function toLayer(
             runs: item.card.runs.map((r) => ({ ...r, text: '點兩下編輯文字', color: '#aaaaaa' })),
           }
         : item.card,
-      uiScale(ctx.canvasW, ctx.canvasH),
+      ctx.templates?.[item.id]?.textScale ?? uiScale(ctx.canvasW, ctx.canvasH),
       Math.min(
         4,
         Math.max(

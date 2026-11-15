@@ -454,3 +454,6 @@ docs/
 
 
 2026-11-15 本輪Chromium最終：[Actions43675152122](https://github.com/peiyulin0520/VideoClip_2/actions/runs/43675152122)，sourcebffd168bfde821aaa1e8d92bb74ae352b64a5a6f：412單元/check、174完整及33/2/29/5/9/30快速全部通過；音訊三輪maxJump約0.0041，門檻0.08不改。2新成功PNG核fast artifact SHA並人工檢視。以上Safari真機項目仍待驗，詳validation/playback-import.md。PR14由使用者自行Merge。
+
+
+2026-11-15 追加四項 Safari 待驗（§7）：刪影像/整層/群組連特效及badge同步、undo/redo；三層主/次/分類導航的主題辨識；320–430px音訊按鈕在名稱左邊且保留觸控/有聲片段；群組展開caption文字列、字體與大小/示意比例、移動縮放/輪序/複製/重開/匯出一致及播放流暢度。新418單元/check通過，新瀏覽器待Actions，前輪174不可當本輪完成。

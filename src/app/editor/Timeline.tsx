@@ -1,3 +1,4 @@
+import { VIDEO_EFFECTS } from '../../engine/effectCatalog';
 import { arrangeTemplate } from '../../engine/templatePlayback';
 import { itemName } from '../../engine/itemName';
 import { itemCategory, laneCategory, LANE_NAMES, type LaneCategory } from '../../engine/batchLayers';
@@ -189,7 +190,13 @@ export function Timeline({
         effectsSingle: {
           id: badge.itemId,
           edge: badge.edge ?? 'enter',
-          mode: badge.effectId ? 'effect' : 'transition',
+          mode:
+            badge.effectId &&
+            VIDEO_EFFECTS.some(
+              (e) => e.id === project.effects?.find((fx) => fx.id === badge.effectId)?.preset,
+            )
+              ? 'effect'
+              : 'transition',
           effectId: badge.effectId,
           request,
         },
@@ -251,6 +258,8 @@ export function Timeline({
             track.layout?.playback === 'sequential'
               ? [track]
               : track.items.map((item) => ({ ...track, items: [item] }));
+          if (track.layout?.captionText)
+            children.push({ ...track, kind: 'text', items: [track.layout.captionText] });
           for (const child of children) {
             rows.push({ track: child, index, top, h: ROW_H, templateChild: true });
             top += ROW_H + ROW_GAP;
@@ -535,8 +544,12 @@ export function Timeline({
           if (templateChild) {
             const group = d.tracks.find((t) => t.id === track.id)!;
             const changed = next.find((i) => i.id === item.id)!;
-            group.items = group.items.map((i) => (i.id === item.id ? changed : i));
-            arrangeTemplate(group);
+            if (group.layout?.captionText?.id === item.id && changed.type === 'text')
+              group.layout.captionText = changed;
+            else {
+              group.items = group.items.map((i) => (i.id === item.id ? changed : i));
+              arrangeTemplate(group);
+            }
           } else setTimelineItems(d, track.id, next);
         },
         { coalesce: trimKey },
@@ -661,6 +674,9 @@ export function Timeline({
                 data-kind={track.kind}
                 data-track-id={track.id}
                 data-template-child={templateChild || undefined}
+                data-template-caption={
+                  (templateChild && track.layout?.captionText?.id === track.items[0]?.id) || undefined
+                }
                 data-bg="1"
                 style={{ top, height: h }}
               >

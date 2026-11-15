@@ -13,7 +13,7 @@ export function TemplatePlaybackSettings({ track }: { track: Track }) {
   return (
     <section className="template-playback-settings" aria-label="版型播放順序">
       <h3>版型播放</h3>
-      <div className="chips">
+      <div className="chips option-secondary">
         {(
           [
             ['simultaneous', '同時播放'],

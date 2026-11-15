@@ -81,10 +81,12 @@ export function EffectsPanel() {
   const usedTransitions = (p.transitions ?? []).filter(
     (tr) => mode === 'transition' && pair && tr.fromId === pair.from.id && tr.toId === pair.to.id,
   );
-  const usedEffects = (p.effects ?? []).filter((e) =>
-    mode === 'effect'
-      ? VIDEO_EFFECTS.some((x) => x.id === e.preset)
-      : EFFECTS.some((x) => x.id === e.preset) && (pair ? onPair(e) : atCursor(e)),
+  const usedEffects = (p.effects ?? []).filter(
+    (e) =>
+      (mode === 'transition' && e.id === single?.effectId) ||
+      (mode === 'effect'
+        ? VIDEO_EFFECTS.some((x) => x.id === e.preset)
+        : EFFECTS.some((x) => x.id === e.preset) && (pair ? onPair(e) : atCursor(e))),
   );
   const label = (id: string) => {
     for (const tr of p.tracks) {
@@ -143,7 +145,7 @@ export function EffectsPanel() {
         ))}
       </div>
       {mode === 'transition' && (
-        <div className="chips effect-scope" aria-label="動畫作用範圍">
+        <div className="chips option-secondary effect-scope" aria-label="動畫作用範圍">
           <button
             className={`chip${scope === 'single' ? ' active' : ''}`}
             aria-pressed={scope === 'single'}
@@ -310,7 +312,7 @@ export function EffectsPanel() {
               </div>
             ))}
           </section>
-          <div className="chips option-secondary" aria-label="特效分類">
+          <div className="chips option-tertiary" aria-label="特效分類">
             {['全部', '基本', '相機動作', '特效', '故障', '自然'].map((name) => (
               <button
                 key={name}
@@ -376,6 +378,26 @@ export function EffectsPanel() {
                                   ),
                                 ),
                           strength: 1,
+                          ...(mode === 'effect'
+                            ? {
+                                ownerId:
+                                  (findItem(d, selectedId)?.item &&
+                                  time >= findItem(d, selectedId)!.item.start &&
+                                  time <
+                                    findItem(d, selectedId)!.item.start +
+                                      findItem(d, selectedId)!.item.duration
+                                    ? selectedId!
+                                    : undefined) ??
+                                  d.tracks
+                                    .flatMap((tr) => tr.items)
+                                    .find(
+                                      (it) =>
+                                        it.type !== 'audio' &&
+                                        time >= it.start &&
+                                        time < it.start + it.duration,
+                                    )?.id,
+                              }
+                            : {}),
                           ...(mode === 'transition' && pair
                             ? { transitionFromId: pair.from.id, transitionToId: pair.to.id }
                             : {}),

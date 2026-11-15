@@ -4032,3 +4032,85 @@ textarea.text-input.area {
   background: var(--panel);
   pointer-events: none;
 }
+
+/* Primary navigation, subordinate scope and tertiary categories use distinct treatments. */
+:root[data-theme] #root .option-primary {
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+}
+:root[data-theme] #root .option-secondary .chip.active {
+  color: var(--fg);
+  background: color-mix(in srgb, var(--accent) 23%, var(--panel));
+  box-shadow: inset 0 -3px var(--accent);
+}
+.audio-entry-header {
+  display: grid;
+  grid-template-columns: max-content minmax(0, 1fr);
+  gap: 8px;
+  align-items: center;
+}
+.audio-actions {
+  display: flex;
+  flex-direction: row;
+  gap: 4px;
+}
+.audio-actions .chip {
+  min-height: 44px;
+}
+.audio-entry-header .audio-source {
+  height: 100%;
+}
+.audio-entry-header .audio-source img {
+  width: 44px;
+  height: 44px;
+}
+
+.audio-action {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  width: 44px;
+  min-height: 52px;
+  padding: 4px;
+}
+.audio-entry-header .audio-source {
+  gap: 6px;
+}
+.audio-entry-header .audio-source img {
+  flex-shrink: 0;
+  width: 38px;
+  height: 38px;
+}
+.template-caption-mini {
+  position: absolute;
+  pointer-events: none;
+  z-index: 2;
+}
+.template-caption-mini canvas {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+:root[data-theme] #root .option-primary > .chip:not(.add) {
+  background: transparent;
+  border-radius: 0;
+  border: 0;
+  border-bottom: 3px solid transparent;
+  color: var(--muted);
+}
+:root[data-theme] #root .option-primary > .chip.active:not(.add) {
+  color: var(--fg);
+  border-bottom-color: var(--accent);
+  font-weight: 700;
+}
+:root[data-theme] #root .option-tertiary {
+  padding-block: 4px;
+}
+:root[data-theme] #root .option-tertiary .chip.active {
+  color: var(--fg);
+  background: var(--control);
+  box-shadow: inset 0 0 0 1px var(--accent);
+  font-weight: 700;
+}

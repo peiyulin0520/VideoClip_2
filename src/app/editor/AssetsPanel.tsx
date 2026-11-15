@@ -125,7 +125,7 @@ export function AssetsPanel() {
   };
   return (
     <div className="panel scroll" aria-label="素材與貼圖">
-      <div className="chips">
+      <div className="chips option-primary" aria-label="素材類型">
         {[
           ['own', '我的素材'],
           ['giphy', 'GIPHY 貼圖'],
@@ -134,6 +134,7 @@ export function AssetsPanel() {
           <button
             key={id}
             className={`chip${section === id ? ' active' : ''}`}
+            aria-pressed={section === id}
             onClick={() => setSection(id as typeof section)}
           >
             {name}

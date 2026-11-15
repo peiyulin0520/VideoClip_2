@@ -1,3 +1,4 @@
+import { createTemplateCaption } from './templateCaption';
 import { arrangeTemplate } from './templatePlayback';
 import { createOverlayClip, createTrack } from '../model/defaults';
 import type { Project, VideoItem } from '../model/types';
@@ -116,13 +117,17 @@ export function collagePlan(
       : {}),
   };
   track.layout = { ...layout };
+  if (style !== 'story') {
+    track.layout.captionText = createTemplateCaption(track);
+    layout.captionText = track.layout.captionText;
+  }
   const tracks = [track];
   return { tracks, layout };
 }
 const artCache = new Map<string, HTMLCanvasElement>();
 export function layoutArt(style: LayoutStyle, w: number, h: number, appearance?: Project['layout']) {
   const caption = appearance?.caption ?? 'LITTLE MOMENTS';
-  const key = `${style}:${w}:${h}:${caption}:${appearance?.frameColor}:${appearance?.captionColor}`,
+  const key = `${style}:${w}:${h}:${!!appearance?.captionText}:${caption}:${appearance?.frameColor}:${appearance?.captionColor}`,
     cached = artCache.get(key);
   if (cached) return cached;
   const canvas = document.createElement('canvas');
@@ -144,7 +149,7 @@ export function layoutArt(style: LayoutStyle, w: number, h: number, appearance?:
   c.fillStyle = appearance?.captionColor ?? (style === 'filmstrip' ? '#e3d4bc' : '#7e6c5b');
   c.textAlign = 'center';
   c.font = `${w * 0.035}px sans-serif`;
-  if (style !== 'story') c.fillText(caption, w / 2, h * 0.96, w * 0.9);
+  if (style !== 'story' && !appearance?.captionText) c.fillText(caption, w / 2, h * 0.96, w * 0.9);
   if (artCache.size >= 4) artCache.delete(artCache.keys().next().value!);
   artCache.set(key, canvas);
   return canvas;
@@ -195,6 +200,8 @@ export function carryTemplateEdits(
     for (const key of [
       'size',
       'caption',
+      'captionFontId',
+      'captionFontSize',
       'frameColor',
       'captionColor',
       'frameOpacity',
@@ -216,5 +223,9 @@ export function carryTemplateEdits(
       transform: previous.layout?.style === next.layout?.style ? old.transform : item.transform,
     };
   });
+  if (next.layout?.style === 'story') delete next.layout.captionText;
+  else if (next.layout && previous.layout?.captionText)
+    next.layout.captionText = structuredClone(previous.layout.captionText);
+  else if (next.layout) next.layout.captionText = createTemplateCaption(next);
   arrangeTemplate(next);
 }

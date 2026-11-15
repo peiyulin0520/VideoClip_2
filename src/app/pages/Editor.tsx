@@ -54,7 +54,12 @@ function EditorLoader({ projectId }: { projectId: string }) {
           });
       });
       if (cancelled) return;
-      for (const id of new Set(p.tracks.flatMap((tr) => tr.layout?.story?.fontIds ?? [])))
+      for (const id of new Set(
+        p.tracks.flatMap((tr) => [
+          ...(tr.layout?.story?.fontIds ?? []),
+          ...(tr.layout?.captionText?.card.runs.map((r) => r.fontId) ?? []),
+        ]),
+      ))
         if (id !== 'system') await ensureFont(id);
       useUI.setState({ previewLoad: { progress: 80, message: '準備預覽畫面' } });
       useUI.setState({ effectsJoin: null, effectsSingle: null });
