@@ -1,6 +1,6 @@
 import { MediaPlayback } from '../../ui/MediaPlayback';
 import { useEffect, useRef, useState, type PointerEvent } from 'react';
-import { Undo2, Redo2, ZoomIn, ZoomOut, Paintbrush, Eraser } from 'lucide-react';
+import { Undo2, Redo2, ZoomIn, ZoomOut, Brush, Eraser } from 'lucide-react';
 import { paintMask } from '../../engine/mediaMask';
 import type { VideoItem, Crop, MediaMask } from '../../model/types';
 import { useProjectStore } from '../../store/projectStore';
@@ -14,7 +14,7 @@ import { cropPointer } from '../../engine/cropPointer';
 import { useDraftHistory } from '../../ui/useDraftHistory';
 
 function CropToolIcon({ mode }: { mode: 'crop' | 'lasso' | 'keep' | 'erase' }) {
-  if (mode === 'keep') return <Paintbrush aria-hidden="true" />;
+  if (mode === 'keep') return <Brush aria-hidden="true" />;
   if (mode === 'erase') return <Eraser aria-hidden="true" />;
   return (
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" aria-hidden="true">

@@ -19,6 +19,9 @@ test('裁切工具同列、筆刷獨立保留、縮放不丟座標、undo/redo �
   const tools = page.locator('.crop-tools .chip');
   expect(await tools.count()).toBe(4);
   await expect(tools.locator('svg')).toHaveCount(4);
+  await expect(
+    page.getByRole('button', { name: '筆刷', exact: true }).locator('svg.lucide-brush'),
+  ).toBeVisible();
   await expect(page.getByRole('region', { name: '裁切工具', exact: true })).toBeVisible();
   await expect(page.getByRole('group', { name: '預覽與套用', exact: true })).toBeVisible();
   for (const width of [320, 390, 430]) {
