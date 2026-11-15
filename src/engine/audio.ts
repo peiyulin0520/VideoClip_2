@@ -254,10 +254,18 @@ export class AudioBus {
         }
       }
       if (node.target !== value || node.windowKey !== key) {
-        const end =
-          value > 0 && wanted?.window && wanted.time !== undefined
-            ? this.ctx!.currentTime + Math.max(0, wanted.window.end - wanted.time)
-            : undefined;
+        let end: number | undefined;
+        if (value > 0 && wanted?.window && wanted.time !== undefined) {
+          const remaining = Math.max(0, wanted.window.end - wanted.time);
+          // Native EOF can arrive a decoded block before the media/context clock
+          // estimate. Only file tails need this small safety margin; edit ranges
+          // inside a longer source keep their exact scheduled boundaries.
+          const nativeRemaining = Number.isFinite(el.duration)
+            ? Math.max(0, (el.duration - el.currentTime) / Math.max(0.01, el.playbackRate))
+            : Infinity;
+          const guard = nativeRemaining <= remaining + AUDIO_FADE ? AUDIO_FADE : 0;
+          end = this.ctx!.currentTime + Math.max(0, remaining - guard);
+        }
         this.mark(`window:${key ?? 'none'} end:${end ?? -1}`, el, wanted?.time);
         this.ramp(node, value, end);
         node.windowKey = key;

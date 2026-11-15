@@ -273,3 +273,25 @@ it.each(['window', 'pause', 'seek'] as const)(
     bus.destroy();
   },
 );
+
+it.each([
+  { sourceTime: 0, rate: 1, windowEnd: 3, expected: 3.988 },
+  { sourceTime: 0, rate: 1, windowEnd: 2.5, expected: 3.5 },
+  { sourceTime: 1, rate: 2, windowEnd: 1, expected: 1.988 },
+])(
+  'guards native EOF at $rate x without moving interior edit boundaries',
+  ({ sourceTime, rate, windowEnd, expected }) => {
+    const { ctx, gain } = context();
+    const el = document.createElement('video');
+    vi.spyOn(el, 'duration', 'get').mockReturnValue(3);
+    el.currentTime = sourceTime;
+    el.playbackRate = rate;
+    const bus = new AudioBus([el], ctx as unknown as AudioContext);
+    bus.set(el, 1, { start: 0, end: windowEnd }, 0);
+    bus.flush();
+    const [level, deadline] = gain.gain.linearRampToValueAtTime.mock.calls.at(-1)!;
+    expect(level).toBe(0);
+    expect(deadline).toBeCloseTo(expected, 8);
+    bus.destroy();
+  },
+);

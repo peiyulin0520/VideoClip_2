@@ -21,6 +21,10 @@
 
 ## 本輪日誌
 
+- 2026-11-15 原生檔尾時鐘緩衝
+  - dd73418 / Actions43662176453快速29/5/9/30全過；3輪live maxJump為0.003908、0.061215、0.004082，原門檻0.08。第二輪仍有EOF小突波（未隱藏/未挑掉）。
+  - AudioBus僅對實際native EOF（duration/currentTime/rate判斷）提前12ms排完淡出，保留內部選段精確截止；處理一個decoded block的時鐘估計誤差。另3測試驗正常速率/變速EOF、內部選段不移動。新check/387單元與lint/build/Pages成功，新瀏覽器待驗，PR仍draft。
+
 - 2026-11-15 偶發片尾音訊突波：保留已排淡出的截止時間
   - Actions43661477158新版29編輯/5色調動作已過（tab computed radius0）；音訊2/3通過，live maxJump0.092916>0.08，未降低門檻。trace在3.018594秒要求0時，原fade deadline3.027404，卻重排成3.030594；native EOF附近3.034535發生0.093799→0.000883跳變。
   - AudioBus.ramp(target0)將fade限制為原envelope.end-now，暫停/seek/視窗關閉不延長已接近的淡出；新增3個行為回歸。失敗時也先寫原始JSON，方便比對，不隱藏失敗。快速音訊套件連跑3輪（9項），原live<0.08門檻不改。

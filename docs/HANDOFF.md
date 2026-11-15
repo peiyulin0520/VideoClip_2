@@ -1,3 +1,5 @@
+> 原生檔尾補強：dd73418快速29+5+9+30全過，但3輪live0.003908/0.061215/0.004082，其中一次EOF仍有較小突波，不能當完全解決。AudioBus.flush只在nativeRemaining<=windowRemaining+12ms時，將end提早12ms，避免native EOF早於兩時鐘估計一小段；中間選段維持exact end。加3個正常/變速/內部邊界測試；新387/check已過，CI待驗。不得只保留成功最小值。
+
 > 最新音訊阻擋：43661477158新29編輯/5tone通過，tab radius0/圖示已驗；live音訊maxJump0.092916>原門檻0.08。原排end3.027404，3.018594收到target0改排12ms至3.030594，native EOF時3.034535 PCM0.093799→0.000883；這是真實排程延長，不可重跑挑綠或放寬。AudioBus.ramp silenceBudget限制零目標為舊end-now，3測試涵蓋window/pause/seek deadline；新check/384已過，CI待驗。e2e寫metrics改在assert前，保留失敗證據。fast音訊--repeat-each=3，共9項，驗偶發而非只挑一次成功。
 
 > 新坑：rounded全域`:is`中有input屬性selector，specificity比單看chip/tab高；`.editor .bottombar .tabs .tab`仍輸給全域，43661078172實際computed radius12。導航規則加`:root[data-theme] #root`明確勝出，保留radius0測試，不降標準。該版320/390/430四工具/圖示/44px已過，快速28/29；新check/381單元已過，Actions待驗。
