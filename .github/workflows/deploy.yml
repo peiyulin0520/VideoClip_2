@@ -89,9 +89,9 @@ jobs:
           cp tests/fixtures/ui-noto-sans-tc.ttf "$HOME/.local/share/fonts/little-moments/"
           cp tests/fixtures/ui-fontconfig.conf "$HOME/.config/fontconfig/conf.d/99-little-moments.conf"
           fc-cache -f "$HOME/.local/share/fonts/little-moments"
-      - name: First-play audio and nonblocking import
-        timeout-minutes: 4
-        run: npm run e2e -- e2e/playback-import-reliability.spec.ts --trace off --workers=1
+      - name: First-play audio, nonblocking import and background editing races
+        timeout-minutes: 6
+        run: npm run e2e -- e2e/playback-import-reliability.spec.ts e2e/advanced-editing.spec.ts e2e/feedback.spec.ts e2e/story-workspace.spec.ts --trace off --workers=1
       - name: Program module recovery and data retention
         timeout-minutes: 4
         run: npm run e2e -- e2e/module-recovery.spec.ts --trace off --workers=1

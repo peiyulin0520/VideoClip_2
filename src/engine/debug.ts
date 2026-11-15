@@ -24,6 +24,7 @@ export function installDebugHook(player: Player) {
     savedProject: () => getProject(useProjectStore.getState().project!.id),
     ready: () => player.isReady,
     time: () => player.time,
+    refreshPreview: () => player.refresh(),
     selected: () => useProjectStore.getState().selectedId,
     audioMode: () => player.audioMode,
     audioState: () => player.audioContext?.state ?? 'native',

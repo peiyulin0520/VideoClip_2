@@ -1,3 +1,4 @@
+import { MediaPreparationStatus } from './MediaPreparationStatus';
 import { aspectLabel } from '../../engine/itemName';
 import { evaluatedItem } from '../../engine/keyframes';
 import { activeTransitions } from '../../engine/transitions';
@@ -579,6 +580,7 @@ export function Preview({ projectId, width, height }: { projectId: string; width
 
   return (
     <div className={`stage-wrap${expanded ? ' expanded-preview' : ''}`}>
+      <MediaPreparationStatus />
       {aspectEditing && (
         <div className="aspect-editor" role="dialog" aria-label="在預覽自訂比例">
           <div className="aspect-editor-actions">

@@ -1,6 +1,5 @@
 import { aspectLabel } from '../../engine/itemName';
 import { usePreferences } from '../../store/preferences';
-import { MediaPreparationStatus } from '../editor/MediaPreparationStatus';
 import { PlaybackBar } from '../editor/PlaybackBar';
 import { ensureFont } from '../../fonts/fontStore';
 import { ArrowUp, ChevronLeft, Redo2, Undo2 } from 'lucide-react';
@@ -322,7 +321,6 @@ function EditorBody() {
       )}
 
       <PlaybackBar total={total} pps={pps} setPps={setPps} />
-      <MediaPreparationStatus />
 
       <button
         className="timeline-toggle"

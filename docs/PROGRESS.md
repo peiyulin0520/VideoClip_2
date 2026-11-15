@@ -6,7 +6,7 @@
 
 - 本輪分支 `codex/playback-import-reliability`，由已合併 PR13 的 main1971bae 起。使用者最新確認參考 **原版VideoClip網站**，優先處理預覽無聲／卡頓與匯入過久。
 - 已實作手勢內音訊prime、無AudioSession的iOS native fallback、切畫質保留context、短缺frame不全域pause、獨立播放列。匯入改metadata＋目前畫面先就緒，轉檔／每2秒真縮圖只在暫停背景準備，取消可接續，舊silent cache查音軌後重建。
-- 初版410單元／41檔及check已過，Actions43674079537新增4播放/匯入＋載入2項與編輯已通過；完整回歸中。追加快速切換時舊初始化不得關閉共用context，411單元待check，不能稱Safari已修妥。方案/風險/測試見 plans/2026-11-15-playback-import-reliability.md。PR14草稿：https://github.com/peiyulin0520/VideoClip_2/pull/14 ，完成新版Actions再交付，不代合併。
+- 最新412單元／41檔與check已過。初版Actions43674079537新增4＋2載入＋29編輯＋5色調＋9音訊成功，但完整3例有背景seek/版面競態；第二版43674613411的快速ABC亦發現seek回舊秒數。已修refresh同時間通知與提示列高，新增第5個確定性瀏覽器測試並把受影響檔加入快測；新版Actions待驗，不能稱Safari已修妥。PR14草稿：https://github.com/peiyulin0520/VideoClip_2/pull/14 ，由使用者自行Merge。
 
 ## PR13 已交付基線（歷史）
 
@@ -35,6 +35,11 @@
 - 2026-11-14 E 階段自訂輸出比例：主預覽基地不依輸出比例改高，頂部比例可進入主預覽四邊/角拖曳草稿，X不儲存、套用才寫 width/height/customAspect。內框/框外斜紋分開。ProjectPreview 使用240方形固定基地 contain，不因4:3上下錯位；音訊來源固定160px基地，播放秒數同列。check/374單元成功，新瀏覽器待驗。
 
 ## 本輪日誌
+
+- 2026-11-15 背景工作與時間軸競態修正
+  - 初版完整回歸取消前有3失敗（advanced選段、feedback跨層、story補色後seek），已下載artifact14146380206查看原始error-context，未略過。兩個seek停在舊秒數，背景project.refresh會emit同時間覆蓋尚未派送的scroll；改只有clamp時間改變才emit。
+  - 背景進度改主預覽內absolute提示，不增減文件列高，避免長按時軌道位置移動；加layout不變與refresh通知單元，新412/check及Actions待驗；補第5個瀏覽器確定性重現：同一事件內先改scrollLeft再refresh，不能覆蓋使用者秒數。將3個受影響檔加入快速入口，原斷言不放寬。
+
 
 - 2026-11-15 音訊context生命週期補強
   - 首版Actions新增4播放/匯入與2載入恢復及編輯通過，完整仍在跑。靜態檢視發現快速切換時cancelled Player.create預設destroy可能close共用ctx，改保留仍由Preview持有的context；已closed的舊ctx不再沿用，等下次手勢建立新ctx。

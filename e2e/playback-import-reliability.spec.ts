@@ -52,7 +52,9 @@ test('完整縮圖與轉檔尚未完成也能進入編輯；播放立即停止�
   await expect(page.getByRole('button', { name: '播放', exact: true })).toBeVisible();
   await expect(page.locator('.pool video')).not.toHaveCount(0);
   await page.screenshot({ path: 'docs/screenshots/playback-import/edit-before-background-ready.png' });
+  const timelineTop = await page.locator('.timeline').evaluate((el) => (el as HTMLElement).offsetTop);
   await playing(page);
+  expect(await page.locator('.timeline').evaluate((el) => (el as HTMLElement).offsetTop)).toBe(timelineTop);
   await expect
     .poll(() => page.evaluate(() => (window as unknown as { optionalStopped: number }).optionalStopped))
     .toBe(1);
@@ -183,4 +185,17 @@ test('短暫缺畫格時持續解碼和播放，不反覆暫停全部來源或�
   expect(result.time - before.time).toBeGreaterThan(0.25);
   await expect.poll(async () => (await state(page)).energy).toBeGreaterThan(0.005);
   await expect(page.getByRole('button', { name: '暫停', exact: true })).toBeVisible();
+});
+
+test('背景素材刷新與捲動同時發生時，播放線仍停在使用者選取的秒數', async ({ page }) => {
+  await createProjectWith(page, ['timing-video.webm']);
+  await waitForPreviewReady(page);
+  for (const time of [2.5, 4.5, 0, 1.7]) {
+    await page.evaluate((t) => {
+      // Browser scroll events are dispatched later; reproduce a cache refresh in between.
+      document.querySelector<HTMLElement>('[data-testid="timeline-scroll"]')!.scrollLeft = t * 60;
+      (window as unknown as { __videoclip: { refreshPreview: () => void } }).__videoclip.refreshPreview();
+    }, time);
+    await expect.poll(async () => (await state(page)).time).toBeCloseTo(time, 1);
+  }
 });

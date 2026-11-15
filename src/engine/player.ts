@@ -264,10 +264,12 @@ export class Player {
   refresh() {
     if (this.destroyed) return;
     this.previewTime = null;
-    const total = this.total();
+    const total = this.total(),
+      previous = this.t;
     if (this.t > total) this.t = total;
     this.scheduleRender();
-    this.emit();
+    // Cache/thumbnail refreshes must not reset a user's scroll before its seek event arrives.
+    if (this.t !== previous) this.emit();
   }
 
   scheduleRender() {
