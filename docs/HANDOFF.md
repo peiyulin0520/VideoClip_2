@@ -2,6 +2,9 @@
 
 ## 11/16進行中（先讀）
 
+- 真正根因已有trace證據（8ab0122/43920200369）：點故事時pointerdown/up/click全到回頂浮鈕(x331.5,y509.1)，panel節點沒變且programmatic click正常。不是前述details假說！正常捲動才掛出的fixed back-to-preview把第四張卡的落點攔走。
+- 修為BottomBar最後正常排版的44px回頂row，Editor提供showReturn/onReturnToPreview；移除Editor前端fixed浮鈕及舊fixed CSS，保留平滑回頂、最底可見及無footer空白的原斷言。臨時事件診斷已移除，pressed三段與原故事影像/暖光/字體/二格都保留。最新source需完整194與全快速，不能用C2的193當全綠。
+
 - 注意129fe18受控開關未修根因：故事第一次tap後就pressed=false，失敗在匯入之前。新target診斷pointer/click實際目標、panel DOM是否重掛、直接click是否能送達；只失敗時log並throw原斷言，不以directclick替代實際觸控驗收。下一步依此診斷修真正觸控／狀態原因，不重跑挑綠。
 
 - c78726b C2完整193/194唯一故事變拍貼（兩個job同失敗），新13皆過且實測29.96fps/18轉場格0慢格0硬seek/native24fps含聲通過。error-context實際選取photobooth，先修選取草稿生命週期，不能以延長red像素poll替代。

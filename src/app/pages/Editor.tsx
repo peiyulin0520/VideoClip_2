@@ -2,7 +2,7 @@ import { aspectLabel } from '../../engine/itemName';
 import { usePreferences } from '../../store/preferences';
 import { PlaybackBar } from '../editor/PlaybackBar';
 import { ensureFont } from '../../fonts/fontStore';
-import { ArrowUp, ChevronLeft, Redo2, Undo2 } from 'lucide-react';
+import { ChevronLeft, Redo2, Undo2 } from 'lucide-react';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { ensureUrls, releaseProjectUrls } from '../../engine/assetUrls';
@@ -234,15 +234,6 @@ function EditorBody() {
           setShowTop(preview.getBoundingClientRect().top < header.getBoundingClientRect().bottom - 2);
       }}
     >
-      {showTop && (
-        <button
-          className="back-to-preview"
-          aria-label="回到最上方預覽"
-          onClick={() => editorRef.current?.scrollTo({ top: 0, behavior: 'smooth' })}
-        >
-          <ArrowUp size={24} />
-        </button>
-      )}
       <Sheet open={qualityOpen} title="預覽畫質" onClose={() => setQualityOpen(false)}>
         <p className="hint">只影響預覽；影片比例與匯出畫質不變。低畫質較省運算，適合多圖層播放。</p>
         <div className="chips">
@@ -353,7 +344,12 @@ function EditorBody() {
           onAdd={(trackId) => pick('main', trackId)}
         />
       </div>
-      <BottomBar onImportMain={() => pick('main')} onImportOverlay={() => pick('overlay')} />
+      <BottomBar
+        onImportMain={() => pick('main')}
+        onImportOverlay={() => pick('overlay')}
+        showReturn={showTop}
+        onReturnToPreview={() => editorRef.current?.scrollTo({ top: 0, behavior: 'smooth' })}
+      />
 
       <input
         ref={fileInput}

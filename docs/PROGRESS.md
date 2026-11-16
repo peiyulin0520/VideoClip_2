@@ -59,6 +59,10 @@
 
 ## 本輪日誌
 
+- 2026-11-16 根因定位：回頂浮鈕攔截觸控
+  - 8ab0122 / Actions43920200369 trace：pointerdown/up/click實際都是「回到最上方預覽」，座標331.5,509.1；samePanel=true，直接click可將故事pressed改true（診斷後仍throw原錯）。所以不是草稿重掛/匯入/解碼；自動捲動後才顯示的浮鈕蓋到第四個款式，攔走實際手勢。
+  - 正式修回頂為bottombar最底的正常44px控制列，不浮在工具/來源/格線上；保留回頂、smooth行為及無footer留白，移除舊fixed bottom疊覆CSS。移除臨時event trace與programmatic診斷，保留所有三階段pressed與故事像素斷言。518/check與最終Actions待本source。
+
 - 2026-11-16 故事按鈕進一步定位
   - 129fe18 / Actions43918879785 target在第一次tap後aria-pressed仍false，尚未匯入，排除單純匯入重設假說；外層受控開關改善不等於已修根因。保留原斷言並補test-only pointer/click目標、DOM節點身份及programmatic delivery診斷，診斷後仍throw原錯，不用直接click繞過讓測試變綠。
 

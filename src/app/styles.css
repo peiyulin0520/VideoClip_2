@@ -2192,20 +2192,6 @@ progress {
 .editor .playhead {
   left: 56px;
 }
-.back-to-preview {
-  position: fixed;
-  bottom: calc(20px + env(safe-area-inset-bottom));
-  right: 16px;
-  width: 48px;
-  height: 48px;
-  border-radius: 50%;
-  background: var(--accent);
-  color: var(--accent-ink);
-  box-shadow: 0 3px 12px #0005;
-  display: grid;
-  place-items: center;
-  z-index: 35;
-}
 .source-range.marker-range {
   height: 72px;
   margin: 66px 22px 24px;
@@ -3215,10 +3201,6 @@ html {
   height: clamp(220px, 58dvh, 600px);
   min-height: 220px;
 }
-.back-to-preview {
-  bottom: calc(12px + env(safe-area-inset-bottom));
-  right: max(10px, env(safe-area-inset-right));
-}
 .editor .bottombar > :last-child {
   margin-bottom: 0;
 }
@@ -3247,9 +3229,6 @@ html {
 }
 .editor {
   height: var(--app-viewport-height, 100dvh);
-}
-.back-to-preview {
-  bottom: calc(12px + env(safe-area-inset-bottom) + var(--visible-bottom-inset, 0px));
 }
 .template-dimensions {
   display: grid;
@@ -3308,9 +3287,6 @@ html {
   }
 }
 /* The return button clears the last tool row without reserving footer space. */
-.back-to-preview {
-  bottom: calc(76px + env(safe-area-inset-bottom) + var(--visible-bottom-inset, 0px));
-}
 .editor .safe-toggle,
 .editor .preview-expand,
 .editor .preview-layers {
@@ -3333,9 +3309,6 @@ html {
 }
 .editor .panel {
   padding-bottom: 8px;
-}
-.back-to-preview {
-  bottom: calc(124px + var(--safe-bottom) + var(--visible-bottom-inset, 0px));
 }
 
 /* Paired timing controls share compact typography and retain touch-sized buttons. */
@@ -4420,4 +4393,27 @@ textarea.text-input.area {
   object-fit: contain;
   border-radius: 0;
   pointer-events: none;
+}
+
+/* Returning to preview is an actual footer control, never a floating hit target over another tool. */
+.panel-return-row {
+  display: flex;
+  justify-content: flex-end;
+  padding: 6px;
+  gap: 6px;
+  border-top: 1px solid var(--line);
+}
+.panel-return-row .back-to-preview {
+  position: static;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  min-width: 44px;
+  min-height: 44px;
+  width: auto;
+  height: auto;
+  background: var(--accent);
+  color: var(--accent-ink);
+  box-shadow: none;
 }
