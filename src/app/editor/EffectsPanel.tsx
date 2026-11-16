@@ -1,3 +1,4 @@
+import { isTemplateRoot, templateMembers } from '../../engine/templateModel';
 import { TextEffectsPanel } from './TextEffectsPanel';
 import { ContinuousPanel } from './ContinuousPanel';
 import { TemplatePlaybackSettings } from './TemplatePlaybackSettings';
@@ -115,7 +116,13 @@ export function EffectsPanel() {
     return '素材';
   };
   const targets = p.tracks
-    .flatMap((tr) => (tr.template ? tr.items.slice(0, 1) : tr.items))
+    .flatMap((tr) =>
+      tr.layout?.version === 2
+        ? [tr.layout.frameItem!, ...templateMembers(tr)]
+        : tr.template
+          ? tr.items.slice(0, 1)
+          : tr.items,
+    )
     .filter((it) => it.type !== 'audio');
   const target =
     targets.find(
@@ -126,12 +133,20 @@ export function EffectsPanel() {
         ),
     ) ?? targets[0];
   const found = findItem(p, target?.id ?? null);
-  const animations = found?.track.template ? found.track.layout?.animations : target?.animations;
+  const animations =
+    found && isTemplateRoot(found.track, found.item) ? found.track.layout?.animations : target?.animations;
   return (
     <div className="panel" aria-label="轉場與畫面特效">
-      {p.tracks.find((t) => t.template && t.items.some((i) => i.id === selectedId)) && (
+      {p.tracks.find(
+        (t) =>
+          t.template && (t.items.some((i) => i.id === selectedId) || t.layout?.frameItem?.id === selectedId),
+      ) && (
         <TemplatePlaybackSettings
-          track={p.tracks.find((t) => t.template && t.items.some((i) => i.id === selectedId))!}
+          track={p.tracks.find(
+            (t) =>
+              t.template &&
+              (t.items.some((i) => i.id === selectedId) || t.layout?.frameItem?.id === selectedId),
+          )!}
         />
       )}
       <div className="chips option-primary effect-modes" role="tablist" aria-label="特效類型">
@@ -212,15 +227,23 @@ export function EffectsPanel() {
                     key={`${target.id}:${single?.request ?? 0}`}
                     initialEdge={single?.id === target.id ? single.edge : undefined}
                     value={animations}
-                    start={found?.track.layout?.start ?? target.start}
-                    duration={found?.track.layout?.duration ?? target.duration}
+                    start={
+                      found && isTemplateRoot(found.track, found.item)
+                        ? found.track.layout!.start
+                        : target.start
+                    }
+                    duration={
+                      found && isTemplateRoot(found.track, found.item)
+                        ? found.track.layout!.duration
+                        : target.duration
+                    }
                     thumbs={
                       target.type !== 'text' ? p.assets.find((a) => a.id === target.assetId)?.thumbs : []
                     }
                     preview={(value) => {
                       const draft = structuredClone(p),
                         f = findItem(draft, target.id)!;
-                      if (f.track.template && f.track.layout) {
+                      if (isTemplateRoot(f.track, f.item) && f.track.layout) {
                         f.track.layout.animations = value;
                         f.track.layout.motion = 'none';
                       } else f.item.animations = value;
@@ -230,7 +253,7 @@ export function EffectsPanel() {
                       useProjectStore.getState().apply((d) => {
                         const f = findItem(d, target.id);
                         if (!f) return;
-                        if (f.track.template && f.track.layout) {
+                        if (isTemplateRoot(f.track, f.item) && f.track.layout) {
                           f.track.layout.animations = value;
                           f.track.layout.motion = 'none';
                         } else f.item.animations = value;

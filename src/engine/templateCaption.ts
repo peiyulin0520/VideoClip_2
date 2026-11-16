@@ -44,6 +44,7 @@ export function hydrateTemplateCaptions(p: Project): Project {
       !t.template ||
       !t.layout ||
       t.layout.style === 'story' ||
+      t.layout.style === 'grid' ||
       t.layout.captionText ||
       t.layout.caption === ''
     )

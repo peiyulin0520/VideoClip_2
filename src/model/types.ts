@@ -106,7 +106,20 @@ export type VideoEffectPreset =
 export type ClipAnimation = { preset: TransitionPreset; duration: number; ranges?: [number, number][] };
 export type ClipAnimations = { enter?: ClipAnimation; exit?: ClipAnimation };
 
+export type TemplateLane = {
+  id: string;
+  name: string;
+  kind: 'visual' | 'text' | 'sticker' | 'audio';
+  cell?: number;
+  hidden?: boolean;
+  locked?: boolean;
+  muted?: boolean;
+};
+export type TemplateRect = { x: number; y: number; w: number; h: number };
 export type ItemBase = {
+  templateRole?: 'frame' | 'cell' | 'member';
+  templateLane?: string;
+  templateCell?: number;
   continuous?: { kind: 'drift' | 'slide' | 'breathe' | 'sway' | 'shake'; strength?: number; speed?: number };
   animations?: ClipAnimations;
   id: string;
@@ -130,6 +143,8 @@ export type VideoItem = ItemBase & {
   type: 'video' | 'image' | 'audio';
   assetId: string;
   sourceItemId?: string;
+  /** Transient render-only still, never stored; original audio is not played. */
+  heldSourceTime?: number;
   trimIn: number; // 素材內的起點（秒）
   speed: number; // 0.25–4；照片固定 1
   volume: number; // 0–1
@@ -301,7 +316,21 @@ export type Project = {
   flexibleLayers?: boolean; // Main/overlay share editable image/video lanes.
   background?: string;
   layout?: {
-    style: 'photobooth' | 'filmstrip' | 'polaroid' | 'story';
+    style: 'photobooth' | 'filmstrip' | 'polaroid' | 'story' | 'grid';
+    version?: 2;
+    frameItem?: VideoItem;
+    grid?: { rows: number; cols: number };
+    cells?: TemplateRect[];
+    box?: { w: number; h: number };
+    border?: number;
+    gap?: number;
+    footer?: number;
+    gapMode?: 'hold' | 'fill' | 'transparent';
+    gapColor?: string;
+    lanes?: TemplateLane[];
+    order?: string[];
+    cellOffsets?: number[];
+    cellDurations?: number[];
     motion: 'none' | 'slide' | 'drift';
     continuous?: ItemBase['continuous'];
     playback?: 'simultaneous' | 'sequential';

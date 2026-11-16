@@ -1,3 +1,4 @@
+import { templateLane } from './templateModel';
 import { cellMediaTime } from './templateTiming';
 import type { Project, VideoItem, Track, Asset } from '../model/types';
 import { AUDIO_FADE, type AudioWindow } from './audioEnvelope';
@@ -10,7 +11,14 @@ export function audibleClips(project: Project, t: number): AudibleClip[] {
   return project.tracks.flatMap((track) => {
     if (track.hidden || track.muted || (track.kind === 'main' && templateActive && !project.flexibleLayers))
       return [];
+    if (
+      track.layout?.version === 2 &&
+      (t < track.layout.start || t >= track.layout.start + track.layout.duration)
+    )
+      return [];
     return track.items.flatMap((item) => {
+      const lane = templateLane(track, item);
+      if (lane?.hidden || lane?.muted) return [];
       if (
         item.type === 'text' ||
         item.type === 'image' ||

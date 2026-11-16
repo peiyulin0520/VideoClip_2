@@ -57,7 +57,7 @@ test('音訊緊湊列保留操作及音量，原始解析度和來源影格率�
   const p = await current(page),
     a = p.assets[0]!;
   expect(a.frameRate).toBeGreaterThan(20);
-  await page.getByRole('button', { name: '匯出', exact: true }).tap();
+  await page.getByRole('button', { name: '匯出影片', exact: true }).tap();
   await expect(page.locator('[aria-label="匯出影格率"] option[value="0"]')).toBeEnabled();
   await page.getByLabel('匯出解析度', { exact: true }).selectOption('0');
   await page.getByLabel('匯出影格率', { exact: true }).selectOption('0');

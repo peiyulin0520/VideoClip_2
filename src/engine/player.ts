@@ -28,7 +28,7 @@ type Deps = {
 type Listener = (t: number, playing: boolean) => void;
 
 const PREFETCH_S = 2.0;
-const POOL_SIZE = 8;
+const POOL_SIZE = 16;
 
 /** 編輯預覽依裝置偏好；輸出可另外指定尺寸，文字仍獨立超取樣。 */
 export function previewSize(
@@ -349,7 +349,12 @@ export class Player {
     const s = sourceTimeAt(item, t);
     const holdAtEnd =
       el.ended || (el instanceof HTMLVideoElement && asset.duration > 0.1 && s >= asset.duration - 0.02);
-    const active = this.playing && !holdAtEnd && t >= item.start && t < item.start + item.duration;
+    const active =
+      this.playing &&
+      item.heldSourceTime === undefined &&
+      !holdAtEnd &&
+      t >= item.start &&
+      t < item.start + item.duration;
     el.dataset.previewIntent = active ? 'play' : 'pause';
     // A pooled decoder can move from B to C of the same file without changing src.
     // Source edits/rebinding must not inherit the old clip's one-second seek throttle.
@@ -416,7 +421,7 @@ export class Player {
     this.bus.set(
       el,
       el.seeking || this.bus.isSeeking(el) ? 0 : gain,
-      audioWindowAt(item, t),
+      audioWindowAt(item, t, track.layout?.version === 2 ? track.layout : undefined),
       t - delta / item.speed,
     );
     if (!el.preservesPitch) el.preservesPitch = true;

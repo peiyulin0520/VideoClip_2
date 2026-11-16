@@ -1,3 +1,4 @@
+import { addTemplateMember } from './templateModel';
 import { useUI } from '../store/uiStore';
 import { arrangeTemplate } from './templatePlayback';
 import { createClip, createTrack, newId } from '../model/defaults';
@@ -26,6 +27,13 @@ export async function addMaterialFiles(files: File[], t: number, origin: Asset['
     const clip = { ...createClip(a), start: t };
     useProjectStore.getState().apply(
       (d) => {
+        const target = useUI.getState().templateDestination;
+        const group = target && d.tracks.find((t) => t.id === target.trackId);
+        if (group?.template && target) {
+          clip.start = group.layout!.start;
+          addTemplateMember(d as never, group as never, clip, target.cell, 'audio');
+          return;
+        }
         const tr = createTrack('audio', d.tracks);
         tr.items = [clip];
         d.tracks.push(tr);

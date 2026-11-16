@@ -1,3 +1,4 @@
+import { templateCells } from './templateModel';
 import { createTemplateCaption } from './templateCaption';
 import { arrangeTemplate } from './templatePlayback';
 import { createOverlayClip, createTrack } from '../model/defaults';
@@ -9,11 +10,13 @@ export const LAYOUTS: { id: LayoutStyle; label: string; count: number }[] = [
   { id: 'filmstrip', label: '直式膠卷', count: 3 },
   { id: 'polaroid', label: '四格相紙', count: 4 },
   { id: 'story', label: '展開故事', count: 3 },
+  { id: 'grid', label: '自訂框架', count: 1 },
 ];
 export function layoutDefaultSize(style: LayoutStyle) {
   return { width: 1080, height: style === 'polaroid' ? 1080 : 1920 };
 }
 export function slotLabel(style: LayoutStyle, index: number, count = 3) {
+  if (style === 'grid') return `第 ${index + 1} 格`;
   if (style === 'story' && count === 2) return ['上方', '下方'][index]!;
   return style === 'polaroid' ? ['左上', '右上', '左下', '右下'][index]! : ['上方', '中間', '下方'][index]!;
 }
@@ -127,7 +130,20 @@ export function collagePlan(
 const artCache = new Map<string, HTMLCanvasElement>();
 export function layoutArt(style: LayoutStyle, w: number, h: number, appearance?: Project['layout']) {
   const caption = appearance?.caption ?? 'LITTLE MOMENTS';
-  const key = `${style}:${w}:${h}:${!!appearance?.captionText}:${caption}:${appearance?.frameColor}:${appearance?.captionColor}`,
+  const structure =
+    appearance?.version === 2
+      ? JSON.stringify([
+          appearance.cells,
+          appearance.grid,
+          appearance.box,
+          appearance.border,
+          appearance.gap,
+          appearance.footer,
+          appearance.size,
+        ])
+      : '';
+
+  const key = `${structure}:${style}:${w}:${h}:${!!appearance?.captionText}:${caption}:${appearance?.frameColor}:${appearance?.captionColor}`,
     cached = artCache.get(key);
   if (cached) return cached;
   const canvas = document.createElement('canvas');
@@ -137,6 +153,13 @@ export function layoutArt(style: LayoutStyle, w: number, h: number, appearance?:
   c.fillStyle =
     appearance?.frameColor ?? (style === 'filmstrip' || style === 'story' ? '#17171b' : '#fff5df');
   c.fillRect(0, 0, w, h);
+  if (appearance?.version === 2) {
+    for (const hole of templateCells({
+      template: true,
+      layout: appearance,
+    } as import('../model/types').Track))
+      c.clearRect(hole.x * w, hole.y * h, hole.w * w, hole.h * h);
+  }
   if (style === 'filmstrip') {
     c.fillStyle = '#eee6d6';
     for (let y = 0.02; y < 1; y += 0.055)
@@ -149,7 +172,8 @@ export function layoutArt(style: LayoutStyle, w: number, h: number, appearance?:
   c.fillStyle = appearance?.captionColor ?? (style === 'filmstrip' ? '#e3d4bc' : '#7e6c5b');
   c.textAlign = 'center';
   c.font = `${w * 0.035}px sans-serif`;
-  if (style !== 'story' && !appearance?.captionText) c.fillText(caption, w / 2, h * 0.96, w * 0.9);
+  if (style !== 'story' && style !== 'grid' && !appearance?.captionText)
+    c.fillText(caption, w / 2, h * 0.96, w * 0.9);
   if (artCache.size >= 4) artCache.delete(artCache.keys().next().value!);
   artCache.set(key, canvas);
   return canvas;

@@ -44,6 +44,7 @@ export function mediaSegments(item: VideoItem): MediaSegment[] {
   );
 }
 export function cellMediaTime(item: VideoItem, t: number): number | null {
+  if (item.heldSourceTime !== undefined) return item.heldSourceTime;
   if (!item.cell && !item.sourceRanges)
     return item.trimIn + Math.min(Math.max(t - item.start, 0), item.duration) * item.speed;
   if (item.cell?.holdAfter && t >= item.start + item.duration) t = item.start + item.duration - 0.001;

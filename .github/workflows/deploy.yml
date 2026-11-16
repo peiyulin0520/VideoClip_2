@@ -91,7 +91,7 @@ jobs:
           fc-cache -f "$HOME/.local/share/fonts/little-moments"
       - name: Crop, native export, performance and 64 text effects
         timeout-minutes: 5
-        run: npm run e2e -- e2e/nov16-media-reliability.spec.ts e2e/nov16-text-motion.spec.ts --trace off --workers=1
+        run: npm run e2e -- e2e/nov16-media-reliability.spec.ts e2e/nov16-text-motion.spec.ts e2e/nov16-framework.spec.ts --trace off --workers=1
       - name: Effect ownership, same-time choices and editable template caption
         timeout-minutes: 5
         run: npm run e2e -- e2e/effects-caption-followup.spec.ts e2e/anchored-playback.spec.ts --trace off --workers=1

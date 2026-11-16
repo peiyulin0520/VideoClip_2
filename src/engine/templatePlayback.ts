@@ -1,7 +1,9 @@
+import { arrangeFramework } from './templateModel';
 import type { Project, Track, VideoItem } from '../model/types';
 /** Child durations/source trims stay independent. Reflow only their project-time placement. */
 export function arrangeTemplate(track: Track, mode = track.layout?.playback ?? 'simultaneous') {
   if (!track.template || !track.layout) return;
+  if (track.layout.version === 2) return arrangeFramework(track, mode);
   const start = track.layout.start,
     previous = track.layout.playback ?? 'simultaneous';
   track.layout.playback = mode;
@@ -59,7 +61,19 @@ export function updateTemplateChild(project: Project, id: string, item: VideoIte
   const index = track.items.findIndex((i) => i.id === id),
     before = track.items[index]!;
   track.items[index] = { ...item, id: before.id, slot: before.type !== 'text' ? before.slot : undefined };
-  arrangeTemplate(track);
+  if (track.layout?.version === 2) {
+    const no = item.templateCell;
+    if (no) {
+      const l = track.layout;
+      (l.cellDurations ??= [])[no - 1] = Math.max(
+        0.2,
+        ...track.items
+          .filter((i) => i.templateCell === no)
+          .map((i) => i.start + i.duration - (l.start + (l.cellOffsets?.[no - 1] ?? 0))),
+      );
+      arrangeTemplate(track);
+    }
+  } else arrangeTemplate(track);
 }
 
 /** Expose legacy hidden delays/gaps as editable local colour cards; draft-only until Apply. */

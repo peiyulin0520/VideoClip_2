@@ -1,3 +1,4 @@
+import { isTemplateRoot } from '../../engine/templateModel';
 import type { ItemBase } from '../../model/types';
 import { findItem } from '../../engine/timeline';
 import { useProjectStore } from '../../store/projectStore';
@@ -9,7 +10,7 @@ export function ContinuousPanel() {
   const found = findItem(project, id);
   if (!found || found.item.type === 'audio')
     return <p className="hint">先點選影像、貼圖、文字或版型，再選整段特效。</p>;
-  const group = found.track.template && useUI.getState().templateCellId !== id && found.item.type !== 'text';
+  const group = isTemplateRoot(found.track, found.item) && useUI.getState().templateCellId !== id;
   const value = group ? found.track.layout?.continuous : found.item.continuous;
   const set = (motion: ItemBase['continuous']) => {
     useUI.getState().player?.pause();

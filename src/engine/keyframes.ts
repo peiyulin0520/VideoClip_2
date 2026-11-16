@@ -1,3 +1,4 @@
+import { isTemplateRoot } from './templateModel';
 import type {
   AnimatedValues,
   ResolvedAnimatedValues,
@@ -91,8 +92,12 @@ export function evaluatedItem<T extends Item>(item: T, time: number): T {
 export function animationTarget(project: Project, id: string) {
   for (const track of project.tracks) {
     const caption = track.layout?.captionText?.id === id;
-    const item = caption ? track.layout!.captionText : track.items.find((it) => it.id === id);
-    const group = track.template && track.layout && !caption;
+    const item = caption
+      ? track.layout!.captionText
+      : track.layout?.frameItem?.id === id
+        ? track.layout.frameItem
+        : track.items.find((it) => it.id === id);
+    const group = item && isTemplateRoot(track, item) && track.layout;
     if (item)
       return {
         group: !!group,

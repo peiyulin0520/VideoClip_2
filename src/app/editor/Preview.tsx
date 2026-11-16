@@ -1,3 +1,4 @@
+import { isTemplateRoot } from '../../engine/templateModel';
 import { PerfOverlay } from './PerfOverlay';
 import { MediaPreparationStatus } from './MediaPreparationStatus';
 import { aspectLabel } from '../../engine/itemName';
@@ -359,12 +360,12 @@ export function Preview({ projectId, width, height }: { projectId: string; width
 
   const box =
     sel && selVisible
-      ? sel.track.template
+      ? isTemplateRoot(sel.track, sel.item)
         ? groupFrame(sel.track, width, height, timelineTime)
         : itemBox(sel.item, geo)
       : null;
   const editableBox = (f: NonNullable<ReturnType<typeof findItem>>) =>
-    f.track.template && f.item.id !== f.track.layout?.captionText?.id
+    isTemplateRoot(f.track, f.item)
       ? groupFrame(f.track, width, height, player?.time ?? 0)
       : itemBox(f.item, geo);
   const selLocked = !!sel?.track.locked || !!sel?.track.hidden;
@@ -385,14 +386,12 @@ export function Preview({ projectId, width, height }: { projectId: string; width
       id,
       key: `gesture:move:${id}:${performance.now()}`,
       start: at,
-      startX:
-        f.track.template && f.item.id !== f.track.layout?.captionText?.id
-          ? groupTransform(f.track, player?.time).x
-          : evaluatedItem(f.item, player?.time ?? f.item.start).transform.x,
-      startY:
-        f.track.template && f.item.id !== f.track.layout?.captionText?.id
-          ? groupTransform(f.track, player?.time).y
-          : evaluatedItem(f.item, player?.time ?? f.item.start).transform.y,
+      startX: isTemplateRoot(f.track, f.item)
+        ? groupTransform(f.track, player?.time).x
+        : evaluatedItem(f.item, player?.time ?? f.item.start).transform.x,
+      startY: isTemplateRoot(f.track, f.item)
+        ? groupTransform(f.track, player?.time).y
+        : evaluatedItem(f.item, player?.time ?? f.item.start).transform.y,
       moved: false,
     };
   };
@@ -425,10 +424,10 @@ export function Preview({ projectId, width, height }: { projectId: string; width
         key: `gesture:pinch:${cur.item.id}:${performance.now()}`,
         startDist: Math.hypot(b.x - a.x, b.y - a.y) || 1,
         startAngle: Math.atan2(b.y - a.y, b.x - a.x),
-        startScale: cur.track.template
+        startScale: isTemplateRoot(cur.track, cur.item)
           ? groupTransform(cur.track, player?.time).scale
           : evaluatedItem(cur.item, player?.time ?? cur.item.start).transform.scale,
-        startRot: cur.track.template
+        startRot: isTemplateRoot(cur.track, cur.item)
           ? 0
           : evaluatedItem(cur.item, player?.time ?? cur.item.start).transform.rotation,
       };
@@ -538,6 +537,18 @@ export function Preview({ projectId, width, height }: { projectId: string; width
       setDragging(true);
       const base = editableBox(f);
       if (!base) return;
+      const local =
+        f.track.layout?.version === 2 && !isTemplateRoot(f.track, f.item)
+          ? geo.templates?.[g.id]?.slot
+          : null;
+      if (local) {
+        setTransform(
+          g.id,
+          { x: g.startX + dx / (local.w * width), y: g.startY + dy / (local.h * height) },
+          g.key,
+        );
+        return;
+      }
       let cx = g.startX * width + dx;
       let cy = g.startY * height + dy;
       const snap = snapMove({ ...base, cx, cy }, width, height, 8 / k, true);

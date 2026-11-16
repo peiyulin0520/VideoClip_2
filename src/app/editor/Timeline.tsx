@@ -1,3 +1,4 @@
+import { isTemplateV2, templateMembers, templateLane } from '../../engine/templateModel';
 import { VIDEO_EFFECTS } from '../../engine/effectCatalog';
 import { arrangeTemplate } from '../../engine/templatePlayback';
 import { itemName } from '../../engine/itemName';
@@ -150,6 +151,8 @@ export function Timeline({
   const [menuTrackId, setMenuTrackId] = useState<string | null>(null);
 
   const [expandedTemplates, setExpandedTemplates] = useState<string[]>([]);
+  const [collapsedTemplateTypes, setCollapsedTemplateTypes] = useState<string[]>([]);
+  const [menuLaneId, setMenuLaneId] = useState<string | null>(null);
   const [batch, setBatch] = useState<string[]>([]);
   const [collapsed, setCollapsed] = useState<LaneCategory[]>(['visual', 'text', 'sticker', 'audio']);
   useEffect(
@@ -237,7 +240,14 @@ export function Timeline({
 
   // Track array is bottom-to-top; every media lane can occupy any stack position.
   const rowLayout = useMemo(() => {
-    const rows: { track: Track; index: number; top: number; h: number; templateChild?: boolean }[] = [];
+    const rows: {
+      track: Track;
+      index: number;
+      top: number;
+      h: number;
+      templateChild?: boolean;
+      templateCategory?: LaneCategory;
+    }[] = [];
     const groups: { category: LaneCategory; top: number; tracks: Track[] }[] = [];
     let top = RULER_H + ROW_GAP;
     for (const { track, index } of project.tracks.map((track, index) => ({ track, index })).reverse()) {
@@ -254,6 +264,38 @@ export function Timeline({
         rows.push({ track, index, top, h: ROW_H });
         top += ROW_H + ROW_GAP;
         if (track.template && expandedTemplates.includes(track.id)) {
+          if (isTemplateV2(track)) {
+            for (const kind of ['visual', 'text', 'sticker', 'audio'] as LaneCategory[]) {
+              const members = templateMembers(track).filter((it) => itemCategory(it, project) === kind);
+              if (!members.length) continue;
+              rows.push({ track, index, top, h: 28, templateCategory: kind });
+              top += 30;
+              if (collapsedTemplateTypes.includes(`${track.id}:${kind}`)) continue;
+              const ids = [...new Set(members.map((it) => it.templateLane ?? it.id))];
+              for (const id of ids) {
+                const items = members.filter((it) => (it.templateLane ?? it.id) === id),
+                  first = items[0]!,
+                  lane = templateLane(track, first);
+                rows.push({
+                  track: {
+                    ...track,
+                    name: `${first.templateCell ? `第 ${first.templateCell} 格` : '整組'} · ${lane?.name ?? itemName(project, first)}`,
+                    kind: kind === 'text' ? 'text' : kind === 'audio' ? 'audio' : 'overlay',
+                    hidden: track.hidden || !!lane?.hidden,
+                    locked: track.locked || !!lane?.locked,
+                    muted: track.muted || lane?.muted,
+                    items,
+                  },
+                  index,
+                  top,
+                  h: ROW_H,
+                  templateChild: true,
+                });
+                top += ROW_H + ROW_GAP;
+              }
+            }
+            continue;
+          }
           const children =
             track.layout?.playback === 'sequential'
               ? [track]
@@ -268,7 +310,7 @@ export function Timeline({
       }
     }
     return { rows, groups, contentH: top + 24 };
-  }, [project, collapsed, expandedTemplates]);
+  }, [project, collapsed, expandedTemplates, collapsedTemplateTypes]);
   const { rows, groups, contentH } = rowLayout;
 
   useLayoutEffect(() => {
@@ -528,7 +570,7 @@ export function Timeline({
     e.preventDefault();
     player?.pause();
     const startX = e.clientX;
-    const startItems = track.items;
+    const startItems = item.templateRole === 'frame' ? [item] : track.items;
     const asset = isVideoItem(item) ? project.assets.find((a) => a.id === item.assetId) : undefined;
     const trimKey = `gesture:trim:${item.id}:${e.timeStamp}:${e.pointerId}`;
     const target = e.currentTarget as HTMLElement;
@@ -548,7 +590,7 @@ export function Timeline({
               group.layout.captionText = changed;
             else {
               group.items = group.items.map((i) => (i.id === item.id ? changed : i));
-              arrangeTemplate(group);
+              if (group.layout?.version !== 2) arrangeTemplate(group);
             }
           } else setTimelineItems(d, track.id, next);
         },
@@ -572,7 +614,33 @@ export function Timeline({
   const step = tickStep(pps);
   for (let t = 0; t <= total + 1e-6; t += step) ticks.push(t);
 
-  const menuTrack = project.tracks.find((t) => t.id === menuTrackId) ?? null;
+  const menuParent = project.tracks.find((t) => t.id === menuTrackId);
+  const menuLane = menuParent?.layout?.lanes?.find((l) => l.id === menuLaneId);
+  const menuTrack = menuParent
+    ? menuLane
+      ? {
+          ...menuParent,
+          ...menuLane,
+          kind: (menuLane.kind === 'text'
+            ? 'text'
+            : menuLane.kind === 'audio'
+              ? 'audio'
+              : 'overlay') as Track['kind'],
+          id: menuParent.id,
+          template: false,
+        }
+      : menuParent
+    : null;
+  const menuPatch = (patch: Partial<Pick<Track, 'name' | 'hidden' | 'locked' | 'muted'>>) => {
+    if (menuLane)
+      useProjectStore.getState().apply((d) =>
+        Object.assign(
+          d.tracks.find((t) => t.id === menuTrackId)!.layout!.lanes!.find((l) => l.id === menuLaneId)!,
+          patch,
+        ),
+      );
+    else if (menuTrack) patchTrack(menuTrack.id, patch);
+  };
   const menuIndex = menuTrack ? project.tracks.indexOf(menuTrack) : -1;
   const viewH = Math.max(contentH, 106);
 
@@ -666,9 +734,9 @@ export function Timeline({
                   )}
               </div>
             ))}
-            {rows.map(({ track, top, h, templateChild }) => (
+            {rows.map(({ track, top, h, templateChild, templateCategory }) => (
               <div
-                key={`${track.id}:${templateChild ? track.items.map((i) => i.id).join(',') : 'group'}`}
+                key={`${track.id}:${templateCategory ?? ''}:${templateChild ? track.items.map((i) => i.id).join(',') : 'group'}`}
                 className={`track${track.hidden ? ' off' : ''}${drag?.targetId === track.id ? (drag.invalid ? ' drop-invalid' : ' layer-drop') : ''}`}
                 data-testid="track"
                 data-kind={track.kind}
@@ -680,39 +748,62 @@ export function Timeline({
                 data-bg="1"
                 style={{ top, height: h }}
               >
-                <HoldButton
-                  className={`track-chip${batch.includes(track.id) ? ' batch-selected' : ''}`}
-                  aria-pressed={batch.includes(track.id)}
-                  onHold={() => {
-                    setBatch((ids) => (ids.includes(track.id) ? ids : [...ids, track.id]));
-                    setMenuTrackId(null);
-                  }}
-                  aria-label={`${track.name} 軌道設定`}
-                  data-testid="track-chip"
-                  title="點選開啟軌道設定"
-                  onClick={() => {
-                    if (batch.length)
-                      setBatch((ids) =>
-                        ids.includes(track.id) ? ids.filter((id) => id !== track.id) : [...ids, track.id],
-                      );
-                    else setMenuTrackId(track.id);
-                  }}
-                >
-                  {track.kind === 'main' || track.kind === 'overlay' ? (
-                    <Film size={16} />
-                  ) : track.kind === 'text' ? (
-                    <Type size={16} />
-                  ) : (
-                    <Layers size={16} />
-                  )}
-                  {track.locked ? (
-                    <Lock size={11} />
-                  ) : track.hidden ? (
-                    <EyeOff size={11} />
-                  ) : track.muted ? (
-                    <VolumeX size={11} />
-                  ) : null}
-                </HoldButton>
+                {templateCategory ? (
+                  <button
+                    className="framework-family-toggle"
+                    aria-expanded={!collapsedTemplateTypes.includes(`${track.id}:${templateCategory}`)}
+                    onClick={() =>
+                      setCollapsedTemplateTypes((v) =>
+                        v.includes(`${track.id}:${templateCategory}`)
+                          ? v.filter((x) => x !== `${track.id}:${templateCategory}`)
+                          : [...v, `${track.id}:${templateCategory}`],
+                      )
+                    }
+                  >
+                    {collapsedTemplateTypes.includes(`${track.id}:${templateCategory}`) ? '▸' : '▾'}{' '}
+                    {LANE_NAMES[templateCategory]}
+                  </button>
+                ) : (
+                  <HoldButton
+                    className={`track-chip${batch.includes(track.id) ? ' batch-selected' : ''}`}
+                    aria-pressed={batch.includes(track.id)}
+                    onHold={() => {
+                      setBatch((ids) => (ids.includes(track.id) ? ids : [...ids, track.id]));
+                      setMenuTrackId(null);
+                    }}
+                    aria-label={`${track.name} 軌道設定`}
+                    data-testid="track-chip"
+                    title="點選開啟軌道設定"
+                    onClick={() => {
+                      if (batch.length)
+                        setBatch((ids) =>
+                          ids.includes(track.id) ? ids.filter((id) => id !== track.id) : [...ids, track.id],
+                        );
+                      else {
+                        setMenuLaneId(templateChild ? (track.items[0]?.templateLane ?? null) : null);
+                        setMenuTrackId(track.id);
+                      }
+                    }}
+                  >
+                    {track.kind === 'main' || track.kind === 'overlay' ? (
+                      <Film size={16} />
+                    ) : track.kind === 'text' ? (
+                      <Type size={16} />
+                    ) : (
+                      <Layers size={16} />
+                    )}
+                    {track.locked ? (
+                      <Lock size={11} />
+                    ) : track.hidden ? (
+                      <EyeOff size={11} />
+                    ) : track.muted ? (
+                      <VolumeX size={11} />
+                    ) : null}
+                    {templateChild && track.items[0]?.templateCell && (
+                      <small className="framework-lane-cell">{track.items[0].templateCell}</small>
+                    )}
+                  </HoldButton>
+                )}
 
                 {!project.flexibleLayers && track.kind === 'main' && (project.mainOffset ?? 0) > 0 && (
                   <div
@@ -752,7 +843,14 @@ export function Timeline({
                       <Plus size={14} />
                     </button>
                   ))}
-                {(track.template && !templateChild ? track.items.slice(0, 1) : track.items).map((it) => {
+                {(templateCategory
+                  ? []
+                  : track.template && !templateChild
+                    ? track.layout?.version === 2
+                      ? [track.layout.frameItem!]
+                      : track.items.slice(0, 1)
+                    : track.items
+                ).map((it) => {
                   const groupSummary = track.template && !templateChild;
                   const displayDuration = groupSummary
                     ? (track.layout?.duration ?? it.duration)
@@ -795,6 +893,7 @@ export function Timeline({
                           useProjectStore.getState().select(it.id);
                           player?.pause();
                           player?.seek(Math.max(it.start, Math.min(player.time, itemEnd(it) - 0.001)));
+                          if (track.layout?.version === 2) startItemGesture(e, it, track);
                         } else startItemGesture(e, it, track);
                       }}
                     >
@@ -845,7 +944,7 @@ export function Timeline({
                       )}
                       <div className="clip-label">
                         {groupSummary
-                          ? `${track.name} · ${track.items.length} 格`
+                          ? `${track.name} · ${track.layout?.count ?? track.items.length} 格`
                           : it.name
                             ? `${it.name} · ${it.duration.toFixed(1)}s`
                             : it.type === 'text'
@@ -861,13 +960,13 @@ export function Timeline({
                       {(groupSummary ? track.layout?.keyframes : it.keyframes)?.map((frame, i) => (
                         <button
                           key={frame.time}
-                          className={`timeline-keyframe${!playState.playing && selected && keyframeAt({ keyframes: groupSummary ? track.layout?.keyframes : it.keyframes }, playState.time - (track.layout?.start ?? it.start), 7 / pps) === frame ? ' selected' : ''}`}
+                          className={`timeline-keyframe${!playState.playing && selected && keyframeAt({ keyframes: groupSummary ? track.layout?.keyframes : it.keyframes }, playState.time - (groupSummary ? (track.layout?.start ?? it.start) : it.start), 7 / pps) === frame ? ' selected' : ''}`}
                           aria-pressed={
                             !playState.playing &&
                             selected &&
                             keyframeAt(
                               { keyframes: groupSummary ? track.layout?.keyframes : it.keyframes },
-                              playState.time - (track.layout?.start ?? it.start),
+                              playState.time - (groupSummary ? (track.layout?.start ?? it.start) : it.start),
                               7 / pps,
                             ) === frame
                           }
@@ -964,7 +1063,7 @@ export function Timeline({
                   defaultValue={menuTrack.name}
                   onBlur={(e) => {
                     const name = e.target.value.trim();
-                    if (name) patchTrack(menuTrack.id, { name });
+                    if (name) menuPatch({ name });
                   }}
                 />
               </label>
@@ -993,7 +1092,7 @@ export function Timeline({
               <button
                 className="menu-item"
                 onClick={() => {
-                  patchTrack(menuTrack.id, { hidden: !menuTrack.hidden });
+                  menuPatch({ hidden: !menuTrack.hidden });
                   setMenuTrackId(null);
                 }}
               >
@@ -1003,7 +1102,7 @@ export function Timeline({
               <button
                 className="menu-item"
                 onClick={() => {
-                  patchTrack(menuTrack.id, { locked: !menuTrack.locked });
+                  menuPatch({ locked: !menuTrack.locked });
                   setMenuTrackId(null);
                 }}
               >
@@ -1013,7 +1112,7 @@ export function Timeline({
                 <button
                   className="menu-item"
                   onClick={() => {
-                    patchTrack(menuTrack.id, { muted: !menuTrack.muted });
+                    menuPatch({ muted: !menuTrack.muted });
                     setMenuTrackId(null);
                   }}
                 >
@@ -1046,7 +1145,13 @@ export function Timeline({
                   <button
                     className="menu-item danger"
                     onClick={() => {
-                      removeTrack(menuTrack.id);
+                      if (menuLane)
+                        useProjectStore.getState().apply((d) => {
+                          const tr = d.tracks.find((t) => t.id === menuTrackId)!;
+                          tr.items = tr.items.filter((i) => i.templateLane !== menuLaneId);
+                          tr.layout!.lanes = tr.layout!.lanes!.filter((l) => l.id !== menuLaneId);
+                        });
+                      else removeTrack(menuTrack.id);
                       setMenuTrackId(null);
                     }}
                   >

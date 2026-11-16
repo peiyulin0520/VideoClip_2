@@ -18,6 +18,7 @@ type UI = {
     retry?: () => void;
     canSkip?: boolean;
   } | null;
+  templateDestination: { trackId: string; cell?: number } | null;
   templateCellId: string | null;
   aspectEditing: boolean;
   keyframePps: number;
@@ -45,6 +46,7 @@ export const useUI = create<UI>((set, get) => ({
   busy: null,
   setBusy: (busy) => set({ busy }),
   previewLoad: null,
+  templateDestination: null,
   templateCellId: null,
   aspectEditing: false,
   keyframePps: 60,

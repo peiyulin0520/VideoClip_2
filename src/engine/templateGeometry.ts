@@ -1,3 +1,4 @@
+import { templateCells } from './templateModel';
 import { continuousMotion } from './continuousMotion';
 import { animationValues } from './keyframes';
 import type { Project, Track, VideoItem } from '../model/types';
@@ -24,18 +25,34 @@ export function groupFrame(track: Track, w: number, h: number, t: number): Box {
     motion = layoutMotion(track.layout, t);
   const presetSize = layoutDefaultSize(track.layout?.style ?? 'photobooth');
   const size = track.layout?.size ?? presetSize;
-  const fit = Math.min(w / presetSize.width, h / presetSize.height);
+  const fit =
+    track.layout?.version === 2
+      ? Math.min(w / size.width, h / size.height)
+      : Math.min(w / presetSize.width, h / presetSize.height);
   return {
     cx: (tf.x + motion.x) * w,
     cy: (tf.y + motion.y) * h,
-    w: Math.max(1, size.width) * fit * tf.scale,
-    h: Math.max(1, size.height) * fit * tf.scale,
+    w:
+      Math.max(1, size.width) *
+      fit *
+      tf.scale *
+      (track.layout?.version === 2 ? (track.layout.box?.w ?? 1) : 1),
+    h:
+      Math.max(1, size.height) *
+      fit *
+      tf.scale *
+      (track.layout?.version === 2 ? (track.layout.box?.h ?? 1) : 1),
     rotation: 0,
   };
 }
 export function cellViewport(track: Track, item: VideoItem, index: number, t: number, w = 1080, h = 1920) {
   const layout = track.layout;
-  let slot = item.slot ?? layoutSlots(layout?.style ?? 'filmstrip', layout?.count)[index]!;
+  let slot =
+    layout?.version === 2
+      ? item.templateCell
+        ? templateCells(track)[item.templateCell - 1]!
+        : { x: 0, y: 0, w: 1, h: 1 }
+      : (item.slot ?? layoutSlots(layout?.style ?? 'filmstrip', layout?.count)[index]!);
   if (layout?.style === 'story') {
     const story = layout.story ?? { opening: 0.7, step: 0.45 },
       local = t - layout.start,
@@ -68,6 +85,7 @@ export type TemplateContext = {
   anchor: boolean;
   textScale?: number;
   groupScale?: number;
+  local?: boolean;
 };
 export function templateContexts(
   project: Project,
@@ -80,8 +98,40 @@ export function templateContexts(
     if (!tr.template) continue;
     const frame = groupFrame(tr, w, h, t);
     tr.items.forEach((it, i) => {
-      if (it.type !== 'text') out[it.id] = { slot: cellViewport(tr, it, i, t, w, h), frame, anchor: i === 0 };
+      if (it.type === 'text' && tr.layout?.version !== 2) return;
+      const slot = cellViewport(tr, it as VideoItem, i, t, w, h);
+      if (it.type !== 'text' || tr.layout?.version === 2)
+        out[it.id] = {
+          slot,
+          frame:
+            it.type === 'text' && it.templateCell && slot
+              ? {
+                  cx: (slot.x + slot.w / 2) * w,
+                  cy: (slot.y + slot.h / 2) * h,
+                  w: slot.w * w,
+                  h: slot.h * h,
+                  rotation: 0,
+                }
+              : frame,
+          anchor: tr.layout?.version === 2 ? false : i === 0,
+          local: tr.layout?.version === 2,
+          ...(it.type === 'text'
+            ? { textScale: Math.min(w / 1080, h / 1920), groupScale: groupTransform(tr, t).scale }
+            : {}),
+        };
     });
+    if (tr.layout?.frameItem)
+      out[tr.layout.frameItem.id] = {
+        frame,
+        slot: {
+          x: (frame.cx - frame.w / 2) / w,
+          y: (frame.cy - frame.h / 2) / h,
+          w: frame.w / w,
+          h: frame.h / h,
+        },
+        anchor: true,
+        local: true,
+      };
     const caption = tr.layout?.captionText;
     if (caption) {
       const scale = groupTransform(tr, t).scale;
@@ -97,6 +147,7 @@ export function templateContexts(
         },
         textScale: Math.min(w / reference.width, h / reference.height),
         groupScale: scale,
+        local: tr.layout?.version === 2,
       };
     }
   }

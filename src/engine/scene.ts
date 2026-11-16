@@ -1,3 +1,5 @@
+import { templateCells } from './templateModel';
+import { composeAdjustment } from './templateTone';
 import { renderKinetic } from './kinetic/render';
 import { applyTextFx } from './textFx';
 import { contrastText } from './colors';
@@ -5,7 +7,7 @@ import { applySingleAnimations } from './singleAnimations';
 import { renderLayers, applyTransitions } from './transitions';
 import { applyVideoEffects, videoEffectOverlay } from './videoEffects';
 import { animationValues, evaluatedItem } from './keyframes';
-import { groupFrame, templateContexts } from './templateGeometry';
+import { groupFrame, groupTransform, templateContexts } from './templateGeometry';
 import { cellMediaTime, templateCardAt } from './templateTiming';
 import { effectLayer, solidCanvas } from './sceneEffects';
 import { createTextItem } from '../model/defaults';
@@ -68,7 +70,7 @@ export function buildScene(
 
     if (track.template && layout && !artAdded.has(track.id)) {
       const frame = groupFrame(track, canvasW, canvasH, t);
-      const scale = Math.max(0.05, animationValues(layout, t - layout.start).scale);
+      const scale = Math.max(0.05, groupTransform(track, t).scale);
       const artW = frame.w / scale,
         artH = frame.h / scale;
       const textureScale = Math.min(1, Math.max(canvasW, canvasH) / Math.max(artW, artH));
@@ -95,8 +97,53 @@ export function buildScene(
       });
       artAdded.add(track.id);
     }
+    if (track.layout?.version === 2 && item.templateRole === 'frame') {
+      const frame = groupFrame(track, canvasW, canvasH, t),
+        cells = templateCells(track);
+      cells.forEach((cell, index) => {
+        const media = layers.some(
+          (l) =>
+            l.track.id === track.id &&
+            l.item.templateCell === index + 1 &&
+            l.item.type !== 'text' &&
+            l.item.type !== 'audio' &&
+            cellMediaTime(l.item, t) !== null,
+        );
+        const ever = track.items.some(
+          (i) => i.templateCell === index + 1 && i.type !== 'text' && i.type !== 'audio',
+        );
+        if (media || (layout!.gapMode !== 'fill' && (layout!.gapMode !== 'hold' || ever))) return;
+        const source = solidCanvas(layout!.gapColor ?? '#eee6d6');
+        out.push({
+          id: `${track.id}-gap-${index + 1}`,
+          kind: 'image',
+          source,
+          ready: true,
+          srcW: 256,
+          srcH: 2,
+          frameW: 256,
+          frameH: 2,
+          box: {
+            cx: frame.cx + (cell.x + cell.w / 2 - 0.5) * frame.w,
+            cy: frame.cy + (cell.y + cell.h / 2 - 0.5) * frame.h,
+            w: cell.w * frame.w,
+            h: cell.h * frame.h,
+            rotation: 0,
+          },
+          opacity: animationValues(layout!, t - layout!.start).opacity,
+          blend: 'normal',
+          cornerRadius: 0,
+        });
+      });
+      continue;
+    }
     const viewport = ctx.templates?.[item.id]?.slot;
-    if (track.template && item.type !== 'text' && viewport) {
+    if (
+      track.template &&
+      item.type !== 'text' &&
+      viewport &&
+      (track.layout?.version !== 2 || templateCardAt(item, t))
+    ) {
       const card = templateCardAt(item, t);
       const source = solidCanvas(card?.color ?? item.cell?.background ?? '#000000');
       out.push({
@@ -255,7 +302,7 @@ function toLayer(
     item = {
       ...item,
       transform: { ...item.transform, opacity: values.opacity * item.transform.opacity },
-      adjustment: values,
+      adjustment: track.layout.version === 2 ? composeAdjustment(item.adjustment, values) : values,
     };
   }
   const box = itemBox(item, ctx);
@@ -271,6 +318,15 @@ function toLayer(
     outline: item.outline,
     crop: item.crop,
     mask: item.type !== 'text' ? item.mask : undefined,
+    viewport:
+      track.layout?.version === 2 && ctx.templates?.[item.id]?.slot
+        ? {
+            x: ctx.templates[item.id]!.slot!.x * ctx.canvasW,
+            y: ctx.templates[item.id]!.slot!.y * ctx.canvasH,
+            w: ctx.templates[item.id]!.slot!.w * ctx.canvasW,
+            h: ctx.templates[item.id]!.slot!.h * ctx.canvasH,
+          }
+        : undefined,
   };
   if (item.type === 'text') {
     const kinetic = renderKinetic(item, (ctx.time ?? item.start) - item.start, ctx.canvasW, ctx.canvasH);

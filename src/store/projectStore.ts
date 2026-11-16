@@ -1,3 +1,4 @@
+import { syncTemplateFrame } from '../engine/templateModel';
 import { hydrateTemplateCaptions, retimeTemplateCaption } from '../engine/templateCaption';
 import { pruneRemovedEffects } from '../engine/effectOwnership';
 import { produce, type Draft } from 'immer';
@@ -59,6 +60,7 @@ export const useProjectStore = create<State>((set, get) => ({
       for (const track of d.tracks) {
         const before = project.tracks.find((t) => t.id === track.id)?.layout;
         if (before && track.layout) retimeTemplateCaption(track, before);
+        syncTemplateFrame(track);
       }
       pruneRemovedEffects(d, project);
     });

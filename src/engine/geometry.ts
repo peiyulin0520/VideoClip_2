@@ -67,6 +67,7 @@ function baseItemBox(item: Item, ctx: GeoCtx): Box | null {
   if (item.type === 'audio') return null;
   const { canvasW: cw, canvasH: ch } = ctx;
   const cell = ctx.templates?.[item.id];
+  if (item.templateRole === 'frame' && cell) return cell.frame;
   if (cell?.textScale !== undefined && item.type === 'text') {
     const size = ctx.textSize(item, 1080 * cell.textScale, 1920 * cell.textScale);
     return {
@@ -85,11 +86,11 @@ function baseItemBox(item: Item, ctx: GeoCtx): Box | null {
     const source = croppedSource(a, item.crop),
       size = fittedSize(source.w, source.h, slot.w * cw, slot.h * ch, item.fit);
     return {
-      cx: (slot.x + slot.w / 2) * cw,
-      cy: (slot.y + slot.h / 2) * ch,
-      w: size.w,
-      h: size.h,
-      rotation: 0,
+      cx: (slot.x + slot.w * (cell.local ? item.transform.x : 0.5)) * cw,
+      cy: (slot.y + slot.h * (cell.local ? item.transform.y : 0.5)) * ch,
+      w: size.w * (cell.local ? item.transform.scale : 1),
+      h: size.h * (cell.local ? item.transform.scale : 1),
+      rotation: cell.local ? item.transform.rotation : 0,
     };
   }
   const { x, y, scale, rotation } = item.transform;

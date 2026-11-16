@@ -1,3 +1,4 @@
+import { templateLane } from './templateModel';
 import { AUDIO_FADE, audioWindowAt, windowGain, softLimit } from './audioEnvelope';
 import { mediaSegments } from './templateTiming';
 import { ALL_FORMATS, AudioBufferSink, BlobSource, Input } from 'mediabunny';
@@ -9,6 +10,8 @@ import { audioBoundaries } from './audioRanges';
 export function audioEntries(project: Project) {
   return project.tracks.flatMap((track) =>
     track.items.flatMap((item) => {
+      const lane = templateLane(track, item);
+      if (lane?.hidden || lane?.muted) return [];
       if (
         track.hidden ||
         track.muted ||
@@ -35,7 +38,10 @@ export class AudioRenderer {
       ...entries.flatMap(({ item }) => audioBoundaries(item)),
       ...project.tracks
         .filter((tr) => tr.template && !tr.hidden)
-        .flatMap((tr) => tr.items.flatMap((it) => [it.start, it.start + it.duration])),
+        .flatMap((tr) => [
+          ...tr.items.flatMap((it) => [it.start, it.start + it.duration]),
+          ...(tr.layout ? [tr.layout.start, tr.layout.start + tr.layout.duration] : []),
+        ]),
     ];
   }
   static async create(project: Project, signal: AbortSignal) {
@@ -64,7 +70,7 @@ export class AudioRenderer {
     const rate = 48000,
       frames = Math.max(1, Math.round((end - start) * rate));
     const ctx = new OfflineAudioContext(2, frames, rate);
-    for (const { item, asset } of this.entries) {
+    for (const { item, asset, track } of this.entries) {
       for (const segment of mediaSegments(item)) {
         const a = Math.max(start, segment.start),
           b = Math.min(end, segment.end);
@@ -88,7 +94,11 @@ export class AudioRenderer {
               gain = ctx.createGain();
             source.buffer = wrapped.buffer;
             source.playbackRate.value = item.speed;
-            const window = audioWindowAt(item, (l + r) / 2)!;
+            const window = audioWindowAt(
+              item,
+              (l + r) / 2,
+              track.layout?.version === 2 ? track.layout : undefined,
+            )!;
             const fade = Math.min(AUDIO_FADE, (window.end - window.start) / 2);
             // Source starts and AudioParam events may round a fractional sample differently.
             // Match the intrinsic gain too: its default 1 must never leak into a 0/2x boundary.

@@ -1,3 +1,4 @@
+import { isTemplateRoot, templateMembers } from '../../engine/templateModel';
 import { itemName } from '../../engine/itemName';
 import { memo, useEffect, useState } from 'react';
 import {
@@ -134,12 +135,16 @@ export function TonePanel() {
         >
           <option value="">選擇素材</option>
           {project.tracks.flatMap((track) =>
-            track.items
+            (track.layout?.version === 2 ? [track.layout.frameItem!, ...templateMembers(track)] : track.items)
               .filter((it) => it.type !== 'audio')
               .map((it) => (
                 <option key={it.id} value={it.id}>
                   {itemName(project, it)}
-                  {track.template ? ' · 整組版型' : ''}
+                  {isTemplateRoot(track, it)
+                    ? ' · 整組版型'
+                    : it.templateCell
+                      ? ` · 第 ${it.templateCell} 格`
+                      : ''}
                 </option>
               )),
           )}

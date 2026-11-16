@@ -136,14 +136,19 @@ export function timelineEffectBadges(project: Project): TimelineEffectBadge[] {
     for (const [time] of fx.ranges ?? [[fx.start, fx.start + fx.duration]]) {
       const track =
         project.tracks.find(
-          (tr) => tr.items.some((it) => it.id === ownerId) || tr.layout?.captionText?.id === ownerId,
+          (tr) =>
+            tr.items.some((it) => it.id === ownerId) ||
+            tr.layout?.captionText?.id === ownerId ||
+            tr.layout?.frameItem?.id === ownerId,
         ) ??
         project.tracks.find((tr) => tr.kind === 'main') ??
         project.tracks.find((tr) => tr.items.some((it) => it.type !== 'audio'));
       const item =
         (ownerId && track?.layout?.captionText?.id === ownerId
           ? track.layout.captionText
-          : track?.items.find((it) => it.id === ownerId)) ??
+          : ownerId && track?.layout?.frameItem?.id === ownerId
+            ? track.layout.frameItem
+            : track?.items.find((it) => it.id === ownerId)) ??
         track?.items.find((it) => it.type !== 'audio' && time >= it.start && time < it.start + it.duration);
       if (track)
         add(

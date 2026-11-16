@@ -191,15 +191,22 @@ export const exportFrame = (page: Page, t: number, pts: [number, number][]) =>
 export async function openTab(
   page: Page,
   name: '剪輯' | '影像' | '文字' | '圖層' | '版型' | '素材' | '音訊' | '特效' | '色調',
+  legacyTemplate = true,
 ) {
   const tab = page.locator('.bottombar .tabs').getByRole('tab', { name, exact: true });
-  // 點「目前的分頁」會收合面板，所以已經在這個分頁且展開時就不用再點
   if (
-    (await tab.getAttribute('aria-selected')) === 'true' &&
-    (await tab.getAttribute('aria-expanded')) === 'true'
+    (await tab.getAttribute('aria-selected')) !== 'true' ||
+    (await tab.getAttribute('aria-expanded')) !== 'true'
   )
-    return;
-  await tab.tap();
+    await tab.tap();
+  // Existing template regression cases explicitly exercise the retained v1 import/compatibility tool.
+  // New framework cases pass false and exercise the primary empty-frame workflow.
+  if (
+    name === '版型' &&
+    legacyTemplate &&
+    !(await page.locator('.legacy-template-tools').evaluate((el) => (el as HTMLDetailsElement).open))
+  )
+    await page.locator('.legacy-template-tools > summary').tap();
 }
 
 /** Await the same real loading gate a phone user sees before editing any controlled field. */

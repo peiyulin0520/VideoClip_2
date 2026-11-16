@@ -2,6 +2,12 @@
 
 ## 11/16進行中（先讀）
 
+- C核心/新UI已實作，514單元/46檔與check成功，C瀏覽器仍待本source。B Actions43865546896完整187/188，新4文字及裁切/perf皆過；唯一原始匯出測試aria名不對，現改匯出影片，native尺寸/FPS實際內容仍須驗。
+- templateModel為v2唯一幾何/成員/靜音gap resolver；frameItem是nested VideoItem assetId空，不需虛構asset，findItem index -2。scene先frame once，holes清除一次，空檔補色一次；不要每個不活動上層填黑。格內transform局部0..1，geo/templateContexts與preview拖移/縮放使用同slot。group animationTarget只frame；v1其餘media仍舊整組語義。
+- layout.lanes虛擬列+templateLane/templateCell，分類導航不等於z，layout.order決定夾心。Layers只當秒與collapsed groups，FrameworkLayers負責成員z/隱藏鎖定。Timeline v2展開有分類、格號、各lane可修剪；child刪除留空frame，frame刪整組，duplicate/split重映射lanes/order/IDs且不重帶已刪來源。setTimelineItems group trim是時間窗，保留成員原座標，totalDuration以parent bound計。
+- TemplatePanel主要是空框/自訂格數、線寬色/同步依序/gap、FrameEditor local draft+shared Player.setPreviewProject、不多開decoder、X丟草稿；框架框/內格共用單份cells，套用不新添另一框。GroupDestination只明確選群組才加入文字/音訊/素材；frame不用crop入口。舊完整v1介面在LegacyTemplatePanel相容details，舊e2e helper顯式打開，新的nov16-framework傳false測主流程。
+- 11個framework puretests覆蓋空frame、共用分界、比例、局部縮放、夾心、多列、gap、seq、隱藏/上傳分類、tone+audio bounds與copy/split/delete；JSdom畫布不當GPU證據，新4Playwright需以本source通過。
+
 - B64 kinetic從參考18d775f移植，src/engine/kinetic保留MIT。型別增TextItem.kinetic/textFx，scene/measureTextItem共用固定kineticFrame；renderer clock hold在淡出前切完整原字卡、loop支持duration/speed。副標存在kinetic.subtitle，巨字橫移改下方帶文字、其他式補footer；TextPanel可改。
 - Compositor文字分支：同一HTMLCanvasElement且尺寸相同時CanvasSource.update，不setSource反覆配置；key仍含step/card/色彩/字體載入。new64真正Canvas回歸、hold/loop/副標保存及零新增texture有新e2e待Actions。
 - 基本4文字樣式使用固定3canvas無像素回讀，kinetic共用scratch/led tile；選中卡片僅可見且主片暫停才動，EffectsPanel只暫停更新time。continuous使用geometry/groupTransform，原媒體/音訊/定格不改。

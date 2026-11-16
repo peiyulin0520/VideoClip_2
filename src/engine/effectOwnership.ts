@@ -6,6 +6,7 @@ export const projectItemIds = (p: Project) =>
     p.tracks.flatMap((t) => [
       ...t.items.map((it) => it.id),
       ...(t.layout?.captionText ? [t.layout.captionText.id] : []),
+      ...(t.layout?.frameItem ? [t.layout.frameItem.id] : []),
     ]),
   );
 /** Old unbound screen effects belonged to the clip at their original application time. */

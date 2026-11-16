@@ -1,3 +1,4 @@
+import { isTemplateRoot, isTemplateV2, templateLane } from './templateModel';
 import { hydrateTemplateCaptions } from './templateCaption';
 import { itemCategory, laneCategory } from './batchLayers';
 import { createMainTrack, createTrack, MIN_CLIP_DURATION, newId } from '../model/defaults';
@@ -53,6 +54,14 @@ export function moveLayerItem(project: Project, id: string, desired: number, dro
   const start = Math.max(0, desired);
   if (!Number.isFinite(start)) throw Error('無效的時間位置');
   const family = itemFamily(source.item);
+  if (isTemplateV2(source.track) && !isTemplateRoot(source.track, source.item)) {
+    if (templateLane(source.track, source.item)?.locked) throw Error('請先解鎖這一列');
+    if ('trackId' in drop && drop.trackId === source.track.id) {
+      source.item.start = Math.max(source.track.layout!.start, start);
+      return;
+    }
+    throw Error('版型內的素材請在群組時間軸調整時間，疊放順序可到圖層頁籤調整');
+  }
   if ('insertAt' in drop && source.track.template) {
     const index = project.tracks.indexOf(source.track);
     const at = Math.max(0, Math.min(project.tracks.length, drop.insertAt));

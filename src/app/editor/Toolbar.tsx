@@ -1,3 +1,6 @@
+import { GroupDestination } from './GroupDestination';
+import { isTemplateRoot, isTemplateV2 } from '../../engine/templateModel';
+import { FrameworkLayers } from './FrameworkLayers';
 import { TemplateCellEditor } from './TemplateCellEditor';
 import { updateTemplateChild } from '../../engine/templatePlayback';
 import { itemName } from '../../engine/itemName';
@@ -158,6 +161,7 @@ export function BottomBar({
       {!collapsed && tab === 'edit' && (
         <EditTab panel={panel} setPanel={setPanel} onImport={onImportMain} found={found} items={items} />
       )}
+      {!collapsed && ['overlay', 'text', 'audio', 'assets'].includes(tab) && <GroupDestination />}
       {!collapsed && tab === 'overlay' && <OverlayTab onImportOverlay={onImportOverlay} />}
       {!collapsed && tab === 'text' && <TextTab found={found} />}
       {!collapsed && tab === 'layers' && found && found.item.type !== 'audio' && (
@@ -417,7 +421,7 @@ function EditTab({
         onClick={() => {
           if (!selected) return toast('請先選取素材');
           setNameDraft(
-            found?.track.template && useUI.getState().templateCellId !== selected.id
+            found && isTemplateRoot(found.track, selected) && useUI.getState().templateCellId !== selected.id
               ? found.track.name
               : itemName(project, selected),
           );
@@ -440,7 +444,11 @@ function EditTab({
               className="btn primary"
               disabled={!nameDraft.trim()}
               onClick={() => {
-                if (found?.track.template && useUI.getState().templateCellId !== selected.id)
+                if (
+                  found &&
+                  isTemplateRoot(found.track, selected) &&
+                  useUI.getState().templateCellId !== selected.id
+                )
                   useProjectStore.getState().apply((d) => {
                     d.tracks.find((t) => t.id === found.track.id)!.name = nameDraft.trim();
                   });
@@ -474,7 +482,11 @@ function EditTab({
         (found?.track.template ? (
           <TemplateCellEditor
             item={selected}
-            index={found.track.items.findIndex((i) => i.id === selected.id)}
+            index={
+              selected.templateCell
+                ? selected.templateCell - 1
+                : found.track.items.findIndex((i) => i.id === selected.id)
+            }
             onApply={(draft) =>
               useProjectStore.getState().apply((d) => updateTemplateChild(d, selected.id, draft))
             }
@@ -487,7 +499,12 @@ function EditTab({
         icon={Maximize}
         label="裁切"
         onClick={() => {
-          if (!selected || selected.type === 'text' || selected.type === 'audio')
+          if (
+            !selected ||
+            selected.type === 'text' ||
+            selected.type === 'audio' ||
+            selected.templateRole === 'frame'
+          )
             return toast('請先選擇影片或圖片');
           useUI.getState().player?.pause();
           setCropping(true);
@@ -566,6 +583,17 @@ function LayersTab() {
       </div>
       <ul className="layer-list" data-testid="layer-list">
         {layers.map(({ item, track, trackIndex }) => {
+          if (isTemplateV2(track)) {
+            if (layers.find((l) => l.track.id === track.id)?.item.id !== item.id) return null;
+            return (
+              <FrameworkLayers
+                key={track.id}
+                project={project}
+                track={project.tracks[trackIndex]!}
+                items={layers.filter((l) => l.track.id === track.id).map((l) => l.item)}
+              />
+            );
+          }
           const label = itemName(project, item);
           return (
             <li
@@ -629,7 +657,7 @@ function LayersTab() {
           <Slider
             label="圖層大小"
             value={Math.round(
-              (findItem(project, it.id)?.track.template
+              (found && isTemplateRoot(found.track, it)
                 ? groupTransform(findItem(project, it.id)!.track, player?.time).scale
                 : evaluatedItem(it, player?.time ?? it.start).transform.scale) * 100,
             )}
@@ -639,7 +667,7 @@ function LayersTab() {
             format={(v) => `${v}%`}
             onChange={(v) => setTransform(it.id, { scale: v / 100 }, `size:${it.id}`)}
           />
-          {!found?.track.template && (
+          {(!found || !isTemplateRoot(found.track, it)) && (
             <Slider
               label="圖層旋轉"
               value={evaluatedItem(it, player?.time ?? it.start).transform.rotation}
@@ -766,7 +794,10 @@ function LayersTab() {
                 {
                   x: 0.5,
                   y: 0.5,
-                  scale: found?.track.template || it.type === 'text' || it.fit === 'cover' ? 1 : 0.5,
+                  scale:
+                    (found && isTemplateRoot(found.track, it)) || it.type === 'text' || it.fit === 'cover'
+                      ? 1
+                      : 0.5,
                   rotation: 0,
                 },
                 `reset:${it.id}`,
