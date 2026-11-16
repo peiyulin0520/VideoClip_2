@@ -4413,7 +4413,7 @@ textarea.text-input.area {
   min-height: 44px;
   width: auto;
   height: auto;
-  background: var(--accent);
-  color: var(--accent-ink);
+  background: var(--control);
+  color: var(--fg);
   box-shadow: none;
 }
