@@ -32,11 +32,61 @@ async function template(
   seconds = 3,
 ) {
   await openTab(page, '版型');
+  await page.evaluate(() => {
+    const trace: { type: string; label: string | null; x: number; y: number }[] = [];
+    const owner = document.querySelector('[aria-label="多格影片版型"]');
+    (window as unknown as { __templateTrace: unknown }).__templateTrace = { trace, owner };
+    for (const type of ['pointerdown', 'pointerup', 'pointercancel', 'click'])
+      document.addEventListener(
+        type,
+        (e) => {
+          const p = e as PointerEvent;
+          trace.push({
+            type,
+            label:
+              (e.target as Element)?.closest('button')?.getAttribute('aria-label') ??
+              (e.target as Element)?.closest('button')?.textContent?.trim() ??
+              null,
+            x: p.clientX,
+            y: p.clientY,
+          });
+        },
+        { capture: true },
+      );
+  });
   await page.getByRole('button', { name: style, exact: true }).tap();
-  await expect(page.getByRole('button', { name: style, exact: true })).toHaveAttribute(
-    'aria-pressed',
-    'true',
-  );
+  try {
+    await expect(page.getByRole('button', { name: style, exact: true })).toHaveAttribute(
+      'aria-pressed',
+      'true',
+    );
+  } catch (error) {
+    console.log(
+      'Template preset touch trace',
+      await page.evaluate(() => {
+        const t = (window as unknown as { __templateTrace: { trace: unknown[]; owner: Element } })
+          .__templateTrace;
+        return {
+          events: t.trace,
+          samePanel: t.owner === document.querySelector('[aria-label="多格影片版型"]'),
+          presets: Array.from(document.querySelectorAll('.template-grid button')).map((b) => ({
+            label: b.getAttribute('aria-label'),
+            pressed: b.getAttribute('aria-pressed'),
+            rect: JSON.stringify(b.getBoundingClientRect()),
+          })),
+          active: document.activeElement?.outerHTML.slice(0, 200),
+        };
+      }),
+    );
+    await page
+      .getByRole('button', { name: style, exact: true })
+      .evaluate((el) => (el as HTMLButtonElement).click());
+    console.log(
+      'Template preset programmatic delivery',
+      await page.getByRole('button', { name: style, exact: true }).getAttribute('aria-pressed'),
+    );
+    throw error;
+  }
   await page.getByTestId('template-files').setInputFiles(files.map(fixture));
   await expect(page.locator('.busy')).toHaveCount(0);
   await waitForPreviewReady(page);

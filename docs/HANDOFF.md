@@ -2,6 +2,8 @@
 
 ## 11/16進行中（先讀）
 
+- 注意129fe18受控開關未修根因：故事第一次tap後就pressed=false，失敗在匯入之前。新target診斷pointer/click實際目標、panel DOM是否重掛、直接click是否能送達；只失敗時log並throw原斷言，不以directclick替代實際觸控驗收。下一步依此診斷修真正觸控／狀態原因，不重跑挑綠。
+
 - c78726b C2完整193/194唯一故事變拍貼（兩個job同失敗），新13皆過且實測29.96fps/18轉場格0慢格0硬seek/native24fps含聲通過。error-context實際選取photobooth，先修選取草稿生命週期，不能以延長red像素poll替代。
 - 外層legacy details onToggle＋條件掛載會使草稿受原生/巢狀toggle事件影響：改button/section只明確onClick切mode；helper新增匯入前後與套用前style pressed三段斷言，原故事所有像素/字體/暖光仍保留。快測新增target first，不刪原33中故事。新框分界popup另補成功截圖，最新check/Actions待驗。
 

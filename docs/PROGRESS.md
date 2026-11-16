@@ -59,6 +59,9 @@
 
 ## 本輪日誌
 
+- 2026-11-16 故事按鈕進一步定位
+  - 129fe18 / Actions43918879785 target在第一次tap後aria-pressed仍false，尚未匯入，排除單純匯入重設假說；外層受控開關改善不等於已修根因。保留原斷言並補test-only pointer/click目標、DOM節點身份及programmatic delivery診斷，診斷後仍throw原錯，不用直接click繞過讓測試變綠。
+
 - 2026-11-16 C2完整193/194與故事選取回歸
   - c78726b / Actions43873673041：518/check、新13與特效14全部過，完整193/194與快33中32過；唯一故事case在套用後實際是拍貼而非故事（error-context aria-pressed/track name證據），不是放寬顏色判定可解。
   - 相容區原生details搭配條件掛載可能被巢狀toggle干擾而卸載草稿，改明確受控button/section，只有使用者點外層button才切模式；保留子元件group key。故事helper增加匯入前/後/套用前aria-pressed斷言，原影像/時間/字體/暖光/二格斷言全保留，快測先跑此target。
