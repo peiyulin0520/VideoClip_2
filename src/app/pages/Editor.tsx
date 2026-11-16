@@ -121,7 +121,6 @@ function EditorBody() {
   const [ratioOpen, setRatioOpen] = useState(false);
   const [exportOpen, setExportOpen] = useState(false);
   const [nameDraft, setNameDraft] = useState('');
-  const [showTop, setShowTop] = useState(false);
   const [timelineOpen, setTimelineOpen] = useState(() => {
     try {
       return sessionStorage.getItem(`lm2-timeline:${project.id}`) === '1';
@@ -223,17 +222,7 @@ function EditorBody() {
   const empty = project.tracks.every((t) => t.items.length === 0);
 
   return (
-    <main
-      className="editor"
-      ref={editorRef}
-      onScroll={() => {
-        const editor = editorRef.current!,
-          preview = editor.querySelector('.stage-wrap'),
-          header = editor.querySelector('.ed-top');
-        if (preview && header)
-          setShowTop(preview.getBoundingClientRect().top < header.getBoundingClientRect().bottom - 2);
-      }}
-    >
+    <main className="editor" ref={editorRef}>
       <Sheet open={qualityOpen} title="預覽畫質" onClose={() => setQualityOpen(false)}>
         <p className="hint">只影響預覽；影片比例與匯出畫質不變。低畫質較省運算，適合多圖層播放。</p>
         <div className="chips">
@@ -347,7 +336,6 @@ function EditorBody() {
       <BottomBar
         onImportMain={() => pick('main')}
         onImportOverlay={() => pick('overlay')}
-        showReturn={showTop}
         onReturnToPreview={() => editorRef.current?.scrollTo({ top: 0, behavior: 'smooth' })}
       />
 

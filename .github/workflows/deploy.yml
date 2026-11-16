@@ -89,6 +89,9 @@ jobs:
           cp tests/fixtures/ui-noto-sans-tc.ttf "$HOME/.local/share/fonts/little-moments/"
           cp tests/fixtures/ui-fontconfig.conf "$HOME/.config/fontconfig/conf.d/99-little-moments.conf"
           fc-cache -f "$HOME/.local/share/fonts/little-moments"
+      - name: Return control stays visible at every phone width without covering tools
+        timeout-minutes: 3
+        run: npm run e2e -- e2e/template-controls.spec.ts --grep '不同iPhone尺寸' --trace off --workers=1
       - name: Legacy story selection survives imports and nested controls
         timeout-minutes: 3
         run: npm run e2e -- e2e/story-workspace.spec.ts --grep '展開故事' --trace off --workers=1

@@ -59,6 +59,10 @@
 
 ## 本輪日誌
 
+- 2026-11-16 回頂正常排版的固定生命週期
+  - 710e624 / Actions43921363841快速：target1、新13、特效14、播放33、恢復2、編輯29、色調5、音訊9（三輪）皆過；最後22/23唯一320×568頁尾回頂底619.4超出568。回頂列在scroll事件後才掛載，造成已捲到底後scrollHeight又增長。
+  - 移除showTop/onScroll條件掛載，回頂永遠是BottomBar的真實最後功能列，仍非浮鈕，不新增空白保留區；第一次捲到底即包含該按鈕，移除捲動React狀態更新。原多尺寸可見底、≥44px、無阻擋/無留白與故事觸控全部保留，快速先驗5種尺寸target再故事。
+
 - 2026-11-16 根因定位：回頂浮鈕攔截觸控
   - 8ab0122 / Actions43920200369 trace：pointerdown/up/click實際都是「回到最上方預覽」，座標331.5,509.1；samePanel=true，直接click可將故事pressed改true（診斷後仍throw原錯）。所以不是草稿重掛/匯入/解碼；自動捲動後才顯示的浮鈕蓋到第四個款式，攔走實際手勢。
   - 正式修回頂為bottombar最底的正常44px控制列，不浮在工具/來源/格線上；保留回頂、smooth行為及無footer留白，移除舊fixed bottom疊覆CSS。移除臨時event trace與programmatic診斷，保留所有三階段pressed與故事像素斷言。518/check與最終Actions待本source。

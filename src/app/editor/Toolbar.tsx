@@ -110,12 +110,10 @@ const BLENDS = Object.keys(BLEND_LABELS) as BlendMode[];
 export function BottomBar({
   onImportMain,
   onImportOverlay,
-  showReturn = false,
   onReturnToPreview,
 }: {
   onImportMain: () => void;
   onImportOverlay: () => void;
-  showReturn?: boolean;
   onReturnToPreview?: () => void;
 }) {
   const project = useProjectStore((s) => s.project)!;
@@ -177,7 +175,7 @@ export function BottomBar({
       {!collapsed && tab === 'tone' && <TonePanel />}
       {!collapsed && tab === 'assets' && <AssetsPanel />}
       {!collapsed && tab === 'audio' && <AudioPanel />}
-      {showReturn && (
+      {onReturnToPreview && (
         <div className="panel-return-row">
           <button className="chip back-to-preview" aria-label="回到最上方預覽" onClick={onReturnToPreview}>
             <ArrowUp size={18} />

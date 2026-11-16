@@ -2,6 +2,8 @@
 
 ## 11/16進行中（先讀）
 
+- 710e624 C5所有fast前8組過，最後22/23：320×568捲至底後才因showTop掛回頂row，scrollHeight增長，按鈕底619.4超viewport568。現在回頂row永遠掛在BottomBar最後、移除Editor showTop/onScroll，不做浮鈕也不留空白；原5寬度/44px/不遮擋/無footer空白斷言未改，快測加該target first。
+
 - 真正根因已有trace證據（8ab0122/43920200369）：點故事時pointerdown/up/click全到回頂浮鈕(x331.5,y509.1)，panel節點沒變且programmatic click正常。不是前述details假說！正常捲動才掛出的fixed back-to-preview把第四張卡的落點攔走。
 - 修為BottomBar最後正常排版的44px回頂row，Editor提供showReturn/onReturnToPreview；移除Editor前端fixed浮鈕及舊fixed CSS，保留平滑回頂、最底可見及無footer空白的原斷言。臨時事件診斷已移除，pressed三段與原故事影像/暖光/字體/二格都保留。最新source需完整194與全快速，不能用C2的193當全綠。
 
