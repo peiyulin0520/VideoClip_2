@@ -83,37 +83,48 @@ async function nativeFrames(
       signal.addEventListener('abort', no, { once: true });
       if (signal.aborted) no();
     });
+  // Capture in the presentation callback itself: loadeddata/seeked can precede
+  // the first drawable surface, and awaiting seeked after a callback may expose
+  // another surface. Never persist that transient blank as a valid thumbnail.
+  const capture = (frame: Filmstrip['frames'][number], t: number, timeout = 5000) => {
+    if (!v.requestVideoFrameCallback) return null;
+    return new Promise<boolean>((resolve) => {
+      let callback = 0;
+      const finish = (ok: boolean) => {
+        clearTimeout(timer);
+        signal.removeEventListener('abort', abort);
+        v.removeEventListener('error', abort);
+        if (callback) v.cancelVideoFrameCallback(callback);
+        resolve(ok);
+      };
+      const abort = () => finish(false);
+      const timer = setTimeout(abort, timeout);
+      const presented: VideoFrameRequestCallback = (_now, info) => {
+        if (Math.abs(info.mediaTime - t) <= 0.1 && v.readyState >= 2) {
+          frame.src = snapshot(v, v.videoWidth, v.videoHeight);
+          finish(true);
+        } else callback = v.requestVideoFrameCallback(presented);
+      };
+      signal.addEventListener('abort', abort, { once: true });
+      v.addEventListener('error', abort, { once: true });
+      if (signal.aborted) abort();
+      else callback = v.requestVideoFrameCallback(presented);
+    });
+  };
   try {
+    const first = frames[0];
+    const initial = first && !first.src ? capture(first, 0, 8000) : null;
     const loaded = wait('loadeddata', 8000);
     v.src = url;
     v.load();
     if (!(await loaded)) return;
+    if (initial) await initial;
     let failures = 0;
     for (const frame of frames) {
       signal.throwIfAborted();
       if (frame.src) continue;
       const t = Math.min(frame.time, Math.max(0, v.duration - 0.001));
-      let callback = 0;
-      const presented =
-        t > 0.001 && v.requestVideoFrameCallback
-          ? new Promise<boolean>((resolve) => {
-              const finish = (ok: boolean) => {
-                clearTimeout(timer);
-                signal.removeEventListener('abort', abort);
-                if (callback) v.cancelVideoFrameCallback(callback);
-                resolve(ok);
-              };
-              const abort = () => finish(false);
-              const timer = setTimeout(abort, 2000);
-              signal.addEventListener('abort', abort, { once: true });
-              if (signal.aborted) return abort();
-              callback = v.requestVideoFrameCallback((_now, info) =>
-                finish(
-                  Math.abs(info.mediaTime - t) <= 0.1 || (info.mediaTime <= t && info.mediaTime >= t - 1),
-                ),
-              );
-            })
-          : null;
+      const presented = capture(frame, t);
       const moved =
         Math.abs(v.currentTime - t) < 0.001 && v.readyState >= 2 && !v.seeking
           ? true
@@ -123,10 +134,10 @@ async function nativeFrames(
               return ready;
             })();
       const decoded = await moved;
-      const fresh = presented ? await presented : decoded;
-      signal.throwIfAborted();
-      if (decoded && fresh && v.readyState >= 2 && !v.seeking && Math.abs(v.currentTime - t) < 0.05) {
-        // Scale directly from the decoded video, never allocate a 4K canvas per thumbnail.
+      if (presented) await presented;
+      else if (decoded && v.readyState >= 2 && !v.seeking && Math.abs(v.currentTime - t) < 0.05) {
+        // Older browsers without presentation callbacks expose the decoded frame
+        // via seeked; scale directly, without allocating a 4K canvas.
         frame.src = snapshot(v, v.videoWidth, v.videoHeight);
       }
       progress();

@@ -40,7 +40,7 @@ async function assertEverySecondPair(page: Page) {
   // Unique clock-labelled images plus per-frame timestamps catch repeated/shifted frames.
   for (const [i, f] of all.entries()) {
     expect(f.src).toBeTruthy();
-    expect(Math.abs(f.rgb[0]! - (32 + 3 * i))).toBeLessThanOrEqual(24);
+    expect(Math.abs(f.rgb[0]! - (32 + 3 * i)), `source ${f.time}s: ${f.rgb}`).toBeLessThanOrEqual(24);
     expect(Math.abs(f.rgb[1]! - 40)).toBeLessThanOrEqual(24);
     expect(Math.abs(f.rgb[2]! - (224 - 3 * i))).toBeLessThanOrEqual(24);
   }

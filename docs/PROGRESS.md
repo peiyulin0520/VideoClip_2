@@ -59,6 +59,10 @@
 
 ## 本輪日誌
 
+- 2026-11-16 原生縮圖呈現時序
+  - 05ebc86 / Actions43926305156完整193/194，唯一原生備援縮圖RGB差32超過原24限，六主題與其餘193均過。loadeddata/seeked不能代表第一個可繪surface，先前首格直接取、後續回呼後再等seeked才取，仍有空白surface競速。
+  - 改先註冊首格presentation callback再load，每格在相符mediaTime回呼內立即snapshot，忽略先前排隊舊幀，精度0.1秒，失敗仍留空而不複製。新unit模擬callback後surface變空再seeked，確認仍保存0/2/4秒真正畫面；保留原63不同圖及RGB限，失敗附來源時間/RGB。快速先三輪原生備援，完整194仍全部驗。新519/check與Actions待本source。
+
 - 2026-11-16 回頂配色的主題一致性
   - 30faf7d / Actions43923871966完整189/194，唯一5個失敗均為新回頂normal chip的背景被全域theme control覆寫，但文字仍accent-ink（mono黑字深底，淺theme白字淺底），ratio1.17～1.38。5尺寸與故事target皆過，其餘新13/14/33/2/29/5/9均過。
   - 回頂是一般工具，明確成對使用--control/--fg，移除該列accent/ink混用，不以important或放寬對比檢查；快測第一組加原六theme readability，所有原194仍完整跑。最新518/check及Actions待驗。

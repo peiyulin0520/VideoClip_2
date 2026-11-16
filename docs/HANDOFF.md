@@ -2,6 +2,8 @@
 
 ## 11/16進行中（先讀）
 
+- 05ebc86完整193/194唯一原生縮圖色差；先前初始loadeddata即snapshot、其他等seeked才取的surface可能空白。改在load前arm首格RVFC，每個相符mediaTime(±0.1s)回呼內立即capture；舊回呼持續等新畫面，絕不補前格。新unit真模擬surface回呼後消失，快測最先三輪同原生案例，原63唯一圖/RGB24限不變。519/check與最新Actions待驗；最終交付腳本unit數要519、fast新增最前3。
+
 - 30faf7d C6全189/194，5個theme只回頂色配對錯：全域normal chip背景control覆寫局部accent bg，但局部accent-ink未改，mono對比1.25/light1.17。回頂utility現在明確control/fg成對，不混accent；既有六theme readability先快跑，原194/其他fast全保留。位置/點按/5尺寸/新13皆過，不能省此完整配色驗收。
 
 - 710e624 C5所有fast前8組過，最後22/23：320×568捲至底後才因showTop掛回頂row，scrollHeight增長，按鈕底619.4超viewport568。現在回頂row永遠掛在BottomBar最後、移除Editor showTop/onScroll，不做浮鈕也不留空白；原5寬度/44px/不遮擋/無footer空白斷言未改，快測加該target first。

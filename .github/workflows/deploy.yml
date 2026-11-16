@@ -89,6 +89,9 @@ jobs:
           cp tests/fixtures/ui-noto-sans-tc.ttf "$HOME/.local/share/fonts/little-moments/"
           cp tests/fixtures/ui-fontconfig.conf "$HOME/.config/fontconfig/conf.d/99-little-moments.conf"
           fc-cache -f "$HOME/.local/share/fonts/little-moments"
+      - name: Native timestamp thumbnails remain correct across three fresh imports
+        timeout-minutes: 4
+        run: npm run e2e -- e2e/timestamped-thumbnails.spec.ts --grep 'Safari原生解碼' --trace off --workers=1 --repeat-each=3
       - name: All six themes keep UI and return controls readable
         timeout-minutes: 6
         run: npm run e2e -- e2e/readability.spec.ts --trace off --workers=1
