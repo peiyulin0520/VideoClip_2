@@ -43,7 +43,7 @@ test('自由裁切描邊時完整來源持續可見，只有檢查結果才隱�
 });
 test('音訊緊湊列保留操作及音量，原始解析度和來源影格率可實際匯出', async ({ page }) => {
   test.setTimeout(90000);
-  await createProjectWith(page, ['solid-red.webm']);
+  await createProjectWith(page, ['timing-video.webm']);
   await waitForPreviewReady(page);
   await openTab(page, '音訊');
   const row = page.locator('.audio-row').first();

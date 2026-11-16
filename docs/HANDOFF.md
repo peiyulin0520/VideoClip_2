@@ -2,6 +2,11 @@
 
 ## 11/16進行中（先讀）
 
+- B64 kinetic從參考18d775f移植，src/engine/kinetic保留MIT。型別增TextItem.kinetic/textFx，scene/measureTextItem共用固定kineticFrame；renderer clock hold在淡出前切完整原字卡、loop支持duration/speed。副標存在kinetic.subtitle，巨字橫移改下方帶文字、其他式補footer；TextPanel可改。
+- Compositor文字分支：同一HTMLCanvasElement且尺寸相同時CanvasSource.update，不setSource反覆配置；key仍含step/card/色彩/字體載入。new64真正Canvas回歸、hold/loop/副標保存及零新增texture有新e2e待Actions。
+- 基本4文字樣式使用固定3canvas無像素回讀，kinetic共用scratch/led tile；選中卡片僅可見且主片暫停才動，EffectsPanel只暫停更新time。continuous使用geometry/groupTransform，原媒體/音訊/定格不改。
+- A音訊測試solid-red無音軌所以0列，不是UI消失；改timing-video。B單元pure motion -0嚴格toBe失敗改浮點比較，其餘原門檻保留。
+
 - plans/2026-11-16-layout-effects-performance.md含完整八組需求；PR14未合併所以接續同分支並draft。只讀/tmp/videoclip-reference-20261116（18d775f），不可改原版VideoClip。
 - A先修裁切完整編輯底圖、compact audio、原始容器fps/bitrate與export native profile、prefs.showPerf及Player.stats低頻顯示。暖B起點不因晚一個tick重seek，非使用者seek的轉場容差放寬；原明確seek0.02精度。
 - 資料metadata來自原始getMedia，不看proxy；舊metadata缺失在匯出panel讀原容器，最高原fps含59.94、單一成片混小規格依時間取樣。未完成64動畫/框架/分組重設，11/15 181只基線。

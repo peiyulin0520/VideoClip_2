@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import type { CardBox, Stroke, TextItem } from '../../model/types';
-import { editText } from '../../store/actions';
+import { editItem, editText } from '../../store/actions';
 import { DECORATION_KINDS } from '../../engine/decorations';
 import { SHAPE_CATS, SHAPES, shapeDef } from '../../engine/shapes';
 import { Slider } from '../../ui/Slider';
@@ -126,6 +126,27 @@ export function TextPanel({
               }, 'txt')
             }
           />
+          {item.kinetic && (
+            <label className="field">
+              副標題
+              <textarea
+                aria-label="副標題內容"
+                className="text-input area"
+                rows={1}
+                placeholder="副標題（可留空）"
+                value={item.kinetic.subtitle ?? ''}
+                onChange={(e) =>
+                  editItem(
+                    id,
+                    (it) => {
+                      if (it.type === 'text' && it.kinetic) it.kinetic.subtitle = e.target.value;
+                    },
+                    { coalesce: `subtitle:${id}` },
+                  )
+                }
+              />
+            </label>
+          )}
           <div className="font-row-wrap">
             <FontSelect
               value={run.fontId}

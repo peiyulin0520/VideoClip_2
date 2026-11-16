@@ -1,9 +1,24 @@
+import { continuousMotion } from './continuousMotion';
 import { animationValues } from './keyframes';
 import type { Project, Track, VideoItem } from '../model/types';
 import type { Box } from './geometry';
 import { layoutMotion, layoutSlots, layoutDefaultSize } from './layouts';
-export const groupTransform = (track: Track, t = track.layout?.start ?? 0) =>
-  animationValues(track.layout ?? {}, t - (track.layout?.start ?? 0));
+export const groupTransform = (track: Track, t = track.layout?.start ?? 0) => {
+  const values = animationValues(track.layout ?? {}, t - (track.layout?.start ?? 0));
+  const motion = continuousMotion(
+    track.layout?.continuous,
+    t - (track.layout?.start ?? 0),
+    track.layout?.duration ?? 1,
+    1,
+    1,
+  );
+  return {
+    ...values,
+    x: values.x + (motion.x ?? 0),
+    y: values.y + (motion.y ?? 0),
+    scale: values.scale * (motion.scale ?? 1),
+  };
+};
 export function groupFrame(track: Track, w: number, h: number, t: number): Box {
   const tf = groupTransform(track, t),
     motion = layoutMotion(track.layout, t);

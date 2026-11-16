@@ -1,3 +1,5 @@
+import { renderKinetic } from './kinetic/render';
+import { applyTextFx } from './textFx';
 import { contrastText } from './colors';
 import { applySingleAnimations } from './singleAnimations';
 import { renderLayers, applyTransitions } from './transitions';
@@ -271,7 +273,18 @@ function toLayer(
     mask: item.type !== 'text' ? item.mask : undefined,
   };
   if (item.type === 'text') {
-    const r = renderText(
+    const kinetic = renderKinetic(item, (ctx.time ?? item.start) - item.start, ctx.canvasW, ctx.canvasH);
+    if (kinetic)
+      return {
+        ...common,
+        kind: 'text',
+        source: kinetic.canvas,
+        ready: true,
+        srcW: kinetic.w,
+        srcH: kinetic.h,
+        textKey: kinetic.key,
+      };
+    let r = renderText(
       ctx.editingHints && item.card.placeholder
         ? {
             ...item.card,
@@ -298,6 +311,14 @@ function toLayer(
         ),
       ),
     );
+    if (item.textFx)
+      r = applyTextFx(
+        r,
+        item.textFx,
+        (ctx.time ?? item.start) - item.start,
+        item.id,
+        item.card.runs[0]?.color ?? '#fff',
+      );
     return { ...common, kind: 'text', source: r.canvas, ready: true, srcW: r.w, srcH: r.h, textKey: r.key };
   }
   const asset = project.assets.find((a) => a.id === item.assetId);

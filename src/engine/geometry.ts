@@ -1,3 +1,4 @@
+import { continuousMotion } from './continuousMotion';
 import { evaluatedItem } from './keyframes';
 import { maskContains } from './mediaMask';
 import type { Asset, BlendMode, Crop, Item, TextItem } from '../model/types';
@@ -43,6 +44,25 @@ export function croppedSource(asset: Asset, crop?: Crop): { w: number; h: number
 }
 
 export function itemBox(item: Item, ctx: GeoCtx): Box | null {
+  const box = baseItemBox(item, ctx);
+  if (!box || !item.continuous) return box;
+  const motion = continuousMotion(
+    item.continuous,
+    (ctx.time ?? item.start) - item.start,
+    item.duration,
+    ctx.canvasW,
+    ctx.canvasH,
+  );
+  return {
+    ...box,
+    cx: box.cx + (motion.x ?? 0),
+    cy: box.cy + (motion.y ?? 0),
+    w: box.w * (motion.scale ?? 1),
+    h: box.h * (motion.scale ?? 1),
+    rotation: box.rotation + (motion.rotation ?? 0),
+  };
+}
+function baseItemBox(item: Item, ctx: GeoCtx): Box | null {
   if (ctx.time !== undefined) item = evaluatedItem(item, ctx.time);
   if (item.type === 'audio') return null;
   const { canvasW: cw, canvasH: ch } = ctx;

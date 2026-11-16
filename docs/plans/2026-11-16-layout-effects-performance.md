@@ -9,3 +9,13 @@
 5. 版型可選1×1/1×2/1×3/1×4及自訂列欄、內線/外框粗細/顏色、整體大小及格子邊界；只一份框架幾何，修剪/改格不留舊線或疊框，操作區不蓋拖曳把手。媒體以原素材保留、可在格內平移/縮放而非永久crop。
 6. 群組時間軸預設收合、內部依文字/影像/貼圖/音訊分類、格號明示；一格多列同秒疊加。圖層頁只列目前秒數，群組預設收合，可在群組內調整實際z順序（影像/文字夾心），分類不強迫z順序。
 7. 新舊專案遷移不丟片段/聲音/定格；保留原2秒真縮圖、音訊波形/ABC/色調/GPU資源斷言。每段check、最終GitHub Actions瀏覽器及自製素材成功截圖，Safari列PLAN §7待真機；不改參考repo，不代Merge。
+
+## C資料設計（待實作）
+
+沿用Track.template群組，增加layout.version2、獨立frameItem（無來源的合成框架錨點、findItem index -2），不靠第一支影片代表框架；空版型也可建立/渲染/選取/修剪/移動/刪除。layout.cells共用唯一幾何，grid列欄、box占輸出框寬高、border/gap厚度/色彩；custom cells不與舊frame canvas疊繪，art key含所有幾何。改尺寸與格線直接重建同一框架來源，不新增第二個框架。
+
+群組內素材仍在track.items（不用改整個專案持久化格式），以templateLane/templateCell/role標明哪一格哪一列；layout.lanes記類型/格號/隱藏鎖定等，layout.order獨立保存實際z序，不能依類型硬分z。captionText舊nested仍支援，v2 frameItem同樣nested；中央apply同步frame時長，projectItemIds含frame以清FX。v2 animationTarget只有frame錨點代表整組，其他成員自己的定格/縮放/色調/進退場。舊v1保留可讀、編輯框架時升級不丟原素材。
+
+時間軸群組header用frame錨點、預設收合；展開按類型（再標格號/列）呈現虛擬列，不新增真global track。一格可多列同秒疊加；分類只是導覽，圖層頁每秒可在群組內排序成影像/文字/影像。加入文字/音訊/素材時可明確選加入該群組。Gap按格統一計算，不能每個空上層都畫黑底遮住下層；hold只在整格無活動素材時取前一/第一畫面，沒有原音；fill畫一次自訂色、transparent不畫。
+
+新版TemplatePanel只框架/格數/外內線/顏色/整體與格界線/播放空檔/來源入口，文字編輯去Text，動態/故事去Effects，保留舊範本可用與舊檔內容；舊e2e入口需移動但保留原影像/音訊/時間/像素/資源斷言。裁切/來源popup不作永久裁片，格內幾何用相對座標，可平移縮放原影像。

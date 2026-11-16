@@ -107,6 +107,7 @@ export type ClipAnimation = { preset: TransitionPreset; duration: number; ranges
 export type ClipAnimations = { enter?: ClipAnimation; exit?: ClipAnimation };
 
 export type ItemBase = {
+  continuous?: { kind: 'drift' | 'slide' | 'breathe' | 'sway' | 'shake'; strength?: number; speed?: number };
   animations?: ClipAnimations;
   id: string;
   name?: string;
@@ -249,7 +250,22 @@ export type TextCard = {
   box?: CardBox;
   decorations?: Decoration[];
 };
-export type TextItem = ItemBase & { type: 'text'; card: TextCard };
+export type TextItem = ItemBase & {
+  type: 'text';
+  card: TextCard;
+  kinetic?: {
+    id: KineticId;
+    accent?: string;
+    bg?: string;
+    size?: { w: number; h: number };
+    fade?: KineticFade;
+    speed?: number;
+    playback?: 'loop' | 'hold';
+    duration?: number;
+    subtitle?: string;
+  };
+  textFx?: { kind: TextFxKind; playback?: 'loop' | 'hold'; duration?: number };
+};
 
 export type Item = VideoItem | TextItem;
 
@@ -287,6 +303,7 @@ export type Project = {
   layout?: {
     style: 'photobooth' | 'filmstrip' | 'polaroid' | 'story';
     motion: 'none' | 'slide' | 'drift';
+    continuous?: ItemBase['continuous'];
     playback?: 'simultaneous' | 'sequential';
     size?: { width: number; height: number };
     caption?: string;
@@ -339,3 +356,71 @@ export type Project = {
   thumbnail?: string;
   version: 1;
 };
+
+export type KineticId =
+  | 'burst'
+  | 'hit'
+  | 'stamp'
+  | 'punch'
+  | 'stack'
+  | 'stretch'
+  | 'through'
+  | 'squash'
+  | 'crawl'
+  | 'drift'
+  | 'echo'
+  | 'slant'
+  | 'path'
+  | 'ticker'
+  | 'depth'
+  | 'tape'
+  | 'flap'
+  | 'flip'
+  | 'type'
+  | 'slot'
+  | 'odo'
+  | 'swapline'
+  | 'led'
+  | 'split'
+  | 'glitch'
+  | 'marker'
+  | 'shake'
+  | 'neon'
+  | 'bob'
+  | 'track'
+  | 'fill'
+  | 'focus'
+  | 'cube'
+  | 'crawl3d'
+  | 'orbit'
+  | 'tunnel'
+  | 'scatter'
+  | 'extrude'
+  | 'blinds'
+  | 'block'
+  | 'kara'
+  | 'popsync'
+  | 'dual'
+  | 'beat'
+  | 'soft'
+  | 'lyrics'
+  | 'trail'
+  | 'mix'
+  | 'vpop'
+  | 'slam'
+  | 'lines'
+  | 'marks'
+  | 'telop'
+  | 'emph'
+  | 'bouncy'
+  | 'star'
+  | 'flick'
+  | 'drip'
+  | 'creep'
+  | 'ghost'
+  | 'corrupt'
+  | 'mirror'
+  | 'torch'
+  | 'melt';
+export type KineticFade = 'none' | 'v' | 'h';
+export type TextFxKind = 'shimmer' | 'sparkle' | 'pixel' | 'shake';
