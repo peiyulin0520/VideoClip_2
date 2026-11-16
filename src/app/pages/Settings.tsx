@@ -95,6 +95,18 @@ export function Settings() {
         </label>
         <p className="hint">只影響編輯時的預覽，最終匯出可另外選擇解析度。</p>
       </section>
+      <section aria-label="播放效能">
+        <h2>播放效能</h2>
+        <label className="check-row">
+          <input
+            type="checkbox"
+            checked={prefs.showPerf}
+            onChange={(e) => prefs.set({ showPerf: e.target.checked })}
+          />
+          顯示播放效能
+        </label>
+        <p className="hint">預覽左上顯示實際播放格數、繪製耗時與慢格；不會改變匯出畫質。</p>
+      </section>
       <section aria-label="GIPHY 貼圖設定">
         <h2>GIPHY 貼圖</h2>
         <GiphyKeyForm settings />

@@ -132,6 +132,7 @@ export function AudioPanel() {
             保留音訊{track.muted ? '（軌道靜音中）' : ''}
           </label>
           <Slider
+            displayLabel="音量"
             label={`音量 ${itemName(project, item)}`}
             value={Math.round(item.volume * 100)}
             min={0}

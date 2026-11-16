@@ -1,5 +1,6 @@
 export function Slider({
   label,
+  displayLabel,
   value,
   min,
   max,
@@ -8,6 +9,7 @@ export function Slider({
   onChange,
 }: {
   label: string;
+  displayLabel?: string;
   value: number;
   min: number;
   max: number;
@@ -17,7 +19,7 @@ export function Slider({
 }) {
   return (
     <label className="slider-row">
-      <span className="slider-label">{label}</span>
+      <span className="slider-label">{displayLabel ?? label}</span>
       <input
         type="range"
         aria-label={label}

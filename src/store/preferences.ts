@@ -17,7 +17,7 @@ export const THEME_SWATCHES: Record<Theme, [string, string]> = {
   beige: ['#eae6db', '#292923'],
 };
 const KEY = 'lm2-preferences';
-function initial(): { theme?: Theme; preview?: number; previewModeVersion?: number } {
+function initial(): { theme?: Theme; preview?: number; previewModeVersion?: number; showPerf?: boolean } {
   try {
     return JSON.parse(localStorage.getItem(KEY) ?? '{}');
   } catch {
@@ -28,8 +28,10 @@ const saved = initial();
 export const usePreferences = create<{
   theme: Theme;
   preview: number;
-  set: (patch: Partial<{ theme: Theme; preview: number }>) => void;
+  showPerf: boolean;
+  set: (patch: Partial<{ theme: Theme; preview: number; showPerf: boolean }>) => void;
 }>((set, get) => ({
+  showPerf: saved.showPerf === true,
   theme: saved.theme && saved.theme in THEMES ? saved.theme : 'beige',
   preview:
     saved.previewModeVersion === 2 && [540, 720, 1080, 1920].includes(saved.preview ?? 0)
@@ -37,9 +39,9 @@ export const usePreferences = create<{
       : 540,
   set: (patch) => {
     set(patch);
-    const { theme, preview } = get();
+    const { theme, preview, showPerf } = get();
     try {
-      localStorage.setItem(KEY, JSON.stringify({ theme, preview, previewModeVersion: 2 }));
+      localStorage.setItem(KEY, JSON.stringify({ theme, preview, showPerf, previewModeVersion: 2 }));
     } catch {
       /* unavailable */
     }

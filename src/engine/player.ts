@@ -1,3 +1,5 @@
+import { PlaybackPerformance, previewSeekTolerance } from './playbackPerformance';
+import { activeTransitions } from './transitions';
 import { cellMediaTime } from './templateTiming';
 import type { Asset, Project, Track, VideoItem } from '../model/types';
 import { Compositor, type SceneLayer } from './compositor';
@@ -25,8 +27,7 @@ type Deps = {
 };
 type Listener = (t: number, playing: boolean) => void;
 
-const DRIFT = 0.5;
-const PREFETCH_S = 1.0;
+const PREFETCH_S = 2.0;
 const POOL_SIZE = 8;
 
 /** 編輯預覽依裝置偏好；輸出可另外指定尺寸，文字仍獨立超取樣。 */
@@ -44,6 +45,20 @@ export function previewSize(
  * 即將開始的片段/疊加會提前載入並停在起點，切換時不會黑畫面。
  */
 export class Player {
+  private perf = new PlaybackPerformance();
+  stats() {
+    return {
+      ...this.perf.snapshot(),
+      canvas: `${this.compositor.width} × ${this.compositor.height}`,
+      sources: this.pool.els
+        .filter((v) => !v.paused && v.videoWidth > 0)
+        .map((v) => ({
+          width: v.videoWidth,
+          height: v.videoHeight,
+          dropped: v.getVideoPlaybackQuality?.().droppedVideoFrames ?? 0,
+        })),
+    };
+  }
   private t = 0;
   private draftProject: Project | null = null;
 
@@ -209,6 +224,7 @@ export class Player {
     this.previewTime = null;
     this.t = Math.min(Math.max(t, 0), this.total());
     if (this.playing) {
+      this.perf.reset();
       this.wallStart = performance.now();
       this.tStart = this.t;
     }
@@ -235,6 +251,7 @@ export class Player {
     this.playing = true;
     this.buffering = !this.frameReady;
     this.bufferSince = performance.now();
+    this.perf.reset();
     this.wallStart = performance.now();
     this.tStart = this.t;
     this.emit(true); // Stop optional background decoders before starting playback.
@@ -371,7 +388,15 @@ export class Player {
     if (
       el.readyState >= 1 &&
       !el.seeking &&
-      Math.abs(delta) > (active && !el.paused && !this.requestedSeek && !rebound ? DRIFT : 0.02) &&
+      Math.abs(delta) >
+        previewSeekTolerance(
+          active,
+          !el.paused,
+          this.requestedSeek,
+          rebound,
+          rebound && el.paused && el.dataset.primed === '1' && Math.abs(el.currentTime - item.trimIn) < 0.03,
+          this.perf.inTransition,
+        ) &&
       (!active || el.paused || this.requestedSeek || !last || now - last.at > 1000)
     ) {
       this.lastSeeks.set(el, { target: s, at: now });
@@ -382,6 +407,7 @@ export class Player {
           el.dataset.itemId === item.id &&
           el.dataset.assetId === asset.id
         ) {
+          if (this.playing && !this.requestedSeek && usePreferences.getState().showPerf) this.perf.seek();
           el.currentTime = Math.max(0, Math.min(s, Math.max(0, asset.duration - 0.001)));
           this.scheduleRender();
         }
@@ -426,6 +452,9 @@ export class Player {
       comp.render([]);
       return;
     }
+    const diagnostics = this.playing && usePreferences.getState().showPerf;
+    const perfStart = diagnostics ? performance.now() : 0;
+    this.perf.inTransition = diagnostics && activeTransitions(p, t).length > 0;
     const used = new Set<HTMLVideoElement>(),
       usedAudio = new Set<HTMLAudioElement>();
     this.readyCount = 0;
@@ -541,7 +570,9 @@ export class Player {
     this.bus.flush();
     this.requestedSeek = false;
     this.lastScene = scene;
+    const builtAt = diagnostics ? performance.now() : 0;
     comp.render(scene, p.background ?? '#000000');
+    if (diagnostics) this.perf.record(perfStart, builtAt - perfStart, performance.now() - builtAt, p.fps);
   }
 
   private maybeCaptureThumb(el: HTMLVideoElement, asset: Asset) {

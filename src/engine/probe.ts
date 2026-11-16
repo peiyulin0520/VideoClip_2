@@ -15,7 +15,7 @@ export function mediaKindOf(file: File): MediaKind | null {
   return null;
 }
 
-type Probed = Pick<Asset, 'duration' | 'width' | 'height' | 'hasAudio'>;
+type Probed = Pick<Asset, 'duration' | 'width' | 'height' | 'hasAudio' | 'frameRate' | 'videoBitrate'>;
 
 /** 讀影片長度、尺寸、有沒有音軌（Mediabunny 直接讀容器，不需要瀏覽器能解碼） */
 async function probeVideoContainer(file: File): Promise<Probed | null> {
@@ -27,7 +27,15 @@ async function probeVideoContainer(file: File): Promise<Probed | null> {
       input.getPrimaryAudioTrack(),
     ]);
     if (!v) return null;
-    return { duration, width: v.displayWidth, height: v.displayHeight, hasAudio: !!a };
+    const stats = await v.computePacketStats(60).catch(() => null);
+    return {
+      duration,
+      width: v.displayWidth,
+      height: v.displayHeight,
+      hasAudio: !!a,
+      frameRate: stats?.averagePacketRate,
+      videoBitrate: stats?.averageBitrate,
+    };
   } catch {
     return null;
   } finally {

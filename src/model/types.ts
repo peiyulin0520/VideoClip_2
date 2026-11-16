@@ -26,6 +26,8 @@ export type Asset = {
   width: number;
   height: number;
   hasAudio: boolean;
+  frameRate?: number;
+  videoBitrate?: number;
   /** 小縮圖（JPEG dataURL），沿著素材時間平均取樣，用於時間軸與專案封面 */
   thumbs: string[];
   generated?: { color: string };

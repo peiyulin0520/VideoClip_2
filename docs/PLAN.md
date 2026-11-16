@@ -457,3 +457,5 @@ docs/
 
 
 2026-11-15 追加四項 Safari 待驗（§7）：刪影像/整層/群組連特效及badge同步、undo/redo；三層主/次/分類導航的主題辨識；320–430px音訊按鈕在名稱左邊且保留觸控/有聲片段；群組展開caption文字列、字體與大小/示意比例、移動縮放/輪序/複製/重開/匯出一致及播放流暢度。source942895a / Actions43693750451：418/check、181完整及快速14/33/2/29/5/9/23全過；詳validation/effects-caption-followup.md，仍不能稱Safari真機完成。
+
+11/16本輪待真機（§7）：重整版型改大小/格線不留殘影、分類收合與夾心z序、一格多列/格內縮放、64動畫副標及完整停留、原始4K60混HD30、free crop完整底圖、compact audio與perf overlay開關及轉場真實FPS/聲音。先由Actions驗自製素材，再真機，不改原版repo。

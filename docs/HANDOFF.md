@@ -1,5 +1,12 @@
 # 交接手冊（HANDOFF）
 
+## 11/16進行中（先讀）
+
+- plans/2026-11-16-layout-effects-performance.md含完整八組需求；PR14未合併所以接續同分支並draft。只讀/tmp/videoclip-reference-20261116（18d775f），不可改原版VideoClip。
+- A先修裁切完整編輯底圖、compact audio、原始容器fps/bitrate與export native profile、prefs.showPerf及Player.stats低頻顯示。暖B起點不因晚一個tick重seek，非使用者seek的轉場容差放寬；原明確seek0.02精度。
+- 資料metadata來自原始getMedia，不看proxy；舊metadata缺失在匯出panel讀原容器，最高原fps含59.94、單一成片混小規格依時間取樣。未完成64動畫/框架/分組重設，11/15 181只基線。
+
+
 ## 追加四項（交付，先讀）
 
 - 最終source942895a3c6e898d83861c501c19dd66bfa77892f / Actions43693750451：418單元/check、181完整（9.8m）、快速14/33/2/29/5/9/23全過。PR14交使用者Merge，最後僅文件/量測/5新PNG，產品/測試/workflow與source一致。驗收validation/effects-caption-followup.md，操作USAGE。

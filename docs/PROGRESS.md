@@ -4,6 +4,13 @@
 
 ## 交接快照（VideoClip_2 最新狀態）
 
+- 11/16新需求進行中，計畫plans/2026-11-16-layout-effects-performance.md：版型框架/多列分類群組/可穿插z序、64文字動畫/副標/循環或完整停留、整段動效、裁切底圖、緊湊音訊、原始規格匯出及效能指標。原版VideoClip18d775f只在/tmp唯讀參考，不改程式；使用者真人錄影未進repo。
+- PR14仍未合併，接續codex/playback-import-reliability並轉draft，完成後由使用者自行Merge。先前418單元/181瀏覽器為11/15基線，不是11/16需求完成證據。
+- A已寫：自由裁切編輯顯示完整來源，只有結果套mask；音訊兩列緊湊；import原容器記fps/bitrate、舊專案export另讀原檔metadata，原始最高尺寸及fps可選、混合素材單一輸出規格；低頻可關的perf overlay及原生轉場暖起點避免多seek。新421單元／43檔與check已過；新3瀏覽器待Actions。
+- 下一步：A check/Actions後續實作64動態字卡及版型資料/幾何/群組UI，最終全回歸。Safari仍待PLAN §7，不可提前宣稱完成。
+
+## 11/15已交付基線（歷史，待合併）
+
 - PR14：https://github.com/peiyulin0520/VideoClip_2/pull/14 ，分支codex/playback-import-reliability。使用者追加四項與原播放／匯入修復一起交付；由使用者自行Merge後Pages才發布，不代合併、auto-merge或推main。
 - 最終驗收source `942895a3c6e898d83861c501c19dd66bfa77892f` / Actions43693750451：418單元／42檔與check、181完整Chromium（9.8m）全過；快速14＋33＋2＋29＋5＋9（三輪音訊）＋23全部成功。最後僅文件/量測/5新成功PNG，產品、測試與workflow和source一致。
 - 刪素材/整層/群組/批次時，同undo交易清所屬特效與銜接；舊無法確定來源的效果有可點badge。ownerId只記刪除歸屬，targetId才影響single分類，保留畫面效果的screen選單；同秒chooser原回歸已過。
@@ -48,6 +55,12 @@
 - 2026-11-14 E 階段自訂輸出比例：主預覽基地不依輸出比例改高，頂部比例可進入主預覽四邊/角拖曳草稿，X不儲存、套用才寫 width/height/customAspect。內框/框外斜紋分開。ProjectPreview 使用240方形固定基地 contain，不因4:3上下錯位；音訊來源固定160px基地，播放秒數同列。check/374單元成功，新瀏覽器待驗。
 
 ## 本輪日誌
+
+- 2026-11-16 新8組需求與A階段
+  - 原版VideoClip最新18d775f唯讀快照參考，原工作樹/remote無改動。錄影6在自由裁切第二秒完整影像消失，只留polygon；修編輯底圖及檢查結果分離。錄影5只3.23秒，不足當真機FPS量測。
+  - Source容器取60個packet header估fps/bitrate、不解碼全片；原始匯出重新編碼、最高來源規格與混合低fps補幀明示。Perf僅開啟時記固定窗口、UI500ms刷新，不讀像素；預載暖幀容忍首個late tick以減少轉場硬seek。
+  - 原npm ci cache不可寫，改/tmp專用cache安裝；既有check418成功。新增3單元已納421／43與check成功，3瀏覽器待Actions。其餘64動畫/版型進行中，不稱全完成。
+
 
 - 2026-11-15 追加四項完整驗收交付（source942895a / PR14）
   - Actions43693750451：418/check、181完整（9.8m）、快速14/33/2/29/5/9/23全過。原同秒chooser測試不改，ownerId分類混淆修正已驗；沒有降低波形、像素、媒體列數或資源配置標準。

@@ -102,10 +102,10 @@ export function CropEditor({ item, onClose }: { item: VideoItem; onClose: () => 
             : source.readyState >= 2)
         ) {
           ctx.drawImage(source, 0, 0, w, h);
-          ctx.globalCompositeOperation = 'destination-in';
-          ctx.drawImage(m, 0, 0);
-          ctx.globalCompositeOperation = 'source-over';
           if (preview) {
+            ctx.globalCompositeOperation = 'destination-in';
+            ctx.drawImage(m, 0, 0);
+            ctx.globalCompositeOperation = 'source-over';
             ctx.clearRect(0, 0, w, crop.t * h);
             ctx.clearRect(0, (1 - crop.b) * h, w, crop.b * h);
             ctx.clearRect(0, 0, crop.l * w, h);

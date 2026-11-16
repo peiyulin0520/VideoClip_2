@@ -64,6 +64,7 @@ export function installDebugHook(player: Player) {
       }
     },
     mediaStats: () => player.compositor.mediaStats(),
+    playbackStats: () => player.stats(),
     async inspectMovie(url: string, t: number, points: [number, number][] = []) {
       if (!url.startsWith('blob:')) throw Error('Only local exported movies');
       const blob = await (await fetch(url)).blob();

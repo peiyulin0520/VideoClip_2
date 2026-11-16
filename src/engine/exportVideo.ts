@@ -25,6 +25,7 @@ import { AudioRenderer, audioEntries } from './exportAudio';
 
 export type ExportOptions = {
   maxSize: number;
+  bitrate?: number;
   fps: number;
   audio: boolean;
   signal: AbortSignal;
@@ -136,7 +137,7 @@ export async function exportVideo(project: Project, options: ExportOptions): Pro
     });
     const video = new CanvasSource(comp.canvas, {
       codec,
-      bitrate: Math.max(750_000, size.width * size.height * options.fps * 0.12),
+      bitrate: Math.max(750_000, options.bitrate ?? 0, size.width * size.height * options.fps * 0.12),
       keyFrameInterval: 2,
     });
     output.addVideoTrack(video, { frameRate: options.fps });
