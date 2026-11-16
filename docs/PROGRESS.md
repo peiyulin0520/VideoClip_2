@@ -59,6 +59,8 @@
 
 ## 本輪日誌
 
+- 2026-11-16 原生取圖片尾：2e5089e / Actions43929471782全193/194及快速138/139，唯一同個clip-a音訊長2.008秒、影片最後packet1.933秒；63張長片備援連續三輪、其餘新13/主題/編輯/原音皆通過。改以EncodedPacketSink metadataOnly讀取目標時間對應的實際video packet，在其內側seek，仍在matching presentation回呼內取圖；不跳進只剩音訊的EOF，也支援VFR。純測試追加2.008/1.933片尾，原色差和時間戳斷言不變。快速先長片與短片兩種備援各三輪（6），最新519/check與完整194待本source。失敗test-only記native回呼時間/ready與缺圖秒數，仍throw原錯。
+
 - 2026-11-16 原生縮圖呈現時序
   - 05ebc86 / Actions43926305156完整193/194，唯一原生備援縮圖RGB差32超過原24限，六主題與其餘193均過。loadeddata/seeked不能代表第一個可繪surface，先前首格直接取、後續回呼後再等seeked才取，仍有空白surface競速。
   - 改先註冊首格presentation callback再load，每格在相符mediaTime回呼內立即snapshot，忽略先前排隊舊幀，精度0.1秒，失敗仍留空而不複製。新unit模擬callback後surface變空再seeked，確認仍保存0/2/4秒真正畫面；保留原63不同圖及RGB限，失敗附來源時間/RGB。快速先三輪原生備援，完整194仍全部驗。新519/check與Actions待本source。

@@ -12,6 +12,7 @@ import { setAssetFilmstrip, useProjectStore } from '../store/projectStore';
 import type { Asset } from '../model/types';
 const mock = vi.hoisted(() => ({
   frames: [] as ({ canvas: { width: number; height: number }; timestamp: number; duration: number } | null)[],
+  packets: new Map<number, { timestamp: number; duration: number }>(),
   dispose: vi.fn(),
 }));
 vi.mock('mediabunny', () => ({
@@ -23,6 +24,11 @@ vi.mock('mediabunny', () => ({
       return { canDecode: async () => true };
     }
   },
+  EncodedPacketSink: class {
+    async getPacket(time: number) {
+      return mock.packets.get(time) ?? { timestamp: time, duration: 0.04 };
+    }
+  },
   CanvasSink: class {
     async *canvasesAtTimestamps() {
       for (const frame of mock.frames) yield frame;
@@ -30,6 +36,7 @@ vi.mock('mediabunny', () => ({
   },
 }));
 afterEach(() => {
+  mock.packets.clear();
   vi.restoreAllMocks();
   vi.unstubAllGlobals();
   useProjectStore.getState().close();
@@ -152,8 +159,9 @@ it('resumes missing source timestamps after an interrupted background job and pu
   expect(partials[1]!.frames.map((f) => f.src)).toEqual(['image-at-0', 'frame-2', null]);
   expect(result.frames.map((f) => f.src)).toEqual(['image-at-0', 'frame-2', 'frame-4']);
 });
-it('captures native frames during presentation, before seeked can expose a transient blank surface', async () => {
+it('captures presented native surfaces and seeks within the final video packet when audio runs longer', async () => {
   mock.frames = [];
+  let stamps = [0, 2, 4];
   let shown = -1;
   let copied = -1;
   let nextCallback: VideoFrameRequestCallback | undefined;
@@ -174,10 +182,11 @@ it('captures native frames during presentation, before seeked can expose a trans
           set: (time: number) => {
             clock = time;
             queueMicrotask(() => {
+              const timestamp = stamps.filter((stamp) => stamp <= time).at(-1)!;
               // A queued old presentation must not satisfy the new request.
-              nextCallback?.(0, { mediaTime: time - 2 } as VideoFrameCallbackMetadata);
-              shown = time;
-              nextCallback?.(0, { mediaTime: time } as VideoFrameCallbackMetadata);
+              nextCallback?.(0, { mediaTime: timestamp - 2 } as VideoFrameCallbackMetadata);
+              shown = timestamp;
+              nextCallback?.(0, { mediaTime: timestamp } as VideoFrameCallbackMetadata);
               shown = -1;
               video.dispatchEvent(new Event('seeked'));
             });
@@ -213,5 +222,12 @@ it('captures native frames during presentation, before seeked can expose a trans
   vi.stubGlobal('URL', { createObjectURL: () => 'blob:test', revokeObjectURL: vi.fn() });
   const result = await buildFilmstrip(new Blob(), 6, new AbortController().signal, () => {});
   expect(result.frames.map((frame) => frame.src)).toEqual(['source-at-0', 'source-at-2', 'source-at-4']);
+  stamps = [0, 1.933];
+  mock.packets.set(2, { timestamp: 1.933, duration: 0.066 });
+  const tail = await buildFilmstrip(new Blob(), 2.008, new AbortController().signal, () => {});
+  expect(tail.frames).toEqual([
+    { time: 0, src: 'source-at-0' },
+    { time: 2, src: 'source-at-1.933' },
+  ]);
   expect(document.querySelector('video')).toBeNull();
 });

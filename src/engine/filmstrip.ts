@@ -1,4 +1,4 @@
-import { ALL_FORMATS, BlobSource, CanvasSink, Input } from 'mediabunny';
+import { ALL_FORMATS, BlobSource, CanvasSink, EncodedPacketSink, Input } from 'mediabunny';
 import type { Asset, VideoItem } from '../model/types';
 
 export type Filmstrip = NonNullable<Asset['filmstrip']>;
@@ -57,6 +57,7 @@ async function nativeFrames(
   frames: Filmstrip['frames'],
   signal: AbortSignal,
   progress: () => void,
+  nativeTimes: Map<number, { timestamp: number; seek: number }>,
 ) {
   const v = document.createElement('video'),
     url = URL.createObjectURL(file);
@@ -123,8 +124,9 @@ async function nativeFrames(
     for (const frame of frames) {
       signal.throwIfAborted();
       if (frame.src) continue;
-      const t = Math.min(frame.time, Math.max(0, v.duration - 0.001));
-      const presented = capture(frame, t);
+      const packet = nativeTimes.get(frame.time);
+      const t = Math.min(packet?.seek ?? frame.time, Math.max(0, v.duration - 0.001));
+      const presented = capture(frame, packet?.timestamp ?? t);
       const moved =
         Math.abs(v.currentTime - t) < 0.001 && v.readyState >= 2 && !v.seeking
           ? true
@@ -175,6 +177,7 @@ export async function buildFilmstrip(
     onPartial?.({ version: 1, interval: 2, duration, frames: frames.map((frame) => ({ ...frame })) });
   };
   publish();
+  const nativeTimes = new Map<number, { timestamp: number; seek: number }>();
   const input = new Input({ source: new BlobSource(file), formats: ALL_FORMATS });
   const cancel = () => input.dispose();
   signal.addEventListener('abort', cancel, { once: true });
@@ -197,6 +200,22 @@ export async function buildFilmstrip(
         if (done % 8 === 0) await new Promise((r) => setTimeout(r, 0));
       }
     }
+    if (track && frames.some((frame) => !frame.src)) {
+      // An audio tail can outlast the last video packet. Seek inside the actual
+      // packet covering each requested time, rather than into an audio-only EOF.
+      // Header-only reads also identify the correct surface for variable-rate video.
+      const packets = new EncodedPacketSink(track);
+      for (const frame of frames) {
+        signal.throwIfAborted();
+        if (frame.src) continue;
+        const packet = await packets.getPacket(frame.time, { metadataOnly: true });
+        if (packet)
+          nativeTimes.set(frame.time, {
+            timestamp: packet.timestamp,
+            seek: packet.timestamp + Math.min(0.001, Math.max(0, packet.duration / 2)),
+          });
+      }
+    }
   } catch (error) {
     if (signal.aborted) throw error;
   } finally {
@@ -205,10 +224,16 @@ export async function buildFilmstrip(
     input.dispose();
   }
   if (frames.some((f) => !f.src))
-    await nativeFrames(file, frames, signal, () => {
-      onProgress(0.85 + (0.15 * frames.filter((f) => !!f.src).length) / Math.max(1, frames.length));
-      publish();
-    });
+    await nativeFrames(
+      file,
+      frames,
+      signal,
+      () => {
+        onProgress(0.85 + (0.15 * frames.filter((f) => !!f.src).length) / Math.max(1, frames.length));
+        publish();
+      },
+      nativeTimes,
+    );
   signal.throwIfAborted();
   onProgress(1);
   return { version: 1, interval: 2, duration, frames };

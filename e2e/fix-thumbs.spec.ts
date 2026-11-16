@@ -28,6 +28,16 @@ test('模擬 iPhone：WebCodecs不可用時，原生影片依每2秒解碼縮圖
   await page.addInitScript(() => {
     // Mediabunny 沒有 WebCodecs 可用
     delete (window as unknown as { VideoDecoder?: unknown }).VideoDecoder;
+    const events: { requested: number; presented: number; ready: number }[] = [];
+    (window as unknown as { __thumbPresentations: typeof events }).__thumbPresentations = events;
+    const request = HTMLVideoElement.prototype.requestVideoFrameCallback;
+    HTMLVideoElement.prototype.requestVideoFrameCallback = function (callback) {
+      return request.call(this, (now, info) => {
+        if (this.style.width === '1px')
+          events.push({ requested: this.currentTime, presented: info.mediaTime, ready: this.readyState });
+        callback(now, info);
+      });
+    };
     // 匯入時用的隱藏 <video>（不是預覽的影片池）聽不到 loadeddata（模擬 iOS 沒有手勢時不載入畫面）
     const orig = EventTarget.prototype.addEventListener;
     EventTarget.prototype.addEventListener = function (this: EventTarget, type: string, ...rest: unknown[]) {
@@ -56,13 +66,26 @@ test('模擬 iPhone：WebCodecs不可用時，原生影片依每2秒解碼縮圖
   await expect
     .poll(async () => (await thumbsOf(page)).assets[0]!.thumbs.length, { timeout: 20_000 })
     .toBeGreaterThan(0);
-  await expect
-    .poll(
-      async () =>
-        ((await project(page)) as unknown as Project).assets[0]?.filmstrip?.frames.every((f) => !!f.src),
-      { timeout: 30000 },
-    )
-    .toBe(true);
+  try {
+    await expect
+      .poll(
+        async () =>
+          ((await project(page)) as unknown as Project).assets[0]?.filmstrip?.frames.every((f) => !!f.src),
+        { timeout: 30000 },
+      )
+      .toBe(true);
+  } catch (error) {
+    console.log(
+      'Native thumbnail diagnostics',
+      await page.evaluate(() => ({
+        events: (window as unknown as { __thumbPresentations: unknown }).__thumbPresentations,
+        frames: (window as unknown as { __videoclip: { project: () => Project } }).__videoclip
+          .project()
+          .assets[0]?.filmstrip?.frames.map((frame) => ({ time: frame.time, ready: !!frame.src })),
+      })),
+    );
+    throw error;
+  }
   await expect(page.getByTestId('clip-name')).toHaveCount(0);
   const a = ((await project(page)) as unknown as Project).assets[0]!;
   const cached = a.filmstrip!;
