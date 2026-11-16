@@ -4387,7 +4387,7 @@ textarea.text-input.area {
   padding-top: 12px;
   border-top: 1px solid #d1c9bc;
 }
-.legacy-template-tools > summary {
+.legacy-template-toggle {
   font-size: var(--ui-font-size);
   min-height: 44px;
   padding: 12px 0;

@@ -2,6 +2,9 @@
 
 ## 11/16進行中（先讀）
 
+- c78726b C2完整193/194唯一故事變拍貼（兩個job同失敗），新13皆過且實測29.96fps/18轉場格0慢格0硬seek/native24fps含聲通過。error-context實際選取photobooth，先修選取草稿生命週期，不能以延長red像素poll替代。
+- 外層legacy details onToggle＋條件掛載會使草稿受原生/巢狀toggle事件影響：改button/section只明確onClick切mode；helper新增匯入前後與套用前style pressed三段斷言，原故事所有像素/字體/暖光仍保留。快測新增target first，不刪原33中故事。新框分界popup另補成功截圖，最新check/Actions待驗。
+
 - C首輪完整182/192：6個theme固定#777 summary低對比→var(--fg)；anchored的getByLabel讀到hidden primary+legacy→互斥掛載；Legacy「新增另一組」選null使外層依ID重掛mode失去→外層不帶key，內層Legacy仍group key；新delete立即reload讀到上筆IDB→poll savedProject最新count後reload，未刪來源/像素/保存斷言。透明底層測試另見下。新source仍須194全驗。
 
 - 相容區只有開啟時才掛LegacyTemplatePanel，現代框架與legacy主內容不隱藏留DOM而是互斥掛載，避免getByLabel把display:none舊欄位也匹配、亦避免每次現代框架改值渲染整個舊工具。所有新框/舊v1原回歸需確認這條路徑。

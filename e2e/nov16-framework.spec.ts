@@ -70,6 +70,7 @@ test('空框架、自訂列欄、外框拖曳可取消；分界調整立即清�
   await page.getByRole('button', { name: '調整格子分界', exact: true }).tap();
   const stage = (await page.locator('.framework-resize-stage').boundingBox())!;
   await drag(page, '第1格b分界', 0, stage.height * (f.h / p.height) * 0.15);
+  await page.screenshot({ path: 'docs/screenshots/nov16/framework-boundary-editor.png' });
   await page.getByRole('button', { name: '套用框架調整', exact: true }).tap();
   const changed = await group(page);
   expect(changed.layout!.cells![0]!.h).toBeCloseTo(0.65, 1);

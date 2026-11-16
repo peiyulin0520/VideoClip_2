@@ -59,6 +59,11 @@
 
 ## 本輪日誌
 
+- 2026-11-16 C2完整193/194與故事選取回歸
+  - c78726b / Actions43873673041：518/check、新13與特效14全部過，完整193/194與快33中32過；唯一故事case在套用後實際是拍貼而非故事（error-context aria-pressed/track name證據），不是放寬顏色判定可解。
+  - 相容區原生details搭配條件掛載可能被巢狀toggle干擾而卸載草稿，改明確受控button/section，只有使用者點外層button才切模式；保留子元件group key。故事helper增加匯入前/後/套用前aria-pressed斷言，原影像/時間/字體/暖光/二格斷言全保留，快測先跑此target。
+  - 本source新效能raw：29.9589合成fps，scene0.3386ms/composite0.7091ms/worst4.2ms，18轉場格/0慢格/0硬seek，解碼drop0；native原160×284/24輸出同規格含audio/RMS.08941。artifact14230415416 SHA7f36d36f7e6e145644587b0495a3baa40e736c2cc3aa1e76cc20220bf68464d8已核，未當最後全綠證據。
+
 - 2026-11-16 C補匯出與實際瀏覽器回饋
   - f289534 / Actions43870516765快速10/11過，空框架/格線無殘影/局部縮放/夾心三個新case與native影片匯出、64文字、crop/perf皆過。唯一新透明case誤把透出的底層紅片當應消失，改以UI隱藏底層後驗透明，保留前後停留與補色像素斷言。完整最終182/192；6主題summary固定#777低對比、舊新表單同名DOM、舊新增群組切回新工具、以及新刪除測試未等IndexedDB完成的reload競速，已逐項修：主題fg、互斥掛載、外層TemplatePanel不依選取ID重掛、poll savedProject後重開。全部原對比與像素斷言保留。
   - code review發現offline匯出迴圈需要略過合成frame anchor（沒有asset）；已修並新增實際版型影片+原音解碼驗證。修v2特效選取第二成員仍fallback第一的問題；加入格序調整只改時間不換格。518單元/check通過。

@@ -204,9 +204,9 @@ export async function openTab(
   if (
     name === '版型' &&
     legacyTemplate &&
-    !(await page.locator('.legacy-template-tools').evaluate((el) => (el as HTMLDetailsElement).open))
+    (await page.locator('.legacy-template-toggle').getAttribute('aria-expanded')) !== 'true'
   )
-    await page.locator('.legacy-template-tools > summary').tap();
+    await page.locator('.legacy-template-toggle').tap();
 }
 
 /** Await the same real loading gate a phone user sees before editing any controlled field. */

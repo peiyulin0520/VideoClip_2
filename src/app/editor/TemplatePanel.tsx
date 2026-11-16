@@ -369,14 +369,16 @@ export function TemplatePanel() {
           )}
         </div>
       )}
-      <details
-        className="legacy-template-tools"
-        open={legacy}
-        onToggle={(e) => setLegacy(e.currentTarget.open)}
-      >
-        <summary>舊版套版工具（相容舊專案）</summary>
+      <section className="legacy-template-tools">
+        <button
+          className="chip legacy-template-toggle"
+          aria-expanded={legacy}
+          onClick={() => setLegacy((v) => !v)}
+        >
+          {legacy ? '▾' : '▸'} 舊版套版工具（相容舊專案）
+        </button>
         {legacy && <LegacyTemplatePanel key={track?.id ?? 'new'} />}
-      </details>
+      </section>
     </div>
   );
 }

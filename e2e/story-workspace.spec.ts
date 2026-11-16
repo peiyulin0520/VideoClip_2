@@ -33,9 +33,17 @@ async function template(
 ) {
   await openTab(page, '版型');
   await page.getByRole('button', { name: style, exact: true }).tap();
+  await expect(page.getByRole('button', { name: style, exact: true })).toHaveAttribute(
+    'aria-pressed',
+    'true',
+  );
   await page.getByTestId('template-files').setInputFiles(files.map(fixture));
   await expect(page.locator('.busy')).toHaveCount(0);
   await waitForPreviewReady(page);
+  await expect(page.getByRole('button', { name: style, exact: true })).toHaveAttribute(
+    'aria-pressed',
+    'true',
+  );
   const p = await current(page);
   for (let i = 0; i < files.length; i++)
     await page
@@ -43,6 +51,10 @@ async function template(
       .selectOption(p.assets.find((a) => a.name === files[i])!.id);
   await page.getByLabel('版型動態效果').selectOption('none');
   await page.getByLabel('版型長度', { exact: true }).fill(String(seconds));
+  await expect(page.getByRole('button', { name: style, exact: true })).toHaveAttribute(
+    'aria-pressed',
+    'true',
+  );
   await page.getByRole('button', { name: '套用多格版型', exact: true }).tap();
   await expect.poll(async () => (await current(page)).tracks.filter((t) => t.template).length).toBe(1);
 }
