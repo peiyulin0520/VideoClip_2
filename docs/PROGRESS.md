@@ -59,6 +59,8 @@
 
 ## 本輪日誌
 
+- 2026-11-16 低fps原生取圖邊界與缺圖重試：4b4b41d / Actions43933078273快速142全過，完整193/194唯一126秒原生備援未填齊。fixture實為1fps，先前timestamp+.001的seek太接近解碼邊界；改至已知packet的中間（snapshot仍驗該packet原時間），避免量化落前一幀。原生偶發不present時只對缺圖用fresh video一次重試，既有圖不動、失敗不複製前格；可取消，非無限重解。unit另模擬第一次load error後fresh decoder正確取0/2/4；long失敗測試僅記回呼/缺圖資料並throw原錯，不增timeout或放寬63/RGB24。519/check與完整194/快142待最新source。
+
 - 2026-11-16 原生取圖片尾：2e5089e / Actions43929471782全193/194及快速138/139，唯一同個clip-a音訊長2.008秒、影片最後packet1.933秒；63張長片備援連續三輪、其餘新13/主題/編輯/原音皆通過。改以EncodedPacketSink metadataOnly讀取目標時間對應的實際video packet，在其內側seek，仍在matching presentation回呼內取圖；不跳進只剩音訊的EOF，也支援VFR。純測試追加2.008/1.933片尾，原色差和時間戳斷言不變。快速先長片與短片兩種備援各三輪（6），最新519/check與完整194待本source。失敗test-only記native回呼時間/ready與缺圖秒數，仍throw原錯。
 
 - 2026-11-16 原生縮圖呈現時序

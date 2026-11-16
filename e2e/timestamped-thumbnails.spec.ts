@@ -6,11 +6,24 @@ const current = (page: Page): Promise<Project> =>
     (window as unknown as { __videoclip: { project: () => Project } }).__videoclip.project(),
   );
 async function frames(page: Page) {
-  await expect
-    .poll(async () => (await current(page)).assets[0]?.filmstrip?.frames.every((f) => !!f.src), {
-      timeout: 45000,
-    })
-    .toBe(true);
+  try {
+    await expect
+      .poll(async () => (await current(page)).assets[0]?.filmstrip?.frames.every((f) => !!f.src), {
+        timeout: 45000,
+      })
+      .toBe(true);
+  } catch (error) {
+    console.log(
+      'Long native thumbnail diagnostics',
+      await page.evaluate(() => ({
+        events: (window as unknown as { __thumbPresentations?: unknown }).__thumbPresentations,
+        frames: (window as unknown as { __videoclip: { project: () => Project } }).__videoclip
+          .project()
+          .assets[0]?.filmstrip?.frames.map((frame) => ({ time: frame.time, ready: !!frame.src })),
+      })),
+    );
+    throw error;
+  }
   return page.evaluate(async () => {
     const p = (window as unknown as { __videoclip: { project: () => Project } }).__videoclip.project();
     const s = p.assets[0]!.filmstrip!;
@@ -166,6 +179,18 @@ test('Safari原生解碼備援也取每2秒實際新畫面，不能複製首幀�
   test.setTimeout(120000);
   await page.addInitScript(() => {
     delete (window as unknown as { VideoDecoder?: unknown }).VideoDecoder;
+    const events: { requested: number; presented: number; ready: number }[] = [];
+    (window as unknown as { __thumbPresentations: typeof events }).__thumbPresentations = events;
+    const request = HTMLVideoElement.prototype.requestVideoFrameCallback;
+    HTMLVideoElement.prototype.requestVideoFrameCallback = function (callback) {
+      return request.call(this, (now, info) => {
+        if (this.style.width === '1px') {
+          events.push({ requested: this.currentTime, presented: info.mediaTime, ready: this.readyState });
+          if (events.length > 128) events.shift();
+        }
+        callback(now, info);
+      });
+    };
   });
   await createProjectWith(page, ['timeline-seconds.webm']);
   await assertEverySecondPair(page);

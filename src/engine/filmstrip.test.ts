@@ -161,6 +161,8 @@ it('resumes missing source timestamps after an interrupted background job and pu
 });
 it('captures presented native surfaces and seeks within the final video packet when audio runs longer', async () => {
   mock.frames = [];
+  let failNextLoad = false;
+  let failures = 0;
   let stamps = [0, 2, 4];
   let shown = -1;
   let copied = -1;
@@ -182,7 +184,10 @@ it('captures presented native surfaces and seeks within the final video packet w
           set: (time: number) => {
             clock = time;
             queueMicrotask(() => {
-              const timestamp = stamps.filter((stamp) => stamp <= time).at(-1)!;
+              // Paused native seeks can quantize onto the previous packet at a
+              // boundary; an interior target must still select the intended frame.
+              const quantized = Math.round(time * 100) / 100;
+              const timestamp = stamps.filter((stamp) => stamp < quantized).at(-1) ?? 0;
               // A queued old presentation must not satisfy the new request.
               nextCallback?.(0, { mediaTime: timestamp - 2 } as VideoFrameCallbackMetadata);
               shown = timestamp;
@@ -202,6 +207,12 @@ it('captures presented native surfaces and seeks within the final video packet w
       };
       video.load = () => {
         if (!video.getAttribute('src')) return;
+        if (failNextLoad) {
+          failNextLoad = false;
+          failures++;
+          queueMicrotask(() => video.dispatchEvent(new Event('error')));
+          return;
+        }
         queueMicrotask(() => {
           shown = 0;
           nextCallback?.(0, { mediaTime: 0 } as VideoFrameCallbackMetadata);
@@ -229,5 +240,11 @@ it('captures presented native surfaces and seeks within the final video packet w
     { time: 0, src: 'source-at-0' },
     { time: 2, src: 'source-at-1.933' },
   ]);
+  stamps = [0, 2, 4];
+  mock.packets.clear();
+  failNextLoad = true;
+  const recovered = await buildFilmstrip(new Blob(), 6, new AbortController().signal, () => {});
+  expect(failures).toBe(1);
+  expect(recovered.frames.map((frame) => frame.src)).toEqual(['source-at-0', 'source-at-2', 'source-at-4']);
   expect(document.querySelector('video')).toBeNull();
 });

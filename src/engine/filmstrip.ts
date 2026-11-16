@@ -212,7 +212,7 @@ export async function buildFilmstrip(
         if (packet)
           nativeTimes.set(frame.time, {
             timestamp: packet.timestamp,
-            seek: packet.timestamp + Math.min(0.001, Math.max(0, packet.duration / 2)),
+            seek: packet.timestamp + (packet.duration > 0 ? packet.duration / 2 : 0.001),
           });
       }
     }
@@ -223,7 +223,9 @@ export async function buildFilmstrip(
     signal.removeEventListener('abort', cancel);
     input.dispose();
   }
-  if (frames.some((f) => !f.src))
+  // A native decoder can miss a presentation under resource pressure. A fresh
+  // element gets one bounded retry for missing times only; valid images stay intact.
+  for (let attempt = 0; attempt < 2 && frames.some((f) => !f.src); attempt++)
     await nativeFrames(
       file,
       frames,
