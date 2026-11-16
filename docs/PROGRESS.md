@@ -4,13 +4,13 @@
 
 ## 交接快照（VideoClip_2 最新狀態）
 
-- 11/16新需求進行中，計畫plans/2026-11-16-layout-effects-performance.md：版型框架/多列分類群組/可穿插z序、64文字動畫/副標/循環或完整停留、整段動效、裁切底圖、緊湊音訊、原始規格匯出及效能指標。原版VideoClip18d775f只在/tmp唯讀參考，不改程式；使用者真人錄影未進repo。
-- PR14仍未合併，接續codex/playback-import-reliability並轉draft，完成後由使用者自行Merge。先前418單元/181瀏覽器為11/15基線，不是11/16需求完成證據。
-- A/B最新source b82fb3111f2e92e129812b16095aa22ed100ccb8：503單元/check成功；Actions43865546896完整187/188通過，新64字卡實畫/逐鈕、副標保存/循環停留/貼圖零新增皆過。唯一失敗為匯出測試aria名稱「匯出」與實際「匯出影片」不合，已修測試選取，輸出內容斷言不改。
-- C2補足最高同秒解碼預留（16格＋底層不可被固定pool截斷，按專案同秒峰值保留，不因千段依序片分配千元素）；框架示意圖反映調色/透明度，動畫位置調框不重加base位移。
-- C已實作空框架、1:1～1:4/自訂列欄、單一外框/格線幾何、可取消拖曳與即時預覽、格內原影像縮放；群組分類列、格號、多列同秒、每秒圖層群組收合與獨立z序。文字/音訊/貼圖有明確加入群組目的地；同步/依序及靜音停留/補色/透明空檔。v1舊套版工具收進相容區，主要頁籤只框架，舊181回歸入口明確開相容區，像素/聲音斷言保留。
-- C首次unit失敗為測試把預設0.5改2卻期望2倍，改實際乘2；518單元／47檔、check成功。新增6瀏覽器待Actions：空框取消/共享分界無殘線/匯出重開、分類與夾心層、格內縮放刪除、依序與空檔。不能以B187充C完整驗收。
-- 下一步：C新192完整與快速回歸、檢視截圖與實測效能/音訊數據，修實際失敗後整理PR14。Safari仍待PLAN §7，使用者自行Merge後才發布。
+- 11/16八組調整已完成，source `e92d6bda0024741ebf1f5808441d39e051089edb` / [Actions 43937100642](https://github.com/peiyulin0520/VideoClip_2/actions/runs/43937100642)：519單元／47檔與check、194完整Chromium及快速6/6/1/1/13/14/33/2/29/5/9/23全部成功。最後提交只文件、量測與成功PNG，產品/測試/build/workflow與驗收source一致。
+- PR14：https://github.com/peiyulin0520/VideoClip_2/pull/14 ，分支codex/playback-import-reliability，由使用者自行Merge後Actions發布；未推main/代合併/auto-merge。原版VideoClip18d775f只讀參考，兩份reference工作樹clean，真人錄影未進repo。
+- 空框架1:1～1:4/自訂列欄、共用分界與外框幾何、線寬/色/透明度、格內原來源移縮；收合群組/分類/格號/多列，當秒圖層可跨類型夾心排序；明確群組新增目的地，同步/依序/格序及靜音停留/補色/透明空檔。文字與特效在各自主頁籤，v1相容區保留。
+- 64文字動畫+4基本式、副標、循環/完整原文停留、整段動效；固定canvas/GPU重用與原音檢查。自由裁切完整編輯底圖、compact audio、原始最高尺寸/FPS輸出與低頻效能開關。回頂改固定存在於功能頁尾的正常44px控制列，無浮鈕攔截、無scrollHeight突增，配色control/fg成對、六主題與五手機尺寸通過。
+- 實測合成29.79fps，轉場18格／慢格0／硬seek0；三輪原生備援每次63張來源圖全部對齊；三輪live maxJump 0.004004/0.003954/0.003954（原limit0.08不變）。原生fixture 160×284/24fps匯出同尺寸/24fps且有聲音。詳validation/nov16-layout-effects.md與nov16-measurements.json。
+- fast artifact14260978659／6711676 bytes下載SHA-256 `e3c0eccdab2e4f17aa7225d10316eb8a910a86946dbc3fd5ed7acbcb5f34e6ca` 已核；10張新成功PNG，框架popup/裁切/文字/匯出畫面人工檢視。完整artifact僅遠端紀錄，不冒稱下載核對。Safari原片4K60/HEVC、多格記憶體/長片FPS/原音聽感仍PLAN §7待真機，不能把Chromium當同一iPhone保證。
+- 下一步只需使用者審核Merge PR14，待Pages發布後重新開啟網站驗真機；工作目錄與交接紀錄需保持一致。
 
 ## 11/15已交付基線（歷史，待合併）
 
@@ -58,6 +58,11 @@
 - 2026-11-14 E 階段自訂輸出比例：主預覽基地不依輸出比例改高，頂部比例可進入主預覽四邊/角拖曳草稿，X不儲存、套用才寫 width/height/customAspect。內框/框外斜紋分開。ProjectPreview 使用240方形固定基地 contain，不因4:3上下錯位；音訊來源固定160px基地，播放秒數同列。check/374單元成功，新瀏覽器待驗。
 
 ## 本輪日誌
+
+- 2026-11-16 最終八組驗收交付
+  - source `e92d6bda0024741ebf1f5808441d39e051089edb` / [Actions 43937100642](https://github.com/peiyulin0520/VideoClip_2/actions/runs/43937100642)：519/check、194完整及快速6/6/1/1/13/14/33/2/29/5/9/23全過。原影像/聲音/來源/字體/主題對比/資源門檻均保留。
+  - 最後回歸修正包含浮動回頂攔截手勢、條件頁尾新增高度、主題色前景/背景不成對，以及原生縮圖未於presentation回呼內即時取圖；正常頁尾控制列/control-fg與逐幀來源擷取修復後，原故事、五尺寸、六主題及三輪原生備援全部通過。
+  - 成功artifact下載核SHA與10新PNG、原音三輪/轉場/native實檔資料見validation/nov16-layout-effects.md；Safari原片仍待真機。
 
 - 2026-11-16 低fps原生取圖邊界與缺圖重試：4b4b41d / Actions43933078273快速142全過，完整193/194唯一126秒原生備援未填齊。fixture實為1fps，先前timestamp+.001的seek太接近解碼邊界；改至已知packet的中間（snapshot仍驗該packet原時間），避免量化落前一幀。原生偶發不present時只對缺圖用fresh video一次重試，既有圖不動、失敗不複製前格；可取消，非無限重解。unit另模擬第一次load error後fresh decoder正確取0/2/4；long失敗測試僅記回呼/缺圖資料並throw原錯，不增timeout或放寬63/RGB24。519/check與完整194/快142待最新source。
 
