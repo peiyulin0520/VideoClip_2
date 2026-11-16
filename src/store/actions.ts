@@ -123,7 +123,9 @@ export function addText(t: number, shape = false): string {
     const group = destination && d.tracks.find((t) => t.id === destination.trackId);
     if (group?.template && destination) {
       item.start = group.layout!.start;
-      item.duration = group.layout!.duration;
+      item.duration = destination?.cell
+        ? (group.layout!.cellDurations?.[destination.cell - 1] ?? group.layout!.duration)
+        : group.layout!.duration;
       addTemplateMember(d as never, group as never, item, destination.cell);
       return;
     }

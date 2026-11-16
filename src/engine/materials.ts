@@ -88,6 +88,14 @@ export async function addSolid(color: string, t: number, layer = false) {
   useProjectStore.getState().apply(
     (d) => {
       d.assets.push(asset);
+      const destination = useUI.getState().templateDestination,
+        group = destination && d.tracks.find((t) => t.id === destination.trackId);
+      if (group?.template && destination) {
+        clip.start = group.layout!.start;
+        clip.duration = group.layout!.duration;
+        addTemplateMember(d as never, group as never, clip, destination.cell);
+        return;
+      }
       if (layer) {
         clip.start = Math.max(0, t);
         const existing = d.tracks.find(
@@ -188,8 +196,11 @@ export async function addTemplateSolid(trackId: string, color: string) {
       const group = d.tracks.find((t) => t.id === trackId);
       if (!group) return;
       d.assets.push(asset);
-      group.items.push(clip);
-      arrangeTemplate(group);
+      if (group.layout?.version === 2) addTemplateMember(d as never, group as never, clip);
+      else {
+        group.items.push(clip);
+        arrangeTemplate(group);
+      }
     },
     { select: clip.id },
   );

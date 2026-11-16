@@ -234,7 +234,9 @@ export function addTemplateMember(
   };
   (l.lanes ??= []).push(lane);
   item.templateLane = lane.id;
-  item.start = Math.max(l.start, item.start);
+  const cellStart = l.start + (no ? (l.cellOffsets?.[no - 1] ?? 0) : 0);
+  const cellEnd = no ? cellStart + (l.cellDurations?.[no - 1] ?? l.duration) : l.start + l.duration;
+  item.start = item.start < cellStart || item.start >= cellEnd ? cellStart : item.start;
   item.transform = { ...item.transform, x: 0.5, y: 0.5 };
   if (item.type !== 'text') {
     item.fit = 'contain';
@@ -350,19 +352,20 @@ export function setFrameBox(
   project: Project,
   track: Track,
   rect: { x: number; y: number; w: number; h: number },
+  current?: { x: number; y: number },
 ) {
   upgradeFramework(project, track);
   const l = track.layout!,
     size = l.size!,
     fit = Math.min(project.width / size.width, project.height / size.height),
     old = l.transform ?? { x: 0.5, y: 0.5, scale: 1 },
-    dx = rect.x - old.x,
-    dy = rect.y - old.y;
+    dx = rect.x - (current?.x ?? old.x),
+    dy = rect.y - (current?.y ?? old.y);
   l.box = {
     w: Math.max(0.1, (rect.w * project.width) / (size.width * fit)),
     h: Math.max(0.1, (rect.h * project.height) / (size.height * fit)),
   };
-  l.transform = { ...old, x: rect.x, y: rect.y };
+  l.transform = { ...old, x: old.x + dx, y: old.y + dy };
   for (const frame of l.keyframes ?? []) {
     frame.values.x += dx;
     frame.values.y += dy;
@@ -425,9 +428,13 @@ export function arrangeFramework(
       ),
     );
   let cursor = 0;
-  for (let i = 0; i < count; i++) {
-    offsets.push(mode === 'sequential' ? cursor : 0);
-    cursor += durations[i]!;
+  const order = [
+    ...new Set([...(l.cellOrder ?? []), ...Array.from({ length: count }, (_, i) => i + 1)]),
+  ].filter((n) => n >= 1 && n <= count);
+  l.cellOrder = order;
+  for (const no of order) {
+    offsets[no - 1] = mode === 'sequential' ? cursor : 0;
+    cursor += durations[no - 1]!;
   }
   const duration = mode === 'sequential' ? cursor : Math.max(...durations);
   for (const item of track.items) {
@@ -469,4 +476,19 @@ export function cloneFramework(track: Track, delta: number): Track {
   delete l.frameItem;
   syncTemplateFrame(copy);
   return copy;
+}
+
+export function reorderFrameworkCell(track: Track, cell: number, direction: -1 | 1) {
+  const l = track.layout;
+  if (l?.version !== 2 || track.locked) return;
+  const count = l.count ?? 1;
+  const order = [
+    ...new Set([...(l.cellOrder ?? []), ...Array.from({ length: count }, (_, i) => i + 1)]),
+  ].filter((n) => n >= 1 && n <= count);
+  const at = order.indexOf(cell),
+    to = at + direction;
+  if (at < 0 || to < 0 || to >= order.length) return;
+  [order[at], order[to]] = [order[to]!, order[at]!];
+  l.cellOrder = order;
+  arrangeFramework(track);
 }

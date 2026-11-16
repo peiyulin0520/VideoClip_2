@@ -12,11 +12,16 @@ export class VideoPool {
   private frameCallbacks = new Map<HTMLVideoElement, number>();
 
   constructor(
-    host: HTMLElement,
+    private host: HTMLElement,
     size: number,
     private onFrame: () => void,
   ) {
-    for (let i = 0; i < size; i++) {
+    this.ensureCapacity(size);
+  }
+
+  ensureCapacity(size: number) {
+    if (this.destroyed) return;
+    for (let i = this.els.length; i < size; i++) {
       const v = document.createElement('video');
       v.playsInline = true;
       v.muted = true;
@@ -66,7 +71,7 @@ export class VideoPool {
       v.addEventListener('playing', () => {
         if (v.dataset.previewIntent !== 'play' && !v.dataset.priming && !v.dataset.audioFading) v.pause();
       });
-      host.appendChild(v);
+      this.host.appendChild(v);
       this.els.push(v);
       if (v.requestVideoFrameCallback) {
         const frame = () => {

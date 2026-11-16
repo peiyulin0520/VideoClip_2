@@ -1,3 +1,4 @@
+import { decoderBudget } from './decoderBudget';
 import { PlaybackPerformance, previewSeekTolerance } from './playbackPerformance';
 import { activeTransitions } from './transitions';
 import { cellMediaTime } from './templateTiming';
@@ -45,6 +46,7 @@ export function previewSize(
  * 即將開始的片段/疊加會提前載入並停在起點，切換時不會黑畫面。
  */
 export class Player {
+  private decoderProject: Project | null = null;
   private perf = new PlaybackPerformance();
   stats() {
     return {
@@ -460,6 +462,10 @@ export class Player {
     const diagnostics = this.playing && usePreferences.getState().showPerf;
     const perfStart = diagnostics ? performance.now() : 0;
     this.perf.inTransition = diagnostics && activeTransitions(p, t).length > 0;
+    if (this.decoderProject !== p) {
+      this.pool.ensureCapacity(Math.max(POOL_SIZE, decoderBudget(p)));
+      this.decoderProject = p;
+    }
     const used = new Set<HTMLVideoElement>(),
       usedAudio = new Set<HTMLAudioElement>();
     this.readyCount = 0;

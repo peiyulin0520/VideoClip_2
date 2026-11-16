@@ -225,3 +225,41 @@ it('member split/delete/duplicate never resurrect removed source or remove the e
   expect(totalDuration(useProjectStore.getState().project!)).toBe(2);
   useProjectStore.getState().close();
 });
+
+it('cell playback order moves time without swapping cell content or overlapping-row relationships', async () => {
+  const { reorderFrameworkCell } = await import('./templateModel');
+  const { p, group } = setup();
+  addTemplateAsset(p, group, p.assets[0]!, 1);
+  addTemplateAsset(p, group, p.assets[1]!, 1);
+  addTemplateAsset(p, group, p.assets[0]!, 2);
+  arrangeFramework(group, 'sequential');
+  const ids = group.items.map((i) => i.id);
+  reorderFrameworkCell(group, 2, -1);
+  expect(group.layout!.cellOrder).toEqual([2, 1]);
+  expect(group.items.map((i) => i.start)).toEqual([4, 4, 0]);
+  expect(group.items.map((i) => i.id)).toEqual(ids);
+  expect(group.items.map((i) => i.templateCell)).toEqual([1, 1, 2]);
+});
+
+it('adding a member after choosing sequential mode inserts it at the chosen cell time, not zero', () => {
+  const { p, group } = setup();
+  arrangeFramework(group, 'sequential');
+  addTemplateAsset(p, group, p.assets[0]!, 2);
+  expect(group.items[0]!.start).toBe(4);
+  expect(group.items[0]!.templateCell).toBe(2);
+});
+it('resizing a keyframed frame at its animated position does not apply the old base position twice', async () => {
+  const { animationValues } = await import('./keyframes');
+  const { p, group } = setup();
+  const values = animationValues(group.layout!, 0);
+  group.layout!.keyframes = [{ time: 0, values: { ...values, x: 0.7, y: 0.6 } }];
+  const f = groupFrame(group, p.width, p.height, 0);
+  setFrameBox(
+    p,
+    group,
+    { x: f.cx / p.width, y: f.cy / p.height, w: (f.w / p.width) * 0.8, h: f.h / p.height },
+    { x: f.cx / p.width, y: f.cy / p.height },
+  );
+  expect(groupFrame(group, p.width, p.height, 0).cx).toBeCloseTo(f.cx);
+  expect(groupFrame(group, p.width, p.height, 0).cy).toBeCloseTo(f.cy);
+});

@@ -1,3 +1,4 @@
+import { reorderFrameworkCell } from '../../engine/templateModel';
 import { useState } from 'react';
 import type { Track } from '../../model/types';
 import { useProjectStore } from '../../store/projectStore';
@@ -45,33 +46,75 @@ export function TemplatePlaybackSettings({ track }: { track: Track }) {
           </button>
         ))}
       </div>
-      {track.items.map((item, i) => (
-        <div className="template-child-entry" key={item.id}>
-          <span>
-            {i + 1} · {itemName(p, item)} · {item.duration.toFixed(2)} 秒
-          </span>
-          <button
-            className="icon-btn"
-            aria-label={`第${i + 1}個素材提前`}
-            disabled={i === 0}
-            onClick={() =>
-              useProjectStore.getState().apply((d) => moveTemplateChild(d, track.id, item.id, -1))
-            }
-          >
-            ←
-          </button>
-          <button
-            className="icon-btn"
-            aria-label={`第${i + 1}個素材延後`}
-            disabled={i === track.items.length - 1}
-            onClick={() =>
-              useProjectStore.getState().apply((d) => moveTemplateChild(d, track.id, item.id, 1))
-            }
-          >
-            →
-          </button>
+      {track.layout?.version === 2 ? (
+        <div className="framework-cell-order">
+          {(track.layout.cellOrder ?? Array.from({ length: track.layout.count ?? 1 }, (_, i) => i + 1)).map(
+            (cell, i, all) => (
+              <div key={cell} className="template-child-entry">
+                <span>
+                  {i + 1} · 第 {cell} 格
+                </span>
+                <button
+                  className="icon-btn"
+                  aria-label={`第${cell}格提前播放`}
+                  disabled={i === 0}
+                  onClick={() =>
+                    useProjectStore
+                      .getState()
+                      .apply((d) =>
+                        reorderFrameworkCell(d.tracks.find((t) => t.id === track.id)! as never, cell, -1),
+                      )
+                  }
+                >
+                  ←
+                </button>
+                <button
+                  className="icon-btn"
+                  aria-label={`第${cell}格延後播放`}
+                  disabled={i === all.length - 1}
+                  onClick={() =>
+                    useProjectStore
+                      .getState()
+                      .apply((d) =>
+                        reorderFrameworkCell(d.tracks.find((t) => t.id === track.id)! as never, cell, 1),
+                      )
+                  }
+                >
+                  →
+                </button>
+              </div>
+            ),
+          )}
         </div>
-      ))}
+      ) : (
+        track.items.map((item, i) => (
+          <div className="template-child-entry" key={item.id}>
+            <span>
+              {i + 1} · {itemName(p, item)} · {item.duration.toFixed(2)} 秒
+            </span>
+            <button
+              className="icon-btn"
+              aria-label={`第${i + 1}個素材提前`}
+              disabled={i === 0}
+              onClick={() =>
+                useProjectStore.getState().apply((d) => moveTemplateChild(d, track.id, item.id, -1))
+              }
+            >
+              ←
+            </button>
+            <button
+              className="icon-btn"
+              aria-label={`第${i + 1}個素材延後`}
+              disabled={i === track.items.length - 1}
+              onClick={() =>
+                useProjectStore.getState().apply((d) => moveTemplateChild(d, track.id, item.id, 1))
+              }
+            >
+              →
+            </button>
+          </div>
+        ))
+      )}
       <details>
         <summary>群組加入色塊</summary>
         <ColorPicker label="群組色塊" value={color} onChange={setColor} />

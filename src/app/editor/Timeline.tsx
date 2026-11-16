@@ -268,8 +268,8 @@ export function Timeline({
             for (const kind of ['visual', 'text', 'sticker', 'audio'] as LaneCategory[]) {
               const members = templateMembers(track).filter((it) => itemCategory(it, project) === kind);
               if (!members.length) continue;
-              rows.push({ track, index, top, h: 28, templateCategory: kind });
-              top += 30;
+              rows.push({ track, index, top, h: ROW_H, templateCategory: kind });
+              top += ROW_H + ROW_GAP;
               if (collapsedTemplateTypes.includes(`${track.id}:${kind}`)) continue;
               const ids = [...new Set(members.map((it) => it.templateLane ?? it.id))];
               for (const id of ids) {

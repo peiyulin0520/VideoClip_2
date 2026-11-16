@@ -150,7 +150,12 @@ export async function exportVideo(project: Project, options: ExportOptions): Pro
       const t = frame / options.fps;
       prepared.clear();
       for (const { item } of renderLayers(project, t)) {
-        if (item.type === 'text' || item.type === 'audio' || (item.cell && cellMediaTime(item, t) === null))
+        if (
+          item.type === 'text' ||
+          item.type === 'audio' ||
+          item.templateRole === 'frame' ||
+          (item.cell && cellMediaTime(item, t) === null)
+        )
           continue;
         const asset = project.assets.find((a) => a.id === item.assetId)!;
         const gif = gifs.get(item.id),

@@ -168,9 +168,7 @@ export function BottomBar({
         <KeyframeControl detailsOnly />
       )}
       {!collapsed && tab === 'layers' && <LayersTab />}
-      {!collapsed && tab === 'layout' && (
-        <TemplatePanel key={found?.track.template ? found.track.id : 'new'} />
-      )}
+      {!collapsed && tab === 'layout' && <TemplatePanel />}
       {!collapsed && tab === 'effects' && <EffectsPanel />}
       {!collapsed && tab === 'tone' && <TonePanel />}
       {!collapsed && tab === 'assets' && <AssetsPanel />}

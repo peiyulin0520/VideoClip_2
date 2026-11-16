@@ -102,11 +102,12 @@ export function EffectsPanel() {
   );
   const label = (id: string) => {
     for (const tr of p.tracks) {
-      const it = tr.items.find((x) => x.id === id);
+      const it =
+        tr.layout?.frameItem?.id === id ? tr.layout.frameItem : templateMembers(tr).find((x) => x.id === id);
       if (it)
         return (
           it.name?.trim() ||
-          (tr.template
+          (isTemplateRoot(tr, it)
             ? tr.name
             : it.type === 'text'
               ? '文字'
@@ -129,7 +130,11 @@ export function EffectsPanel() {
       (it) =>
         it.id === selectedId ||
         p.tracks.some(
-          (tr) => tr.template && tr.items.some((x) => x.id === selectedId) && tr.items[0]?.id === it.id,
+          (tr) =>
+            tr.template &&
+            tr.layout?.version !== 2 &&
+            tr.items.some((x) => x.id === selectedId) &&
+            tr.items[0]?.id === it.id,
         ),
     ) ?? targets[0];
   const found = findItem(p, target?.id ?? null);

@@ -83,7 +83,7 @@ export function FrameworkEditor({
         s,
         0,
       );
-      setFrameBox(next, tr, box);
+      setFrameBox(next, tr, box, { x: f.cx / next.width, y: f.cy / next.height });
     } else {
       const c = tr.layout!.cells![g.cell]!,
         edge = g.edge as 'l' | 'r' | 't' | 'b';
@@ -143,7 +143,10 @@ export function FrameworkEditor({
       <div
         ref={stage}
         className="framework-resize-stage"
-        style={{ aspectRatio: `${draft.width}/${draft.height}` }}
+        style={{
+          aspectRatio: `${draft.width}/${draft.height}`,
+          width: `min(100%, ${Math.min(340, (window.innerHeight * 0.5 * draft.width) / draft.height)}px)`,
+        }}
         onPointerMove={move}
         onPointerUp={stop}
         onPointerCancel={stop}

@@ -1,3 +1,4 @@
+import { writeFile } from 'node:fs/promises';
 import { expect, test } from '@playwright/test';
 import { createProjectWith, clips, openTab, setCropOffset, waitForPreviewReady, seekTo } from './helpers';
 import type { Project } from '../src/model/types';
@@ -69,13 +70,24 @@ test('音訊緊湊列保留操作及音量，原始解析度和來源影格率�
     async (url) =>
       await (
         window as unknown as {
-          __videoclip: { inspectMovie: (u: string, t: number) => Promise<{ width: number; height: number }> };
+          __videoclip: {
+            inspectMovie: (
+              u: string,
+              t: number,
+            ) => Promise<{ width: number; height: number; frameRate: number; audio: boolean }>;
+          };
         }
       ).__videoclip.inspectMovie(url!, 0.1),
     await link.getAttribute('href'),
   );
   expect(info.width).toBeGreaterThanOrEqual(a.width - 2);
   expect(info.height).toBeGreaterThanOrEqual(a.height - 2);
+  expect(Math.abs(info.frameRate - a.frameRate!)).toBeLessThan(0.1);
+  expect(info.audio).toBe(true);
+  await writeFile(
+    'docs/screenshots/nov16/native-export.json',
+    JSON.stringify({ source: { width: a.width, height: a.height, fps: a.frameRate }, output: info }, null, 2),
+  );
 });
 test('設定可啟用低頻播放效能，實際播放及轉場有格數與耗時，回零重播仍有聲音', async ({ page }) => {
   await page.addInitScript(() =>
@@ -106,7 +118,7 @@ test('設定可啟用低頻播放效能，實際播放及轉場有格數與耗�
           ).__videoclip.playbackStats().fps,
       ),
     )
-    .toBeGreaterThan(5);
+    .toBeGreaterThan(20);
   await expect
     .poll(() =>
       page.evaluate(
@@ -117,6 +129,33 @@ test('設定可啟用低頻播放效能，實際播放及轉場有格數與耗�
       ),
     )
     .toBeGreaterThan(0);
+  await expect
+    .poll(() =>
+      page.evaluate(() => (window as unknown as { __videoclip: { time: () => number } }).__videoclip.time()),
+    )
+    .toBeGreaterThan(join + 0.4);
+  const measured = await page.evaluate(() =>
+    (
+      window as unknown as {
+        __videoclip: {
+          playbackStats: () => {
+            fps: number;
+            sceneMs: number;
+            compositeMs: number;
+            worstMs: number;
+            slowFrames: number;
+            hardSeeks: number;
+            transition: { frames: number; slowFrames: number; hardSeeks: number };
+          };
+        };
+      }
+    ).__videoclip.playbackStats(),
+  );
+  expect(measured.fps).toBeGreaterThan(20);
+  expect(measured.transition.frames).toBeGreaterThan(3);
+  expect(measured.transition.hardSeeks).toBeLessThanOrEqual(1);
+  expect(measured.transition.slowFrames / measured.transition.frames).toBeLessThan(0.2);
+  await writeFile('docs/screenshots/nov16/playback-stats.json', JSON.stringify(measured, null, 2));
   await expect(page.getByTestId('perf-overlay')).toBeVisible();
   await page.getByTestId('stage').scrollIntoViewIfNeeded();
   await page.screenshot({ path: 'docs/screenshots/nov16/playback-performance.png' });

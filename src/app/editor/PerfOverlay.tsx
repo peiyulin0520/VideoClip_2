@@ -13,8 +13,8 @@ export function PerfOverlay({ player }: { player: Player | null }) {
   return (
     <div className="playback-perf" data-testid="perf-overlay" aria-label="播放效能">
       <div>
-        {stats.fps.toFixed(1)} fps · 場景 {stats.sceneMs.toFixed(1)} ms · 合成 {stats.compositeMs.toFixed(1)}{' '}
-        ms
+        合成 {stats.fps.toFixed(1)} fps · 場景 {stats.sceneMs.toFixed(1)} ms · 合成{' '}
+        {stats.compositeMs.toFixed(1)} ms
       </div>
       <div>
         慢格 {stats.slowFrames} · 最長繪製 {stats.worstMs.toFixed(1)} ms · 播放跳轉 {stats.hardSeeks}

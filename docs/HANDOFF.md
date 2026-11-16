@@ -2,6 +2,17 @@
 
 ## 11/16進行中（先讀）
 
+- C首輪完整182/192：6個theme固定#777 summary低對比→var(--fg)；anchored的getByLabel讀到hidden primary+legacy→互斥掛載；Legacy「新增另一組」選null使外層依ID重掛mode失去→外層不帶key，內層Legacy仍group key；新delete立即reload讀到上筆IDB→poll savedProject最新count後reload，未刪來源/像素/保存斷言。透明底層測試另見下。新source仍須194全驗。
+
+- 相容區只有開啟時才掛LegacyTemplatePanel，現代框架與legacy主內容不隱藏留DOM而是互斥掛載，避免getByLabel把display:none舊欄位也匹配、亦避免每次現代框架改值渲染整個舊工具。所有新框/舊v1原回歸需確認這條路徑。
+
+- C2 decoderBudget用source intervals峰值＋每個hold cell一備用＋2prefetch；Player只project引用變更時計算，VideoPool.ensureCapacity只補未載入元素，避免16格+底層17源卡固定16池，也不因1000依序source分配1000元素。518單元／47檔與check成功；別放回固定上限造成空格／ready永久未滿。
+- 原始setFrameBox對keyframe位置取rect-base會重加已動畫位移，現在UI傳current frame中心，結構變更只移動delta，所有keyframes同delta；先選依序再加入第2格也按cellOffsets進入正確時間。純回歸已補。
+
+- C首輪f289534快速10/11；透明case底層紅片本來就會透出，改UI隱藏base再驗黑底，不改正式renderer。新增C2實際整段影片/原音匯出、第二子素材特效選取、全部框架選項/色彩透明度/格序按鈕（新6case）。offline export loop跳frame anchor，不能以assetId空去找媒體。
+- EffectsPanel v2 target不能用舊first-item fallback、label需認frame/caption；群組格序cellOrder獨立於z-order及cell membership。reorderFrameworkCell改cellOffsets，不交換素材/格子。新增素材目的地超出群組終點時回group start，避免新物件不可見。
+- Perf新增>20合成fps、轉場慢格比例<20%、硬跳≤1及原音重播斷言，實測JSON與native輸出fps/audio放nov16 artifact；不能把首輪28fps截圖當Safari保證。現518單元，最新check/194回歸待驗。
+
 - C核心/新UI已實作，514單元/46檔與check成功，C瀏覽器仍待本source。B Actions43865546896完整187/188，新4文字及裁切/perf皆過；唯一原始匯出測試aria名不對，現改匯出影片，native尺寸/FPS實際內容仍須驗。
 - templateModel為v2唯一幾何/成員/靜音gap resolver；frameItem是nested VideoItem assetId空，不需虛構asset，findItem index -2。scene先frame once，holes清除一次，空檔補色一次；不要每個不活動上層填黑。格內transform局部0..1，geo/templateContexts與preview拖移/縮放使用同slot。group animationTarget只frame；v1其餘media仍舊整組語義。
 - layout.lanes虛擬列+templateLane/templateCell，分類導航不等於z，layout.order決定夾心。Layers只當秒與collapsed groups，FrameworkLayers負責成員z/隱藏鎖定。Timeline v2展開有分類、格號、各lane可修剪；child刪除留空frame，frame刪整組，duplicate/split重映射lanes/order/IDs且不重帶已刪來源。setTimelineItems group trim是時間窗，保留成員原座標，totalDuration以parent bound計。

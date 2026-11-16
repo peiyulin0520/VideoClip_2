@@ -329,6 +329,7 @@ export type Project = {
     gapColor?: string;
     lanes?: TemplateLane[];
     order?: string[];
+    cellOrder?: number[];
     cellOffsets?: number[];
     cellDurations?: number[];
     motion: 'none' | 'slide' | 'drift';
