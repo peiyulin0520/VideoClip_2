@@ -1,3 +1,4 @@
+import { templateLayersAt, templateLane } from './templateModel';
 import { trimKeyframes } from './keyframes';
 import { cellMediaTime } from './templateTiming';
 import { MAX_SPEED, MIN_CLIP_DURATION, MIN_SPEED, newId } from '../model/defaults';
@@ -38,6 +39,10 @@ export function findItem(
     const track = p.tracks[ti]!;
     const index = track.items.findIndex((x) => x.id === id);
     if (index >= 0) return { item: track.items[index]!, track, trackIndex: ti, index };
+    if (track.layout?.frameItem?.id === id)
+      return { item: track.layout.frameItem, track, trackIndex: ti, index: -2 };
+    if (track.layout?.captionText?.id === id)
+      return { item: track.layout.captionText, track, trackIndex: ti, index: -1 };
   }
   return null;
 }
@@ -60,6 +65,24 @@ export function layersAt(p: Project, t: number, includeHidden: boolean): Layer[]
   const out: Layer[] = [];
   p.tracks.forEach((track, trackIndex) => {
     if (track.hidden && !includeHidden) return;
+    if (track.template && track.layout?.version === 2) {
+      for (const item of templateLayersAt(track, t, includeHidden)) {
+        const lane = templateLane(track, item);
+        out.push({
+          item,
+          track: lane
+            ? {
+                ...track,
+                muted: track.muted || lane.muted,
+                hidden: track.hidden || !!lane.hidden,
+                locked: track.locked || !!lane.locked,
+              }
+            : track,
+          trackIndex,
+        });
+      }
+      return;
+    }
     if (track.kind === 'main') {
       const hit = p.freeMain
         ? (() => {
@@ -79,13 +102,21 @@ export function layersAt(p: Project, t: number, includeHidden: boolean): Layer[]
             t < track.layout.start + track.layout.duration)),
     );
     for (const item of track.template ? active : active.slice(0, 1)) out.push({ item, track, trackIndex });
+    const caption = track.template && track.layout?.captionText;
+    if (caption && t >= caption.start && t < itemEnd(caption)) out.push({ item: caption, track, trackIndex });
   });
   return out;
 }
 
 export function totalDuration(p: Project): number {
   return p.tracks.reduce(
-    (max, tr) => tr.items.reduce((m, it) => Math.max(m, it.start + it.duration), max),
+    (max, tr) =>
+      tr.layout?.version === 2
+        ? Math.max(max, tr.layout.start + tr.layout.duration)
+        : tr.items.reduce(
+            (m, it) => Math.max(m, it.start + it.duration),
+            Math.max(max, tr.template && tr.layout ? tr.layout.start + tr.layout.duration : 0),
+          ),
     Math.max(
       0,
       ...(p.effects ?? []).flatMap((e) => (e.ranges ? e.ranges.map((r) => r[1]) : [e.start + e.duration])),

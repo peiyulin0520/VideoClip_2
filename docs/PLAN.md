@@ -444,3 +444,28 @@ docs/
 2026-11-15載入錯誤追加：Safari真機驗舊分頁更新後80%失敗→更新程式重開原專案、原媒體/字體/設定保留、離線重開、首頁waiting update與多分頁版本一致。Chromium可驗流程/儲存，不能代替Safari錯誤來源的實機stack。
 
 載入修復最終：source19291aeb4efd413e085a2b16c686734040535462 / [Actions43668024373](https://github.com/peiyulin0520/VideoClip_2/actions/runs/43668024373)：399單元/check、169完整、2/29/5/9/30快速全過。3新恢復圖核artifact14142943701 SHA，詳validation/module-recovery.md。PR13待使用者Merge並等Pages發布，Safari失敗URL/原裝置切換仍待驗。
+
+
+2026-11-15 播放／匯入追加真機待驗：
+
+- 原版VideoClip參考策略：AudioSession有／無的Safari首次有聲播放、靜音鍵/耳機/背景回來、切540/720/比例沿用context、拖回0。舊iOS native預聽volume限制與匯出細部音量分別驗。
+- 匯入長片只等首畫面，背景進度可先編輯；play／來源popup預聽／畫布手勢即停止optional解碼，pause後繼續每2秒真縮圖，驗長片後段準確與無聲舊cache重建。
+- 捲動／色調＋多效果／來源視窗關閉後的FPS與爆音需Safari真機。Chromium自製素材只能驗授權順序/音軌波形/資源，不宣稱已測同一iPhone原片。
+
+
+2026-11-15 本輪Chromium最終：[Actions43675152122](https://github.com/peiyulin0520/VideoClip_2/actions/runs/43675152122)，sourcebffd168bfde821aaa1e8d92bb74ae352b64a5a6f：412單元/check、174完整及33/2/29/5/9/30快速全部通過；音訊三輪maxJump約0.0041，門檻0.08不改。2新成功PNG核fast artifact SHA並人工檢視。以上Safari真機項目仍待驗，詳validation/playback-import.md。PR14由使用者自行Merge。
+
+
+2026-11-15 追加四項 Safari 待驗（§7）：刪影像/整層/群組連特效及badge同步、undo/redo；三層主/次/分類導航的主題辨識；320–430px音訊按鈕在名稱左邊且保留觸控/有聲片段；群組展開caption文字列、字體與大小/示意比例、移動縮放/輪序/複製/重開/匯出一致及播放流暢度。source942895a / Actions43693750451：418/check、181完整及快速14/33/2/29/5/9/23全過；詳validation/effects-caption-followup.md，仍不能稱Safari真機完成。
+
+11/16本輪待真機（§7）：重整版型改大小/格線不留殘影、分類收合與夾心z序、一格多列/格內縮放、64動畫副標及完整停留、原始4K60混HD30、free crop完整底圖、compact audio與perf overlay開關及轉場真實FPS/聲音。先由Actions驗自製素材，再真機，不改原版repo。
+
+
+### 2026-11-16框架與分層更新
+
+空版型以獨立合成外框代表，1:1/1:2/1:3/1:4及自訂1～4列欄；外框與內線獨立粗細、色彩，外框拖曳和格界拖曳分開。格子原影像可移縮、不預裁。群組預設收合，內部分類可收合並標格號，多影像列可同秒；Layers此秒在群組內跨類型排序，文字/音訊/特效依主要頁籤編輯。同步/依序，空檔靜音停留/補色/透明，新增目的地明確可選群組。v1工具留相容區，舊檔結構編輯才升級，無刪素材。詳plans/2026-11-16-layout-effects-performance.md。
+
+待真機：iPhone Safari拖外框/格線的手指精度、多格4K60原生解碼/轉場fps及原音、16格記憶體上限、循環字卡/文字完全停留、實際4K60混1080p30匯出能力，不能以Chromium合成fixture取代。
+
+
+11/16本輪Chromium驗收：source `e92d6bda0024741ebf1f5808441d39e051089edb` / [Actions 43937100642](https://github.com/peiyulin0520/VideoClip_2/actions/runs/43937100642)，519單元/47檔與check、194完整、快速6/6/1/1/13/14/33/2/29/5/9/23全部成功；手機五尺寸與六主題、回頂不攔截、版型/64文字/音訊/native匯出皆含。詳validation/nov16-layout-effects.md。原片Safari待真機清單保持未完成。

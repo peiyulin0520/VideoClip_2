@@ -1,3 +1,8 @@
+import { applyTextFx } from './textFx';
+import { KINETIC } from './kinetic';
+import { renderKinetic } from './kinetic/render';
+import { findItem } from './timeline';
+import { createTextItem } from '../model/defaults';
 import { AudioRenderer } from './exportAudio';
 import { getProject } from '../storage/projects';
 import { useProjectStore } from '../store/projectStore';
@@ -21,10 +26,51 @@ export function installDebugHook(player: Player) {
   if (!on) return;
   const hook = {
     project: () => JSON.parse(JSON.stringify(useProjectStore.getState().project)),
+    kineticProbe: (id: string, times: number[]) => {
+      const p = useProjectStore.getState().project!,
+        found = findItem(p, id);
+      if (found?.item.type !== 'text') throw Error('Select a text item');
+      const text = found.item;
+      return times.map((t) => {
+        const r = text.kinetic
+          ? renderKinetic(text, t, 320, 568)
+          : text.textFx
+            ? applyTextFx(
+                renderText(text.card, 0.3, 1),
+                text.textFx,
+                t,
+                text.id,
+                text.card.runs[0]?.color ?? '#fff',
+              )
+            : null;
+        if (!r) return null;
+        const data = r.canvas.getContext('2d')!.getImageData(0, 0, r.canvas.width, r.canvas.height).data;
+        let hash = 2166136261,
+          pixels = 0;
+        for (let i = 0; i < data.length; i++) {
+          hash = Math.imul(hash ^ data[i]!, 16777619);
+          if (i % 4 === 3 && data[i]! > 20) pixels++;
+        }
+        return { hash: hash >>> 0, pixels, key: r.key };
+      });
+    },
+    kineticCatalog: () =>
+      KINETIC.map((def) => {
+        const it = createTextItem(0, def.words.join(' '));
+        it.kinetic = { id: def.id, playback: 'loop' };
+        const r = renderKinetic(it, def.poster, 240, 426)!;
+        const data = r.canvas.getContext('2d')!.getImageData(0, 0, r.canvas.width, r.canvas.height).data;
+        let pixels = 0;
+        for (let i = 3; i < data.length; i += 4) if (data[i]! > 20) pixels++;
+        return { id: def.id, pixels };
+      }),
     savedProject: () => getProject(useProjectStore.getState().project!.id),
     ready: () => player.isReady,
     time: () => player.time,
+    refreshPreview: () => player.refresh(),
     selected: () => useProjectStore.getState().selectedId,
+    audioMode: () => player.audioMode,
+    audioState: () => player.audioContext?.state ?? 'native',
     audioEnergy: () => player.audioEnergy(),
     audioProbe: (milliseconds: number) => player.audioProbe(milliseconds),
     async audioWave(start: number, end: number, times: number[]) {
@@ -61,6 +107,7 @@ export function installDebugHook(player: Player) {
       }
     },
     mediaStats: () => player.compositor.mediaStats(),
+    playbackStats: () => player.stats(),
     async inspectMovie(url: string, t: number, points: [number, number][] = []) {
       if (!url.startsWith('blob:')) throw Error('Only local exported movies');
       const blob = await (await fetch(url)).blob();
@@ -94,6 +141,7 @@ export function installDebugHook(player: Player) {
           width: video?.displayWidth ?? 0,
           height: video?.displayHeight ?? 0,
           audio: !!audio,
+          frameRate: video ? (await video.computePacketStats(60)).averagePacketRate : 0,
           rms,
           bytes: blob.size,
           samples: points.map(([x, y]) =>

@@ -8,6 +8,22 @@ import { MIN_CLIP_DURATION } from '../model/defaults';
 export function setTimelineItems(project: Project, trackId: string, next: Item[]) {
   const track = project.tracks.find((t) => t.id === trackId);
   if (!track) return;
+  if (track.layout?.version === 2) {
+    const frame = next.find((i) => i.templateRole === 'frame');
+    if (frame) {
+      const l = track.layout;
+      const delta = frame.start - l.start;
+      const before = { ...l };
+      l.start = frame.start;
+      l.duration = frame.duration;
+      // Trimming the group reveals the same original timeline interval; members do not slide.
+      l.keyframes = trimKeyframes(before, delta, delta + l.duration);
+    } else {
+      const ids = new Set(next.map((i) => i.id));
+      track.items = track.items.map((i) => (ids.has(i.id) ? next.find((n) => n.id === i.id)! : i));
+    }
+    return;
+  }
   const previousLayout = track.layout;
   if (track.template && track.items.length > 1) {
     const changed = next.find((it) => {

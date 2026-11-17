@@ -1,3 +1,4 @@
+import { unlockPausedMedia } from './mediaUnlock';
 /** Separated sound uses audio elements: it must not run another video decoder for the same movie. */
 export class AudioPool {
   readonly els: HTMLAudioElement[] = [];
@@ -15,7 +16,13 @@ export class AudioPool {
       this.els.push(el);
     }
   }
-  acquire(itemId: string, assetId: string, url: string, protect: Set<HTMLAudioElement>) {
+  acquire(
+    itemId: string,
+    assetId: string,
+    url: string,
+    protect: Set<HTMLAudioElement>,
+    allowUrlChange = true,
+  ) {
     let el = this.els.find((el) => el.dataset.itemId === itemId);
     if (!el) {
       el = this.els
@@ -31,9 +38,10 @@ export class AudioPool {
       el.dataset.itemId = itemId;
       delete el.dataset.seekTarget;
     }
-    if (el.dataset.assetId !== assetId) {
+    if (el.dataset.assetId !== assetId || (allowUrlChange && el.dataset.url !== url)) {
       el.pause();
       el.dataset.assetId = assetId;
+      el.dataset.url = url;
       el.src = url;
       el.load();
     }
@@ -46,6 +54,9 @@ export class AudioPool {
         el.dataset.previewIntent = 'pause';
         if (!el.paused) pause(el);
       }
+  }
+  unlock(prepare?: (element: HTMLMediaElement) => boolean) {
+    unlockPausedMedia(this.els, prepare);
   }
   destroy() {
     for (const el of this.els) {

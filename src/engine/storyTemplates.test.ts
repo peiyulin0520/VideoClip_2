@@ -82,6 +82,9 @@ describe('group template geometry and source timing', () => {
     const ctx = geoCtx(next, 1080, 1920, 1),
       frame = groupFrame(g, 1080, 1920, 1),
       slot = cellViewport(g, g.items[1] as VideoItem, 1, 1)!;
+    // Geometry is independent of font rasterization (jsdom CI has no 2D Canvas).
+    // Actual caption glyphs and export pixels are covered in Playwright.
+    ctx.textSize = () => ({ w: 300, h: 40 });
     expect(frame).toMatchObject({ cx: 648, cy: 768, w: 540, h: 960 });
     expect(itemBox(g.items[1]!, ctx)!.cx).toBeCloseTo((slot.x + slot.w / 2) * 1080);
     expect(hitLayers(visibleLayers(next, 1), ctx, frame.cx, frame.cy)[0]!.track.id).toBe(g.id);

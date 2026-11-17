@@ -15,7 +15,7 @@ export function mediaKindOf(file: File): MediaKind | null {
   return null;
 }
 
-type Probed = Pick<Asset, 'duration' | 'width' | 'height' | 'hasAudio'>;
+type Probed = Pick<Asset, 'duration' | 'width' | 'height' | 'hasAudio' | 'frameRate' | 'videoBitrate'>;
 
 /** 讀影片長度、尺寸、有沒有音軌（Mediabunny 直接讀容器，不需要瀏覽器能解碼） */
 async function probeVideoContainer(file: File): Promise<Probed | null> {
@@ -27,7 +27,15 @@ async function probeVideoContainer(file: File): Promise<Probed | null> {
       input.getPrimaryAudioTrack(),
     ]);
     if (!v) return null;
-    return { duration, width: v.displayWidth, height: v.displayHeight, hasAudio: !!a };
+    const stats = await v.computePacketStats(60).catch(() => null);
+    return {
+      duration,
+      width: v.displayWidth,
+      height: v.displayHeight,
+      hasAudio: !!a,
+      frameRate: stats?.averagePacketRate,
+      videoBitrate: stats?.averageBitrate,
+    };
   } catch {
     return null;
   } finally {
@@ -122,31 +130,6 @@ export function captureThumb(v: HTMLVideoElement): string | null {
   }
 }
 
-async function videoThumbs(url: string, duration: number, count: number): Promise<string[]> {
-  const v = document.createElement('video');
-  v.preload = 'auto';
-  v.muted = true;
-  v.playsInline = true;
-  v.src = url;
-  const out: string[] = [];
-  try {
-    if (!(await waitFor(v, 'loadeddata', 8000))) return out;
-    const c = canvasFor(v.videoWidth, v.videoHeight);
-    const ctx = c.getContext('2d')!;
-    for (let i = 0; i < count; i++) {
-      const t = Math.min(((i + 0.5) / count) * duration, Math.max(duration - 0.05, 0));
-      v.currentTime = t;
-      if (!(await waitFor(v, 'seeked', 4000))) break;
-      ctx.drawImage(v, 0, 0, c.width, c.height);
-      out.push(c.toDataURL('image/jpeg', 0.6));
-    }
-  } finally {
-    v.removeAttribute('src');
-    v.load();
-  }
-  return out.length === count ? out : [];
-}
-
 async function imageInfo(file: File, url: string): Promise<{ w: number; h: number; thumb: string } | null> {
   const img = new Image();
   img.src = url;
@@ -189,10 +172,7 @@ export async function probeMedia(file: File, kind: MediaKind): Promise<ProbeResu
     }
     const meta = (await probeVideoContainer(file)) ?? (await probeVideoElement(url));
     if (!meta || !(meta.duration > 0)) return { ok: false, reason: '讀不到影片資訊' };
-    const count = Math.min(Math.max(Math.ceil(meta.duration), 1), 8);
-    let thumbs = await mediabunnyThumbs(file, meta.duration, count);
-    if (thumbs.length === 0) thumbs = await videoThumbs(url, meta.duration, count);
-    return { ok: true, info: { kind, ...meta, thumbs } };
+    return { ok: true, info: { kind, ...meta, thumbs: [] } };
   } finally {
     URL.revokeObjectURL(url);
   }

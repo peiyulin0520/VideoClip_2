@@ -157,3 +157,35 @@ it('a listener replacing its subscription is not revisited within the same playb
   expect(replacement).toHaveBeenCalledTimes(2);
   player.destroy();
 });
+
+it('thumbnail/proxy cache refreshes redraw without emitting a stale time that resets pending user scroll', async () => {
+  vi.stubGlobal(
+    'requestAnimationFrame',
+    vi.fn(() => 1),
+  );
+  vi.stubGlobal('cancelAnimationFrame', vi.fn());
+  vi.spyOn(HTMLMediaElement.prototype, 'pause').mockImplementation(() => {});
+  vi.spyOn(HTMLMediaElement.prototype, 'load').mockImplementation(() => {});
+  const p = createProject('cache');
+  const track = createTrack('text', p.tracks);
+  track.items = [createTextItem(0)];
+  p.tracks.push(track);
+  const player = await Player.create({
+    host: document.createElement('div'),
+    canvas: document.createElement('canvas'),
+    getProject: () => p,
+    urlFor: () => undefined,
+  });
+  const listener = vi.fn();
+  player.subscribe(listener);
+  listener.mockClear();
+  player.refresh();
+  expect(listener).not.toHaveBeenCalled();
+  player.seek(1.7);
+  expect(listener).toHaveBeenLastCalledWith(1.7, false);
+  listener.mockClear();
+  track.items[0]!.duration = 1;
+  player.refresh();
+  expect(listener).toHaveBeenLastCalledWith(1, false);
+  player.destroy();
+});

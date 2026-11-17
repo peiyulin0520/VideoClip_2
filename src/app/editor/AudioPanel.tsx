@@ -1,3 +1,4 @@
+import { Scissors, Unlink, VolumeX, Trash2 } from 'lucide-react';
 import { itemName } from '../../engine/itemName';
 import { useRef, useState } from 'react';
 import { useProjectStore } from '../../store/projectStore';
@@ -10,6 +11,7 @@ import { Slider } from '../../ui/Slider';
 
 export function AudioPanel() {
   const project = useProjectStore((s) => s.project)!;
+  const player = useUI((s) => s.player);
   const [editing, setEditing] = useState<VideoItem | null>(null);
   const input = useRef<HTMLInputElement>(null);
   const entries = project.tracks.flatMap((track) =>
@@ -51,28 +53,75 @@ export function AudioPanel() {
       <p className="hint">
         音樂放在播放頭位置。時間軸長按拖移、拉片頭片尾修剪；每支影片可保留、關閉或分離原音。
       </p>
+      {player?.audioMode === 'element' && (
+        <p className="hint">此瀏覽器使用原音直接預聽；細部音量仍會套用到匯出影片。</p>
+      )}
       {entries.length === 0 && <p className="hint">目前沒有音訊。可匯入配樂，或加入帶有聲音的影片。</p>}
       {entries.map(({ item, asset, track }) => (
         <div className="audio-row" key={item.id}>
-          <button
-            className="chip audio-source"
-            onClick={() => {
-              useProjectStore.getState().select(item.id);
-              useUI.getState().player?.seek(item.start);
-            }}
-          >
-            {asset.thumbs[0] ? (
-              <img src={asset.thumbs[0]} alt={`${itemName(project, item)} 素材縮圖`} />
-            ) : (
-              <span className="audio-note">♫</span>
-            )}
-            <span>
-              {item.type === 'audio' ? '♫' : '原音'} {itemName(project, item)}
-              <small>
-                {track.name} · 時間軸 {item.start.toFixed(2)}–{(item.start + item.duration).toFixed(2)} 秒
-              </small>
-            </span>
-          </button>
+          <div className="audio-entry-header">
+            <div className="audio-actions" aria-label="音訊操作">
+              <button
+                className="icon-btn audio-action"
+                aria-label="片段範圍"
+                title="片段範圍"
+                onClick={() => {
+                  useUI.getState().player?.pause();
+                  setEditing(item);
+                }}
+              >
+                <Scissors size={18} />
+                <span aria-hidden="true">片段</span>
+              </button>
+              {item.type === 'video' && (
+                <button
+                  className="icon-btn audio-action"
+                  aria-label="分離原音"
+                  title="分離原音"
+                  onClick={() => {
+                    try {
+                      separateAudio(item.id);
+                    } catch (e) {
+                      toast((e as Error).message);
+                    }
+                  }}
+                >
+                  <Unlink size={18} />
+                  <span aria-hidden="true">分離</span>
+                </button>
+              )}
+              <button
+                className="icon-btn audio-action"
+                aria-label={item.type === 'audio' ? '刪除音軌' : '移除原音'}
+                title={item.type === 'audio' ? '刪除音軌' : '移除原音'}
+                onClick={() =>
+                  item.type === 'audio' ? removeAnyItem(item.id) : setAudioEnabled(item.id, false)
+                }
+              >
+                {item.type === 'audio' ? <Trash2 size={18} /> : <VolumeX size={18} />}
+                <span aria-hidden="true">{item.type === 'audio' ? '刪除' : '移除'}</span>
+              </button>
+            </div>
+            <button
+              className="chip audio-source"
+              onClick={() => {
+                useProjectStore.getState().select(item.id);
+                useUI.getState().player?.seek(item.start);
+              }}
+            >
+              {asset.thumbs[0] ? (
+                <img src={asset.thumbs[0]} alt={`${itemName(project, item)} 素材縮圖`} />
+              ) : (
+                <span className="audio-note">♫</span>
+              )}
+              <span>
+                {item.type === 'audio' ? '♫' : '原音'} {itemName(project, item)}
+                <small>
+                  {track.name} · 時間軸 {item.start.toFixed(2)}–{(item.start + item.duration).toFixed(2)} 秒
+                </small>
+              </span>
+            </button>
+          </div>
           <label className="check-row">
             <input
               type="checkbox"
@@ -83,6 +132,7 @@ export function AudioPanel() {
             保留音訊{track.muted ? '（軌道靜音中）' : ''}
           </label>
           <Slider
+            displayLabel="音量"
             label={`音量 ${itemName(project, item)}`}
             value={Math.round(item.volume * 100)}
             min={0}
@@ -99,39 +149,6 @@ export function AudioPanel() {
               )
             }
           />
-          <div className="chips">
-            <button
-              className="chip"
-              onClick={() => {
-                useUI.getState().player?.pause();
-                setEditing(item);
-              }}
-            >
-              片段範圍
-            </button>
-            {item.type === 'video' && (
-              <button
-                className="chip"
-                onClick={() => {
-                  try {
-                    separateAudio(item.id);
-                  } catch (e) {
-                    toast((e as Error).message);
-                  }
-                }}
-              >
-                分離原音
-              </button>
-            )}
-            <button
-              className="chip"
-              onClick={() =>
-                item.type === 'audio' ? removeAnyItem(item.id) : setAudioEnabled(item.id, false)
-              }
-            >
-              {item.type === 'audio' ? '刪除音軌' : '移除原音'}
-            </button>
-          </div>
         </div>
       ))}
     </div>

@@ -4,6 +4,35 @@
 
 ## 交接快照（VideoClip_2 最新狀態）
 
+- 11/16八組調整已完成，source `e92d6bda0024741ebf1f5808441d39e051089edb` / [Actions 43937100642](https://github.com/peiyulin0520/VideoClip_2/actions/runs/43937100642)：519單元／47檔與check、194完整Chromium及快速6/6/1/1/13/14/33/2/29/5/9/23全部成功。最後提交只文件、量測與成功PNG，產品/測試/build/workflow與驗收source一致。
+- PR14：https://github.com/peiyulin0520/VideoClip_2/pull/14 ，分支codex/playback-import-reliability，由使用者自行Merge後Actions發布；未推main/代合併/auto-merge。原版VideoClip18d775f只讀參考，兩份reference工作樹clean，真人錄影未進repo。
+- 空框架1:1～1:4/自訂列欄、共用分界與外框幾何、線寬/色/透明度、格內原來源移縮；收合群組/分類/格號/多列，當秒圖層可跨類型夾心排序；明確群組新增目的地，同步/依序/格序及靜音停留/補色/透明空檔。文字與特效在各自主頁籤，v1相容區保留。
+- 64文字動畫+4基本式、副標、循環/完整原文停留、整段動效；固定canvas/GPU重用與原音檢查。自由裁切完整編輯底圖、compact audio、原始最高尺寸/FPS輸出與低頻效能開關。回頂改固定存在於功能頁尾的正常44px控制列，無浮鈕攔截、無scrollHeight突增，配色control/fg成對、六主題與五手機尺寸通過。
+- 實測合成29.79fps，轉場18格／慢格0／硬seek0；三輪原生備援每次63張來源圖全部對齊；三輪live maxJump 0.004004/0.003954/0.003954（原limit0.08不變）。原生fixture 160×284/24fps匯出同尺寸/24fps且有聲音。詳validation/nov16-layout-effects.md與nov16-measurements.json。
+- fast artifact14260978659／6711676 bytes下載SHA-256 `e3c0eccdab2e4f17aa7225d10316eb8a910a86946dbc3fd5ed7acbcb5f34e6ca` 已核；10張新成功PNG，框架popup/裁切/文字/匯出畫面人工檢視。完整artifact僅遠端紀錄，不冒稱下載核對。Safari原片4K60/HEVC、多格記憶體/長片FPS/原音聽感仍PLAN §7待真機，不能把Chromium當同一iPhone保證。
+- 下一步只需使用者審核Merge PR14，待Pages發布後重新開啟網站驗真機；工作目錄與交接紀錄需保持一致。
+
+## 11/15已交付基線（歷史，待合併）
+
+- PR14：https://github.com/peiyulin0520/VideoClip_2/pull/14 ，分支codex/playback-import-reliability。使用者追加四項與原播放／匯入修復一起交付；由使用者自行Merge後Pages才發布，不代合併、auto-merge或推main。
+- 最終驗收source `942895a3c6e898d83861c501c19dd66bfa77892f` / Actions43693750451：418單元／42檔與check、181完整Chromium（9.8m）全過；快速14＋33＋2＋29＋5＋9（三輪音訊）＋23全部成功。最後僅文件/量測/5新成功PNG，產品、測試與workflow和source一致。
+- 刪素材/整層/群組/批次時，同undo交易清所屬特效與銜接；舊無法確定來源的效果有可點badge。ownerId只記刪除歸屬，targetId才影響single分類，保留畫面效果的screen選單；同秒chooser原回歸已過。
+- 主層文字底線、次層淺底、第三層輪廓；文字/素材等巢狀導航同步。音訊三圖示短標籤在名稱左側同列，320/390/430觸控/溢出及實際按鈕操作通過。
+- 拍貼／膠卷／相紙layout.captionText為真正TextItem、獨立於media格數及輪序長度；群組展開文字軌可從普通文字頁編輯字體/大小/內容。示意比例、保存重開及匯出像素通過，群組縮放播放文字貼圖新增配置0。
+- 三輪live maxJump0.003899/0.003886/0.004181，完整0.004079，原<0.08不變。fast artifact14154206234／5,150,019 bytes下載核SHA61b2b3651016a96dfd6f37b82dd720e9a7bdbb5736d837798f026f052b26df7d，5圖人工檢視；詳validation/effects-caption-followup.md、effects-caption-audio.json及USAGE。
+- 下一步：使用者審核Merge PR14、等Pages發布後iPhone Safari驗實際原片聲音/長片FPS/字體與手勢；Chromium不等於Safari真機。沒有待修程式，使用者錄影未進repo。下方bffd168／174為追加前基線。
+
+## PR14 播放／匯入已驗基線（追加前）
+
+- PR14：https://github.com/peiyulin0520/VideoClip_2/pull/14 ，分支codex/playback-import-reliability。PR13已合併；本輪由使用者自行Merge，不代合併／auto-merge／推main。
+- 最終驗收source `bffd168bfde821aaa1e8d92bb74ae352b64a5a6f` / Actions43675152122：412單元／41檔與check、174完整Chromium（12.1m）全過，快速33＋2＋29＋5＋9（三輪音訊）＋30全部成功。最後提交只文件/量測/2成功PNG，產品、測試、workflow與source一致。
+- 使用者確認參考**原版VideoClip網站**：手勢內啟用原音、無AudioSession的iOS native fallback、切畫質沿用context、短暫缺frame不全域pause。時鐘訂閱分離播放列；匯入metadata＋目前畫面先就緒，proxy及每2秒真縮圖只在暫停背景準備，播放/預聽/畫布及時間軸手勢立即取消、部分縮圖可接續。原檔匯出不變。
+- 初版背景refresh同時間通知及提示列高使seek/拖曳失敗已修：refresh只在clamp實改時間emit，進度absolute在預覽。原advanced/feedback/story/GIPHY/ABC時間與像素斷言保留；新增確定性scroll→refresh回歸。初、中版失敗保留日誌，不以舊快測冒充完整成功。
+- 音訊三輪live maxJump0.004138／0.004171／0.004067，完整0.004067，原<0.08門檻不改。fast artifact14146372790／2,631,919 bytes下載核SHA b66e52499260b2c47217f8865d17df19b72faeccb71cfddfd7f88b5d61579672，2新PNG人工檢視；舊204圖為前輪基線，不批次替換。詳validation/playback-import.md與USAGE。
+- 下一步：使用者Merge PR14並等待Pages發布，再iPhone Safari驗首次原音、零秒重播、切畫質、長片/多效果及靜音鍵/背景返回。Chromium有實際音軌/PCM及資源斷言，仍不能稱Safari原片FPS/聽感已驗。proxy完成前先用原檔；舊iOS native預聽細部音量有限，匯出仍保留設定。
+
+## PR13 已交付基線（歷史）
+
 - 使用者回報80% Safari「Importing a module script failed」，舊retry無效。本輪修復PR #13：https://github.com/peiyulin0520/VideoClip_2/pull/13 ，分支codex/recover-module-loading。PR12已由使用者合併，本輪由使用者自行Merge，未代合併/不推main。
 - 驗收source `19291aeb4efd413e085a2b16c686734040535462` / Actions43668024373：399單元/39檔與check、169完整Chromium全過，另2恢復＋29編輯＋5色調＋9音訊（三輪）＋30生命週期全過。最後僅文件/3新成功圖，程式/測試/build/workflow與source一致。
 - 主bundle合併Renderer lazy imports，預覽初始化不再fetch獨立renderer檔；PWA完整程式預快取、等待明確更新，不自動接管使用中的文件。模組錯誤顯示「更新程式並重新開啟」，先save當前專案，只更新本app scope worker、啟用waiting後完整同hash重開；不刪IndexedDB/OPFS/字體/其他cache。一般媒體錯誤仍普通retry，無Player不給無效略過。
@@ -29,6 +58,107 @@
 - 2026-11-14 E 階段自訂輸出比例：主預覽基地不依輸出比例改高，頂部比例可進入主預覽四邊/角拖曳草稿，X不儲存、套用才寫 width/height/customAspect。內框/框外斜紋分開。ProjectPreview 使用240方形固定基地 contain，不因4:3上下錯位；音訊來源固定160px基地，播放秒數同列。check/374單元成功，新瀏覽器待驗。
 
 ## 本輪日誌
+
+- 2026-11-16 最終八組驗收交付
+  - source `e92d6bda0024741ebf1f5808441d39e051089edb` / [Actions 43937100642](https://github.com/peiyulin0520/VideoClip_2/actions/runs/43937100642)：519/check、194完整及快速6/6/1/1/13/14/33/2/29/5/9/23全過。原影像/聲音/來源/字體/主題對比/資源門檻均保留。
+  - 最後回歸修正包含浮動回頂攔截手勢、條件頁尾新增高度、主題色前景/背景不成對，以及原生縮圖未於presentation回呼內即時取圖；正常頁尾控制列/control-fg與逐幀來源擷取修復後，原故事、五尺寸、六主題及三輪原生備援全部通過。
+  - 成功artifact下載核SHA與10新PNG、原音三輪/轉場/native實檔資料見validation/nov16-layout-effects.md；Safari原片仍待真機。
+
+- 2026-11-16 低fps原生取圖邊界與缺圖重試：4b4b41d / Actions43933078273快速142全過，完整193/194唯一126秒原生備援未填齊。fixture實為1fps，先前timestamp+.001的seek太接近解碼邊界；改至已知packet的中間（snapshot仍驗該packet原時間），避免量化落前一幀。原生偶發不present時只對缺圖用fresh video一次重試，既有圖不動、失敗不複製前格；可取消，非無限重解。unit另模擬第一次load error後fresh decoder正確取0/2/4；long失敗測試僅記回呼/缺圖資料並throw原錯，不增timeout或放寬63/RGB24。519/check與完整194/快142待最新source。
+
+- 2026-11-16 原生取圖片尾：2e5089e / Actions43929471782全193/194及快速138/139，唯一同個clip-a音訊長2.008秒、影片最後packet1.933秒；63張長片備援連續三輪、其餘新13/主題/編輯/原音皆通過。改以EncodedPacketSink metadataOnly讀取目標時間對應的實際video packet，在其內側seek，仍在matching presentation回呼內取圖；不跳進只剩音訊的EOF，也支援VFR。純測試追加2.008/1.933片尾，原色差和時間戳斷言不變。快速先長片與短片兩種備援各三輪（6），最新519/check與完整194待本source。失敗test-only記native回呼時間/ready與缺圖秒數，仍throw原錯。
+
+- 2026-11-16 原生縮圖呈現時序
+  - 05ebc86 / Actions43926305156完整193/194，唯一原生備援縮圖RGB差32超過原24限，六主題與其餘193均過。loadeddata/seeked不能代表第一個可繪surface，先前首格直接取、後續回呼後再等seeked才取，仍有空白surface競速。
+  - 改先註冊首格presentation callback再load，每格在相符mediaTime回呼內立即snapshot，忽略先前排隊舊幀，精度0.1秒，失敗仍留空而不複製。新unit模擬callback後surface變空再seeked，確認仍保存0/2/4秒真正畫面；保留原63不同圖及RGB限，失敗附來源時間/RGB。快速先三輪原生備援，完整194仍全部驗。新519/check與Actions待本source。
+
+- 2026-11-16 回頂配色的主題一致性
+  - 30faf7d / Actions43923871966完整189/194，唯一5個失敗均為新回頂normal chip的背景被全域theme control覆寫，但文字仍accent-ink（mono黑字深底，淺theme白字淺底），ratio1.17～1.38。5尺寸與故事target皆過，其餘新13/14/33/2/29/5/9均過。
+  - 回頂是一般工具，明確成對使用--control/--fg，移除該列accent/ink混用，不以important或放寬對比檢查；快測第一組加原六theme readability，所有原194仍完整跑。最新518/check及Actions待驗。
+
+- 2026-11-16 回頂正常排版的固定生命週期
+  - 710e624 / Actions43921363841快速：target1、新13、特效14、播放33、恢復2、編輯29、色調5、音訊9（三輪）皆過；最後22/23唯一320×568頁尾回頂底619.4超出568。回頂列在scroll事件後才掛載，造成已捲到底後scrollHeight又增長。
+  - 移除showTop/onScroll條件掛載，回頂永遠是BottomBar的真實最後功能列，仍非浮鈕，不新增空白保留區；第一次捲到底即包含該按鈕，移除捲動React狀態更新。原多尺寸可見底、≥44px、無阻擋/無留白與故事觸控全部保留，快速先驗5種尺寸target再故事。
+
+- 2026-11-16 根因定位：回頂浮鈕攔截觸控
+  - 8ab0122 / Actions43920200369 trace：pointerdown/up/click實際都是「回到最上方預覽」，座標331.5,509.1；samePanel=true，直接click可將故事pressed改true（診斷後仍throw原錯）。所以不是草稿重掛/匯入/解碼；自動捲動後才顯示的浮鈕蓋到第四個款式，攔走實際手勢。
+  - 正式修回頂為bottombar最底的正常44px控制列，不浮在工具/來源/格線上；保留回頂、smooth行為及無footer留白，移除舊fixed bottom疊覆CSS。移除臨時event trace與programmatic診斷，保留所有三階段pressed與故事像素斷言。518/check與最終Actions待本source。
+
+- 2026-11-16 故事按鈕進一步定位
+  - 129fe18 / Actions43918879785 target在第一次tap後aria-pressed仍false，尚未匯入，排除單純匯入重設假說；外層受控開關改善不等於已修根因。保留原斷言並補test-only pointer/click目標、DOM節點身份及programmatic delivery診斷，診斷後仍throw原錯，不用直接click繞過讓測試變綠。
+
+- 2026-11-16 C2完整193/194與故事選取回歸
+  - c78726b / Actions43873673041：518/check、新13與特效14全部過，完整193/194與快33中32過；唯一故事case在套用後實際是拍貼而非故事（error-context aria-pressed/track name證據），不是放寬顏色判定可解。
+  - 相容區原生details搭配條件掛載可能被巢狀toggle干擾而卸載草稿，改明確受控button/section，只有使用者點外層button才切模式；保留子元件group key。故事helper增加匯入前/後/套用前aria-pressed斷言，原影像/時間/字體/暖光/二格斷言全保留，快測先跑此target。
+  - 本source新效能raw：29.9589合成fps，scene0.3386ms/composite0.7091ms/worst4.2ms，18轉場格/0慢格/0硬seek，解碼drop0；native原160×284/24輸出同規格含audio/RMS.08941。artifact14230415416 SHA7f36d36f7e6e145644587b0495a3baa40e736c2cc3aa1e76cc20220bf68464d8已核，未當最後全綠證據。
+
+- 2026-11-16 C補匯出與實際瀏覽器回饋
+  - f289534 / Actions43870516765快速10/11過，空框架/格線無殘影/局部縮放/夾心三個新case與native影片匯出、64文字、crop/perf皆過。唯一新透明case誤把透出的底層紅片當應消失，改以UI隱藏底層後驗透明，保留前後停留與補色像素斷言。完整最終182/192；6主題summary固定#777低對比、舊新表單同名DOM、舊新增群組切回新工具、以及新刪除測試未等IndexedDB完成的reload競速，已逐項修：主題fg、互斥掛載、外層TemplatePanel不依選取ID重掛、poll savedProject後重開。全部原對比與像素斷言保留。
+  - code review發現offline匯出迴圈需要略過合成frame anchor（沒有asset）；已修並新增實際版型影片+原音解碼驗證。修v2特效選取第二成員仍fallback第一的問題；加入格序調整只改時間不換格。518單元/check通過。
+  - 新效能測試提升至合成>20fps及轉場慢格比例<20%、硬seek≤1，另保留原音重播；將真實native輸出fps/audio與perf JSON留artifact。C首輪artifact14227921124 SHA002bbee5a8814b4f337a8937614c788f9de94a3879d1066e72e178b35e27ad96已下載核對，框架/群組/perf三圖已檢視，最終仍需新source成功圖。
+
+- 2026-11-16 C框架與內部分層
+  - layout.version2/frameItem獨立合成錨點（findItem -2）、原media仍items，cells是frame holes/source viewport/handle共用幾何，外框與格界popup分開、控制列外置、不蓋把手。縮放只改局部transform，無永久crop；art key含box/grid/cells/border/gap，呼吸除總scale以穩定框架canvas尺寸。
+  - lanes記分類/格號/可見鎖定、order獨立z；時間軸group收合、內部類型可收合、每格多列；Layers目前秒數群組收合及跨類型排序。文字/音訊/素材新增目的地、所有member自身定格/動畫/色調；群組合成只一shader。frame/child刪除/複製/分割與source trim分離，親群組trim只裁時間窗，空群組不丟。
+  - 保留v1相容套版（手動展開，不作新框預設），原e2e openTab對舊套版案例顯式展開相容區；新案例false使用主要空框路徑，沒有降低原斷言。514單元/check過，瀏覽器待本source。B完整187/188唯一測試定位錯誤已改真aria。
+
+- 2026-11-16 B文字與整段動效
+  - 參考64式實際draw/core/catalog保留MIT及來源註記；配合本模型改renderer與固定canvas、cache更新，巨字橫移副標可自訂、文字頁獨立欄位。增加4基本樣式與整段捲動/滑入出/呼吸/晃/震，使用共用geometry確保預覽和匯出一致。
+  - Hold在來源fade-out前切完整文字/副標並穩定快取，loop按一輪長度/速度重複；完整原文字不受動畫拆詞8詞/14字限制，晚期不消失。主片播放時卡片動畫停止，EffectsPanel不逐幀訂閱React時間。
+  - 首輪503單元有1項負零嚴格相等失敗，改浮點近似斷言；正式offset不改。A Actions43861898792新3之裁切/效能過，音訊無列因測試選無聲色塊，已換真正有聲fixture。完整A最終183/184，唯一失敗就是無音軌fixture，舊181全部保留通過；B新188完整待驗，不能稱本輪完成。
+
+
+- 2026-11-16 新8組需求與A階段
+  - 原版VideoClip最新18d775f唯讀快照參考，原工作樹/remote無改動。錄影6在自由裁切第二秒完整影像消失，只留polygon；修編輯底圖及檢查結果分離。錄影5只3.23秒，不足當真機FPS量測。
+  - Source容器取60個packet header估fps/bitrate、不解碼全片；原始匯出重新編碼、最高來源規格與混合低fps補幀明示。Perf僅開啟時記固定窗口、UI500ms刷新，不讀像素；預載暖幀容忍首個late tick以減少轉場硬seek。
+  - 原npm ci cache不可寫，改/tmp專用cache安裝；既有check418成功。新增3單元已納421／43與check成功，3瀏覽器待Actions。其餘64動畫/版型進行中，不稱全完成。
+
+
+- 2026-11-15 追加四項完整驗收交付（source942895a / PR14）
+  - Actions43693750451：418/check、181完整（9.8m）、快速14/33/2/29/5/9/23全過。原同秒chooser測試不改，ownerId分類混淆修正已驗；沒有降低波形、像素、媒體列數或資源配置標準。
+  - 三輪live0.003898978/0.003886402/0.004180849、完整0.004078627（limit0.08），raw JSON保存。fast artifact14154206234 SHA已核，5新成功圖人工檢視，舊圖保持歷史基線。
+  - 最後僅文件/量測/成功PNG，程式、測試與workflow同source；PR14交由使用者Merge，Safari仍PLAN §7待真機。
+
+
+- 2026-11-15 同秒多效果分類回歸修復
+  - source17d406b / Actions43692408338：418/check及新增7、33/2/29/5/9全過，完整180/181、快速29/30。唯一失敗為同秒chooser原「畫面特效」因ownerId被標成「單素材特效」。ownerId只管理生命週期，不應改變渲染/編輯分類；恢復只有targetId才single，新增單元斷言，既有chooser測試不改。下載fast artifact error-context確認實際三個選項，不以重跑挑綠。新版check/Actions待驗。快速入口把anchored-playback移到首組與新7同跑（14項），末組剩23項，沒有刪任何回歸。
+
+
+- 2026-11-15 驗收截圖取景補強
+  - source77ca098的Actions43691920624 check及新增7瀏覽器已過，完整回歸仍執行中。初輪4截圖的音訊/版型操作在視窗下緣，不足供使用者目視審核。新增明確捲到音訊列、特效第三層與版型示意，另存群組文字軌畫面；只改截圖取景，保留所有原斷言，產品程式不改。新版check/Actions待驗。
+
+
+- 2026-11-15 追加版型文字的CI幾何測試依賴
+  - source39e919c / Actions43691474481新增7個瀏覽器已通過；build檢查在storyTemplates幾何hit測試因CI jsdom沒有Canvas而失敗（本機有）。caption新增為可點文字，舊測試現在也會量文字。
+  - 該純幾何測試注入固定文字bounds，保留frame/cell/hit原斷言；實際字體raster、匯出及貼圖配置已由新7個瀏覽器斷言，沒有把正式Canvas路徑改成fallback。新check及新版Actions待驗。
+
+
+- 2026-11-15 使用者追加特效／層級／音訊／版型文字（本機已驗，瀏覽器待驗）
+  - PR14未合併，接續同PR並暫draft。effects ownership與中央apply刪除清理覆蓋刪片/圖層/群組/批次；legacy無owner以原時間找素材，未知來源仍有badge，基本overlay badge跳正確面板。
+  - captionText不塞進media items，避免變4格或拖長輪序；舊版型載入補Caption，普通TextPanel編輯與groupFrame局部座標/固定raster比例共用。版型圖示文字用微型靜態canvas，不訂閱播放時鐘。
+  - 418單元/check過；7新瀏覽器待跑，原同時3媒體/輪序1媒體斷言排除caption，另驗caption行與GPU零新配置。Safari仍待真機，未提交使用者圖片/影片。
+
+
+- 2026-11-15 播放／匯入完整驗收交付（sourcebffd168 / PR14）
+  - Actions43675152122：412單元與check、174完整（12.1m）全過；快速33背景/操作＋2載入＋29編輯＋5色調＋9三輪音訊＋30生命週期全部成功。含首播native PCM、同context換畫質、短readiness缺口不pause、永久阻塞optional仍能編輯、全片2秒真縮圖及先前seek/拖曳失敗。
+  - 三輪live maxJump0.004138112／0.004171133／0.004067361、完整0.004067361；原<0.08不改。量測JSON與兩張成功圖保存，fast artifact SHA已核並人工檢視；不放使用者錄影、不批次替換舊圖。
+  - PR14交使用者Merge；Safari聲音/靜音鍵/長片FPS及舊native音量限制列PLAN §7，未宣稱真機完成。最後僅文件/量測/成功PNG，不再更動通過驗收的產品/測試/workflow。
+
+
+- 2026-11-15 背景工作與時間軸競態修正
+  - 初版完整回歸取消前有3失敗（advanced選段、feedback跨層、story補色後seek），已下載artifact14146380206查看原始error-context，未略過。兩個seek停在舊秒數，背景project.refresh會emit同時間覆蓋尚未派送的scroll；改只有clamp時間改變才emit。
+  - 背景進度改主預覽內absolute提示，不增減文件列高，避免長按時軌道位置移動；加layout不變與refresh通知單元，新412/check及Actions待驗；補第5個瀏覽器確定性重現：同一事件內先改scrollLeft再refresh，不能覆蓋使用者秒數。將3個受影響檔加入快速入口，原斷言不放寬。
+
+
+- 2026-11-15 音訊context生命週期補強
+  - 首版Actions新增4播放/匯入與2載入恢復及編輯通過，完整仍在跑。靜態檢視發現快速切換時cancelled Player.create預設destroy可能close共用ctx，改保留仍由Preview持有的context；已closed的舊ctx不再沿用，等下次手勢建立新ctx。
+  - 新增closed-context單元，本輪411/check及新版Actions待驗，不拿初版快測當最終完成。
+
+
+- 2026-11-15 預覽有聲與非阻塞匯入（進行中）
+  - 比對原版audio/player/mediaPool/proxyQueue/videoSync；修正先muted play再非手勢開聲、always WebAudio及畫質重建授權流失。背景解碼取消／部分縮圖保存與UI時鐘隔離已寫入。
+  - 新增單元與4瀏覽器情境，既有縮圖/實際proxy測試改為明確等背景完成，保留真時間戳/聲音/原檔匯出斷言。尚待新版check與Actions，不以PR13測試當本輪完成。
+
 
 - 2026-11-15 載入恢復完整驗收（source19291ae / PR13）
   - Actions43668024373：399單元/check與169完整（9.4min）全過；快速2/29/5/9/30全過。無WebGPU/阻擋lazy chunk、Safari錯誤同hash完整重開/資料保留、首頁更新點擊均已驗。

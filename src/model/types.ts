@@ -8,7 +8,14 @@ export type Asset = {
   filmstrip?: { version: 1; interval: 2; duration: number; frames: { time: number; src: string | null }[] };
   previewFiles?: Record<
     string,
-    { status: 'ready' | 'none'; mime?: string; width?: number; height?: number; version: 1 }
+    {
+      status: 'ready' | 'none';
+      mime?: string;
+      width?: number;
+      height?: number;
+      version: 1;
+      audioVerified?: boolean;
+    }
   >;
   id: string;
   kind: 'video' | 'image' | 'audio';
@@ -19,6 +26,8 @@ export type Asset = {
   width: number;
   height: number;
   hasAudio: boolean;
+  frameRate?: number;
+  videoBitrate?: number;
   /** 小縮圖（JPEG dataURL），沿著素材時間平均取樣，用於時間軸與專案封面 */
   thumbs: string[];
   generated?: { color: string };
@@ -97,7 +106,21 @@ export type VideoEffectPreset =
 export type ClipAnimation = { preset: TransitionPreset; duration: number; ranges?: [number, number][] };
 export type ClipAnimations = { enter?: ClipAnimation; exit?: ClipAnimation };
 
+export type TemplateLane = {
+  id: string;
+  name: string;
+  kind: 'visual' | 'text' | 'sticker' | 'audio';
+  cell?: number;
+  hidden?: boolean;
+  locked?: boolean;
+  muted?: boolean;
+};
+export type TemplateRect = { x: number; y: number; w: number; h: number };
 export type ItemBase = {
+  templateRole?: 'frame' | 'cell' | 'member';
+  templateLane?: string;
+  templateCell?: number;
+  continuous?: { kind: 'drift' | 'slide' | 'breathe' | 'sway' | 'shake'; strength?: number; speed?: number };
   animations?: ClipAnimations;
   id: string;
   name?: string;
@@ -120,6 +143,8 @@ export type VideoItem = ItemBase & {
   type: 'video' | 'image' | 'audio';
   assetId: string;
   sourceItemId?: string;
+  /** Transient render-only still, never stored; original audio is not played. */
+  heldSourceTime?: number;
   trimIn: number; // 素材內的起點（秒）
   speed: number; // 0.25–4；照片固定 1
   volume: number; // 0–1
@@ -240,7 +265,22 @@ export type TextCard = {
   box?: CardBox;
   decorations?: Decoration[];
 };
-export type TextItem = ItemBase & { type: 'text'; card: TextCard };
+export type TextItem = ItemBase & {
+  type: 'text';
+  card: TextCard;
+  kinetic?: {
+    id: KineticId;
+    accent?: string;
+    bg?: string;
+    size?: { w: number; h: number };
+    fade?: KineticFade;
+    speed?: number;
+    playback?: 'loop' | 'hold';
+    duration?: number;
+    subtitle?: string;
+  };
+  textFx?: { kind: TextFxKind; playback?: 'loop' | 'hold'; duration?: number };
+};
 
 export type Item = VideoItem | TextItem;
 
@@ -276,11 +316,30 @@ export type Project = {
   flexibleLayers?: boolean; // Main/overlay share editable image/video lanes.
   background?: string;
   layout?: {
-    style: 'photobooth' | 'filmstrip' | 'polaroid' | 'story';
+    style: 'photobooth' | 'filmstrip' | 'polaroid' | 'story' | 'grid';
+    version?: 2;
+    frameItem?: VideoItem;
+    grid?: { rows: number; cols: number };
+    cells?: TemplateRect[];
+    box?: { w: number; h: number };
+    border?: number;
+    gap?: number;
+    footer?: number;
+    gapMode?: 'hold' | 'fill' | 'transparent';
+    gapColor?: string;
+    lanes?: TemplateLane[];
+    order?: string[];
+    cellOrder?: number[];
+    cellOffsets?: number[];
+    cellDurations?: number[];
     motion: 'none' | 'slide' | 'drift';
+    continuous?: ItemBase['continuous'];
     playback?: 'simultaneous' | 'sequential';
     size?: { width: number; height: number };
     caption?: string;
+    captionText?: TextItem;
+    captionFontId?: string;
+    captionFontSize?: number;
     frameColor?: string;
     captionColor?: string;
     frameOpacity?: number;
@@ -309,6 +368,7 @@ export type Project = {
     strength: number;
     ranges?: [number, number][];
     targetId?: string;
+    ownerId?: string;
     transitionFromId?: string;
     transitionToId?: string;
   }[];
@@ -326,3 +386,71 @@ export type Project = {
   thumbnail?: string;
   version: 1;
 };
+
+export type KineticId =
+  | 'burst'
+  | 'hit'
+  | 'stamp'
+  | 'punch'
+  | 'stack'
+  | 'stretch'
+  | 'through'
+  | 'squash'
+  | 'crawl'
+  | 'drift'
+  | 'echo'
+  | 'slant'
+  | 'path'
+  | 'ticker'
+  | 'depth'
+  | 'tape'
+  | 'flap'
+  | 'flip'
+  | 'type'
+  | 'slot'
+  | 'odo'
+  | 'swapline'
+  | 'led'
+  | 'split'
+  | 'glitch'
+  | 'marker'
+  | 'shake'
+  | 'neon'
+  | 'bob'
+  | 'track'
+  | 'fill'
+  | 'focus'
+  | 'cube'
+  | 'crawl3d'
+  | 'orbit'
+  | 'tunnel'
+  | 'scatter'
+  | 'extrude'
+  | 'blinds'
+  | 'block'
+  | 'kara'
+  | 'popsync'
+  | 'dual'
+  | 'beat'
+  | 'soft'
+  | 'lyrics'
+  | 'trail'
+  | 'mix'
+  | 'vpop'
+  | 'slam'
+  | 'lines'
+  | 'marks'
+  | 'telop'
+  | 'emph'
+  | 'bouncy'
+  | 'star'
+  | 'flick'
+  | 'drip'
+  | 'creep'
+  | 'ghost'
+  | 'corrupt'
+  | 'mirror'
+  | 'torch'
+  | 'melt';
+export type KineticFade = 'none' | 'v' | 'h';
+export type TextFxKind = 'shimmer' | 'sparkle' | 'pixel' | 'shake';

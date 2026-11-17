@@ -10,9 +10,13 @@ export const LANE_NAMES: Record<LaneCategory, string> = {
 export function itemCategory(item: Item, project: Project): LaneCategory {
   if (item.type === 'text') return 'text';
   if (item.type === 'audio') return 'audio';
-  return project.assets.find((a) => a.id === item.assetId)?.origin ? 'sticker' : 'visual';
+  return project.assets.find((a) => a.id === item.assetId)?.origin === 'giphy' ||
+    project.assets.find((a) => a.id === item.assetId)?.origin === 'drawing'
+    ? 'sticker'
+    : 'visual';
 }
 export function laneCategory(track: Track, project: Project): LaneCategory {
+  if (track.template && track.layout?.version === 2) return 'visual';
   return track.items[0]
     ? itemCategory(track.items[0], project)
     : track.kind === 'text'

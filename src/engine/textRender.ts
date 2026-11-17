@@ -1,3 +1,4 @@
+import { kineticFrame } from './kinetic/hit';
 import { cssFamily, FALLBACK_STACK, requestFont } from '../fonts/fontStore';
 import type { TextCard, TextItem, TextRun } from '../model/types';
 import type { Op } from './decorations';
@@ -194,6 +195,7 @@ export function uiScale(canvasW: number, canvasH: number): number {
 }
 
 export function measureTextItem(item: TextItem, canvasW: number, canvasH: number): { w: number; h: number } {
+  if (item.kinetic) return kineticFrame(item, canvasW, canvasH);
   const r = renderText(
     item.card.placeholder
       ? {
@@ -204,4 +206,9 @@ export function measureTextItem(item: TextItem, canvasW: number, canvasH: number
     uiScale(canvasW, canvasH),
   );
   return { w: r.w, h: r.h };
+}
+
+export function canvasFamily(fontId: string) {
+  const family = cssFamily(fontId);
+  return `${family ? `"${family}", ` : ''}${FALLBACK_STACK}`;
 }

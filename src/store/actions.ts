@@ -1,3 +1,11 @@
+import {
+  addTemplateAsset,
+  addTemplateMember,
+  isTemplateRoot,
+  isTemplateV2,
+  cloneFramework,
+} from '../engine/templateModel';
+import { captionEdited } from '../engine/templateCaption';
 import { arrangeTemplate } from '../engine/templatePlayback';
 import { laneCategory } from '../engine/batchLayers';
 import { editAnimatedValues, trimKeyframes } from '../engine/keyframes';
@@ -42,9 +50,17 @@ type Opts = { coalesce?: string; select?: string | null };
 export function editItem(id: string, recipe: (it: Draft<Item>) => void, opts?: Opts) {
   store().apply((d) => {
     for (const tr of d.tracks) {
-      const it = tr.items.find((x) => x.id === id);
+      const it =
+        tr.items.find((x) => x.id === id) ??
+        (tr.layout?.captionText?.id === id
+          ? tr.layout.captionText
+          : tr.layout?.frameItem?.id === id
+            ? tr.layout.frameItem
+            : undefined);
       if (it) {
         recipe(it);
+        if (it.templateRole === 'frame' && it.name) tr.name = it.name;
+        if (tr.layout?.captionText?.id === id) captionEdited(tr);
         return;
       }
     }
@@ -69,10 +85,17 @@ export function setTransform(id: string, patch: Partial<Transform>, coalesce = `
 export function addOverlayClips(assets: Asset[], t: number): string | null {
   if (assets.length === 0) return null;
   let firstId: string | null = null;
+  const destination = useUI.getState().templateDestination;
   store().apply((d) => {
     for (const asset of assets) {
+      const group = destination && d.tracks.find((t) => t.id === destination.trackId);
+      if (group?.template && destination) {
+        const id = addTemplateAsset(d as never, group as never, asset, destination.cell, t);
+        firstId ??= id;
+        continue;
+      }
       const clip = createOverlayClip(asset, t);
-      const category = asset.origin ? 'sticker' : 'visual';
+      const category = asset.origin === 'giphy' || asset.origin === 'drawing' ? 'sticker' : 'visual';
       let ti = d.tracks.findIndex(
         (track) =>
           track.kind === 'overlay' &&
@@ -96,6 +119,16 @@ export function addOverlayClips(assets: Asset[], t: number): string | null {
 export function addText(t: number, shape = false): string {
   const item = shape ? createShapeItem(t) : createTextItem(t);
   store().apply((d) => {
+    const destination = useUI.getState().templateDestination;
+    const group = destination && d.tracks.find((t) => t.id === destination.trackId);
+    if (group?.template && destination) {
+      item.start = group.layout!.start;
+      item.duration = destination?.cell
+        ? (group.layout!.cellDurations?.[destination.cell - 1] ?? group.layout!.duration)
+        : group.layout!.duration;
+      addTemplateMember(d as never, group as never, item, destination.cell);
+      return;
+    }
     let ti = firstFreeTrack(d as never, 'text', item.start, item.duration);
     if (ti < 0) {
       d.tracks.push(createTrack('text', d.tracks as Track[]));
@@ -127,7 +160,17 @@ export function removeAnyItem(id: string): boolean {
         (transition) => transition.fromId !== id && transition.toId !== id,
       );
       const tr = d.tracks[f.trackIndex]!;
+      if (tr.layout?.captionText?.id === id) {
+        delete tr.layout.captionText;
+        tr.layout.caption = '';
+        return;
+      }
       if (tr.template) {
+        if (isTemplateV2(tr as never) && !isTemplateRoot(tr as never, f.item)) {
+          tr.items = tr.items.filter((i) => i.id !== id);
+          tr.layout!.order = tr.layout!.order?.filter((i) => i !== id);
+          return;
+        }
         if (useUI.getState().templateCellId === id && tr.items.length > 1) {
           tr.items = tr.items.filter((i) => i.id !== id);
           arrangeTemplate(tr);
@@ -152,6 +195,46 @@ export function splitAny(id: string, t: number): string | null {
   const p = store().project;
   const f = p && findItem(p, id);
   if (!p || !f) return null;
+  if (isTemplateV2(f.track) && !isTemplateRoot(f.track, f.item)) {
+    const out = splitFree([f.item], id, t);
+    if (!out) return null;
+    const right = out[1]!;
+    if (right.type !== 'text' && f.item.type !== 'text')
+      Object.assign(right, sliceCell(f.item, t - f.item.start), {
+        id: right.id,
+        start: t,
+        duration: f.item.duration - (t - f.item.start),
+        keyframes: right.keyframes,
+      });
+    store().apply(
+      (d) => {
+        const tr = d.tracks[f.trackIndex]!;
+        tr.items.splice(f.index, 1, out[0]!, right);
+        (tr.layout!.order ??= []).push(right.id);
+      },
+      { select: right.id },
+    );
+    return right.id;
+  }
+  if (isTemplateV2(f.track)) {
+    const l = f.track.layout!,
+      local = t - l.start;
+    if (local < 0.2 || l.duration - local < 0.2) return null;
+    const copy = cloneFramework(f.track, 0);
+    copy.layout!.start = t;
+    copy.layout!.duration = l.duration - local;
+    copy.layout!.keyframes = trimKeyframes(l, local, l.duration);
+    const selected = copy.layout!.frameItem!.id;
+    store().apply(
+      (d) => {
+        d.tracks[f.trackIndex]!.layout!.duration = local;
+        d.tracks[f.trackIndex]!.layout!.keyframes = trimKeyframes(l, 0, local);
+        d.tracks.splice(f.trackIndex + 1, 0, copy);
+      },
+      { select: selected },
+    );
+    return selected;
+  }
   if (f.track.template) {
     const local = t - f.item.start;
     if (local < 0.2 || f.item.duration - local < 0.2) return null;
@@ -178,6 +261,13 @@ export function splitAny(id: string, t: number): string | null {
         };
       }
       selected = copy.items[0]!.id;
+      const caption = p.tracks[f.trackIndex]!.layout?.captionText;
+      if (copy.layout && caption) {
+        copy.layout.captionText = structuredClone(caption);
+        copy.layout.captionText.id = `${copy.id}-caption`;
+        copy.layout.captionText.start = t;
+        copy.layout.captionText.duration = copy.layout.duration;
+      }
       d.tracks.splice(f.trackIndex + 1, 0, copy);
     });
     store().select(selected);
@@ -206,6 +296,30 @@ export function duplicateAny(id: string): boolean {
   const p = store().project;
   const f = p && findItem(p, id);
   if (!p || !f) return false;
+  if (isTemplateV2(f.track) && !isTemplateRoot(f.track, f.item)) {
+    const copy = structuredClone(f.item);
+    copy.id = newId('i_');
+    copy.start += copy.duration;
+    store().apply(
+      (d) => {
+        const tr = d.tracks[f.trackIndex]!;
+        tr.items.push(copy);
+        (tr.layout!.order ??= []).push(copy.id);
+      },
+      { select: copy.id },
+    );
+    return true;
+  }
+  if (isTemplateV2(f.track)) {
+    const copy = cloneFramework(f.track, f.track.layout!.duration);
+    store().apply(
+      (d) => {
+        d.tracks.splice(f.trackIndex + 1, 0, copy);
+      },
+      { select: copy.layout!.frameItem!.id },
+    );
+    return true;
+  }
   if (f.track.template) {
     const copy = structuredClone(f.track);
     const start = Math.max(...copy.items.map((it) => it.start + it.duration));
@@ -213,7 +327,13 @@ export function duplicateAny(id: string): boolean {
     copy.id = newId('t_');
     copy.items = copy.items.map((it) => ({ ...it, id: newId('i_'), start: it.start + delta }));
     const layout = copy.layout ?? p.layout;
-    if (layout) copy.layout = { ...layout, start };
+    if (layout) {
+      copy.layout = { ...layout, start };
+      if (copy.layout.captionText) {
+        copy.layout.captionText.id = `${copy.id}-caption`;
+        copy.layout.captionText.start += start - layout.start;
+      }
+    }
     store().apply(
       (d) => {
         d.tracks.splice(f.trackIndex + 1, 0, copy);
@@ -283,11 +403,16 @@ export function placeItem(id: string, start: number, opts?: Opts) {
   const s = findFreeStart(f.track.items, start, f.item.duration, id);
   store().apply((d) => {
     const tr = d.tracks.find((t) => t.id === f.track.id)!;
+    if (isTemplateV2(tr as never) && !isTemplateRoot(tr as never, f.item)) {
+      const it = tr.items.find((it) => it.id === id)!;
+      it.start = Math.max(tr.layout!.start, start);
+      return;
+    }
     if (tr.template) {
       const delta = Math.max(0, start) - f.item.start;
       for (const it of tr.items) it.start += delta;
       if (tr.layout) tr.layout.start += delta;
-      if (d.layout) d.layout = { ...(tr.layout ?? d.layout), start: tr.items[0]!.start };
+      if (d.layout) d.layout = { ...(tr.layout ?? d.layout), start: tr.layout?.start ?? tr.items[0]!.start };
     } else {
       const it = tr.items.find((it) => it.id === id)!;
       it.start = s;

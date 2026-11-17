@@ -14,8 +14,16 @@ export function audioWindows(item: VideoItem): AudioWindow[] {
         }),
   );
 }
-export function audioWindowAt(item: VideoItem, time: number) {
-  return audioWindows(item).find((w) => time >= w.start && time < w.end);
+export function audioWindowAt(item: VideoItem, time: number, bounds?: { start: number; duration: number }) {
+  const windows = audioWindows(item);
+  return (
+    bounds
+      ? windows.map((w) => ({
+          start: Math.max(w.start, bounds.start),
+          end: Math.min(w.end, bounds.start + bounds.duration),
+        }))
+      : windows
+  ).find((w) => time >= w.start && time < w.end);
 }
 export function windowGain(window: AudioWindow, time: number, gain: number) {
   const fade = Math.min(AUDIO_FADE, (window.end - window.start) / 2);

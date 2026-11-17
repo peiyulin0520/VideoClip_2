@@ -1,4 +1,4 @@
-import { ALL_FORMATS, BlobSource, CanvasSink, Input } from 'mediabunny';
+import { ALL_FORMATS, BlobSource, CanvasSink, EncodedPacketSink, Input } from 'mediabunny';
 import type { Asset, VideoItem } from '../model/types';
 
 export type Filmstrip = NonNullable<Asset['filmstrip']>;
@@ -57,6 +57,7 @@ async function nativeFrames(
   frames: Filmstrip['frames'],
   signal: AbortSignal,
   progress: () => void,
+  nativeTimes: Map<number, { timestamp: number; seek: number }>,
 ) {
   const v = document.createElement('video'),
     url = URL.createObjectURL(file);
@@ -83,32 +84,49 @@ async function nativeFrames(
       signal.addEventListener('abort', no, { once: true });
       if (signal.aborted) no();
     });
+  // Capture in the presentation callback itself: loadeddata/seeked can precede
+  // the first drawable surface, and awaiting seeked after a callback may expose
+  // another surface. Never persist that transient blank as a valid thumbnail.
+  const capture = (frame: Filmstrip['frames'][number], t: number, timeout = 5000) => {
+    if (!v.requestVideoFrameCallback) return null;
+    return new Promise<boolean>((resolve) => {
+      let callback = 0;
+      const finish = (ok: boolean) => {
+        clearTimeout(timer);
+        signal.removeEventListener('abort', abort);
+        v.removeEventListener('error', abort);
+        if (callback) v.cancelVideoFrameCallback(callback);
+        resolve(ok);
+      };
+      const abort = () => finish(false);
+      const timer = setTimeout(abort, timeout);
+      const presented: VideoFrameRequestCallback = (_now, info) => {
+        if (Math.abs(info.mediaTime - t) <= 0.1 && v.readyState >= 2) {
+          frame.src = snapshot(v, v.videoWidth, v.videoHeight);
+          finish(true);
+        } else callback = v.requestVideoFrameCallback(presented);
+      };
+      signal.addEventListener('abort', abort, { once: true });
+      v.addEventListener('error', abort, { once: true });
+      if (signal.aborted) abort();
+      else callback = v.requestVideoFrameCallback(presented);
+    });
+  };
   try {
+    const first = frames[0];
+    const initial = first && !first.src ? capture(first, 0, 8000) : null;
     const loaded = wait('loadeddata', 8000);
     v.src = url;
     v.load();
     if (!(await loaded)) return;
+    if (initial) await initial;
     let failures = 0;
     for (const frame of frames) {
       signal.throwIfAborted();
       if (frame.src) continue;
-      const t = Math.min(frame.time, Math.max(0, v.duration - 0.001));
-      let callback = 0;
-      const presented =
-        t > 0.001 && v.requestVideoFrameCallback
-          ? new Promise<boolean>((resolve) => {
-              const timer = setTimeout(() => {
-                v.cancelVideoFrameCallback(callback);
-                resolve(false);
-              }, 2000);
-              callback = v.requestVideoFrameCallback((_now, info) => {
-                clearTimeout(timer);
-                resolve(
-                  Math.abs(info.mediaTime - t) <= 0.1 || (info.mediaTime <= t && info.mediaTime >= t - 1),
-                );
-              });
-            })
-          : null;
+      const packet = nativeTimes.get(frame.time);
+      const t = Math.min(packet?.seek ?? frame.time, Math.max(0, v.duration - 0.001));
+      const presented = capture(frame, packet?.timestamp ?? t);
       const moved =
         Math.abs(v.currentTime - t) < 0.001 && v.readyState >= 2 && !v.seeking
           ? true
@@ -118,10 +136,10 @@ async function nativeFrames(
               return ready;
             })();
       const decoded = await moved;
-      const fresh = presented ? await presented : decoded;
-      signal.throwIfAborted();
-      if (decoded && fresh && v.readyState >= 2 && !v.seeking && Math.abs(v.currentTime - t) < 0.05) {
-        // Scale directly from the decoded video, never allocate a 4K canvas per thumbnail.
+      if (presented) await presented;
+      else if (decoded && v.readyState >= 2 && !v.seeking && Math.abs(v.currentTime - t) < 0.05) {
+        // Older browsers without presentation callbacks expose the decoded frame
+        // via seeked; scale directly, without allocating a 4K canvas.
         frame.src = snapshot(v, v.videoWidth, v.videoHeight);
       }
       progress();
@@ -142,9 +160,24 @@ export async function buildFilmstrip(
   duration: number,
   signal: AbortSignal,
   onProgress: (f: number) => void,
+  previous?: Filmstrip,
+  onPartial?: (strip: Filmstrip) => void,
 ): Promise<Filmstrip> {
   signal.throwIfAborted();
-  const frames = filmstripTimes(duration).map((time) => ({ time, src: null as string | null }));
+  const frames = filmstripTimes(duration).map((time, index) => ({
+    time,
+    src:
+      previous?.version === 1 && previous.duration === duration && previous.frames[index]?.time === time
+        ? previous.frames[index]!.src
+        : null,
+  }));
+  const pending = frames.filter((frame) => !frame.src);
+  const publish = () => {
+    signal.throwIfAborted();
+    onPartial?.({ version: 1, interval: 2, duration, frames: frames.map((frame) => ({ ...frame })) });
+  };
+  publish();
+  const nativeTimes = new Map<number, { timestamp: number; seek: number }>();
   const input = new Input({ source: new BlobSource(file), formats: ALL_FORMATS });
   const cancel = () => input.dispose();
   signal.addEventListener('abort', cancel, { once: true });
@@ -154,16 +187,33 @@ export async function buildFilmstrip(
     const track = await input.getPrimaryVideoTrack();
     if (track && (await track.canDecode())) {
       const sink = new CanvasSink(track, { height: 80, fit: 'contain' });
-      for await (const wrapped of sink.canvasesAtTimestamps(frames.map((f) => f.time))) {
+      for await (const wrapped of sink.canvasesAtTimestamps(pending.map((f) => f.time))) {
         signal.throwIfAborted();
         clearTimeout(idle);
         idle = setTimeout(cancel, 30000);
-        const frame = frames[done++];
+        const frame = pending[done++];
         if (!frame) break;
         if (wrapped && frameCovers(frame.time, wrapped.timestamp, wrapped.duration))
           frame.src = snapshot(wrapped.canvas, wrapped.canvas.width, wrapped.canvas.height);
         onProgress((0.85 * done) / Math.max(1, frames.length));
+        if (done === 1 || done % 8 === 0 || done === pending.length) publish();
         if (done % 8 === 0) await new Promise((r) => setTimeout(r, 0));
+      }
+    }
+    if (track && frames.some((frame) => !frame.src)) {
+      // An audio tail can outlast the last video packet. Seek inside the actual
+      // packet covering each requested time, rather than into an audio-only EOF.
+      // Header-only reads also identify the correct surface for variable-rate video.
+      const packets = new EncodedPacketSink(track);
+      for (const frame of frames) {
+        signal.throwIfAborted();
+        if (frame.src) continue;
+        const packet = await packets.getPacket(frame.time, { metadataOnly: true });
+        if (packet)
+          nativeTimes.set(frame.time, {
+            timestamp: packet.timestamp,
+            seek: packet.timestamp + (packet.duration > 0 ? packet.duration / 2 : 0.001),
+          });
       }
     }
   } catch (error) {
@@ -173,9 +223,18 @@ export async function buildFilmstrip(
     signal.removeEventListener('abort', cancel);
     input.dispose();
   }
-  if (frames.some((f) => !f.src))
-    await nativeFrames(file, frames, signal, () =>
-      onProgress(0.85 + (0.15 * frames.filter((f) => !!f.src).length) / Math.max(1, frames.length)),
+  // A native decoder can miss a presentation under resource pressure. A fresh
+  // element gets one bounded retry for missing times only; valid images stay intact.
+  for (let attempt = 0; attempt < 2 && frames.some((f) => !f.src); attempt++)
+    await nativeFrames(
+      file,
+      frames,
+      signal,
+      () => {
+        onProgress(0.85 + (0.15 * frames.filter((f) => !!f.src).length) / Math.max(1, frames.length));
+        publish();
+      },
+      nativeTimes,
     );
   signal.throwIfAborted();
   onProgress(1);

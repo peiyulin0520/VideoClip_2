@@ -1,3 +1,4 @@
+import { loadOriginalProfile, originalProfile } from '../../engine/exportProfile';
 import { MediaPlayback } from '../../ui/MediaPlayback';
 import { useEffect, useRef, useState } from 'react';
 import { Sheet } from '../../ui/Sheet';
@@ -8,6 +9,18 @@ import { exportRealtime, unlockExportAudio } from '../../engine/exportRealtime';
 
 export function ExportPanel({ onClose }: { onClose: () => void }) {
   const project = useProjectStore((s) => s.project)!;
+  const [nativeProfile, setNativeProfile] = useState(() => originalProfile(project));
+  const [nativeReady, setNativeReady] = useState(false);
+  useEffect(() => {
+    const controller = new AbortController();
+    void loadOriginalProfile(project, controller.signal)
+      .then((p) => {
+        setNativeProfile(p);
+        setNativeReady(true);
+      })
+      .catch(() => {});
+    return () => controller.abort();
+  }, [project]);
   const [size, setSize] = useState(1920),
     [fps, setFps] = useState(30),
     [audio, setAudio] = useState(true),
@@ -39,9 +52,14 @@ export function ExportPanel({ onClose }: { onClose: () => void }) {
     setProgress(0);
     if (lastUrl.current) URL.revokeObjectURL(lastUrl.current);
     const snapshot = structuredClone(useProjectStore.getState().project!);
+    if (size === 0) {
+      snapshot.width = nativeProfile.width;
+      snapshot.height = nativeProfile.height;
+    }
     const options = {
-      maxSize: size,
-      fps,
+      maxSize: size || Math.max(nativeProfile.width, nativeProfile.height),
+      fps: fps || nativeProfile.fps,
+      bitrate: size === 0 ? nativeProfile.bitrate : undefined,
       audio,
       signal: cancel.signal,
       progress: (p: number, text: string) => {
@@ -82,6 +100,10 @@ export function ExportPanel({ onClose }: { onClose: () => void }) {
           <label className="field">
             解析度
             <select aria-label="匯出解析度" value={size} onChange={(e) => setSize(Number(e.target.value))}>
+              <option value={0} disabled={!nativeReady}>
+                原始素材最高解析度 · {nativeProfile.width} × {nativeProfile.height}
+                {!nativeReady ? '（讀取中）' : ''}
+              </option>
               {[360, 720, 1080, 1920].map((limit) => {
                 const actual = exportSize(project, limit);
                 return (
@@ -102,11 +124,19 @@ export function ExportPanel({ onClose }: { onClose: () => void }) {
           <label className="field">
             每秒影格
             <select aria-label="匯出影格率" value={fps} onChange={(e) => setFps(Number(e.target.value))}>
+              <option value={0} disabled={!nativeReady}>
+                原始素材最高影格率 · {nativeProfile.fps.toFixed(2).replace(/\.00$/, '')} fps
+              </option>
               <option value={24}>24 fps</option>
               <option value={30}>30 fps</option>
               <option value={60}>60 fps</option>
             </select>
           </label>
+          {(size === 0 || fps === 0) && (
+            <p className="hint">
+              混合素材輸出同一個尺寸與影格率，以最高原始規格為準；較小或較低影格率素材會放大或重複影格。編輯後會重新編碼。
+            </p>
+          )}
           <label className="field">
             匯出方式
             <select aria-label="匯出方式" value={method} onChange={(e) => setMethod(e.target.value)}>

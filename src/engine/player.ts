@@ -1,3 +1,6 @@
+import { decoderBudget } from './decoderBudget';
+import { PlaybackPerformance, previewSeekTolerance } from './playbackPerformance';
+import { activeTransitions } from './transitions';
 import { cellMediaTime } from './templateTiming';
 import type { Asset, Project, Track, VideoItem } from '../model/types';
 import { Compositor, type SceneLayer } from './compositor';
@@ -25,9 +28,8 @@ type Deps = {
 };
 type Listener = (t: number, playing: boolean) => void;
 
-const DRIFT = 0.3;
-const PREFETCH_S = 1.0;
-const POOL_SIZE = 8;
+const PREFETCH_S = 2.0;
+const POOL_SIZE = 16;
 
 /** 編輯預覽依裝置偏好；輸出可另外指定尺寸，文字仍獨立超取樣。 */
 export function previewSize(
@@ -44,6 +46,21 @@ export function previewSize(
  * 即將開始的片段/疊加會提前載入並停在起點，切換時不會黑畫面。
  */
 export class Player {
+  private decoderProject: Project | null = null;
+  private perf = new PlaybackPerformance();
+  stats() {
+    return {
+      ...this.perf.snapshot(),
+      canvas: `${this.compositor.width} × ${this.compositor.height}`,
+      sources: this.pool.els
+        .filter((v) => !v.paused && v.videoWidth > 0)
+        .map((v) => ({
+          width: v.videoWidth,
+          height: v.videoHeight,
+          dropped: v.getVideoPlaybackQuality?.().droppedVideoFrames ?? 0,
+        })),
+    };
+  }
   private t = 0;
   private draftProject: Project | null = null;
 
@@ -85,7 +102,6 @@ export class Player {
   private bus: AudioBus;
   private lastEmit = 0;
   frameReady = false;
-  private preloadReady = false;
   private lastScene: SceneLayer[] = [];
   private hitCanvas: HTMLCanvasElement | null = null;
 
@@ -169,7 +185,7 @@ export class Player {
     this.pause();
     this.seek(t);
     const deadline = performance.now() + 15000;
-    while (!this.frameReady || !this.preloadReady) {
+    while (!this.frameReady) {
       if (this.destroyed) return;
       onProgress?.(Math.min(99, Math.round((100 * this.readyCount) / Math.max(1, this.expectedCount))));
       if (performance.now() > deadline) throw Error('預覽素材尚未準備完成，請重試或略過無法載入的素材');
@@ -193,9 +209,9 @@ export class Player {
     return () => this.listeners.delete(fn);
   }
 
-  private emit() {
+  private emit(force = false) {
     const now = performance.now();
-    if (this.playing && now - this.lastEmit < 80) return;
+    if (!force && this.playing && now - this.lastEmit < 80) return;
     this.lastEmit = now;
     for (const l of [...this.listeners]) l(this.t, this.playing);
   }
@@ -210,6 +226,7 @@ export class Player {
     this.previewTime = null;
     this.t = Math.min(Math.max(t, 0), this.total());
     if (this.playing) {
+      this.perf.reset();
       this.wallStart = performance.now();
       this.tStart = this.t;
     }
@@ -236,11 +253,13 @@ export class Player {
     this.playing = true;
     this.buffering = !this.frameReady;
     this.bufferSince = performance.now();
+    this.perf.reset();
     this.wallStart = performance.now();
     this.tStart = this.t;
+    this.emit(true); // Stop optional background decoders before starting playback.
     this.render(this.t);
-    this.pool.unlock();
-    this.emit();
+    this.pool.unlock((el) => this.bus.prime(el));
+    this.audioPool.unlock((el) => this.bus.prime(el));
     this.raf = requestAnimationFrame(this.tick);
   }
 
@@ -264,10 +283,12 @@ export class Player {
   refresh() {
     if (this.destroyed) return;
     this.previewTime = null;
-    const total = this.total();
+    const total = this.total(),
+      previous = this.t;
     if (this.t > total) this.t = total;
     this.scheduleRender();
-    this.emit();
+    // Cache/thumbnail refreshes must not reset a user's scroll before its seek event arrives.
+    if (this.t !== previous) this.emit();
   }
 
   scheduleRender() {
@@ -283,27 +304,17 @@ export class Player {
     if (!this.playing) return;
     const total = this.total();
     const now = performance.now();
+    // Native playback keeps decoding during brief readiness gaps. Keep the last
+    // drawable frame; never repeatedly pause/restart every stream to wait for one.
     if (!this.frameReady && this.deps.clock !== 'wall') {
       if (!this.buffering) this.bufferSince = now;
       this.buffering = true;
-      this.wallStart = now;
-      this.tStart = this.t;
-      this.render(this.t);
-      this.emit();
       if (now - this.bufferSince > 15000) {
         this.pause();
         this.deps.onPlaybackError?.('預覽暫時無法繼續，請稍候再播放');
         return;
       }
-      this.raf = requestAnimationFrame(this.tick);
-      return;
-    }
-    if (this.buffering) {
-      this.buffering = false;
-      this.wallStart = now;
-      this.tStart = this.t;
-      this.render(this.t);
-    }
+    } else this.buffering = false;
     const t = this.tStart + (now - this.wallStart) / 1000;
     const fps = this.getProject()?.fps ?? 30;
     if (Math.floor(t * fps) === Math.floor(this.t * fps) && t < total) {
@@ -337,9 +348,16 @@ export class Player {
   }
 
   private syncVideo(el: HTMLMediaElement, item: VideoItem, asset: Asset, track: Track, t: number) {
-    const active = this.playing && !this.buffering && t >= item.start && t < item.start + item.duration;
-    el.dataset.previewIntent = active ? 'play' : 'pause';
     const s = sourceTimeAt(item, t);
+    const holdAtEnd =
+      el.ended || (el instanceof HTMLVideoElement && asset.duration > 0.1 && s >= asset.duration - 0.02);
+    const active =
+      this.playing &&
+      item.heldSourceTime === undefined &&
+      !holdAtEnd &&
+      t >= item.start &&
+      t < item.start + item.duration;
+    el.dataset.previewIntent = active ? 'play' : 'pause';
     // A pooled decoder can move from B to C of the same file without changing src.
     // Source edits/rebinding must not inherit the old clip's one-second seek throttle.
     let sourceMap = this.sourceMaps.get(el);
@@ -351,7 +369,7 @@ export class Player {
       };
       this.sourceMaps.set(el, sourceMap);
     }
-    const binding = `${item.id}:${item.assetId}:${item.trimIn}:${item.start}:${item.duration}:${item.speed}:${sourceMap.key}`;
+    const binding = `${el.dataset.url}:${item.id}:${item.assetId}:${item.trimIn}:${item.start}:${item.duration}:${item.speed}:${sourceMap.key}`;
     const rebound = this.mediaBindings.get(el) !== binding;
     if (rebound) {
       this.mediaBindings.set(el, binding);
@@ -359,8 +377,7 @@ export class Player {
     }
     const gain =
       !active ||
-      el.paused ||
-      this.pendingPlay.has(el) ||
+      (this.bus.mode === 'webaudio' && (el.paused || this.pendingPlay.has(el))) ||
       el.seeking ||
       t < item.start ||
       t >= item.start + item.duration ||
@@ -378,7 +395,15 @@ export class Player {
     if (
       el.readyState >= 1 &&
       !el.seeking &&
-      Math.abs(delta) > (active && !el.paused && !this.requestedSeek && !rebound ? DRIFT : 0.02) &&
+      Math.abs(delta) >
+        previewSeekTolerance(
+          active,
+          !el.paused,
+          this.requestedSeek,
+          rebound,
+          rebound && el.paused && el.dataset.primed === '1' && Math.abs(el.currentTime - item.trimIn) < 0.03,
+          this.perf.inTransition,
+        ) &&
       (!active || el.paused || this.requestedSeek || !last || now - last.at > 1000)
     ) {
       this.lastSeeks.set(el, { target: s, at: now });
@@ -389,6 +414,7 @@ export class Player {
           el.dataset.itemId === item.id &&
           el.dataset.assetId === asset.id
         ) {
+          if (this.playing && !this.requestedSeek && usePreferences.getState().showPerf) this.perf.seek();
           el.currentTime = Math.max(0, Math.min(s, Math.max(0, asset.duration - 0.001)));
           this.scheduleRender();
         }
@@ -397,7 +423,7 @@ export class Player {
     this.bus.set(
       el,
       el.seeking || this.bus.isSeeking(el) ? 0 : gain,
-      audioWindowAt(item, t),
+      audioWindowAt(item, t, track.layout?.version === 2 ? track.layout : undefined),
       t - delta / item.speed,
     );
     if (!el.preservesPitch) el.preservesPitch = true;
@@ -405,6 +431,7 @@ export class Player {
     if (el.playbackRate !== rate) el.playbackRate = rate;
     if (active) {
       if (el.paused && !this.pendingPlay.has(el)) {
+        if (asset.hasAudio) this.bus.prime(el, track.muted || item.audioEnabled === false ? 0 : item.volume);
         this.pendingPlay.add(el);
         void el.play().then(
           () => {
@@ -431,6 +458,13 @@ export class Player {
     if (!p) {
       comp.render([]);
       return;
+    }
+    const diagnostics = this.playing && usePreferences.getState().showPerf;
+    const perfStart = diagnostics ? performance.now() : 0;
+    this.perf.inTransition = diagnostics && activeTransitions(p, t).length > 0;
+    if (this.decoderProject !== p) {
+      this.pool.ensureCapacity(Math.max(POOL_SIZE, decoderBudget(p)));
+      this.decoderProject = p;
     }
     const used = new Set<HTMLVideoElement>(),
       usedAudio = new Set<HTMLAudioElement>();
@@ -483,7 +517,7 @@ export class Player {
             srcH: img.naturalHeight || asset.height,
           };
         }
-        const el = this.pool.acquire(item.id, asset.id, url, used);
+        const el = this.pool.acquire(item.id, asset.id, url, used, false, !this.playing);
         if (!el) return null; // 同時疊的影片超過上限，多的不畫
         used.add(el);
         this.syncVideo(el, item, asset, track, t);
@@ -514,7 +548,7 @@ export class Player {
       const url = this.deps.urlFor(asset.id);
       if (!url) continue;
       this.expectedCount++;
-      const el = this.audioPool.acquire(item.id, asset.id, url, usedAudio);
+      const el = this.audioPool.acquire(item.id, asset.id, url, usedAudio, !this.playing);
       if (!el) continue;
       usedAudio.add(el);
       this.syncVideo(el, item, asset, track, t);
@@ -532,7 +566,7 @@ export class Player {
     for (const { item, asset } of this.upcoming(p, t)) {
       const url = this.deps.urlFor(asset.id);
       if (!url) continue;
-      const el = this.pool.acquire(item.id, asset.id, url, used);
+      const el = this.pool.acquire(item.id, asset.id, url, used, false, !this.playing);
       if (!el) continue;
       used.add(el);
       el.dataset.seekTarget = String(item.trimIn);
@@ -542,15 +576,14 @@ export class Player {
       }
       if (!el.paused) el.pause();
     }
-    this.preloadReady = [...used, ...usedAudio].every(
-      (el) => el.readyState >= 2 && !el.seeking && !this.bus.isSeeking(el) && !el.dataset.priming,
-    );
     this.pool.pauseAllExcept(used, (el) => this.bus.pause(el));
     this.audioPool.pauseAllExcept(usedAudio, (el) => this.bus.pause(el));
     this.bus.flush();
     this.requestedSeek = false;
     this.lastScene = scene;
+    const builtAt = diagnostics ? performance.now() : 0;
     comp.render(scene, p.background ?? '#000000');
+    if (diagnostics) this.perf.record(perfStart, builtAt - perfStart, performance.now() - builtAt, p.fps);
   }
 
   private maybeCaptureThumb(el: HTMLVideoElement, asset: Asset) {
@@ -598,6 +631,18 @@ export class Player {
     return this.bus.probe(milliseconds);
   }
 
+  refreshAudioPermission() {
+    if (!this.destroyed) {
+      this.bus.unlock();
+      this.render(this.t);
+    }
+  }
+  get audioMode() {
+    return this.bus.mode;
+  }
+  get audioContext() {
+    return this.bus.context;
+  }
   audioEnergy() {
     return this.bus.energy();
   }
@@ -613,7 +658,7 @@ export class Player {
     return mainTrack(p).items.find((x) => this.t >= x.start && this.t < x.start + x.duration)?.id;
   }
 
-  destroy() {
+  destroy({ keepAudioContext = false }: { keepAudioContext?: boolean } = {}) {
     if (this.destroyed) return;
     this.destroyed = true;
     for (const gif of this.gifs.values()) gif.destroy();
@@ -624,7 +669,7 @@ export class Player {
     this.listeners.clear();
     this.pool.destroy();
     this.audioPool.destroy();
-    this.bus.destroy();
+    this.bus.destroy(!keepAudioContext);
     this.compositor.destroy();
   }
 }

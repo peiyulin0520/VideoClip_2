@@ -1,3 +1,5 @@
+import { addTemplateMember } from './templateModel';
+import { useUI } from '../store/uiStore';
 import { arrangeTemplate } from './templatePlayback';
 import { createClip, createTrack, newId } from '../model/defaults';
 import type { Asset, VideoItem } from '../model/types';
@@ -25,6 +27,13 @@ export async function addMaterialFiles(files: File[], t: number, origin: Asset['
     const clip = { ...createClip(a), start: t };
     useProjectStore.getState().apply(
       (d) => {
+        const target = useUI.getState().templateDestination;
+        const group = target && d.tracks.find((t) => t.id === target.trackId);
+        if (group?.template && target) {
+          clip.start = group.layout!.start;
+          addTemplateMember(d as never, group as never, clip, target.cell, 'audio');
+          return;
+        }
         const tr = createTrack('audio', d.tracks);
         tr.items = [clip];
         d.tracks.push(tr);
@@ -79,6 +88,14 @@ export async function addSolid(color: string, t: number, layer = false) {
   useProjectStore.getState().apply(
     (d) => {
       d.assets.push(asset);
+      const destination = useUI.getState().templateDestination,
+        group = destination && d.tracks.find((t) => t.id === destination.trackId);
+      if (group?.template && destination) {
+        clip.start = group.layout!.start;
+        clip.duration = group.layout!.duration;
+        addTemplateMember(d as never, group as never, clip, destination.cell);
+        return;
+      }
       if (layer) {
         clip.start = Math.max(0, t);
         const existing = d.tracks.find(
@@ -157,6 +174,7 @@ export function setAudioEnabled(id: string, enabled: boolean) {
       if (it.cell) it.cell.sequentialAudio = enabled;
     }
   });
+  useUI.getState().player?.refreshAudioPermission();
 }
 
 export async function addTemplateSolid(trackId: string, color: string) {
@@ -178,8 +196,11 @@ export async function addTemplateSolid(trackId: string, color: string) {
       const group = d.tracks.find((t) => t.id === trackId);
       if (!group) return;
       d.assets.push(asset);
-      group.items.push(clip);
-      arrangeTemplate(group);
+      if (group.layout?.version === 2) addTemplateMember(d as never, group as never, clip);
+      else {
+        group.items.push(clip);
+        arrangeTemplate(group);
+      }
     },
     { select: clip.id },
   );

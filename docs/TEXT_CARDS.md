@@ -256,3 +256,11 @@ C 1.14 0.62, 1.22 0.78, 1.285 0.89
 填滿顏色使用 box.fill / box.opacity（0–1，允許完全透明）；框線 stroke.color / stroke.width / stroke.opacity（選填，預設 1）各自獨立。填滿為 0 時仍繪框線，預覽與影片輸出共用 renderer。
 
 2026-11-12：新字塊無填色、輪廓縮圖與淺暖次分類；選色才將填色不透明度設為 1。舊字塊不改。裝飾 offset 保存相對字高，介面顯示 offset × run.size 的 1080 基準 px，附正負方向說明。
+
+
+## 2026-11-15 版型文字
+
+非story版型的layout.captionText儲存真正TextItem，不計入媒體items/格數/輪序時長。展開模板有獨立文字時間軸，可選到普通文字頁編輯字體、大小、內容等；版型頁也可改內容/字體/大小/色彩，小示意以原比例靜態呈現。跟隨父群組位置/縮放/隱藏；文字raster scale扣除群組當前動畫scale，避免逐幀重建。舊caption欄位留作相容，載入生成固定ID captionText，編輯文字時同步舊欄位。story既有動態標題本輪不變。
+
+
+11/16追加：TextItem.kinetic存64式id/循環或完整停留/速度/一輪長度/副標/色彩；TextItem.textFx存4基本文字樣式，兩者互斥，不破壞原card格式。主標照card.runs全文編輯，副標在文字頁kinetic.subtitle，空字串代表不顯示。Hold最終顯示完整card（含超出動畫8詞/14字的原內容），保留字體/樣式，不停在透明末格。正式文字尺寸不跟介面CSS改動。本輪source `e92d6bda0024741ebf1f5808441d39e051089edb` / [Actions 43937100642](https://github.com/peiyulin0520/VideoClip_2/actions/runs/43937100642)：64鈕逐一點選/真Canvas、循環與完整停留/副標保存/零新增貼圖均通過，完整194回歸成功。

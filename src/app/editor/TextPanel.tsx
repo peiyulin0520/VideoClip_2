@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import type { CardBox, Stroke, TextItem } from '../../model/types';
-import { editText } from '../../store/actions';
+import { editItem, editText } from '../../store/actions';
 import { DECORATION_KINDS } from '../../engine/decorations';
 import { SHAPE_CATS, SHAPES, shapeDef } from '../../engine/shapes';
 import { Slider } from '../../ui/Slider';
@@ -91,7 +91,7 @@ export function TextPanel({
 
   return (
     <>
-      <div className="chips sticky-tabs" role="tablist" aria-label="字卡設定">
+      <div className="chips sticky-tabs option-primary" role="tablist" aria-label="字卡設定">
         {SECTIONS.map((s) => (
           <button
             key={s}
@@ -126,6 +126,27 @@ export function TextPanel({
               }, 'txt')
             }
           />
+          {item.kinetic && (
+            <label className="field">
+              副標題
+              <textarea
+                aria-label="副標題內容"
+                className="text-input area"
+                rows={1}
+                placeholder="副標題（可留空）"
+                value={item.kinetic.subtitle ?? ''}
+                onChange={(e) =>
+                  editItem(
+                    id,
+                    (it) => {
+                      if (it.type === 'text' && it.kinetic) it.kinetic.subtitle = e.target.value;
+                    },
+                    { coalesce: `subtitle:${id}` },
+                  )
+                }
+              />
+            </label>
+          )}
           <div className="font-row-wrap">
             <FontSelect
               value={run.fontId}
@@ -236,7 +257,7 @@ export function TextPanel({
 
       {section === '字塊' && (
         <>
-          <div className="chips box-categories" aria-label="字塊分類">
+          <div className="chips box-categories option-secondary" aria-label="字塊分類">
             <button
               role="radio"
               aria-checked={!box}

@@ -12,6 +12,7 @@ import { setAssetFilmstrip, useProjectStore } from '../store/projectStore';
 import type { Asset } from '../model/types';
 const mock = vi.hoisted(() => ({
   frames: [] as ({ canvas: { width: number; height: number }; timestamp: number; duration: number } | null)[],
+  packets: new Map<number, { timestamp: number; duration: number }>(),
   dispose: vi.fn(),
 }));
 vi.mock('mediabunny', () => ({
@@ -23,6 +24,11 @@ vi.mock('mediabunny', () => ({
       return { canDecode: async () => true };
     }
   },
+  EncodedPacketSink: class {
+    async getPacket(time: number) {
+      return mock.packets.get(time) ?? { timestamp: time, duration: 0.04 };
+    }
+  },
   CanvasSink: class {
     async *canvasesAtTimestamps() {
       for (const frame of mock.frames) yield frame;
@@ -30,6 +36,7 @@ vi.mock('mediabunny', () => ({
   },
 }));
 afterEach(() => {
+  mock.packets.clear();
   vi.restoreAllMocks();
   vi.unstubAllGlobals();
   useProjectStore.getState().close();
@@ -125,4 +132,119 @@ it('repair persists across undo without adding an edit or changing the source an
   expect(useProjectStore.getState().project!.name).toBe('test');
   expect(hasFilmstrip(useProjectStore.getState().project!.assets[0]!)).toBe(true);
   expect(useProjectStore.getState().project!.assets[0]!.duration).toBe(6);
+});
+it('resumes missing source timestamps after an interrupted background job and publishes immutable partials', async () => {
+  const old = strip(6);
+  old.frames[1]!.src = null;
+  old.frames[2]!.src = null;
+  mock.frames = [
+    { canvas: { width: 160, height: 90 }, timestamp: 2, duration: 1 },
+    { canvas: { width: 160, height: 90 }, timestamp: 4, duration: 1 },
+  ];
+  vi.spyOn(HTMLCanvasElement.prototype, 'getContext').mockReturnValue({ drawImage: vi.fn() } as never);
+  vi.spyOn(HTMLCanvasElement.prototype, 'toDataURL')
+    .mockReturnValueOnce('frame-2')
+    .mockReturnValueOnce('frame-4');
+  const partials: Filmstrip[] = [];
+  const result = await buildFilmstrip(
+    new Blob(),
+    6,
+    new AbortController().signal,
+    () => {},
+    old,
+    (s) => partials.push(s),
+  );
+  expect(old.frames.map((f) => f.src)).toEqual(['image-at-0', null, null]);
+  expect(partials[0]!.frames.map((f) => f.src)).toEqual(['image-at-0', null, null]);
+  expect(partials[1]!.frames.map((f) => f.src)).toEqual(['image-at-0', 'frame-2', null]);
+  expect(result.frames.map((f) => f.src)).toEqual(['image-at-0', 'frame-2', 'frame-4']);
+});
+it('captures presented native surfaces and seeks within the final video packet when audio runs longer', async () => {
+  mock.frames = [];
+  let failNextLoad = false;
+  let failures = 0;
+  let stamps = [0, 2, 4];
+  let shown = -1;
+  let copied = -1;
+  let nextCallback: VideoFrameRequestCallback | undefined;
+  const original = document.createElement.bind(document);
+  vi.spyOn(document, 'createElement').mockImplementation(((tag: string) => {
+    const element = original(tag);
+    if (tag === 'video') {
+      const video = element as HTMLVideoElement;
+      let clock = 0;
+      Object.defineProperties(video, {
+        readyState: { get: () => 2 },
+        videoWidth: { get: () => 160 },
+        videoHeight: { get: () => 90 },
+        duration: { get: () => 6 },
+        seeking: { get: () => false },
+        currentTime: {
+          get: () => clock,
+          set: (time: number) => {
+            clock = time;
+            queueMicrotask(() => {
+              // Paused native seeks can quantize onto the previous packet at a
+              // boundary; an interior target must still select the intended frame.
+              const quantized = Math.round(time * 100) / 100;
+              const timestamp = stamps.filter((stamp) => stamp < quantized).at(-1) ?? 0;
+              // A queued old presentation must not satisfy the new request.
+              nextCallback?.(0, { mediaTime: timestamp - 2 } as VideoFrameCallbackMetadata);
+              shown = timestamp;
+              nextCallback?.(0, { mediaTime: timestamp } as VideoFrameCallbackMetadata);
+              shown = -1;
+              video.dispatchEvent(new Event('seeked'));
+            });
+          },
+        },
+      });
+      video.requestVideoFrameCallback = (callback) => {
+        nextCallback = callback;
+        return 1;
+      };
+      video.cancelVideoFrameCallback = () => {
+        nextCallback = undefined;
+      };
+      video.load = () => {
+        if (!video.getAttribute('src')) return;
+        if (failNextLoad) {
+          failNextLoad = false;
+          failures++;
+          queueMicrotask(() => video.dispatchEvent(new Event('error')));
+          return;
+        }
+        queueMicrotask(() => {
+          shown = 0;
+          nextCallback?.(0, { mediaTime: 0 } as VideoFrameCallbackMetadata);
+          shown = -1;
+          video.dispatchEvent(new Event('loadeddata'));
+        });
+      };
+      video.pause = () => {};
+    }
+    return element;
+  }) as typeof document.createElement);
+  vi.spyOn(HTMLCanvasElement.prototype, 'getContext').mockReturnValue({
+    drawImage: () => {
+      copied = shown;
+    },
+  } as never);
+  vi.spyOn(HTMLCanvasElement.prototype, 'toDataURL').mockImplementation(() => `source-at-${copied}`);
+  vi.stubGlobal('URL', { createObjectURL: () => 'blob:test', revokeObjectURL: vi.fn() });
+  const result = await buildFilmstrip(new Blob(), 6, new AbortController().signal, () => {});
+  expect(result.frames.map((frame) => frame.src)).toEqual(['source-at-0', 'source-at-2', 'source-at-4']);
+  stamps = [0, 1.933];
+  mock.packets.set(2, { timestamp: 1.933, duration: 0.066 });
+  const tail = await buildFilmstrip(new Blob(), 2.008, new AbortController().signal, () => {});
+  expect(tail.frames).toEqual([
+    { time: 0, src: 'source-at-0' },
+    { time: 2, src: 'source-at-1.933' },
+  ]);
+  stamps = [0, 2, 4];
+  mock.packets.clear();
+  failNextLoad = true;
+  const recovered = await buildFilmstrip(new Blob(), 6, new AbortController().signal, () => {});
+  expect(failures).toBe(1);
+  expect(recovered.frames.map((frame) => frame.src)).toEqual(['source-at-0', 'source-at-2', 'source-at-4']);
+  expect(document.querySelector('video')).toBeNull();
 });

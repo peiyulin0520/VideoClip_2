@@ -1,3 +1,4 @@
+import { isTemplateRoot } from './templateModel';
 import type {
   AnimatedValues,
   ResolvedAnimatedValues,
@@ -90,14 +91,21 @@ export function evaluatedItem<T extends Item>(item: T, time: number): T {
 }
 export function animationTarget(project: Project, id: string) {
   for (const track of project.tracks) {
-    const item = track.items.find((it) => it.id === id);
+    const caption = track.layout?.captionText?.id === id;
+    const item = caption
+      ? track.layout!.captionText
+      : track.layout?.frameItem?.id === id
+        ? track.layout.frameItem
+        : track.items.find((it) => it.id === id);
+    const group = item && isTemplateRoot(track, item) && track.layout;
     if (item)
       return {
-        target: (track.template && track.layout ? track.layout : item) as AnimationTarget,
+        group: !!group,
+        target: (group ? track.layout : item) as AnimationTarget,
         track,
         item,
-        start: track.template && track.layout ? track.layout.start : item.start,
-        duration: track.template && track.layout ? track.layout.duration : item.duration,
+        start: group ? track.layout!.start : item.start,
+        duration: group ? track.layout!.duration : item.duration,
       };
   }
   throw Error('請先選取素材');
@@ -124,17 +132,17 @@ export function editAnimatedValues(
   forceFrame = false,
   selectionTolerance = 0.015,
 ) {
-  const { target, start, duration, track } = animationTarget(project, id);
+  const { target, start, duration, track, group } = animationTarget(project, id);
   if (track.locked) throw Error('請先解鎖圖層');
   const cursor = Math.max(0, Math.min(duration, time - start));
   const local = keyframeAt(target, cursor, selectionTolerance)?.time ?? cursor;
   const values = { ...interpolatedValues(target, local), ...patch };
-  if (track.template) values.rotation = 0;
+  if (group) values.rotation = 0;
   if (target.keyframes?.length || forceFrame) upsertFrame(target, local, values);
   else {
     const { x, y, scale, rotation, opacity, ...adjustment } = values;
-    target.transform = track.template ? { x, y, scale } : { x, y, scale, rotation, opacity };
-    if (track.template) target.opacity = opacity;
+    target.transform = group ? { x, y, scale } : { x, y, scale, rotation, opacity };
+    if (group) target.opacity = opacity;
     target.adjustment = adjustment;
   }
 }

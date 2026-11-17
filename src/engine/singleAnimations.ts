@@ -24,6 +24,11 @@ export function applySingleAnimations(
               animations: track.layout.animations,
               group: true,
             },
+            ...(track.layout.version === 2
+              ? [...track.items, ...(track.layout.captionText ? [track.layout.captionText] : [])]
+                  .filter((it) => it.type !== 'audio')
+                  .map((it) => ({ ...it, group: false }))
+              : []),
           ]
         : track.items.filter((it) => it.type !== 'audio').map((it) => ({ ...it, group: false }));
     for (const target of targets) {

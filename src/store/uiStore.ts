@@ -8,6 +8,7 @@ type UI = {
   toasts: Toast[];
   toast: (text: string) => void;
   appUpdateReady: boolean;
+  mediaPreparation: { progress: number; message: string; paused: boolean } | null;
   busy: string | null;
   setBusy: (text: string | null) => void;
   previewLoad: {
@@ -17,6 +18,7 @@ type UI = {
     retry?: () => void;
     canSkip?: boolean;
   } | null;
+  templateDestination: { trackId: string; cell?: number } | null;
   templateCellId: string | null;
   aspectEditing: boolean;
   keyframePps: number;
@@ -34,6 +36,7 @@ type UI = {
 
 export const useUI = create<UI>((set, get) => ({
   appUpdateReady: false,
+  mediaPreparation: null,
   toasts: [],
   toast: (text) => {
     const id = nextId++;
@@ -43,6 +46,7 @@ export const useUI = create<UI>((set, get) => ({
   busy: null,
   setBusy: (busy) => set({ busy }),
   previewLoad: null,
+  templateDestination: null,
   templateCellId: null,
   aspectEditing: false,
   keyframePps: 60,

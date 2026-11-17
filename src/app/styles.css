@@ -2192,20 +2192,6 @@ progress {
 .editor .playhead {
   left: 56px;
 }
-.back-to-preview {
-  position: fixed;
-  bottom: calc(20px + env(safe-area-inset-bottom));
-  right: 16px;
-  width: 48px;
-  height: 48px;
-  border-radius: 50%;
-  background: var(--accent);
-  color: var(--accent-ink);
-  box-shadow: 0 3px 12px #0005;
-  display: grid;
-  place-items: center;
-  z-index: 35;
-}
 .source-range.marker-range {
   height: 72px;
   margin: 66px 22px 24px;
@@ -3215,10 +3201,6 @@ html {
   height: clamp(220px, 58dvh, 600px);
   min-height: 220px;
 }
-.back-to-preview {
-  bottom: calc(12px + env(safe-area-inset-bottom));
-  right: max(10px, env(safe-area-inset-right));
-}
 .editor .bottombar > :last-child {
   margin-bottom: 0;
 }
@@ -3247,9 +3229,6 @@ html {
 }
 .editor {
   height: var(--app-viewport-height, 100dvh);
-}
-.back-to-preview {
-  bottom: calc(12px + env(safe-area-inset-bottom) + var(--visible-bottom-inset, 0px));
 }
 .template-dimensions {
   display: grid;
@@ -3308,9 +3287,6 @@ html {
   }
 }
 /* The return button clears the last tool row without reserving footer space. */
-.back-to-preview {
-  bottom: calc(76px + env(safe-area-inset-bottom) + var(--visible-bottom-inset, 0px));
-}
 .editor .safe-toggle,
 .editor .preview-expand,
 .editor .preview-layers {
@@ -3333,9 +3309,6 @@ html {
 }
 .editor .panel {
   padding-bottom: 8px;
-}
-.back-to-preview {
-  bottom: calc(124px + var(--safe-bottom) + var(--visible-bottom-inset, 0px));
 }
 
 /* Paired timing controls share compact typography and retain touch-sized buttons. */
@@ -4017,4 +3990,430 @@ textarea.text-input.area {
   color: var(--fg);
   border: 1px solid var(--line);
   border-radius: 12px;
+}
+
+.media-preparation-status {
+  position: absolute;
+  z-index: 4;
+  top: 36px;
+  left: 8px;
+  max-width: calc(100% - 118px);
+  margin: 0;
+  padding: 4px 8px;
+  border-radius: 8px;
+  color: var(--fg);
+  background: var(--panel);
+  pointer-events: none;
+}
+
+/* Primary navigation, subordinate scope and tertiary categories use distinct treatments. */
+:root[data-theme] #root .option-primary {
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+}
+:root[data-theme] #root .option-secondary .chip.active {
+  color: var(--fg);
+  background: color-mix(in srgb, var(--accent) 23%, var(--panel));
+  box-shadow: inset 0 -3px var(--accent);
+}
+.audio-entry-header {
+  display: grid;
+  grid-template-columns: max-content minmax(0, 1fr);
+  gap: 8px;
+  align-items: center;
+}
+.audio-actions {
+  display: flex;
+  flex-direction: row;
+  gap: 4px;
+}
+.audio-actions .chip {
+  min-height: 44px;
+}
+.audio-entry-header .audio-source {
+  height: 100%;
+}
+.audio-entry-header .audio-source img {
+  width: 44px;
+  height: 44px;
+}
+
+.audio-action {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  width: 44px;
+  min-height: 52px;
+  padding: 4px;
+}
+.audio-entry-header .audio-source {
+  gap: 6px;
+}
+.audio-entry-header .audio-source img {
+  flex-shrink: 0;
+  width: 38px;
+  height: 38px;
+}
+.template-caption-mini {
+  position: absolute;
+  pointer-events: none;
+  z-index: 2;
+}
+.template-caption-mini canvas {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+:root[data-theme] #root .option-primary > .chip:not(.add) {
+  background: transparent;
+  border-radius: 0;
+  border: 0;
+  border-bottom: 3px solid transparent;
+  color: var(--muted);
+}
+:root[data-theme] #root .option-primary > .chip.active:not(.add) {
+  color: var(--fg);
+  border-bottom-color: var(--accent);
+  font-weight: 700;
+}
+:root[data-theme] #root .option-tertiary {
+  padding-block: 4px;
+}
+:root[data-theme] #root .option-tertiary .chip.active {
+  color: var(--fg);
+  background: var(--control);
+  box-shadow: inset 0 0 0 1px var(--accent);
+  font-weight: 700;
+}
+
+.playback-perf {
+  position: absolute;
+  z-index: 6;
+  top: 36px;
+  left: 6px;
+  max-width: calc(100% - 12px);
+  pointer-events: none;
+  background: #151515d9;
+  color: #fff;
+  padding: 5px 7px;
+  border-radius: 8px;
+  font-size: 11px;
+  line-height: 1.35;
+  font-variant-numeric: tabular-nums;
+}
+/* Compact audio rows keep controls in two short lines instead of large separate blocks. */
+.audio-row {
+  padding: 4px 0;
+  margin: 0;
+  border-bottom: 1px solid var(--line);
+}
+.audio-row .audio-entry-header {
+  gap: 4px;
+}
+.audio-row .audio-actions {
+  gap: 2px;
+}
+.audio-row .audio-actions .audio-action {
+  min-height: 44px;
+  padding: 2px;
+  gap: 1px;
+}
+.audio-row .audio-source {
+  min-height: 44px;
+  padding: 2px 4px;
+}
+.audio-row .audio-source img {
+  width: 30px;
+  height: 30px;
+}
+.audio-row .check-row {
+  margin: 0;
+  min-height: 44px;
+  display: inline-flex;
+}
+.audio-row > .slider-row {
+  margin: 0;
+}
+.audio-row {
+  display: grid;
+  grid-template-columns: max-content minmax(0, 1fr);
+  column-gap: 6px;
+}
+.audio-row .audio-entry-header {
+  grid-column: 1/-1;
+}
+.audio-row > .slider-row {
+  grid-template-columns: max-content minmax(20px, 1fr) 38px;
+  min-width: 0;
+  margin: 0;
+  gap: 4px;
+}
+.text-effect-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 6px;
+  margin-block: 6px;
+}
+.text-effect-grid .effect-card {
+  min-width: 0;
+  min-height: 64px;
+  overflow: hidden;
+}
+.text-effect-grid canvas {
+  width: 100%;
+  height: 70px;
+  object-fit: contain;
+  background: #17171b;
+}
+.text-effect-controls {
+  margin-top: 8px;
+  padding-top: 6px;
+  border-top: 1px solid var(--line);
+}
+
+/* Frame controls and transport occupy separate rows; no control covers a resize handle. */
+.framework-grid-fields,
+.group-destination {
+  display: flex;
+  gap: 12px;
+  align-items: end;
+  flex-wrap: wrap;
+}
+.framework-grid-fields > .field,
+.group-destination > .field {
+  flex: 1;
+  min-width: 120px;
+}
+.framework-mini {
+  position: relative;
+  width: min(100%, 220px);
+  margin: 12px auto;
+  border: 1px solid #bbb;
+}
+.framework-cell {
+  position: absolute;
+  border: 0;
+  border-radius: 0;
+  background: repeating-linear-gradient(45deg, #34343b 0 8px, #292930 8px 16px);
+  color: #fff;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  gap: 5px;
+  min-height: 0;
+  min-width: 0;
+  padding: 2px;
+  overflow: hidden;
+}
+.framework-cell span {
+  font-size: 18px;
+}
+.framework-cell small {
+  font-size: 11px;
+}
+.framework-member-list > div {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  padding: 8px 0;
+  border-bottom: 1px solid #ddd;
+  flex-wrap: wrap;
+}
+.framework-member-list > div > span {
+  flex: 1;
+  min-width: 90px;
+  overflow-wrap: anywhere;
+}
+.framework-editor-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid #ccc;
+}
+.framework-editor-bar .project-preview {
+  margin: 0;
+  min-height: 0;
+}
+.framework-editor-bar .btn {
+  flex: 1;
+}
+.framework-resize-stage {
+  position: relative;
+  width: min(100%, 340px);
+  margin: 24px auto;
+  touch-action: none;
+  background: repeating-linear-gradient(45deg, #34343b 0 8px, #292930 8px 16px);
+}
+.framework-resize-stage > canvas {
+  width: 100%;
+  height: 100%;
+  display: block;
+  pointer-events: none;
+}
+.framework-resize-box,
+.framework-cell-bounds {
+  position: absolute;
+  border: 2px dashed #d76437;
+  pointer-events: none;
+  box-sizing: border-box;
+}
+.framework-handle {
+  position: absolute;
+  pointer-events: auto;
+  width: 44px;
+  height: 44px;
+  min-width: 44px;
+  min-height: 44px;
+  border: 0;
+  background: transparent;
+  padding: 0;
+  touch-action: none;
+  z-index: 3;
+  transform: translate(-50%, -50%);
+}
+.framework-handle::after {
+  content: '';
+  position: absolute;
+  inset: 14px;
+  border: 2px solid #fff;
+  border-radius: 3px;
+  background: #ac4e35;
+  box-shadow: 0 0 2px #000;
+}
+.framework-handle.l {
+  left: 0;
+  top: 50%;
+}
+.framework-handle.r {
+  left: 100%;
+  top: 50%;
+}
+.framework-handle.t {
+  left: 50%;
+  top: 0;
+}
+.framework-handle.b {
+  left: 50%;
+  top: 100%;
+}
+.framework-handle.tl {
+  left: 0;
+  top: 0;
+}
+.framework-handle.tr {
+  left: 100%;
+  top: 0;
+}
+.framework-handle.bl {
+  left: 0;
+  top: 100%;
+}
+.framework-handle.br {
+  left: 100%;
+  top: 100%;
+}
+.framework-family-toggle {
+  position: sticky;
+  left: 0;
+  height: 44px;
+  min-height: 44px;
+  min-width: 150px;
+  background: #35353c;
+  color: white;
+  border: 0;
+  border-radius: 0;
+  text-align: left;
+  font-size: 12px;
+  padding: 0 12px;
+  z-index: 4;
+}
+.framework-lane-cell {
+  position: absolute;
+  bottom: 3px;
+  right: 4px;
+  background: #ac4e35;
+  color: white;
+  border-radius: 3px;
+  padding: 0 3px;
+  font-size: 10px;
+}
+.framework-layer-group {
+  list-style: none;
+  border: 1px solid #d1c9bc;
+  border-radius: 8px;
+  margin: 6px 0;
+  overflow: hidden;
+}
+.framework-layer-group > .layer-list {
+  padding-left: 10px;
+}
+.framework-layer-group .layer-row {
+  gap: 4px;
+}
+.legacy-template-tools {
+  margin-top: 20px;
+  padding-top: 12px;
+  border-top: 1px solid #d1c9bc;
+}
+.legacy-template-toggle {
+  font-size: var(--ui-font-size);
+  min-height: 44px;
+  padding: 12px 0;
+  box-sizing: border-box;
+  color: var(--fg);
+}
+.framework-cell > img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+.framework-cell > span,
+.framework-cell > small {
+  position: relative;
+  background: #0009;
+  padding: 2px 4px;
+  border-radius: 3px;
+}
+.framework-mini .template-caption-mini {
+  pointer-events: none;
+}
+
+.framework-cell > .tone-thumbnail {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  border-radius: 0;
+  pointer-events: none;
+}
+
+/* Returning to preview is an actual footer control, never a floating hit target over another tool. */
+.panel-return-row {
+  display: flex;
+  justify-content: flex-end;
+  padding: 6px;
+  gap: 6px;
+  border-top: 1px solid var(--line);
+}
+.panel-return-row .back-to-preview {
+  position: static;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  min-width: 44px;
+  min-height: 44px;
+  width: auto;
+  height: auto;
+  background: var(--control);
+  color: var(--fg);
+  box-shadow: none;
 }

@@ -70,6 +70,7 @@ type Obj = {
   textureSource: CanvasSource | null;
   frame?: FrameResource;
   textKey: string | undefined;
+  textCanvas?: HTMLCanvasElement;
   hasFrame: boolean;
   continuity?: string;
   mask: Graphics | null;
@@ -212,6 +213,7 @@ export class Compositor {
     o.texture = null;
     o.textureSource = null;
     o.textKey = undefined;
+    o.textCanvas = undefined;
     o.frame = frame;
     frame.refs++;
     o.sprite.texture = frame.texture;
@@ -228,7 +230,18 @@ export class Compositor {
   private update(o: Obj, layer: SceneLayer, frames: Map<LayerSource, Map<string, FrameResource>>) {
     if (layer.kind === 'text') {
       if (o.textKey !== layer.textKey || !o.texture) {
-        this.setSource(o, layer.source as HTMLCanvasElement);
+        if (
+          o.textCanvas === layer.source &&
+          o.textureSource &&
+          o.textureSource.width === o.textCanvas.width &&
+          o.textureSource.height === o.textCanvas.height
+        ) {
+          o.textureSource.update();
+          this.uploads++;
+        } else {
+          this.setSource(o, layer.source as HTMLCanvasElement);
+          o.textCanvas = layer.source as HTMLCanvasElement;
+        }
         o.textKey = layer.textKey;
         o.hasFrame = true;
       }

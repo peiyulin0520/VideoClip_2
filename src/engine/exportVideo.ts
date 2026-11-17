@@ -25,6 +25,7 @@ import { AudioRenderer, audioEntries } from './exportAudio';
 
 export type ExportOptions = {
   maxSize: number;
+  bitrate?: number;
   fps: number;
   audio: boolean;
   signal: AbortSignal;
@@ -48,6 +49,7 @@ export async function prepareFonts(project: Project) {
   const ids = [
     ...new Set([
       ...project.tracks.flatMap((tr) => tr.layout?.story?.fontIds ?? []),
+      ...project.tracks.flatMap((tr) => tr.layout?.captionText?.card.runs.map((r) => r.fontId) ?? []),
       ...project.tracks.flatMap((t) =>
         t.items.flatMap((it) => (it.type === 'text' ? it.card.runs.map((r) => r.fontId) : [])),
       ),
@@ -135,7 +137,7 @@ export async function exportVideo(project: Project, options: ExportOptions): Pro
     });
     const video = new CanvasSource(comp.canvas, {
       codec,
-      bitrate: Math.max(750_000, size.width * size.height * options.fps * 0.12),
+      bitrate: Math.max(750_000, options.bitrate ?? 0, size.width * size.height * options.fps * 0.12),
       keyFrameInterval: 2,
     });
     output.addVideoTrack(video, { frameRate: options.fps });
@@ -148,7 +150,12 @@ export async function exportVideo(project: Project, options: ExportOptions): Pro
       const t = frame / options.fps;
       prepared.clear();
       for (const { item } of renderLayers(project, t)) {
-        if (item.type === 'text' || item.type === 'audio' || (item.cell && cellMediaTime(item, t) === null))
+        if (
+          item.type === 'text' ||
+          item.type === 'audio' ||
+          item.templateRole === 'frame' ||
+          (item.cell && cellMediaTime(item, t) === null)
+        )
           continue;
         const asset = project.assets.find((a) => a.id === item.assetId)!;
         const gif = gifs.get(item.id),

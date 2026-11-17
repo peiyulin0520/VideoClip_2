@@ -1,7 +1,45 @@
+import { ALL_FORMATS, BlobSource, Input } from 'mediabunny';
 import type { Asset } from '../model/types';
 import { getMedia, putMedia } from '../storage/media';
 import { makePreview, previewKey, type PreviewResult, type PreviewFile } from './previewProxy';
 import { bindPreviewUrl } from './assetUrls';
+
+/** Existing derived files may predate the audio-preservation check. Validate metadata, never decode. */
+async function cachedPreview(projectId: string, asset: Asset, side: number) {
+  const saved = asset.previewFiles?.[String(side)];
+  const blob = await getMedia(projectId, previewKey(asset.id, side), saved?.mime ?? 'video/mp4');
+  if (asset.hasAudio && !saved?.audioVerified) {
+    const input = new Input({ source: new BlobSource(blob), formats: ALL_FORMATS });
+    try {
+      if (!(await input.getPrimaryAudioTrack())) throw Error('舊輕量檔未保留原音');
+    } finally {
+      input.dispose();
+    }
+  }
+  return blob;
+}
+/** Opening a project only restores completed caches; it never waits for transcoding. */
+export async function restorePreviews(
+  projectId: string,
+  assets: Asset[],
+  side: number,
+  signal: AbortSignal,
+  save: (id: string, metadata: PreviewFile | undefined) => void,
+) {
+  for (const asset of assets) {
+    if (asset.kind !== 'video' || asset.previewFiles?.[String(side)]?.status !== 'ready') continue;
+    try {
+      const blob = await cachedPreview(projectId, asset, side);
+      signal.throwIfAborted();
+      bindPreviewUrl(projectId, asset.id, side, blob);
+      if (!asset.previewFiles[String(side)]?.audioVerified)
+        save(asset.id, { ...asset.previewFiles[String(side)]!, audioVerified: true });
+    } catch (error) {
+      if (signal.aborted) throw error;
+      save(asset.id, undefined); // Rebuild only the optional derived file; original media stays intact.
+    }
+  }
+}
 
 function convertInWorker(
   file: Blob,
@@ -93,8 +131,10 @@ export async function preparePreviews(
     }
     if (saved?.version === 1 && saved.status === 'ready')
       try {
-        const blob = await getMedia(projectId, previewKey(asset.id, side), saved.mime ?? 'video/mp4');
+        const blob = await cachedPreview(projectId, asset, side);
+        signal.throwIfAborted();
         bindPreviewUrl(projectId, asset.id, side, blob);
+        if (!saved.audioVerified) onMetadata(asset.id, { ...saved, audioVerified: true });
         progress(1);
         continue;
       } catch {

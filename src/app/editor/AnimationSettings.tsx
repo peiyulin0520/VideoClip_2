@@ -34,7 +34,7 @@ export function AnimationSettings({
   });
   return (
     <section aria-label="單一素材進出場動畫">
-      <div className="chips option-secondary">
+      <div className="chips option-tertiary">
         {(['enter', 'exit'] as const).map((id) => (
           <button
             key={id}

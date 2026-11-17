@@ -6,6 +6,7 @@ export function uniqueEffects(effects: NonNullable<Project['effects']>) {
     if (!overlayPresets.has(effect.preset)) return true;
     const key = JSON.stringify([
       effect.preset,
+      effect.ownerId,
       effect.transitionFromId ?? effect.start,
       effect.transitionToId ?? effect.targetId,
     ]);

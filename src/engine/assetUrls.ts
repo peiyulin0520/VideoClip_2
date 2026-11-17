@@ -2,8 +2,8 @@ import type { Asset } from '../model/types';
 import { getMedia } from '../storage/media';
 
 // 把本機素材檔變成 object URL 給 <video>/<img> 用。整個編輯器共用，離開專案時釋放。
-const urls = new Map<string, string>();
-const previewUrls = new Map<string, { side: number; url: string }>();
+const urls = new Map<string, { url: string; blob: Blob }>();
+const previewUrls = new Map<string, { side: number; url: string; blob: Blob }>();
 const key = (projectId: string, assetId: string) => `${projectId}/${assetId}`;
 
 export async function ensureUrls(
@@ -21,7 +21,7 @@ export async function ensureUrls(
       }
       try {
         const f = await getMedia(projectId, a.id, a.mime);
-        urls.set(key(projectId, a.id), URL.createObjectURL(f));
+        urls.set(key(projectId, a.id), { url: URL.createObjectURL(f), blob: f });
       } catch {
         missing.push(a.name);
       } finally {
@@ -33,7 +33,7 @@ export async function ensureUrls(
 }
 
 export function urlFor(projectId: string, assetId: string): string | undefined {
-  return urls.get(key(projectId, assetId));
+  return urls.get(key(projectId, assetId))?.url;
 }
 
 export function releaseProjectUrls(projectId: string): void {
@@ -44,7 +44,7 @@ export function releaseProjectUrls(projectId: string): void {
     }
   for (const [k, u] of urls) {
     if (k.startsWith(`${projectId}/`)) {
-      URL.revokeObjectURL(u);
+      URL.revokeObjectURL(u.url);
       urls.delete(k);
     }
   }
@@ -54,9 +54,17 @@ export function bindPreviewUrl(projectId: string, assetId: string, side: number,
   const k = key(projectId, assetId),
     old = previewUrls.get(k);
   if (old) URL.revokeObjectURL(old.url);
-  previewUrls.set(k, { side, url: URL.createObjectURL(blob) });
+  previewUrls.set(k, { side, url: URL.createObjectURL(blob), blob });
 }
 export function previewUrlFor(projectId: string, assetId: string, side?: number) {
   const cached = previewUrls.get(key(projectId, assetId));
   return cached && (side === undefined || cached.side === side) ? cached.url : urlFor(projectId, assetId);
+}
+
+/** Reuse the immutable local Blob rather than fetching a large blob: URL into another buffer. */
+export function previewBlobFor(projectId: string, assetId: string, side?: number): Blob | undefined {
+  const cached = previewUrls.get(key(projectId, assetId));
+  return cached && (side === undefined || cached.side === side)
+    ? cached.blob
+    : urls.get(key(projectId, assetId))?.blob;
 }

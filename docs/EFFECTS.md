@@ -200,3 +200,15 @@ Compositor 的同來源/crop/mask/尺寸共享 FrameResource，RGB 重影與故�
 ### 2026-11-15 預覽原音片尾
 
 AudioBus已排好的淡出截止不可被late pause/seek延長。原生EOF才使用12ms安全緩衝，以避開媒體與AudioContext時鐘的小段誤差；內部選段保留既有精確邊界，離線匯出不套這個原生解碼緩衝。音訊回歸原live maxJump<0.08不變，快速套件連跑三輪並保留全部原始值，不挑最低一輪。
+
+
+## 2026-11-15 特效歸屬與刪除
+
+新增effects.ownerId記錄套用素材，transitionFromId/toId及targetId亦是歸屬。所有UI刪除經ProjectStore.apply同一交易比較item IDs，刪片/整層/模板/批次連相關特效與轉場一起移除，undo/redo一起還原。舊未記owner的畫面特效依原始套用時點推定；無法識別來源時仍顯示可管理的時間軸標記。ownerId不改既有全畫面合成語意。主/次/分類分別文字底線、淺底、輪廓選取。
+
+
+## 2026-11-16 文字與整段動效（已接入並驗收）
+
+文字特效分基本4式＋參考VideoClip18d775f的64式，8個分類。MIT來源授權在src/engine/kinetic/LICENSE-claude-animated-text.txt，原版repo不修改。主/副標內容在文字頁，特效類型/速度/一輪長度/底色與強調色在特效頁。Hold預設：在淡出前顯示完整原文字及副標，直到素材尾；Loop重複動畫，不在定格裡保存進退場。
+
+ItemBase.continuous供影像、貼圖、文字，layout.continuous供群組，整段捲動/滑入出/呼吸/震動與單一素材輕晃皆確定性函式。共用geometry，不逐幀重建filter；kinetic/basic text共用固定canvas，同尺寸CanvasSource.update、主播放時暫停選項卡預覽。本輪source `e92d6bda0024741ebf1f5808441d39e051089edb` / [Actions 43937100642](https://github.com/peiyulin0520/VideoClip_2/actions/runs/43937100642)的194完整與全部快速回歸成功；實測與原音資料見validation/nov16-layout-effects.md，Safari原片仍需真機。
